@@ -42,8 +42,12 @@ api.interceptors.response.use(
     async (error: AxiosError) => {
         const originalRequest = error.config
 
+        const isAuthEndpoint =
+            originalRequest?.url?.includes("/api/agent/login") ||
+            originalRequest?.url?.includes("/api/agent/signup")
+
         // If error is 401 (Unauthorized) and we haven't tried to refresh the token yet
-        if (error.response?.status === 401 && !originalRequest?.headers?.["X-Retry"]) {
+        if (error.response?.status === 401 && !originalRequest?.headers?.["X-Retry"] && !isAuthEndpoint) {
             try {
                 // Try to refresh the token
                 const refreshResponse = await axios.post(
