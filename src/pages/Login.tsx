@@ -17,8 +17,7 @@ import {
     Snackbar,
 } from "@mui/material"
 import { useAuth } from "../context/AuthContext"
-import api from "../services/api"
-import React from "react"
+import axios from "axios"
 
 function Login() {
     const navigate = useNavigate()
@@ -40,8 +39,10 @@ function Login() {
                 password,
             }
 
-            const response = await api.post("/api/agent/login", loginData, {
-                withCredentials: true, // Important for receiving cookies
+            // 로그인 요청은 axios 인스턴스를 직접 사용하지 않고 axios를 직접 사용하여
+            // 인터셉터의 영향을 받지 않도록 합니다.
+            const response = await axios.post("http://localhost:8080/api/agent/login", loginData, {
+                withCredentials: true, // 쿠키를 받기 위해 필수
             })
 
             // Check if login was successful (status 2xx)
