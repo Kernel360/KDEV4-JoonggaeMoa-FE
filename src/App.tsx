@@ -12,6 +12,11 @@ import SurveyList from "./pages/survey/SurveyList"
 import SurveyDetail from "./pages/survey/SurveyDetail"
 import SurveyCreate from "./pages/survey/SurveyCreate"
 import SurveyEdit from "./pages/survey/SurveyEdit"
+import ConsultationList from "./pages/consultation/ConsultationList"
+import ConsultationHistory from "./pages/consultation/ConsultationHistory"
+import ConsultationDetail from "./pages/consultation/ConsultationDetail"
+import ConsultationCreate from "./pages/consultation/ConsultationCreate"
+import ConsultationEdit from "./pages/consultation/ConsultationEdit"
 import { AuthProvider } from "./context/AuthContext"
 import ProtectedRoute from "./components/ProtectedRoute"
 
@@ -129,6 +134,47 @@ function App() {
                             element={
                                 <ProtectedRoute>
                                     <SurveyEdit />
+                                </ProtectedRoute>
+                            }
+                        />
+                        {/* 상담 관리 라우트 */}
+                        <Route
+                            path="/consultation"
+                            element={
+                                <ProtectedRoute>
+                                    <ConsultationList />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/consultation/history"
+                            element={
+                                <ProtectedRoute>
+                                    <ConsultationHistory />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/consultation/create"
+                            element={
+                                <ProtectedRoute>
+                                    <ConsultationCreate />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/consultation/:id"
+                            element={
+                                <ProtectedRoute>
+                                    <ConsultationDetail />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/consultation/edit/:id"
+                            element={
+                                <ProtectedRoute>
+                                    <ConsultationEdit />
                                 </ProtectedRoute>
                             }
                         />

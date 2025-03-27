@@ -1,6 +1,6 @@
 "use client"
 
-// 대시보드에 설문 관리 메뉴 추가
+// 대시보드에 상담 관리 메뉴 추가
 import React from "react"
 import {
     AppBar,
@@ -24,7 +24,7 @@ import {
     Description,
     Business,
     People,
-    Inventory,
+    Forum,
     Email,
     Home,
     Work,
@@ -46,6 +46,10 @@ const Dashboard = () => {
 
     const handleSurveyManagement = () => {
         navigate("/survey")
+    }
+
+    const handleConsultationManagement = () => {
+        navigate("/consultation")
     }
 
     return (
@@ -141,12 +145,15 @@ const Dashboard = () => {
                                 display: "flex",
                                 flexDirection: "column",
                                 alignItems: "center",
-                                cursor: "default",
-                                "&:hover": { bgcolor: "#f9f9f9" },
+                                cursor: "pointer",
+                                "&:hover": { bgcolor: "#f0f7ff" },
                             }}
+                            onClick={handleConsultationManagement}
                         >
-                            <Inventory sx={{ fontSize: 40, mb: 1 }} />
-                            <Typography variant="body2">실물관리</Typography>
+                            <Forum sx={{ fontSize: 40, mb: 1, color: "#3f51b5" }} />
+                            <Typography variant="body2" sx={{ color: "#3f51b5", fontWeight: "bold" }}>
+                                상담관리
+                            </Typography>
                         </Paper>
                     </Grid>
                     <Grid item xs={2}>
@@ -346,21 +353,22 @@ const Dashboard = () => {
                                     <Button
                                         variant="outlined"
                                         fullWidth
-                                        startIcon={<Assignment />}
+                                        startIcon={<Forum />}
                                         sx={{ justifyContent: "flex-start", p: 1.5, borderColor: "#e0e0e0", color: "#333" }}
-                                        onClick={() => navigate("/survey/create")}
+                                        onClick={() => navigate("/consultation/create")}
                                     >
-                                        새 설문 만들기
+                                        상담 등록하기
                                     </Button>
                                 </Grid>
                                 <Grid item xs={6}>
                                     <Button
                                         variant="outlined"
                                         fullWidth
-                                        startIcon={<Description />}
+                                        startIcon={<Assignment />}
                                         sx={{ justifyContent: "flex-start", p: 1.5, borderColor: "#e0e0e0", color: "#333" }}
+                                        onClick={() => navigate("/survey/create")}
                                     >
-                                        계약서 작성
+                                        새 설문 만들기
                                     </Button>
                                 </Grid>
                                 <Grid item xs={6}>
