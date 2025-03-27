@@ -24,7 +24,7 @@ import {
 } from "@mui/material"
 import { ArrowBack, Edit, Delete } from "@mui/icons-material"
 import { useNavigate, useParams } from "react-router-dom"
-import { getCustomerById, deleteCustomer, type CustomerResponse } from "../services/customerApi"
+import { getCustomerById, deleteCustomer, type CustomerResponse } from "../../services/customerApi"
 
 const CustomerDetail = () => {
     const navigate = useNavigate()

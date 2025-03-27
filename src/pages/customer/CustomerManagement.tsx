@@ -31,8 +31,8 @@ import {
 } from "@mui/material"
 import { Search, Add, FileUpload, ArrowBack, KeyboardArrowDown } from "@mui/icons-material"
 import { useNavigate } from "react-router-dom"
-import { getAllCustomers, type CustomerResponse } from "../services/customerApi"
-import { useAuth } from "../context/AuthContext"
+import { getAllCustomers, type CustomerResponse } from "../../services/customerApi"
+import { useAuth } from "../../context/AuthContext"
 
 const CustomerManagement = () => {
     const navigate = useNavigate()

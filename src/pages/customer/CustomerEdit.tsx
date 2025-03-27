@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
     Box,
     Container,
@@ -20,15 +20,17 @@ import {
     CircularProgress,
 } from "@mui/material"
 import { ArrowBack } from "@mui/icons-material"
-import { useNavigate } from "react-router-dom"
-import { createCustomer, type CreateCustomerRequest } from "../services/customerApi"
+import { useNavigate, useParams } from "react-router-dom"
+import { getCustomerById, updateCustomer, type UpdateCustomerRequest } from "../../services/customerApi"
 
-const CustomerAdd = () => {
+const CustomerEdit = () => {
     const navigate = useNavigate()
+    const { id } = useParams<{ id: string }>()
     const [loading, setLoading] = useState(false)
+    const [initialLoading, setInitialLoading] = useState(true)
     const [success, setSuccess] = useState(false)
     const [error, setError] = useState<string | null>(null)
-    const [formData, setFormData] = useState<CreateCustomerRequest>({
+    const [formData, setFormData] = useState<UpdateCustomerRequest>({
         name: "",
         birthday: "",
         phone: "",
@@ -38,6 +40,40 @@ const CustomerAdd = () => {
         memo: "",
         consent: false,
     })
+
+    useEffect(() => {
+        if (id) {
+            fetchCustomerDetails(Number.parseInt(id))
+        }
+    }, [id])
+
+    const fetchCustomerDetails = async (customerId: number) => {
+        try {
+            setInitialLoading(true)
+            const response = await getCustomerById(customerId)
+
+            if (response.data.success && response.data.data) {
+                const customer = response.data.data
+                setFormData({
+                    name: customer.name,
+                    birthday: customer.birthday || "",
+                    phone: customer.phone,
+                    email: customer.email || "",
+                    job: customer.job || "",
+                    isVip: customer.isVip,
+                    memo: customer.memo || "",
+                    consent: customer.consent,
+                })
+            } else {
+                setError("고객 정보를 불러오는데 실패했습니다.")
+            }
+        } catch (err) {
+            console.error("Error fetching customer details:", err)
+            setError("고객 정보를 불러오는데 실패했습니다.")
+        } finally {
+            setInitialLoading(false)
+        }
+    }
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target
@@ -57,26 +93,36 @@ const CustomerAdd = () => {
             return
         }
 
+        if (!id) return
+
         try {
             setLoading(true)
             setError(null)
 
-            const response = await createCustomer(formData)
+            const response = await updateCustomer(Number.parseInt(id), formData)
 
             if (response.data.success) {
                 setSuccess(true)
                 setTimeout(() => {
-                    navigate("/customer-management")
+                    navigate(`/customer-management/${id}`)
                 }, 1500)
             } else {
-                setError(response.data.error?.message || "고객 등록에 실패했습니다.")
+                setError(response.data.error?.message || "고객 정보 수정에 실패했습니다.")
             }
         } catch (err: any) {
-            console.error("Error creating customer:", err)
-            setError(err.response?.data?.error?.message || "고객 등록에 실패했습니다.")
+            console.error("Error updating customer:", err)
+            setError(err.response?.data?.error?.message || "고객 정보 수정에 실패했습니다.")
         } finally {
             setLoading(false)
         }
+    }
+
+    if (initialLoading) {
+        return (
+            <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
+                <CircularProgress />
+            </Box>
+        )
     }
 
     return (
@@ -92,16 +138,16 @@ const CustomerAdd = () => {
             <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
                 <Paper elevation={0} sx={{ p: 4 }}>
                     <Box sx={{ display: "flex", alignItems: "center", mb: 4 }}>
-                        <IconButton onClick={() => navigate("/customer-management")} sx={{ mr: 1 }}>
+                        <IconButton onClick={() => navigate(`/customer-management/${id}`)} sx={{ mr: 1 }}>
                             <ArrowBack />
                         </IconButton>
                         <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                            고객 정보 등록
+                            고객 정보 수정
                         </Typography>
                     </Box>
 
                     <Typography variant="subtitle2" color="textSecondary" sx={{ mb: 3 }}>
-                        고객의 기본 정보를 입력해주세요.
+                        고객의 정보를 수정해주세요.
                     </Typography>
 
                     <form onSubmit={handleSubmit}>
@@ -171,7 +217,7 @@ const CustomerAdd = () => {
                                 <Button
                                     variant="outlined"
                                     sx={{ mr: 1, borderColor: "#ddd", color: "#333" }}
-                                    onClick={() => navigate("/customer-management")}
+                                    onClick={() => navigate(`/customer-management/${id}`)}
                                     disabled={loading}
                                 >
                                     취소
@@ -182,7 +228,7 @@ const CustomerAdd = () => {
                                     sx={{ bgcolor: "#000", "&:hover": { bgcolor: "#333" } }}
                                     disabled={loading}
                                 >
-                                    {loading ? <CircularProgress size={24} /> : "고객 등록하기"}
+                                    {loading ? <CircularProgress size={24} /> : "고객 정보 수정하기"}
                                 </Button>
                             </Grid>
                         </Grid>
@@ -198,7 +244,7 @@ const CustomerAdd = () => {
 
             <Snackbar open={success} autoHideDuration={6000} onClose={() => setSuccess(false)}>
                 <Alert onClose={() => setSuccess(false)} severity="success" sx={{ width: "100%" }}>
-                    고객이 성공적으로 등록되었습니다. 고객 목록 페이지로 이동합니다.
+                    고객 정보가 성공적으로 수정되었습니다.
                 </Alert>
             </Snackbar>
 
@@ -211,5 +257,5 @@ const CustomerAdd = () => {
     )
 }
 
-export default CustomerAdd
+export default CustomerEdit
 

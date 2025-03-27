@@ -1,14 +1,18 @@
-import {BrowserRouter as Router, Routes, Route, Navigate} from "react-router-dom"
-import {ThemeProvider, createTheme, CssBaseline} from "@mui/material"
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom"
+import { ThemeProvider, createTheme, CssBaseline } from "@mui/material"
 import Login from "./pages/Login"
 import Register from "./pages/Register"
 import Dashboard from "./pages/Dashboard"
-import CustomerManagement from "./pages/CustomerManagement"
-import CustomerAdd from "./pages/CustomerAdd"
-import CustomerImport from "./pages/CustomerImport"
-import CustomerDetail from "./pages/CustomerDetail"
-import CustomerEdit from "./pages/CustomerEdit"
-import {AuthProvider} from "./context/AuthContext"
+import CustomerManagement from "./pages/customer/CustomerManagement"
+import CustomerAdd from "./pages/customer/CustomerAdd"
+import CustomerImport from "./pages/customer/CustomerImport"
+import CustomerDetail from "./pages/customer/CustomerDetail"
+import CustomerEdit from "./pages/customer/CustomerEdit"
+import SurveyList from "./pages/survey/SurveyList"
+import SurveyDetail from "./pages/survey/SurveyDetail"
+import SurveyCreate from "./pages/survey/SurveyCreate"
+import SurveyEdit from "./pages/survey/SurveyEdit"
+import { AuthProvider } from "./context/AuthContext"
 import ProtectedRoute from "./components/ProtectedRoute"
 
 // Create a theme instance
@@ -27,7 +31,7 @@ const theme = createTheme({
             "BlinkMacSystemFont",
             '"Segoe UI"',
             "Roboto",
-            "Helvetica Neue",
+            '"Helvetica Neue"',
             "Arial",
             "sans-serif",
             '"Apple Color Emoji"',
@@ -40,25 +44,26 @@ const theme = createTheme({
 function App() {
     return (
         <ThemeProvider theme={theme}>
-            <CssBaseline/>
+            <CssBaseline />
             <Router>
                 <AuthProvider>
                     <Routes>
-                        <Route path="/" element={<Login/>}/>
-                        <Route path="/register" element={<Register/>}/>
+                        <Route path="/" element={<Login />} />
+                        <Route path="/register" element={<Register />} />
                         <Route
                             path="/dashboard"
                             element={
                                 <ProtectedRoute>
-                                    <Dashboard/>
+                                    <Dashboard />
                                 </ProtectedRoute>
                             }
                         />
+                        {/* 고객 관리 라우트 */}
                         <Route
                             path="/customer-management"
                             element={
                                 <ProtectedRoute>
-                                    <CustomerManagement/>
+                                    <CustomerManagement />
                                 </ProtectedRoute>
                             }
                         />
@@ -66,7 +71,7 @@ function App() {
                             path="/customer-management/add"
                             element={
                                 <ProtectedRoute>
-                                    <CustomerAdd/>
+                                    <CustomerAdd />
                                 </ProtectedRoute>
                             }
                         />
@@ -74,7 +79,7 @@ function App() {
                             path="/customer-management/import"
                             element={
                                 <ProtectedRoute>
-                                    <CustomerImport/>
+                                    <CustomerImport />
                                 </ProtectedRoute>
                             }
                         />
@@ -82,7 +87,7 @@ function App() {
                             path="/customer-management/:id"
                             element={
                                 <ProtectedRoute>
-                                    <CustomerDetail/>
+                                    <CustomerDetail />
                                 </ProtectedRoute>
                             }
                         />
@@ -90,11 +95,44 @@ function App() {
                             path="/customer-management/edit/:id"
                             element={
                                 <ProtectedRoute>
-                                    <CustomerEdit/>
+                                    <CustomerEdit />
                                 </ProtectedRoute>
                             }
                         />
-                        <Route path="*" element={<Navigate to="/"/>}/>
+                        {/* 설문 관리 라우트 */}
+                        <Route
+                            path="/survey"
+                            element={
+                                <ProtectedRoute>
+                                    <SurveyList />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/survey/create"
+                            element={
+                                <ProtectedRoute>
+                                    <SurveyCreate />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/survey/:id"
+                            element={
+                                <ProtectedRoute>
+                                    <SurveyDetail />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/survey/edit/:id"
+                            element={
+                                <ProtectedRoute>
+                                    <SurveyEdit />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route path="*" element={<Navigate to="/" />} />
                     </Routes>
                 </AuthProvider>
             </Router>

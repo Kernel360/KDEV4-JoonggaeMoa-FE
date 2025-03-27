@@ -1,5 +1,6 @@
 "use client"
 
+// 대시보드에 설문 관리 메뉴 추가
 import React from "react"
 import {
     AppBar,
@@ -24,13 +25,13 @@ import {
     Business,
     People,
     Inventory,
-    Forum,
     Email,
     Home,
     Work,
     Person,
     Notifications,
     Add,
+    Assignment,
 } from "@mui/icons-material"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
@@ -41,6 +42,10 @@ const Dashboard = () => {
 
     const handleCustomerManagement = () => {
         navigate("/customer-management")
+    }
+
+    const handleSurveyManagement = () => {
+        navigate("/survey")
     }
 
     return (
@@ -152,12 +157,15 @@ const Dashboard = () => {
                                 display: "flex",
                                 flexDirection: "column",
                                 alignItems: "center",
-                                cursor: "default",
-                                "&:hover": { bgcolor: "#f9f9f9" },
+                                cursor: "pointer",
+                                "&:hover": { bgcolor: "#f0f7ff" },
                             }}
+                            onClick={handleSurveyManagement}
                         >
-                            <Forum sx={{ fontSize: 40, mb: 1 }} />
-                            <Typography variant="body2">상담관리</Typography>
+                            <Assignment sx={{ fontSize: 40, mb: 1, color: "#3f51b5" }} />
+                            <Typography variant="body2" sx={{ color: "#3f51b5", fontWeight: "bold" }}>
+                                설문관리
+                            </Typography>
                         </Paper>
                     </Grid>
                     <Grid item xs={2}>
@@ -331,18 +339,18 @@ const Dashboard = () => {
                                         sx={{ justifyContent: "flex-start", p: 1.5, borderColor: "#e0e0e0", color: "#333" }}
                                         onClick={() => navigate("/customer-management/add")}
                                     >
-                                        신규 매물 등록
+                                        신규 고객 등록
                                     </Button>
                                 </Grid>
                                 <Grid item xs={6}>
                                     <Button
                                         variant="outlined"
                                         fullWidth
-                                        startIcon={<Person />}
+                                        startIcon={<Assignment />}
                                         sx={{ justifyContent: "flex-start", p: 1.5, borderColor: "#e0e0e0", color: "#333" }}
-                                        onClick={() => navigate("/customer-management/add")}
+                                        onClick={() => navigate("/survey/create")}
                                     >
-                                        상담 일정 등록
+                                        새 설문 만들기
                                     </Button>
                                 </Grid>
                                 <Grid item xs={6}>

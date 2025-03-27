@@ -19,7 +19,7 @@ import {
 } from "@mui/material"
 import { ArrowBack, CloudUpload } from "@mui/icons-material"
 import { useNavigate } from "react-router-dom"
-import { bulkCreateCustomers } from "../services/customerApi"
+import { bulkCreateCustomers } from "../../services/customerApi"
 
 const CustomerImport = () => {
     const navigate = useNavigate()
