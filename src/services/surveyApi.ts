@@ -3,8 +3,10 @@ import type { AxiosResponse } from "axios";
 import type {
     SurveyCreateRequest,
     SurveyUpdateRequest,
-    SurveyResponse
-} from "../types/survey";
+    SurveyResponse,
+    AnswerRequest,
+    AnswerResponse,
+} from "../types/survey"
 import type { ApiResponse } from "../types/api";
 
 // 현재 로그인한 에이전트 ID 가져오기
@@ -51,3 +53,18 @@ export const getSurveyById = async (
     const agentId = getAgentId();
     return api.get(`/api/agents/${agentId}/surveys/${surveyId}`);
 };
+
+// 설문 답변 제출
+export const submitSurveyAnswer = async (
+    surveyId: number,
+    answerData: AnswerRequest,
+): Promise<AxiosResponse<ApiResponse<void>>> => {
+    const agentId = getAgentId()
+    return api.post(`/api/agents/${agentId}/surveys/${surveyId}/submit`, answerData)
+}
+
+// 모든 설문 답변 조회
+export const getAllSurveyAnswers = async (): Promise<AxiosResponse<ApiResponse<AnswerResponse[]>>> => {
+    const agentId = getAgentId()
+    return api.get(`/api/agents/${agentId}/surveys/answer`)
+}

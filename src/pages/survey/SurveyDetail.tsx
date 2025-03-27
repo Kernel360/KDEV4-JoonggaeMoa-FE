@@ -34,13 +34,6 @@ import { useNavigate, useParams } from "react-router-dom"
 import { getSurveyById, deleteSurvey } from "../../services/surveyApi"
 import type { SurveyResponse } from "../../types/survey"
 
-// Define QuestionType enum
-enum QuestionType {
-    TEXT = "TEXT",
-    RADIO = "RADIO",
-    CHECKBOX = "CHECKBOX",
-}
-
 const SurveyDetail = () => {
     const navigate = useNavigate()
     const { id } = useParams<{ id: string }>()
@@ -120,7 +113,7 @@ const SurveyDetail = () => {
     // 질문 타입에 따른 UI 렌더링
     const renderQuestionOptions = (question: SurveyResponse["questionList"][0]) => {
         switch (question.type) {
-            case QuestionType.RADIO:
+            case "RADIO":
                 return (
                     <RadioGroup>
                         {question.options.map((option, index) => (
@@ -128,7 +121,7 @@ const SurveyDetail = () => {
                         ))}
                     </RadioGroup>
                 )
-            case QuestionType.CHECKBOX:
+            case "CHECKBOX":
                 return (
                     <FormGroup>
                         {question.options.map((option, index) => (
@@ -136,7 +129,7 @@ const SurveyDetail = () => {
                         ))}
                     </FormGroup>
                 )
-            case QuestionType.TEXT:
+            case "TEXT":
                 return <TextField fullWidth variant="outlined" placeholder="텍스트 응답" disabled sx={{ mt: 1 }} />
             default:
                 return null
