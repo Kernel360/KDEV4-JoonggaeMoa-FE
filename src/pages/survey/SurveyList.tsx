@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useEffect } from "react"
 import {
     Box,
@@ -24,11 +26,13 @@ import {
     CircularProgress,
     Snackbar,
     Alert,
+    TextField,
+    InputAdornment,
 } from "@mui/material"
-import { Add, Edit, Delete, ArrowBack } from "@mui/icons-material"
+import { Add, Edit, Delete, ArrowBack, Search } from "@mui/icons-material"
 import { useNavigate } from "react-router-dom"
 import { getAllSurveys, deleteSurvey } from "../../services/surveyApi"
-import type { SurveyResponse } from "@/types/survey"
+import type { SurveyResponse } from "../../types/survey"
 
 const SurveyList = () => {
     const navigate = useNavigate()
@@ -39,6 +43,7 @@ const SurveyList = () => {
     const [surveyToDelete, setSurveyToDelete] = useState<number | null>(null)
     const [deleteLoading, setDeleteLoading] = useState(false)
     const [successMessage, setSuccessMessage] = useState<string | null>(null)
+    const [searchTerm, setSearchTerm] = useState("")
 
     useEffect(() => {
         fetchSurveys()
@@ -61,7 +66,8 @@ const SurveyList = () => {
         }
     }
 
-    const handleDeleteClick = (surveyId: number) => {
+    const handleDeleteClick = (event: React.MouseEvent, surveyId: number) => {
+        event.stopPropagation()
         setSurveyToDelete(surveyId)
         setDeleteDialogOpen(true)
     }
@@ -98,9 +104,13 @@ const SurveyList = () => {
         navigate(`/survey/${surveyId}`)
     }
 
-    const handleEditSurvey = (surveyId: number) => {
+    const handleEditSurvey = (event: React.MouseEvent, surveyId: number) => {
+        event.stopPropagation()
         navigate(`/survey/edit/${surveyId}`)
     }
+
+    // 검색어로 필터링
+    const filteredSurveys = surveys.filter((survey) => survey.title.toLowerCase().includes(searchTerm.toLowerCase()))
 
     return (
         <Box sx={{ flexGrow: 1, bgcolor: "#f5f5f5", minHeight: "100vh" }}>
@@ -135,6 +145,24 @@ const SurveyList = () => {
                     </Button>
                 </Box>
 
+                <Paper elevation={0} sx={{ mb: 3, p: 2 }}>
+                    <TextField
+                        placeholder="설문 제목으로 검색"
+                        variant="outlined"
+                        size="small"
+                        fullWidth
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        InputProps={{
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <Search />
+                                </InputAdornment>
+                            ),
+                        }}
+                    />
+                </Paper>
+
                 {loading ? (
                     <Box sx={{ display: "flex", justifyContent: "center", my: 5 }}>
                         <CircularProgress />
@@ -158,19 +186,22 @@ const SurveyList = () => {
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {surveys.length > 0 ? (
-                                    surveys.map((survey) => (
-                                        <TableRow key={survey.id} hover>
-                                            <TableCell sx={{ cursor: "pointer" }} onClick={() => handleViewSurvey(survey.id)}>
-                                                {survey.title}
-                                            </TableCell>
+                                {filteredSurveys.length > 0 ? (
+                                    filteredSurveys.map((survey) => (
+                                        <TableRow
+                                            key={survey.id}
+                                            hover
+                                            onClick={() => handleViewSurvey(survey.id)}
+                                            sx={{ cursor: "pointer" }}
+                                        >
+                                            <TableCell>{survey.title}</TableCell>
                                             <TableCell>{survey.description}</TableCell>
                                             <TableCell>{survey.questionList.length}</TableCell>
                                             <TableCell align="right">
-                                                <IconButton size="small" onClick={() => handleEditSurvey(survey.id)} sx={{ mr: 1 }}>
+                                                <IconButton size="small" onClick={(e) => handleEditSurvey(e, survey.id)} sx={{ mr: 1 }}>
                                                     <Edit fontSize="small" />
                                                 </IconButton>
-                                                <IconButton size="small" color="error" onClick={() => handleDeleteClick(survey.id)}>
+                                                <IconButton size="small" color="error" onClick={(e) => handleDeleteClick(e, survey.id)}>
                                                     <Delete fontSize="small" />
                                                 </IconButton>
                                             </TableCell>
@@ -179,7 +210,9 @@ const SurveyList = () => {
                                 ) : (
                                     <TableRow>
                                         <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
-                                            <Typography variant="body1">등록된 설문이 없습니다.</Typography>
+                                            <Typography variant="body1">
+                                                {searchTerm ? "검색 결과가 없습니다." : "등록된 설문이 없습니다."}
+                                            </Typography>
                                         </TableCell>
                                     </TableRow>
                                 )}

@@ -29,7 +29,7 @@ import {
 import { ArrowBack, Add, Delete, DragIndicator } from "@mui/icons-material"
 import { useNavigate } from "react-router-dom"
 import { createSurvey } from "../../services/surveyApi"
-import {type SurveyCreateRequest, type QuestionCreateRequest, QuestionType } from "../../types/survey"
+import type { SurveyCreateRequest, QuestionCreateRequest } from "../../types/survey"
 
 const SurveyCreate = () => {
     const navigate = useNavigate()
@@ -45,7 +45,7 @@ const SurveyCreate = () => {
     const [questions, setQuestions] = useState<QuestionCreateRequest[]>([
         {
             content: "",
-            type: QuestionType.RADIO,
+            type: "RADIO",
             isRequired: false,
             options: ["", ""],
         },
@@ -57,7 +57,7 @@ const SurveyCreate = () => {
             ...questions,
             {
                 content: "",
-                type: QuestionType.RADIO,
+                type: "RADIO",
                 isRequired: false,
                 options: ["", ""],
             },
@@ -79,9 +79,9 @@ const SurveyCreate = () => {
             [field]: value,
         }
 
-        // 질문 타입이 변경되면 옵션 초기화
+        // 질문 타입이 변경되면 옵션 초기화 부분
         if (field === "type") {
-            if (value === QuestionType.TEXT) {
+            if (value === "TEXT") {
                 newQuestions[index].options = []
             } else if (newQuestions[index].options.length === 0) {
                 newQuestions[index].options = ["", ""]
@@ -130,7 +130,7 @@ const SurveyCreate = () => {
         // 라디오/체크박스 타입의 질문에 옵션이 있는지 확인
         const invalidOptions = questions.find(
             (q) =>
-                (q.type === QuestionType.RADIO || q.type === QuestionType.CHECKBOX) &&
+                (q.type === "RADIO" || q.type === "CHECKBOX") &&
                 (q.options.length === 0 || q.options.some((opt) => !opt.trim())),
         )
         if (invalidOptions) {
@@ -171,7 +171,7 @@ const SurveyCreate = () => {
             <AppBar position="static" color="default" elevation={0} sx={{ bgcolor: "white" }}>
                 <Toolbar>
                     <Typography variant="h6" component="div" sx={{ flexGrow: 1, color: "#888", fontWeight: 300 }}>
-                        설문 응답 폼
+                        설문지 만들기
                     </Typography>
                 </Toolbar>
             </AppBar>
@@ -257,9 +257,9 @@ const SurveyCreate = () => {
                                                 label="질문 유형"
                                                 onChange={(e) => handleQuestionChange(questionIndex, "type", e.target.value)}
                                             >
-                                                <MenuItem value={QuestionType.RADIO}>객관식 (단일 선택)</MenuItem>
-                                                <MenuItem value={QuestionType.CHECKBOX}>객관식 (다중 선택)</MenuItem>
-                                                <MenuItem value={QuestionType.TEXT}>주관식</MenuItem>
+                                                <MenuItem value="RADIO">객관식 (단일 선택)</MenuItem>
+                                                <MenuItem value="CHECKBOX">객관식 (다중 선택)</MenuItem>
+                                                <MenuItem value="TEXT">주관식</MenuItem>
                                             </Select>
                                         </FormControl>
                                     </Grid>
@@ -277,7 +277,7 @@ const SurveyCreate = () => {
                                 </Grid>
 
                                 {/* 객관식 옵션 (라디오/체크박스) */}
-                                {(question.type === QuestionType.RADIO || question.type === QuestionType.CHECKBOX) && (
+                                {(question.type === "RADIO" || question.type === "CHECKBOX") && (
                                     <Box sx={{ mt: 2 }}>
                                         <Typography variant="subtitle2" color="textSecondary" sx={{ mb: 1 }}>
                                             선택 옵션
@@ -285,7 +285,7 @@ const SurveyCreate = () => {
 
                                         {question.options.map((option, optionIndex) => (
                                             <Box key={optionIndex} sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-                                                {question.type === QuestionType.RADIO ? <Radio disabled /> : <Checkbox disabled />}
+                                                {question.type === "RADIO" ? <Radio disabled /> : <Checkbox disabled />}
                                                 <TextField
                                                     fullWidth
                                                     size="small"
