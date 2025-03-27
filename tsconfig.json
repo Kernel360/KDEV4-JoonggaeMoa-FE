@@ -1,7 +1,13 @@
 {
-  "files": [],
-  "references": [
-    { "path": "./tsconfig.app.json" },
-    { "path": "./tsconfig.node.json" }
-  ]
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "moduleResolution": "node",  // 모듈 경로를 Node 방식으로 확인
+    "baseUrl": "./",             // 상대 경로 문제 해결
+    "paths": {
+      "@/*": ["src/*"]           // (선택) 경로 alias 설정
+    },
+    "esModuleInterop": true,     // ES 모듈 호환 (import 사용 가능)
+    "allowSyntheticDefaultImports": true, // Synthetic import 허용
+    "skipLibCheck": true,
+  }
 }
