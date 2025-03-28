@@ -4,55 +4,55 @@
 export enum QuestionType {
     RADIO = "RADIO",
     CHECKBOX = "CHECKBOX",
-    TEXT = "TEXT"
+    TEXT = "TEXT",
 }
 
 // 질문 생성 요청
 export interface QuestionCreateRequest {
-    content: string;
-    type: string;
-    isRequired: boolean;
-    options: string[];
+    content: string
+    type: string
+    isRequired: boolean
+    options: string[]
 }
 
 // 질문 수정 요청
 export interface QuestionUpdateRequest {
-    id?: number;
-    content: string;
-    type: string;
-    isRequired: boolean;
-    options: string[];
+    id?: number
+    content: string
+    type: string
+    isRequired: boolean
+    options: string[]
 }
 
 // 질문 응답
 export interface QuestionResponse {
-    id: number;
-    content: string;
-    type: string;
-    isRequired: boolean;
-    options: string[];
+    id: number
+    content: string
+    type: string
+    isRequired: boolean
+    options: string[]
 }
 
 // 설문 생성 요청
 export interface SurveyCreateRequest {
-    title: string;
-    description: string;
-    questionList: QuestionCreateRequest[];
+    title: string
+    description: string
+    questionList: QuestionCreateRequest[]
 }
 
 // 설문 수정 요청
 export interface SurveyUpdateRequest {
-    title: string;
-    description: string;
-    questionList: QuestionUpdateRequest[];
+    title: string
+    description: string
+    questionList: QuestionUpdateRequest[]
 }
 
 // 설문 응답
 export interface SurveyResponse {
-    id: number;
-    title: string;
-    description: string;
-    questionList: QuestionResponse[];
+    id: number
+    title: string
+    description: string
+    questionList: QuestionResponse[]
 }
 
 // 고객 응답 정보
@@ -85,3 +85,4 @@ export interface AnswerResponse {
     survey: SurveyResponse
     answer: QuestionAnswerResponse[]
 }
+

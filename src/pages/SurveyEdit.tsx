@@ -27,9 +27,9 @@ import {
 } from "@mui/material"
 import { ArrowBack, Add, Delete, DragIndicator } from "@mui/icons-material"
 import { useNavigate, useParams } from "react-router-dom"
-import { getSurveyById, updateSurvey } from "../../services/surveyApi"
-import type { SurveyUpdateRequest, QuestionUpdateRequest } from "../../types/survey"
-import { QuestionType as QuestionTypeEnum } from "../../types/survey"
+import { surveyApi } from "../services/surveyApi"
+import type { SurveyUpdateRequest, QuestionUpdateRequest } from "../types/survey"
+import { QuestionType as QuestionTypeEnum } from "../types/survey"
 
 const SurveyEdit = () => {
     const navigate = useNavigate()
@@ -55,7 +55,7 @@ const SurveyEdit = () => {
     const fetchSurveyDetails = async (surveyId: number) => {
         try {
             setInitialLoading(true)
-            const response = await getSurveyById(surveyId)
+            const response = await surveyApi.getSurveyById(surveyId)
 
             if (response.data.success && response.data.data) {
                 const survey = response.data.data
@@ -165,7 +165,7 @@ const SurveyEdit = () => {
         const invalidOptions = questions.find(
             (q) =>
                 (q.type === QuestionTypeEnum.RADIO || q.type === QuestionTypeEnum.CHECKBOX) &&
-                (q.options.length === 0 || q.options.some((opt) => !opt.trim())),
+                (q.options.length === 0 || q.options.some((opt) => !opt.content.trim())),
         )
         if (invalidOptions) {
             setError("모든 선택 옵션에 내용을 입력해주세요.")
@@ -182,7 +182,7 @@ const SurveyEdit = () => {
                 questionList: questions,
             }
 
-            const response = await updateSurvey(Number.parseInt(id), surveyData)
+            const response = await surveyApi.updateSurvey(Number.parseInt(id), surveyData)
 
             if (response.data.success) {
                 setSuccess(true)

@@ -28,8 +28,8 @@ import {
 } from "@mui/material"
 import { ArrowBack, Add, Delete, DragIndicator } from "@mui/icons-material"
 import { useNavigate } from "react-router-dom"
-import { createSurvey } from "../../services/surveyApi"
-import type { SurveyCreateRequest, QuestionCreateRequest } from "../../types/survey"
+import { surveyApi } from "../services/surveyApi"
+import type { SurveyCreateRequest, QuestionCreateRequest } from "../types/survey"
 
 const SurveyCreate = () => {
     const navigate = useNavigate()
@@ -148,7 +148,7 @@ const SurveyCreate = () => {
                 questionList: questions,
             }
 
-            const response = await createSurvey(surveyData)
+            const response = await surveyApi.createSurvey(surveyData)
 
             if (response.data.success) {
                 setSuccess(true)

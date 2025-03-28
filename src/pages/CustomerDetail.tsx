@@ -24,7 +24,8 @@ import {
 } from "@mui/material"
 import { ArrowBack, Edit, Delete } from "@mui/icons-material"
 import { useNavigate, useParams } from "react-router-dom"
-import { getCustomerById, deleteCustomer, type CustomerResponse } from "../../services/customerApi"
+import { customerApi } from "../services/customerApi"
+import type { CustomerResponse } from "../services/customerApi"
 
 const CustomerDetail = () => {
     const navigate = useNavigate()
@@ -46,7 +47,7 @@ const CustomerDetail = () => {
     const fetchCustomerDetails = async (customerId: number) => {
         try {
             setLoading(true)
-            const response = await getCustomerById(customerId)
+            const response = await customerApi.getCustomerById(customerId)
 
             if (response.data.success && response.data.data) {
                 setCustomer(response.data.data)
@@ -76,7 +77,7 @@ const CustomerDetail = () => {
             setDeleteLoading(true)
             setDeleteError(null)
 
-            const response = await deleteCustomer(Number.parseInt(id))
+            const response = await customerApi.deleteCustomer(Number.parseInt(id))
 
             if (response.data.success) {
                 setDeleteSuccess(true)
@@ -113,7 +114,7 @@ const CustomerDetail = () => {
                         {error || "고객을 찾을 수 없습니다."}
                     </Typography>
                     <Button variant="contained" onClick={() => navigate("/customer-management")} sx={{ mt: 2 }}>
-                        고객 목록으로 돌아가기
+                        고객 목록으��� 돌아가기
                     </Button>
                 </Box>
             </Container>

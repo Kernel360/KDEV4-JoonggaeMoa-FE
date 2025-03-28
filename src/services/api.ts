@@ -1,4 +1,4 @@
-import axios, {type AxiosError, type AxiosResponse, InternalAxiosRequestConfig} from "axios"
+import axios, { type AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from "axios"
 
 // Create axios instance with base URL
 const api = axios.create({
@@ -42,11 +42,12 @@ api.interceptors.response.use(
     async (error: AxiosError) => {
         const originalRequest = error.config
 
+        // Skip token refresh for auth endpoints
         const isAuthEndpoint =
-            originalRequest?.url?.includes("/api/agent/login") ||
-            originalRequest?.url?.includes("/api/agent/signup")
+            originalRequest?.url?.includes("/api/agent/login") || originalRequest?.url?.includes("/api/agent/signup")
 
         // If error is 401 (Unauthorized) and we haven't tried to refresh the token yet
+        // and it's not an auth endpoint
         if (error.response?.status === 401 && !originalRequest?.headers?.["X-Retry"] && !isAuthEndpoint) {
             try {
                 // Try to refresh the token

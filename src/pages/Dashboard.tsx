@@ -52,6 +52,10 @@ const Dashboard = () => {
         navigate("/consultation")
     }
 
+    const handleMessageManagement = () => {
+        navigate("/message")
+    }
+
     return (
         <Box sx={{ flexGrow: 1, bgcolor: "#f5f5f5", minHeight: "100vh" }}>
             <AppBar position="static" color="default" elevation={0} sx={{ bgcolor: "white" }}>
@@ -183,12 +187,15 @@ const Dashboard = () => {
                                 display: "flex",
                                 flexDirection: "column",
                                 alignItems: "center",
-                                cursor: "default",
-                                "&:hover": { bgcolor: "#f9f9f9" },
+                                cursor: "pointer",
+                                "&:hover": { bgcolor: "#f0f7ff" },
                             }}
+                            onClick={() => navigate("/message")}
                         >
-                            <Email sx={{ fontSize: 40, mb: 1 }} />
-                            <Typography variant="body2">문자발송</Typography>
+                            <Email sx={{ fontSize: 40, mb: 1, color: "#3f51b5" }} />
+                            <Typography variant="body2" sx={{ color: "#3f51b5", fontWeight: "bold" }}>
+                                문자관리
+                            </Typography>
                         </Paper>
                     </Grid>
                 </Grid>
@@ -377,6 +384,7 @@ const Dashboard = () => {
                                         fullWidth
                                         startIcon={<Email />}
                                         sx={{ justifyContent: "flex-start", p: 1.5, borderColor: "#e0e0e0", color: "#333" }}
+                                        onClick={() => navigate("/message/create")}
                                     >
                                         문자 발송
                                     </Button>

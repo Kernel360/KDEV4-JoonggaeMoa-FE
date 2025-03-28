@@ -21,29 +21,27 @@ import {
     Pagination,
     AppBar,
     Toolbar,
-    Menu,
-    MenuItem,
-    FormControl,
-    InputLabel,
-    Select,
-    type SelectChangeEvent,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogContentText,
+    DialogTitle,
     CircularProgress,
 } from "@mui/material"
-import { Search, Add, FileUpload, ArrowBack, KeyboardArrowDown } from "@mui/icons-material"
+import { Search, Add, FileUpload, ArrowBack, Delete } from "@mui/icons-material"
 import { useNavigate } from "react-router-dom"
-import { getAllCustomers, type CustomerResponse } from "../../services/customerApi"
-import { useAuth } from "../../context/AuthContext"
+import { customerApi } from "../services/customerApi"
+import type { CustomerResponse } from "../services/customerApi"
 
-const CustomerManagement = () => {
+const CustomerManagement: React.FC = () => {
     const navigate = useNavigate()
-    const { agentId } = useAuth()
     const [customers, setCustomers] = useState<CustomerResponse[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [page, setPage] = useState(1)
-    const [filterAnchorEl, setFilterAnchorEl] = useState<null | HTMLElement>(null)
-    const [statusFilter, setStatusFilter] = useState<string>("all")
     const [searchTerm, setSearchTerm] = useState("")
+    const [openDialog, setOpenDialog] = useState(false)
+    const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null)
 
     const rowsPerPage = 10
 
@@ -54,7 +52,7 @@ const CustomerManagement = () => {
     const fetchCustomers = async () => {
         try {
             setLoading(true)
-            const response = await getAllCustomers()
+            const response = await customerApi.getCustomers()
             if (response.data.success && response.data.data) {
                 setCustomers(response.data.data)
             } else {
@@ -72,36 +70,48 @@ const CustomerManagement = () => {
         setPage(value)
     }
 
-    const handleFilterClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-        setFilterAnchorEl(event.currentTarget)
-    }
-
-    const handleFilterClose = () => {
-        setFilterAnchorEl(null)
-    }
-
-    const handleStatusFilterChange = (event: SelectChangeEvent) => {
-        setStatusFilter(event.target.value)
-    }
-
     const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setSearchTerm(event.target.value)
         setPage(1) // Reset to first page on search
     }
 
-    // Filter customers based on search term and VIP status
+    const handleDeleteCustomer = (id: number) => {
+        setSelectedCustomerId(id)
+        setOpenDialog(true)
+    }
+
+    const confirmDeleteCustomer = async () => {
+        if (selectedCustomerId) {
+            try {
+                const response = await customerApi.deleteCustomer(selectedCustomerId)
+                if (response.data.success) {
+                    setCustomers(customers.filter((customer) => customer.id !== selectedCustomerId))
+                } else {
+                    setError("고객 삭제에 실패했습니다.")
+                }
+            } catch (error) {
+                console.error("Error deleting customer:", error)
+                setError("고객 삭제에 실패했습니다.")
+            } finally {
+                setOpenDialog(false)
+                setSelectedCustomerId(null)
+            }
+        }
+    }
+
+    const closeDialog = () => {
+        setOpenDialog(false)
+        setSelectedCustomerId(null)
+    }
+
+    // Filter customers based on search term
     const filteredCustomers = customers.filter((customer) => {
         const matchesSearch =
             customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             customer.phone.includes(searchTerm) ||
-            customer.email.toLowerCase().includes(searchTerm.toLowerCase())
+            (customer.email && customer.email.toLowerCase().includes(searchTerm.toLowerCase()))
 
-        const matchesStatus =
-            statusFilter === "all" ||
-            (statusFilter === "vip" && customer.isVip) ||
-            (statusFilter === "normal" && !customer.isVip)
-
-        return matchesSearch && matchesStatus
+        return matchesSearch
     })
 
     // Pagination
@@ -116,9 +126,6 @@ const CustomerManagement = () => {
                 <Toolbar>
                     <Typography variant="h6" component="div" sx={{ flexGrow: 1, color: "#888", fontWeight: 300 }}>
                         고객 관리
-                    </Typography>
-                    <Typography variant="body2" sx={{ mr: 2 }}>
-                        관리자
                     </Typography>
                 </Toolbar>
             </AppBar>
@@ -158,46 +165,21 @@ const CustomerManagement = () => {
                 </Box>
 
                 <Paper elevation={0} sx={{ mb: 3, p: 2 }}>
-                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <TextField
-                            placeholder="고객명, 연락처 또는 이메일로 검색"
-                            variant="outlined"
-                            size="small"
-                            sx={{ width: "70%" }}
-                            value={searchTerm}
-                            onChange={handleSearchChange}
-                            InputProps={{
-                                startAdornment: (
-                                    <InputAdornment position="start">
-                                        <Search />
-                                    </InputAdornment>
-                                ),
-                            }}
-                        />
-                        <Button
-                            endIcon={<KeyboardArrowDown />}
-                            onClick={handleFilterClick}
-                            sx={{ borderColor: "#ddd", color: "#333" }}
-                        >
-                            {statusFilter === "all" ? "전체 상태" : statusFilter === "vip" ? "VIP 고객" : "일반 고객"}
-                        </Button>
-                        <Menu anchorEl={filterAnchorEl} open={Boolean(filterAnchorEl)} onClose={handleFilterClose}>
-                            <FormControl sx={{ m: 1, minWidth: 120 }}>
-                                <InputLabel id="status-filter-label">상태</InputLabel>
-                                <Select
-                                    labelId="status-filter-label"
-                                    id="status-filter"
-                                    value={statusFilter}
-                                    label="상태"
-                                    onChange={handleStatusFilterChange}
-                                >
-                                    <MenuItem value="all">전체</MenuItem>
-                                    <MenuItem value="vip">VIP 고객</MenuItem>
-                                    <MenuItem value="normal">일반 고객</MenuItem>
-                                </Select>
-                            </FormControl>
-                        </Menu>
-                    </Box>
+                    <TextField
+                        placeholder="고객명, 연락처 또는 이메일로 검색"
+                        variant="outlined"
+                        size="small"
+                        fullWidth
+                        value={searchTerm}
+                        onChange={handleSearchChange}
+                        InputProps={{
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <Search />
+                                </InputAdornment>
+                            ),
+                        }}
+                    />
                 </Paper>
 
                 {loading ? (
@@ -223,6 +205,7 @@ const CustomerManagement = () => {
                                         <TableCell>직업</TableCell>
                                         <TableCell>등록일자</TableCell>
                                         <TableCell>상태</TableCell>
+                                        <TableCell>작업</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -251,11 +234,23 @@ const CustomerManagement = () => {
                                                         }}
                                                     />
                                                 </TableCell>
+                                                <TableCell>
+                                                    <IconButton
+                                                        size="small"
+                                                        color="error"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            handleDeleteCustomer(customer.id)
+                                                        }}
+                                                    >
+                                                        <Delete fontSize="small" />
+                                                    </IconButton>
+                                                </TableCell>
                                             </TableRow>
                                         ))
                                     ) : (
                                         <TableRow>
-                                            <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
+                                            <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
                                                 <Typography variant="body1">
                                                     {searchTerm ? "검색 결과가 없습니다." : "등록된 고객이 없습니다."}
                                                 </Typography>
@@ -276,6 +271,27 @@ const CustomerManagement = () => {
                     </>
                 )}
             </Container>
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog
+                open={openDialog}
+                onClose={closeDialog}
+                aria-labelledby="alert-dialog-title"
+                aria-describedby="alert-dialog-description"
+            >
+                <DialogTitle id="alert-dialog-title">{"고객 삭제"}</DialogTitle>
+                <DialogContent>
+                    <DialogContentText id="alert-dialog-description">
+                        이 고객을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={closeDialog}>취소</Button>
+                    <Button onClick={confirmDeleteCustomer} color="error" autoFocus>
+                        삭제
+                    </Button>
+                </DialogActions>
+            </Dialog>
 
             <Box sx={{ bgcolor: "#fff", p: 2, textAlign: "center", mt: 4 }}>
                 <Typography variant="caption" color="textSecondary">

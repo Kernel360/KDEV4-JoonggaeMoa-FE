@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useEffect } from "react"
 import {
     Box,
@@ -22,19 +24,30 @@ import {
     Chip,
     CircularProgress,
     Divider,
+    Menu,
+    MenuItem,
+    Snackbar,
+    Alert,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Autocomplete,
 } from "@mui/material"
 import { Search, Add, ArrowBack, CalendarMonth, ChevronLeft, ChevronRight } from "@mui/icons-material"
 import { useNavigate } from "react-router-dom"
-import { getAllConsultations } from "../../services/consultationApi"
-import { ConsultationStatus, ConsultationType } from "../../types/consultation"
-import type { ConsultationResponse } from "../../types/consultation"
+import { consultationApi } from "../services/consultationApi"
+import { customerApi } from "../services/customerApi"
+import { ConsultationStatus, ConsultationType } from "../types/consultation"
+import type { ConsultationResponse } from "../types/consultation"
+import type { CustomerResponse } from "../types/customer"
 
-// 상담 상태별 칩 색상 및 텍스트
+// 상담 상태별 칩 색상 및 텍스트 - 새로운 상태 값에 맞게 업데이트
 const statusConfig = {
     [ConsultationStatus.WAITING]: { color: "#e3f2fd", textColor: "#1976d2", label: "예약 대기" },
     [ConsultationStatus.CONFIRMED]: { color: "#fff8e1", textColor: "#f57c00", label: "예약 확정" },
-    [ConsultationStatus.COMPLETED]: { color: "#e8f5e9", textColor: "#2e7d32", label: "예약 완료" },
-    [ConsultationStatus.CANCELED]: { color: "#ffebee", textColor: "#c62828", label: "취소" },
+    [ConsultationStatus.COMPLETED]: { color: "#e8f5e9", textColor: "#2e7d32", label: "진행 완료" },
+    [ConsultationStatus.CANCELED]: { color: "#ffebee", textColor: "#c62828", label: "예약 취소" },
 }
 
 // 상담 유형별 텍스트
@@ -43,7 +56,6 @@ const typeConfig = {
     [ConsultationType.CALL]: "전화 상담",
     [ConsultationType.VIDEO]: "화상 상담",
 }
-
 
 // 날짜 문자열을 Date 객체로 변환하는 함수
 const parseDate = (dateString: string): Date | null => {
@@ -105,29 +117,48 @@ const ConsultationList = () => {
     const [currentDate, setCurrentDate] = useState(new Date())
     const [selectedDate, setSelectedDate] = useState<Date | null>(null)
 
+    // 상태 변경 관련 상태
+    const [statusAnchorEl, setStatusAnchorEl] = useState<null | HTMLElement>(null)
+    const [selectedConsultation, setSelectedConsultation] = useState<number | null>(null)
+    const [statusLoading, setStatusLoading] = useState(false)
+    const [statusSuccess, setStatusSuccess] = useState(false)
+    const [statusError, setStatusError] = useState<string | null>(null)
+
+    // 상담 등록 모달 관련 상태
+    const [createModalOpen, setCreateModalOpen] = useState(false)
+    const [customers, setCustomers] = useState<CustomerResponse[]>([])
+    const [customersLoading, setCustomersLoading] = useState(false)
+    const [selectedCustomer, setSelectedCustomer] = useState<CustomerResponse | null>(null)
+    const [scheduledDate, setScheduledDate] = useState("")
+    const [scheduledTime, setScheduledTime] = useState("")
+    const [createLoading, setCreateLoading] = useState(false)
+    const [createSuccess, setCreateSuccess] = useState(false)
+    const [createError, setCreateError] = useState<string | null>(null)
+
     useEffect(() => {
         fetchConsultations()
     }, [])
 
+    // fetchConsultations 함수를 수정하여 서버 응답 데이터를 적절히 변환합니다
     const fetchConsultations = async () => {
         try {
             setLoading(true)
-            const response = await getAllConsultations()
+            const response = await consultationApi.getConsultations()
 
             if (response.data.success && response.data.data) {
                 // 서버 응답 데이터를 컴포넌트에서 사용하는 형식으로 변환
-                const formattedConsultations = response.data.data.map((item: any) => ({
+                const formattedConsultations = response.data.data.map((item: ConsultationResponse) => ({
                     id: item.consultationId,
                     customer: {
                         id: item.customerId,
                         name: item.customerName,
                         phone: item.customerPhone,
-                        email: item.customerEmail || "",
+                        email: "",
                     },
                     consultationType: item.consultationType || ConsultationType.VISIT, // 기본값 설정
                     scheduledAt: item.date,
                     memo: item.memo || "",
-                    status: item.consultationStatus,
+                    status: item.consultationStatus as ConsultationStatus,
                     propertyInterest: item.interestProperty,
                     budget: item.assetStatus,
                     result: item.result,
@@ -145,6 +176,25 @@ const ConsultationList = () => {
             setError("상담 목록을 불러오는데 실패했습니다.")
         } finally {
             setLoading(false)
+        }
+    }
+
+    // 고객 목록 가져오기
+    const fetchCustomers = async () => {
+        try {
+            setCustomersLoading(true)
+            const response = await customerApi.getCustomers()
+
+            if (response.data.success && response.data.data) {
+                setCustomers(response.data.data)
+            } else {
+                setCreateError("고객 목록을 불러오는데 실패했습니다.")
+            }
+        } catch (err) {
+            console.error("Error fetching customers:", err)
+            setCreateError("고객 목록을 불러오는데 실패했습니다.")
+        } finally {
+            setCustomersLoading(false)
         }
     }
 
@@ -200,11 +250,12 @@ const ConsultationList = () => {
         return weeks
     }
 
-    // 날짜별 상담 개수 계산
+    // 날짜별 상담 개수 계산 - 날짜 파싱 로직 수정
     const getConsultationCountByDate = (date: Date) => {
         if (!date) return 0
 
         const dateString = formatDateToYYYYMMDD(date)
+
         return consultations.filter((consultation) => {
             // scheduledAt이 없는 경우 필터링에서 제외
             if (!consultation.scheduledAt) return false
@@ -231,7 +282,112 @@ const ConsultationList = () => {
         navigate(`/consultation/${consultationId}`)
     }
 
-    // 검색어로 필터링
+    // 상태 변경 메뉴 열기
+    const handleStatusMenuOpen = (event: React.MouseEvent<HTMLDivElement>, consultationId: number) => {
+        event.stopPropagation()
+        setStatusAnchorEl(event.currentTarget)
+        setSelectedConsultation(consultationId)
+    }
+
+    // 상태 변경 메뉴 닫기
+    const handleStatusMenuClose = () => {
+        setStatusAnchorEl(null)
+        setSelectedConsultation(null)
+    }
+
+    // 상담 상태 변경
+    const handleStatusChange = async (newStatus: ConsultationStatus) => {
+        if (!selectedConsultation) return
+
+        try {
+            setStatusLoading(true)
+            setStatusError(null)
+
+            const response = await consultationApi.updateConsultationStatus(selectedConsultation, newStatus)
+
+            if (response.data.success) {
+                // 상태 변경 성공 시 목록 업데이트
+                setConsultations(
+                    consultations.map((consultation) =>
+                        consultation.id === selectedConsultation ? { ...consultation, status: newStatus } : consultation,
+                    ),
+                )
+                setStatusSuccess(true)
+            } else {
+                setStatusError(response.data.error?.message || "상담 상태 변경에 실패했습니다.")
+            }
+        } catch (err: any) {
+            console.error("Error updating consultation status:", err)
+            setStatusError(err.response?.data?.error?.message || "상담 상태 변경에 실패했습니다.")
+        } finally {
+            setStatusLoading(false)
+            handleStatusMenuClose()
+        }
+    }
+
+    // 상담 등록 모달 열기
+    const handleCreateModalOpen = () => {
+        setCreateModalOpen(true)
+        fetchCustomers()
+        // 오늘 날짜로 초기화
+        const today = new Date()
+        setScheduledDate(formatDateToYYYYMMDD(today))
+        setScheduledTime("10:00") // 기본 시간 설정
+    }
+
+    // 상담 등록 모달 닫기
+    const handleCreateModalClose = () => {
+        setCreateModalOpen(false)
+        setSelectedCustomer(null)
+        setScheduledDate("")
+        setScheduledTime("")
+        setCreateError(null)
+    }
+
+    // 상담 등록 처리
+    const handleCreateConsultation = async () => {
+        // 유효성 검사
+        if (!selectedCustomer) {
+            setCreateError("고객을 선택해주세요.")
+            return
+        }
+
+        if (!scheduledDate || !scheduledTime) {
+            setCreateError("상담 일시를 입력해주세요.")
+            return
+        }
+
+        try {
+            setCreateLoading(true)
+            setCreateError(null)
+
+            // 날짜와 시간을 "yyyy-MM-ddTHH:mm:00" 형식으로 결합
+            const date = `${scheduledDate} ${scheduledTime}`
+
+            const consultationData = {
+                customerId: selectedCustomer.id,
+                date: date,
+            }
+
+            const response = await consultationApi.createConsultation(consultationData)
+
+            if (response.data.success) {
+                setCreateSuccess(true)
+                handleCreateModalClose()
+                // 상담 목록 다시 불러오기
+                fetchConsultations()
+            } else {
+                setCreateError(response.data.error?.message || "상담 등록에 실패했습니다.")
+            }
+        } catch (err: any) {
+            console.error("Error creating consultation:", err)
+            setCreateError(err.response?.data?.error?.message || "상담 등록에 실패했습니다.")
+        } finally {
+            setCreateLoading(false)
+        }
+    }
+
+    // 검색어로 필터링 - customer 객체가 존재하는지 확인하는 안전 검사 추가
     const filteredConsultations = consultations.filter((consultation) => {
         // customer 객체가 없는 경우 필터링에서 제외
         if (!consultation.customer) {
@@ -250,9 +406,11 @@ const ConsultationList = () => {
     // 캘린더 데이터
     const calendarData = generateCalendarData()
 
-    // 상단 요약 정보 계산
-    const today = new Date();
+    // 상단 요약 정보 계산 - 날짜 파싱 로직 수정
+    const today = new Date()
     const todayString = formatDateToYYYYMMDD(today)
+
+    // 오늘 상담 카운트 - 오늘 날짜이면서 상태가 "예약 확정"인 상담만 필터링
     const todayConsultations = consultations.filter((c) => {
         if (!c.scheduledAt) return false
 
@@ -260,7 +418,7 @@ const ConsultationList = () => {
         if (!consultDate) return false
 
         const consultDateString = formatDateToYYYYMMDD(consultDate)
-        return consultDateString === todayString
+        return consultDateString === todayString && c.status === ConsultationStatus.CONFIRMED
     })
 
     const scheduledCount = consultations.filter((c) => c.status === ConsultationStatus.CONFIRMED).length
@@ -307,7 +465,7 @@ const ConsultationList = () => {
                             bgcolor: "#000",
                             "&:hover": { bgcolor: "#333" },
                         }}
-                        onClick={() => navigate("/consultation/create")}
+                        onClick={handleCreateModalOpen}
                     >
                         상담 등록
                     </Button>
@@ -418,6 +576,11 @@ const ConsultationList = () => {
                                                                 sx={{
                                                                     bgcolor: statusConfig[consultation.status]?.color || "#f5f5f5",
                                                                     color: statusConfig[consultation.status]?.textColor || "#757575",
+                                                                    cursor: "pointer",
+                                                                }}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation()
+                                                                    handleStatusMenuOpen(e, consultation.id)
                                                                 }}
                                                             />
                                                         </TableCell>
@@ -533,6 +696,144 @@ const ConsultationList = () => {
                     </Grid>
                 )}
             </Container>
+
+            {/* 상태 변경 메뉴 */}
+            <Menu
+                anchorEl={statusAnchorEl}
+                open={Boolean(statusAnchorEl)}
+                onClose={handleStatusMenuClose}
+                anchorOrigin={{
+                    vertical: "bottom",
+                    horizontal: "right",
+                }}
+                transformOrigin={{
+                    vertical: "top",
+                    horizontal: "right",
+                }}
+            >
+                <Typography variant="subtitle2" sx={{ px: 2, py: 1, fontWeight: "bold" }}>
+                    상담 상태 변경
+                </Typography>
+                <Divider />
+                {Object.values(ConsultationStatus).map((status) => (
+                    <MenuItem key={status} onClick={() => handleStatusChange(status)} disabled={statusLoading}>
+                        <Chip
+                            label={statusConfig[status]?.label}
+                            size="small"
+                            sx={{
+                                bgcolor: statusConfig[status]?.color,
+                                color: statusConfig[status]?.textColor,
+                                width: "100%",
+                                justifyContent: "center",
+                            }}
+                        />
+                    </MenuItem>
+                ))}
+            </Menu>
+
+            {/* 상담 등록 모달 */}
+            <Dialog open={createModalOpen} onClose={handleCreateModalClose} maxWidth="sm" fullWidth>
+                <DialogTitle>상담 등록</DialogTitle>
+                <DialogContent>
+                    <Box sx={{ mt: 2 }}>
+                        <Grid container spacing={3}>
+                            <Grid item xs={12}>
+                                <Autocomplete
+                                    options={customers}
+                                    loading={customersLoading}
+                                    getOptionLabel={(option) => `${option.name} (${option.phone})`}
+                                    value={selectedCustomer}
+                                    onChange={(event, newValue) => {
+                                        setSelectedCustomer(newValue)
+                                    }}
+                                    renderInput={(params) => (
+                                        <TextField
+                                            {...params}
+                                            label="고객 선택"
+                                            required
+                                            InputProps={{
+                                                ...params.InputProps,
+                                                endAdornment: (
+                                                    <>
+                                                        {customersLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                                                        {params.InputProps.endAdornment}
+                                                    </>
+                                                ),
+                                            }}
+                                        />
+                                    )}
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    fullWidth
+                                    label="상담 날짜"
+                                    type="date"
+                                    required
+                                    value={scheduledDate}
+                                    onChange={(e) => setScheduledDate(e.target.value)}
+                                    InputLabelProps={{
+                                        shrink: true,
+                                    }}
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    fullWidth
+                                    label="상담 시간"
+                                    type="time"
+                                    required
+                                    value={scheduledTime}
+                                    onChange={(e) => setScheduledTime(e.target.value)}
+                                    InputLabelProps={{
+                                        shrink: true,
+                                    }}
+                                />
+                            </Grid>
+                        </Grid>
+                    </Box>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleCreateModalClose} disabled={createLoading}>
+                        취소
+                    </Button>
+                    <Button
+                        onClick={handleCreateConsultation}
+                        variant="contained"
+                        disabled={createLoading || !selectedCustomer || !scheduledDate || !scheduledTime}
+                    >
+                        {createLoading ? <CircularProgress size={24} /> : "등록"}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* 상태 변경 성공 메시지 */}
+            <Snackbar open={statusSuccess} autoHideDuration={3000} onClose={() => setStatusSuccess(false)}>
+                <Alert onClose={() => setStatusSuccess(false)} severity="success" sx={{ width: "100%" }}>
+                    상담 상태가 성공적으로 변경되었습니다.
+                </Alert>
+            </Snackbar>
+
+            {/* 상태 변경 에러 메시지 */}
+            <Snackbar open={!!statusError} autoHideDuration={3000} onClose={() => setStatusError(null)}>
+                <Alert onClose={() => setStatusError(null)} severity="error" sx={{ width: "100%" }}>
+                    {statusError}
+                </Alert>
+            </Snackbar>
+
+            {/* 상담 등록 성공 메시지 */}
+            <Snackbar open={createSuccess} autoHideDuration={3000} onClose={() => setCreateSuccess(false)}>
+                <Alert onClose={() => setCreateSuccess(false)} severity="success" sx={{ width: "100%" }}>
+                    상담이 성공적으로 등록되었습니다.
+                </Alert>
+            </Snackbar>
+
+            {/* 상담 등록 에러 메시지 */}
+            <Snackbar open={!!createError} autoHideDuration={3000} onClose={() => setCreateError(null)}>
+                <Alert onClose={() => setCreateError(null)} severity="error" sx={{ width: "100%" }}>
+                    {createError}
+                </Alert>
+            </Snackbar>
 
             <Box sx={{ bgcolor: "#fff", p: 2, textAlign: "center", mt: 4 }}>
                 <Typography variant="caption" color="textSecondary">
