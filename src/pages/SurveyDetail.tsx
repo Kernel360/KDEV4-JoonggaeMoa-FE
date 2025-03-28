@@ -31,8 +31,8 @@ import {
 } from "@mui/material"
 import { ArrowBack, Edit, Delete } from "@mui/icons-material"
 import { useNavigate, useParams } from "react-router-dom"
-import { getSurveyById, deleteSurvey } from "../../services/surveyApi"
-import type { SurveyResponse } from "../../types/survey"
+import { surveyApi } from "../services/surveyApi"
+import type { SurveyResponse } from "../types/survey"
 
 const SurveyDetail = () => {
     const navigate = useNavigate()
@@ -56,7 +56,7 @@ const SurveyDetail = () => {
     const fetchSurveyDetails = async (surveyId: number) => {
         try {
             setLoading(true)
-            const response = await getSurveyById(surveyId)
+            const response = await surveyApi.getSurveyById(surveyId)
 
             if (response.data.success && response.data.data) {
                 setSurvey(response.data.data)
@@ -89,7 +89,7 @@ const SurveyDetail = () => {
             setDeleteLoading(true)
             setDeleteError(null)
 
-            const response = await deleteSurvey(Number.parseInt(id))
+            const response = await surveyApi.deleteSurvey(Number.parseInt(id))
 
             if (response.data.success) {
                 setDeleteSuccess(true)

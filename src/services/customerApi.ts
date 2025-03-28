@@ -95,7 +95,7 @@ export const updateCustomer = async (
 }
 
 // 모든 고객 조회
-export const getAllCustomers = async (): Promise<AxiosResponse<ApiResponse<CustomerResponse[]>>> => {
+export const getCustomers = async (): Promise<AxiosResponse<ApiResponse<CustomerResponse[]>>> => {
     const agentId = getAgentId()
     return api.get(`/api/agents/${agentId}/customers`)
 }
@@ -104,5 +104,15 @@ export const getAllCustomers = async (): Promise<AxiosResponse<ApiResponse<Custo
 export const getCustomerById = async (customerId: number): Promise<AxiosResponse<ApiResponse<CustomerResponse>>> => {
     const agentId = getAgentId()
     return api.get(`/api/agents/${agentId}/customers/${customerId}`)
+}
+
+// Export both individual functions and the object for backward compatibility
+export const customerApi = {
+    createCustomer,
+    bulkCreateCustomers,
+    deleteCustomer,
+    updateCustomer,
+    getCustomers,
+    getCustomerById,
 }
 

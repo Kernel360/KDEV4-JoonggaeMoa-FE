@@ -21,7 +21,7 @@ import {
 } from "@mui/material"
 import { ArrowBack } from "@mui/icons-material"
 import { useNavigate } from "react-router-dom"
-import { createCustomer, type CreateCustomerRequest } from "../../services/customerApi"
+import { customerApi, type CreateCustomerRequest } from "../services/customerApi"
 
 const CustomerAdd = () => {
     const navigate = useNavigate()
@@ -61,7 +61,7 @@ const CustomerAdd = () => {
             setLoading(true)
             setError(null)
 
-            const response = await createCustomer(formData)
+            const response = await customerApi.createCustomer(formData)
 
             if (response.data.success) {
                 setSuccess(true)

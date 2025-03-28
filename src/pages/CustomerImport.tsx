@@ -19,7 +19,7 @@ import {
 } from "@mui/material"
 import { ArrowBack, CloudUpload } from "@mui/icons-material"
 import { useNavigate } from "react-router-dom"
-import { bulkCreateCustomers } from "../../services/customerApi"
+import { customerApi } from "../services/customerApi"
 
 const CustomerImport = () => {
     const navigate = useNavigate()
@@ -54,7 +54,7 @@ const CustomerImport = () => {
             setIsUploading(true)
             setError(null)
 
-            const response = await bulkCreateCustomers(file)
+            const response = await customerApi.bulkCreateCustomers(file)
 
             if (response.data.success) {
                 setUploadSuccess(true)

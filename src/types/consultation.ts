@@ -1,6 +1,6 @@
 // 상담 관련 타입 정의
 
-// 상담 상태
+// 상담 상태 enum을 백엔드와 일치하도록 수정
 export enum ConsultationStatus {
     WAITING = "WAITING", // 상담 예약 대기
     CONFIRMED = "CONFIRMED", // 예약 확정
@@ -15,10 +15,11 @@ export enum ConsultationType {
     VIDEO = "VIDEO", // 화상 상담
 }
 
-// 상담 생성 요청
+// 상담 생성 요청 타입을 백엔드 구조에 맞게 수정
 export interface ConsultationCreateRequest {
     customerId: number
     date: string // "yyyy-MM-dd HH:mm" 형식
+    // 아래 필드들은 백엔드에서 아직 처리하지 않지만 프론트엔드에서 사용 중
     purpose?: string
     interestProperty?: string
     interestLocation?: string
@@ -28,15 +29,16 @@ export interface ConsultationCreateRequest {
     consultationStatus?: string
 }
 
-// 상담 수정 요청
+// 상담 수정 요청 - 백엔드 API와 일치하도록 수정
 export interface ConsultationUpdateRequest {
-    consultationType?: ConsultationType
-    scheduledAt?: string
+    date?: string // "yyyy-MM-dd HH:mm" 형식
+    purpose?: string
+    interestProperty?: string
+    interestLocation?: string
+    contractType?: string
+    assetStatus?: string
     memo?: string
-    status?: ConsultationStatus
-    propertyInterest?: string
-    budget?: string
-    result?: string // 상담 결과
+    consultationStatus?: string
 }
 
 // 상담 결과 요청
@@ -53,19 +55,22 @@ export interface CustomerInfo {
     email?: string
 }
 
-// 상담 응답
+// 백엔드에서 제공하는 상담 응답 형태로 변경
 export interface ConsultationResponse {
-    id: number
-    customer: CustomerInfo
-    consultationType: ConsultationType
-    scheduledAt: string
-    memo: string
-    status: ConsultationStatus
-    propertyInterest?: string
-    budget?: string
+    consultationId: number
+    customerId: number
+    customerName: string
+    customerPhone: string
+    date: string
+    purpose?: string
+    interestProperty?: string
+    interestLocation?: string
+    contractType?: string
+    assetStatus?: string
+    memo?: string
+    consultationStatus: string
     result?: string
     nextAction?: string
-    createdAt: string
-    updatedAt: string
+    consultationType?: ConsultationType
 }
 

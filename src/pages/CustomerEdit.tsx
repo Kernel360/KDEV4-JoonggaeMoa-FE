@@ -21,7 +21,7 @@ import {
 } from "@mui/material"
 import { ArrowBack } from "@mui/icons-material"
 import { useNavigate, useParams } from "react-router-dom"
-import { getCustomerById, updateCustomer, type UpdateCustomerRequest } from "../../services/customerApi"
+import { customerApi, type UpdateCustomerRequest } from "../services/customerApi"
 
 const CustomerEdit = () => {
     const navigate = useNavigate()
@@ -50,7 +50,7 @@ const CustomerEdit = () => {
     const fetchCustomerDetails = async (customerId: number) => {
         try {
             setInitialLoading(true)
-            const response = await getCustomerById(customerId)
+            const response = await customerApi.getCustomerById(customerId)
 
             if (response.data.success && response.data.data) {
                 const customer = response.data.data
@@ -99,7 +99,7 @@ const CustomerEdit = () => {
             setLoading(true)
             setError(null)
 
-            const response = await updateCustomer(Number.parseInt(id), formData)
+            const response = await customerApi.updateCustomer(Number.parseInt(id), formData)
 
             if (response.data.success) {
                 setSuccess(true)

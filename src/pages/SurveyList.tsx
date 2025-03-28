@@ -31,8 +31,8 @@ import {
 } from "@mui/material"
 import { Add, Edit, Delete, ArrowBack, Search } from "@mui/icons-material"
 import { useNavigate } from "react-router-dom"
-import { getAllSurveys, deleteSurvey } from "../../services/surveyApi"
-import type { SurveyResponse } from "../../types/survey"
+import { surveyApi } from "../services/surveyApi"
+import type { SurveyResponse } from "../types/survey"
 
 const SurveyList = () => {
     const navigate = useNavigate()
@@ -52,7 +52,7 @@ const SurveyList = () => {
     const fetchSurveys = async () => {
         try {
             setLoading(true)
-            const response = await getAllSurveys()
+            const response = await surveyApi.getSurveys()
             if (response.data.success && response.data.data) {
                 setSurveys(response.data.data)
             } else {
@@ -77,7 +77,7 @@ const SurveyList = () => {
 
         try {
             setDeleteLoading(true)
-            const response = await deleteSurvey(surveyToDelete)
+            const response = await surveyApi.deleteSurvey(surveyToDelete)
 
             if (response.data.success) {
                 setSuccessMessage("설문이 성공적으로 삭제되었습니다.")

@@ -3,22 +3,24 @@ import { ThemeProvider, createTheme, CssBaseline } from "@mui/material"
 import Login from "./pages/Login"
 import Register from "./pages/Register"
 import Dashboard from "./pages/Dashboard"
-import CustomerManagement from "./pages/customer/CustomerManagement"
-import CustomerAdd from "./pages/customer/CustomerAdd"
-import CustomerImport from "./pages/customer/CustomerImport"
-import CustomerDetail from "./pages/customer/CustomerDetail"
-import CustomerEdit from "./pages/customer/CustomerEdit"
-import SurveyList from "./pages/survey/SurveyList"
-import SurveyDetail from "./pages/survey/SurveyDetail"
-import SurveyCreate from "./pages/survey/SurveyCreate"
-import SurveyEdit from "./pages/survey/SurveyEdit"
-import ConsultationList from "./pages/consultation/ConsultationList"
-import ConsultationHistory from "./pages/consultation/ConsultationHistory"
-import ConsultationDetail from "./pages/consultation/ConsultationDetail"
-import ConsultationCreate from "./pages/consultation/ConsultationCreate"
-import ConsultationEdit from "./pages/consultation/ConsultationEdit"
+import CustomerManagement from "./pages/CustomerManagement"
+import CustomerAdd from "./pages/CustomerAdd"
+import CustomerImport from "./pages/CustomerImport"
+import CustomerDetail from "./pages/CustomerDetail"
+import CustomerEdit from "./pages/CustomerEdit"
+import SurveyList from "./pages/SurveyList"
+import SurveyDetail from "./pages/SurveyDetail"
+import SurveyCreate from "./pages/SurveyCreate"
+import SurveyEdit from "./pages/SurveyEdit"
+import ConsultationList from "./pages/ConsultationList"
+import ConsultationHistory from "./pages/ConsultationHistory"
+import ConsultationDetail from "./pages/ConsultationDetail"
 import { AuthProvider } from "./context/AuthContext"
 import ProtectedRoute from "./components/ProtectedRoute"
+import ConsultationEdit from "./pages/ConsultationEdit"
+import MessageList from "./pages/MessageList"
+import MessageCreate from "./pages/MessageCreate"
+import MessageTemplateCreate from "./pages/MessageTemplateCreate"
 
 // Create a theme instance
 const theme = createTheme({
@@ -155,14 +157,6 @@ function App() {
                             }
                         />
                         <Route
-                            path="/consultation/create"
-                            element={
-                                <ProtectedRoute>
-                                    <ConsultationCreate />
-                                </ProtectedRoute>
-                            }
-                        />
-                        <Route
                             path="/consultation/:id"
                             element={
                                 <ProtectedRoute>
@@ -170,11 +164,36 @@ function App() {
                                 </ProtectedRoute>
                             }
                         />
+                        {/* 상담 수정 경로 추가 */}
                         <Route
                             path="/consultation/edit/:id"
                             element={
                                 <ProtectedRoute>
                                     <ConsultationEdit />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/message"
+                            element={
+                                <ProtectedRoute>
+                                    <MessageList />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/message/create"
+                            element={
+                                <ProtectedRoute>
+                                    <MessageCreate />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/message/templates"
+                            element={
+                                <ProtectedRoute>
+                                    <MessageTemplateCreate />
                                 </ProtectedRoute>
                             }
                         />

@@ -26,19 +26,19 @@ import {
     MenuItem,
     FormControl,
     InputLabel,
-    Button
+    Button,
 } from "@mui/material"
 import { Search, ArrowBack } from "@mui/icons-material"
 import { useNavigate } from "react-router-dom"
-import { getAllConsultations } from "../../services/consultationApi"
-import { ConsultationStatus, ConsultationType } from "../../types/consultation"
-import type { ConsultationResponse } from "../../types/consultation"
+import { consultationApi } from "../services/consultationApi"
+import { ConsultationStatus, ConsultationType } from "../types/consultation"
+import type { ConsultationResponse } from "../types/consultation"
 
-// 상담 상태별 칩 색상 및 텍스트
+// 상담 상태별 칩 색상 및 텍스트 - 새로운 상태 값에 맞게 업데이트
 const statusConfig = {
     [ConsultationStatus.WAITING]: { color: "#e3f2fd", textColor: "#1976d2", label: "예약 대기" },
     [ConsultationStatus.CONFIRMED]: { color: "#fff8e1", textColor: "#f57c00", label: "예약 확정" },
-    [ConsultationStatus.COMPLETED]: { color: "#e8f5e9", textColor: "#2e7d32", label: "완료" },
+    [ConsultationStatus.COMPLETED]: { color: "#e8f5e9", textColor: "#2e7d32", label: "진행 완료" },
     [ConsultationStatus.CANCELED]: { color: "#ffebee", textColor: "#c62828", label: "예약 취소" },
 }
 
@@ -119,25 +119,26 @@ const ConsultationHistory = () => {
         fetchConsultations()
     }, [])
 
+    // fetchConsultations 함수를 수정하여 서버 응답 데이터를 적절히 변환합니다
     const fetchConsultations = async () => {
         try {
             setLoading(true)
-            const response = await getAllConsultations()
+            const response = await consultationApi.getConsultations()
 
             if (response.data.success && response.data.data) {
                 // 서버 응답 데이터를 컴포넌트에서 사용하는 형식으로 변환
-                const formattedConsultations = response.data.data.map((item: any) => ({
+                const formattedConsultations = response.data.data.map((item: ConsultationResponse) => ({
                     id: item.consultationId,
                     customer: {
                         id: item.customerId,
                         name: item.customerName,
                         phone: item.customerPhone,
-                        email: item.customerEmail || "",
+                        email: "",
                     },
                     consultationType: item.consultationType || ConsultationType.VISIT, // 기본값 설정
                     scheduledAt: item.date,
                     memo: item.memo || "",
-                    status: item.consultationStatus,
+                    status: item.consultationStatus as ConsultationStatus,
                     propertyInterest: item.interestProperty,
                     budget: item.assetStatus,
                     result: item.result,
@@ -168,7 +169,7 @@ const ConsultationHistory = () => {
         setPage(value)
     }
 
-    // 검색어와 필터로 상담 내역 필터링
+    // 검색어와 필터로 상담 내역 필터링 - customer 객체가 존재하는지 확인하는 안전 검사 추가
     const filteredConsultations = consultations.filter((consultation) => {
         // customer 객체가 없는 경우 필터링에서 제외
         if (!consultation.customer) {
@@ -242,10 +243,10 @@ const ConsultationHistory = () => {
                                 <InputLabel>상담 상태</InputLabel>
                                 <Select value={statusFilter} label="상담 상태" onChange={(e) => setStatusFilter(e.target.value)}>
                                     <MenuItem value="ALL">전체</MenuItem>
-                                    <MenuItem value={ConsultationStatus.WAITING}>예약 대기</MenuItem>
+                                    <MenuItem value={ConsultationStatus.WAITING}>상담 예약 대기</MenuItem>
                                     <MenuItem value={ConsultationStatus.CONFIRMED}>예약 확정</MenuItem>
-                                    <MenuItem value={ConsultationStatus.COMPLETED}>완료됨</MenuItem>
-                                    <MenuItem value={ConsultationStatus.CANCELED}>취소됨</MenuItem>
+                                    <MenuItem value={ConsultationStatus.COMPLETED}>진행 완료</MenuItem>
+                                    <MenuItem value={ConsultationStatus.CANCELED}>예약 취소</MenuItem>
                                 </Select>
                             </FormControl>
                         </Grid>

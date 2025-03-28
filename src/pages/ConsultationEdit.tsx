@@ -21,11 +21,12 @@ import {
     CircularProgress,
     Snackbar,
     Alert,
+    Divider,
 } from "@mui/material"
 import { ArrowBack } from "@mui/icons-material"
 import { useNavigate, useParams } from "react-router-dom"
-import { getConsultationById, updateConsultation } from "../../services/consultationApi"
-import { ConsultationStatus, ConsultationType } from "../../types/consultation"
+import { consultationApi } from "../services/consultationApi"
+import { ConsultationStatus, ConsultationType } from "../types/consultation"
 
 // 상담 유형 옵션
 const CONSULTATION_TYPES = [
@@ -36,7 +37,7 @@ const CONSULTATION_TYPES = [
 
 // 상담 상태 옵션
 const CONSULTATION_STATUSES = [
-    { value: ConsultationStatus.WAITING, label: "상담 예약 대기" },
+    { value: ConsultationStatus.WAITING, label: "예약 대기" },
     { value: ConsultationStatus.CONFIRMED, label: "예약 확정" },
     { value: ConsultationStatus.COMPLETED, label: "진행 완료" },
     { value: ConsultationStatus.CANCELED, label: "예약 취소" },
@@ -98,14 +99,6 @@ const formatTimeToHHMM = (date: Date): string => {
     return `${hours}:${minutes}`
 }
 
-// "YYYY-MM-DD"와 "HH:MM"을 "yyyyMMdd HH:mm" 형식으로 변환
-const formatToServerDateFormat = (dateStr: string, timeStr: string): string => {
-    if (!dateStr) return ""
-
-    const [year, month, day] = dateStr.split("-")
-    return `${year}${month}${day} ${timeStr}`
-}
-
 const ConsultationEdit = () => {
     const navigate = useNavigate()
     const { id } = useParams<{ id: string }>()
@@ -114,19 +107,24 @@ const ConsultationEdit = () => {
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState(false)
 
-    // 폼 데이터
+    // 폼 데이터 - 상담 정보
     const [consultationType, setConsultationType] = useState<ConsultationType>(ConsultationType.VISIT)
     const [scheduledDate, setScheduledDate] = useState("")
     const [scheduledTime, setScheduledTime] = useState("")
+    const [purpose, setPurpose] = useState("")
+    const [interestProperty, setInterestProperty] = useState("")
+    const [interestLocation, setInterestLocation] = useState("")
+    const [contractType, setContractType] = useState("")
+    const [assetStatus, setAssetStatus] = useState("")
     const [memo, setMemo] = useState("")
-    const [status, setStatus] = useState<ConsultationStatus>(ConsultationStatus.WAITING)
-    const [propertyInterest, setPropertyInterest] = useState("")
-    const [budget, setBudget] = useState("")
+
+    // 고객 정보 (읽기 전용)
     const [customerName, setCustomerName] = useState("")
     const [customerPhone, setCustomerPhone] = useState("")
 
     useEffect(() => {
         if (id) {
+            console.log("상담 ID:", id) // 로그 추가
             fetchConsultationDetails(Number.parseInt(id))
         }
     }, [id])
@@ -134,7 +132,10 @@ const ConsultationEdit = () => {
     const fetchConsultationDetails = async (consultationId: number) => {
         try {
             setLoading(true)
-            const response = await getConsultationById(consultationId)
+            console.log("상담 상세 정보 요청:", consultationId) // 로그 추가
+            const response = await consultationApi.getConsultationById(consultationId)
+
+            console.log("상담 상세 정보 응답:", response.data) // 로그 추가
 
             if (response.data.success && response.data.data) {
                 const item = response.data.data
@@ -146,15 +147,13 @@ const ConsultationEdit = () => {
                 // 상담 유형 설정 (기본값: 방문 상담)
                 setConsultationType(item.consultationType || ConsultationType.VISIT)
 
-                // 상담 상태 설정
-                setStatus(item.consultationStatus || ConsultationStatus.WAITING)
-
-                // 메모 설정
+                // 상담 정보 설정
+                setPurpose(item.purpose || "")
+                setInterestProperty(item.interestProperty || "")
+                setInterestLocation(item.interestLocation || "")
+                setContractType(item.contractType || "")
+                setAssetStatus(item.assetStatus || "")
                 setMemo(item.memo || "")
-
-                // 관심 매물 및 예산 설정
-                setPropertyInterest(item.interestProperty || "")
-                setBudget(item.assetStatus || "")
 
                 // 날짜 및 시간 설정
                 if (item.date) {
@@ -175,6 +174,7 @@ const ConsultationEdit = () => {
         }
     }
 
+    // 상담 정보 수정 제출 (상태 포함)
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         if (!id) return
@@ -190,18 +190,21 @@ const ConsultationEdit = () => {
             setError(null)
 
             // 날짜와 시간을 서버 형식으로 변환
-            const formattedDate = formatToServerDateFormat(scheduledDate, scheduledTime)
+            const formattedDate = `${scheduledDate}T${scheduledTime}:00`
 
             const consultationData = {
-                consultationType,
-                scheduledAt: formattedDate,
+                date: formattedDate,
+                purpose,
+                interestProperty,
+                interestLocation,
+                contractType,
+                assetStatus,
                 memo,
-                status,
-                propertyInterest,
-                budget,
             }
 
-            const response = await updateConsultation(Number.parseInt(id), consultationData)
+            console.log("상담 수정 요청 데이터:", consultationData) // 로그 추가
+            const response = await consultationApi.updateConsultation(Number.parseInt(id), consultationData)
+            console.log("상담 수정 응답:", response.data) // 로그 추가
 
             if (response.data.success) {
                 setSuccess(true)
@@ -247,6 +250,8 @@ const ConsultationEdit = () => {
                             상담 정보 수정
                         </Typography>
                     </Box>
+
+                    <Divider sx={{ my: 3 }} />
 
                     <form onSubmit={handleSubmit}>
                         <Grid container spacing={3}>
@@ -304,20 +309,13 @@ const ConsultationEdit = () => {
                             </Grid>
 
                             <Grid item xs={12} sm={6}>
-                                <FormControl fullWidth>
-                                    <InputLabel>상담 상태</InputLabel>
-                                    <Select
-                                        value={status}
-                                        label="상담 상태"
-                                        onChange={(e) => setStatus(e.target.value as ConsultationStatus)}
-                                    >
-                                        {CONSULTATION_STATUSES.map((status) => (
-                                            <MenuItem key={status.value} value={status.value}>
-                                                {status.label}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
+                                <TextField
+                                    fullWidth
+                                    label="상담 목적"
+                                    value={purpose}
+                                    onChange={(e) => setPurpose(e.target.value)}
+                                    placeholder="상담 목적을 입력하세요"
+                                />
                             </Grid>
 
                             <Grid item xs={12} sm={6}>
@@ -352,8 +350,8 @@ const ConsultationEdit = () => {
                                 <TextField
                                     fullWidth
                                     label="관심 매물"
-                                    value={propertyInterest}
-                                    onChange={(e) => setPropertyInterest(e.target.value)}
+                                    value={interestProperty}
+                                    onChange={(e) => setInterestProperty(e.target.value)}
                                     placeholder="관심 매물 정보를 입력하세요"
                                 />
                             </Grid>
@@ -361,10 +359,30 @@ const ConsultationEdit = () => {
                             <Grid item xs={12} sm={6}>
                                 <TextField
                                     fullWidth
-                                    label="예산"
-                                    value={budget}
-                                    onChange={(e) => setBudget(e.target.value)}
-                                    placeholder="고객의 예산을 입력하세요"
+                                    label="관심 지역"
+                                    value={interestLocation}
+                                    onChange={(e) => setInterestLocation(e.target.value)}
+                                    placeholder="관심 지역을 입력하세요"
+                                />
+                            </Grid>
+
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    fullWidth
+                                    label="계약 유형"
+                                    value={contractType}
+                                    onChange={(e) => setContractType(e.target.value)}
+                                    placeholder="계약 유형을 입력하세요"
+                                />
+                            </Grid>
+
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    fullWidth
+                                    label="자산 상태"
+                                    value={assetStatus}
+                                    onChange={(e) => setAssetStatus(e.target.value)}
+                                    placeholder="고객의 자산 상태를 입력하세요"
                                 />
                             </Grid>
 
