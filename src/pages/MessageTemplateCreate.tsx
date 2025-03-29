@@ -67,11 +67,10 @@ const MessageTemplateCreate = () => {
         try {
             setLoading(true)
             const templatesData: MessageTemplateResponse[] = []
-            const agentId = 1 // 실제로는 로그인한 사용자의 ID를 사용
 
             for (const category of Object.values(MessageCategory)) {
                 try {
-                    const response = await messageTemplateApi.getMessageTemplate(agentId, category)
+                    const response = await messageTemplateApi.getMessageTemplate(category)
                     if (response.data.success && response.data.data) {
                         const template = response.data.data
                         // 템플릿 제목 추가 (백엔드에서 제공하지 않으므로 프론트에서 설정)
@@ -143,7 +142,6 @@ const MessageTemplateCreate = () => {
                 content: templateContent,
             }
 
-            const agentId = 1 // 실제로는 로그인한 사용자의 ID를 사용
             const response = await messageTemplateApi.updateMessageTemplate(templateData)
 
             if (response.data.success) {
@@ -180,7 +178,6 @@ const MessageTemplateCreate = () => {
             setLoading(true)
             setError(null)
 
-            const agentId = 1 // 실제로는 로그인한 사용자의 ID를 사용
             const response = await messageTemplateApi.deleteMessageTemplate(selectedTemplate.category)
 
             if (response.data.success) {
@@ -360,9 +357,6 @@ const MessageTemplateCreate = () => {
                                 onChange={(e) => setTemplateTitle(e.target.value)}
                                 placeholder="템플릿 제목을 입력하세요"
                                 sx={{ mb: 3 }}
-                                InputProps={{
-                                    readOnly: true, // 제목은 카테고리에 따라 자동으로 설정되므로 읽기 전용으로 설정
-                                }}
                             />
 
                             <FormControl fullWidth sx={{ mb: 3 }}>

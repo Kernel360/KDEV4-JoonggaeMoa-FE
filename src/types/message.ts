@@ -22,6 +22,16 @@ export interface Message {
     sendStatus: MessageStatus
 }
 
+// 예약된 메시지 타입
+export interface ReservedMessage {
+    id: number
+    sendAt: string
+    customerId: number
+    customerName: string
+    customerPhone?: string
+    content: string
+}
+
 // 메시지 템플릿 타입
 export interface MessageTemplate {
     category: string

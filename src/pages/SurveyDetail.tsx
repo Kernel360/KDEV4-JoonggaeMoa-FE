@@ -14,12 +14,6 @@ import {
     CircularProgress,
     Divider,
     List,
-    Radio,
-    Checkbox,
-    FormControlLabel,
-    RadioGroup,
-    FormGroup,
-    TextField,
     Chip,
     Dialog,
     DialogActions,
@@ -28,6 +22,11 @@ import {
     DialogTitle,
     Snackbar,
     Alert,
+    RadioGroup,
+    FormControlLabel,
+    Radio,
+    FormGroup,
+    Checkbox,
 } from "@mui/material"
 import { ArrowBack, Edit, Delete } from "@mui/icons-material"
 import { useNavigate, useParams } from "react-router-dom"
@@ -129,8 +128,6 @@ const SurveyDetail = () => {
                         ))}
                     </FormGroup>
                 )
-            case "TEXT":
-                return <TextField fullWidth variant="outlined" placeholder="텍스트 응답" disabled sx={{ mt: 1 }} />
             default:
                 return null
         }

@@ -28,11 +28,11 @@ import {
     MenuItem,
     Snackbar,
     Alert,
+    Autocomplete,
     Dialog,
     DialogTitle,
     DialogContent,
     DialogActions,
-    Autocomplete,
 } from "@mui/material"
 import { Search, Add, ArrowBack, CalendarMonth, ChevronLeft, ChevronRight } from "@mui/icons-material"
 import { useNavigate } from "react-router-dom"
@@ -410,7 +410,7 @@ const ConsultationList = () => {
     const today = new Date()
     const todayString = formatDateToYYYYMMDD(today)
 
-    // 오늘 상담 카운트 - 오늘 날짜이면서 상태가 "예약 확정"인 상담만 필터링
+    // 오늘 상담 카운트 - 오늘 날이면서 상태가 "예약 확정"인 상담만 필터링
     const todayConsultations = consultations.filter((c) => {
         if (!c.scheduledAt) return false
 
@@ -438,8 +438,9 @@ const ConsultationList = () => {
         })
     }
 
+    // Update the ConsultationList component to use standardized container
     return (
-        <Box sx={{ flexGrow: 1, bgcolor: "#f5f5f5", minHeight: "100vh" }}>
+        <Box sx={{ flexGrow: 1, bgcolor: "#f5f5f5", minHeight: "100vh", overflow: "auto" }}>
             <AppBar position="static" color="default" elevation={0} sx={{ bgcolor: "white" }}>
                 <Toolbar>
                     <Typography variant="h6" component="div" sx={{ flexGrow: 1, color: "#888", fontWeight: 300 }}>
@@ -448,7 +449,15 @@ const ConsultationList = () => {
                 </Toolbar>
             </AppBar>
 
-            <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+            <Container
+                maxWidth="lg"
+                sx={{
+                    mt: 4,
+                    mb: 4,
+                    mx: "auto",
+                    px: { xs: 2, sm: 3, md: 4 },
+                }}
+            >
                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
                     <Box sx={{ display: "flex", alignItems: "center" }}>
                         <IconButton onClick={() => navigate("/dashboard")} sx={{ mr: 1 }}>
@@ -473,8 +482,11 @@ const ConsultationList = () => {
 
                 {/* 요약 정보 */}
                 <Grid container spacing={3} sx={{ mb: 3 }}>
-                    <Grid item xs={4}>
-                        <Paper elevation={0} sx={{ p: 3, display: "flex", flexDirection: "column", alignItems: "center" }}>
+                    <Grid item xs={12} sm={4}>
+                        <Paper
+                            elevation={0}
+                            sx={{ p: 3, borderRadius: 2, display: "flex", flexDirection: "column", alignItems: "center" }}
+                        >
                             <Typography variant="subtitle2" color="textSecondary" gutterBottom>
                                 오늘 상담
                             </Typography>
@@ -483,8 +495,11 @@ const ConsultationList = () => {
                             </Typography>
                         </Paper>
                     </Grid>
-                    <Grid item xs={4}>
-                        <Paper elevation={0} sx={{ p: 3, display: "flex", flexDirection: "column", alignItems: "center" }}>
+                    <Grid item xs={12} sm={4}>
+                        <Paper
+                            elevation={0}
+                            sx={{ p: 3, borderRadius: 2, display: "flex", flexDirection: "column", alignItems: "center" }}
+                        >
                             <Typography variant="subtitle2" color="textSecondary" gutterBottom>
                                 예약 상담
                             </Typography>
@@ -493,8 +508,11 @@ const ConsultationList = () => {
                             </Typography>
                         </Paper>
                     </Grid>
-                    <Grid item xs={4}>
-                        <Paper elevation={0} sx={{ p: 3, display: "flex", flexDirection: "column", alignItems: "center" }}>
+                    <Grid item xs={12} sm={4}>
+                        <Paper
+                            elevation={0}
+                            sx={{ p: 3, borderRadius: 2, display: "flex", flexDirection: "column", alignItems: "center" }}
+                        >
                             <Typography variant="subtitle2" color="textSecondary" gutterBottom>
                                 완료된 상담
                             </Typography>
@@ -506,7 +524,7 @@ const ConsultationList = () => {
                 </Grid>
 
                 {/* 검색 필드 */}
-                <Paper elevation={0} sx={{ mb: 3, p: 2 }}>
+                <Paper elevation={0} sx={{ mb: 3, p: 3, borderRadius: 2 }}>
                     <TextField
                         placeholder="고객명, 연락처 또는 이메일로 검색"
                         variant="outlined"
@@ -529,7 +547,7 @@ const ConsultationList = () => {
                         <CircularProgress />
                     </Box>
                 ) : error ? (
-                    <Paper elevation={0} sx={{ p: 3, textAlign: "center" }}>
+                    <Paper elevation={0} sx={{ p: 3, textAlign: "center", borderRadius: 2 }}>
                         <Typography color="error">{error}</Typography>
                         <Button variant="contained" sx={{ mt: 2 }} onClick={fetchConsultations}>
                             다시 시도
@@ -539,19 +557,19 @@ const ConsultationList = () => {
                     <Grid container spacing={3}>
                         {/* 상담 목록 테이블 */}
                         <Grid item xs={12}>
-                            <Paper elevation={0} sx={{ p: 3, mb: 3 }}>
+                            <Paper elevation={0} sx={{ p: 3, mb: 3, borderRadius: 2 }}>
                                 <Typography variant="h6" sx={{ mb: 2 }}>
                                     상담 목록
                                 </Typography>
                                 <TableContainer>
                                     <Table>
                                         <TableHead>
-                                            <TableRow>
-                                                <TableCell>고객명</TableCell>
-                                                <TableCell>연락처</TableCell>
-                                                <TableCell>상담 일시</TableCell>
-                                                <TableCell>상담 유형</TableCell>
-                                                <TableCell>상태</TableCell>
+                                            <TableRow sx={{ bgcolor: "#f9f9f9" }}>
+                                                <TableCell sx={{ fontWeight: 500 }}>고객명</TableCell>
+                                                <TableCell sx={{ fontWeight: 500 }}>연락처</TableCell>
+                                                <TableCell sx={{ fontWeight: 500 }}>상담 일시</TableCell>
+                                                <TableCell sx={{ fontWeight: 500 }}>상담 유형</TableCell>
+                                                <TableCell sx={{ fontWeight: 500 }}>상태</TableCell>
                                             </TableRow>
                                         </TableHead>
                                         <TableBody>
@@ -603,7 +621,7 @@ const ConsultationList = () => {
 
                         {/* 캘린더 뷰 */}
                         <Grid item xs={12}>
-                            <Paper elevation={0} sx={{ p: 3 }}>
+                            <Paper elevation={0} sx={{ p: 3, borderRadius: 2 }}>
                                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
                                     <Typography variant="h6">
                                         <CalendarMonth sx={{ verticalAlign: "middle", mr: 1 }} />

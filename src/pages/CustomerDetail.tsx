@@ -114,7 +114,7 @@ const CustomerDetail = () => {
                         {error || "고객을 찾을 수 없습니다."}
                     </Typography>
                     <Button variant="contained" onClick={() => navigate("/customer-management")} sx={{ mt: 2 }}>
-                        고객 목록으��� 돌아가기
+                        고객 목록으로 돌아가기
                     </Button>
                 </Box>
             </Container>
@@ -131,8 +131,16 @@ const CustomerDetail = () => {
                 </Toolbar>
             </AppBar>
 
-            <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
-                <Paper elevation={0} sx={{ p: 4 }}>
+            <Container
+                maxWidth="md"
+                sx={{
+                    mt: 4,
+                    mb: 4,
+                    mx: "auto",
+                    px: { xs: 2, sm: 3, md: 4 },
+                }}
+            >
+                <Paper elevation={0} sx={{ p: 4, borderRadius: 2 }}>
                     <Box sx={{ display: "flex", alignItems: "center", mb: 4 }}>
                         <IconButton onClick={() => navigate("/customer-management")} sx={{ mr: 1 }}>
                             <ArrowBack />
@@ -235,7 +243,7 @@ const CustomerDetail = () => {
                             <Paper
                                 elevation={0}
                                 sx={{
-                                    p: 2,
+                                    p: 3,
                                     mt: 1,
                                     bgcolor: "#f9f9f9",
                                     minHeight: "100px",

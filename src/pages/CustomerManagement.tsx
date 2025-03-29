@@ -130,7 +130,15 @@ const CustomerManagement: React.FC = () => {
                 </Toolbar>
             </AppBar>
 
-            <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+            <Container
+                maxWidth="lg"
+                sx={{
+                    mt: 4,
+                    mb: 4,
+                    mx: "auto",
+                    px: { xs: 2, sm: 3, md: 4 },
+                }}
+            >
                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
                     <Box sx={{ display: "flex", alignItems: "center" }}>
                         <IconButton onClick={() => navigate("/dashboard")} sx={{ mr: 1 }}>
@@ -164,7 +172,7 @@ const CustomerManagement: React.FC = () => {
                     </Box>
                 </Box>
 
-                <Paper elevation={0} sx={{ mb: 3, p: 2 }}>
+                <Paper elevation={0} sx={{ mb: 3, p: 3, borderRadius: 2 }}>
                     <TextField
                         placeholder="고객명, 연락처 또는 이메일로 검색"
                         variant="outlined"
@@ -187,7 +195,7 @@ const CustomerManagement: React.FC = () => {
                         <CircularProgress />
                     </Box>
                 ) : error ? (
-                    <Paper elevation={0} sx={{ p: 3, textAlign: "center" }}>
+                    <Paper elevation={0} sx={{ p: 3, textAlign: "center", borderRadius: 2 }}>
                         <Typography color="error">{error}</Typography>
                         <Button variant="contained" sx={{ mt: 2 }} onClick={fetchCustomers}>
                             다시 시도
@@ -195,17 +203,17 @@ const CustomerManagement: React.FC = () => {
                     </Paper>
                 ) : (
                     <>
-                        <TableContainer component={Paper} elevation={0}>
+                        <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2, overflow: "hidden" }}>
                             <Table sx={{ minWidth: 650 }}>
                                 <TableHead>
                                     <TableRow sx={{ bgcolor: "#f9f9f9" }}>
-                                        <TableCell>고객명</TableCell>
-                                        <TableCell>연락처</TableCell>
-                                        <TableCell>이메일</TableCell>
-                                        <TableCell>직업</TableCell>
-                                        <TableCell>등록일자</TableCell>
-                                        <TableCell>상태</TableCell>
-                                        <TableCell>작업</TableCell>
+                                        <TableCell sx={{ fontWeight: 500 }}>고객명</TableCell>
+                                        <TableCell sx={{ fontWeight: 500 }}>연락처</TableCell>
+                                        <TableCell sx={{ fontWeight: 500 }}>이메일</TableCell>
+                                        <TableCell sx={{ fontWeight: 500 }}>직업</TableCell>
+                                        <TableCell sx={{ fontWeight: 500 }}>등록일자</TableCell>
+                                        <TableCell sx={{ fontWeight: 500 }}>상태</TableCell>
+                                        <TableCell sx={{ fontWeight: 500 }}>작업</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>

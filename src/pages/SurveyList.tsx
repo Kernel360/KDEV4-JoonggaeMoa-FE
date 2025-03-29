@@ -122,7 +122,15 @@ const SurveyList = () => {
                 </Toolbar>
             </AppBar>
 
-            <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+            <Container
+                maxWidth="lg"
+                sx={{
+                    mt: 4,
+                    mb: 4,
+                    mx: "auto",
+                    px: { xs: 2, sm: 3, md: 4 },
+                }}
+            >
                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
                     <Box sx={{ display: "flex", alignItems: "center" }}>
                         <IconButton onClick={() => navigate("/dashboard")} sx={{ mr: 1 }}>
@@ -145,7 +153,7 @@ const SurveyList = () => {
                     </Button>
                 </Box>
 
-                <Paper elevation={0} sx={{ mb: 3, p: 2 }}>
+                <Paper elevation={0} sx={{ mb: 3, p: 3, borderRadius: 2 }}>
                     <TextField
                         placeholder="설문 제목으로 검색"
                         variant="outlined"
@@ -175,14 +183,16 @@ const SurveyList = () => {
                         </Button>
                     </Paper>
                 ) : (
-                    <TableContainer component={Paper} elevation={0}>
+                    <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2, overflow: "hidden" }}>
                         <Table>
                             <TableHead>
                                 <TableRow sx={{ bgcolor: "#f9f9f9" }}>
-                                    <TableCell>제목</TableCell>
-                                    <TableCell>설명</TableCell>
-                                    <TableCell>질문 수</TableCell>
-                                    <TableCell align="right">작업</TableCell>
+                                    <TableCell sx={{ fontWeight: 500 }}>제목</TableCell>
+                                    <TableCell sx={{ fontWeight: 500 }}>설명</TableCell>
+                                    <TableCell sx={{ fontWeight: 500 }}>질문 수</TableCell>
+                                    <TableCell sx={{ fontWeight: 500 }} align="right">
+                                        작업
+                                    </TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>

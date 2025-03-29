@@ -1,6 +1,5 @@
 "use client"
 
-// 대시보드에 상담 관리 메뉴 추가
 import React from "react"
 import {
     AppBar,
@@ -21,7 +20,6 @@ import {
     Divider,
 } from "@mui/material"
 import {
-    Description,
     Business,
     People,
     Forum,
@@ -32,6 +30,7 @@ import {
     Notifications,
     Add,
     Assignment,
+    InsertDriveFile,
 } from "@mui/icons-material"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
@@ -50,6 +49,10 @@ const Dashboard = () => {
 
     const handleConsultationManagement = () => {
         navigate("/consultation")
+    }
+
+    const handleContractManagement = () => {
+        navigate("/contract")
     }
 
     const handleMessageManagement = () => {
@@ -87,42 +90,18 @@ const Dashboard = () => {
                 </Toolbar>
             </AppBar>
 
-            <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+            <Container
+                maxWidth="lg"
+                sx={{
+                    mt: 4,
+                    mb: 4,
+                    mx: "auto",
+                    px: { xs: 2, sm: 3, md: 4 },
+                }}
+            >
                 {/* Menu Icons */}
                 <Grid container spacing={2} sx={{ mb: 4 }}>
-                    <Grid item xs={2}>
-                        <Paper
-                            elevation={0}
-                            sx={{
-                                p: 3,
-                                display: "flex",
-                                flexDirection: "column",
-                                alignItems: "center",
-                                cursor: "default",
-                                "&:hover": { bgcolor: "#f9f9f9" },
-                            }}
-                        >
-                            <Description sx={{ fontSize: 40, mb: 1 }} />
-                            <Typography variant="body2">계약관리</Typography>
-                        </Paper>
-                    </Grid>
-                    <Grid item xs={2}>
-                        <Paper
-                            elevation={0}
-                            sx={{
-                                p: 3,
-                                display: "flex",
-                                flexDirection: "column",
-                                alignItems: "center",
-                                cursor: "default",
-                                "&:hover": { bgcolor: "#f9f9f9" },
-                            }}
-                        >
-                            <Business sx={{ fontSize: 40, mb: 1 }} />
-                            <Typography variant="body2">매물관리</Typography>
-                        </Paper>
-                    </Grid>
-                    <Grid item xs={2}>
+                    <Grid item xs={12} sm={4} md={2}>
                         <Paper
                             elevation={0}
                             sx={{
@@ -131,7 +110,48 @@ const Dashboard = () => {
                                 flexDirection: "column",
                                 alignItems: "center",
                                 cursor: "pointer",
-                                "&:hover": { bgcolor: "#f0f7ff" },
+                                borderRadius: 2,
+                                transition: "all 0.2s",
+                                "&:hover": { bgcolor: "#f0f7ff", transform: "translateY(-2px)" },
+                            }}
+                            onClick={handleContractManagement}
+                        >
+                            <InsertDriveFile sx={{ fontSize: 40, mb: 1, color: "#3f51b5" }} />
+                            <Typography variant="body2" sx={{ color: "#3f51b5", fontWeight: "bold" }}>
+                                계약관리
+                            </Typography>
+                        </Paper>
+                    </Grid>
+                    <Grid item xs={12} sm={4} md={2}>
+                        <Paper
+                            elevation={0}
+                            sx={{
+                                p: 3,
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                cursor: "default",
+                                borderRadius: 2,
+                                transition: "all 0.2s",
+                                "&:hover": { bgcolor: "#f0f7ff", transform: "translateY(-2px)" },
+                            }}
+                        >
+                            <Business sx={{ fontSize: 40, mb: 1 }} />
+                            <Typography variant="body2">매물관리</Typography>
+                        </Paper>
+                    </Grid>
+                    <Grid item xs={12} sm={4} md={2}>
+                        <Paper
+                            elevation={0}
+                            sx={{
+                                p: 3,
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                cursor: "pointer",
+                                borderRadius: 2,
+                                transition: "all 0.2s",
+                                "&:hover": { bgcolor: "#f0f7ff", transform: "translateY(-2px)" },
                             }}
                             onClick={handleCustomerManagement}
                         >
@@ -141,7 +161,7 @@ const Dashboard = () => {
                             </Typography>
                         </Paper>
                     </Grid>
-                    <Grid item xs={2}>
+                    <Grid item xs={12} sm={4} md={2}>
                         <Paper
                             elevation={0}
                             sx={{
@@ -150,7 +170,9 @@ const Dashboard = () => {
                                 flexDirection: "column",
                                 alignItems: "center",
                                 cursor: "pointer",
-                                "&:hover": { bgcolor: "#f0f7ff" },
+                                borderRadius: 2,
+                                transition: "all 0.2s",
+                                "&:hover": { bgcolor: "#f0f7ff", transform: "translateY(-2px)" },
                             }}
                             onClick={handleConsultationManagement}
                         >
@@ -160,7 +182,7 @@ const Dashboard = () => {
                             </Typography>
                         </Paper>
                     </Grid>
-                    <Grid item xs={2}>
+                    <Grid item xs={12} sm={4} md={2}>
                         <Paper
                             elevation={0}
                             sx={{
@@ -169,7 +191,9 @@ const Dashboard = () => {
                                 flexDirection: "column",
                                 alignItems: "center",
                                 cursor: "pointer",
-                                "&:hover": { bgcolor: "#f0f7ff" },
+                                borderRadius: 2,
+                                transition: "all 0.2s",
+                                "&:hover": { bgcolor: "#f0f7ff", transform: "translateY(-2px)" },
                             }}
                             onClick={handleSurveyManagement}
                         >
@@ -179,7 +203,7 @@ const Dashboard = () => {
                             </Typography>
                         </Paper>
                     </Grid>
-                    <Grid item xs={2}>
+                    <Grid item xs={12} sm={4} md={2}>
                         <Paper
                             elevation={0}
                             sx={{
@@ -188,9 +212,11 @@ const Dashboard = () => {
                                 flexDirection: "column",
                                 alignItems: "center",
                                 cursor: "pointer",
-                                "&:hover": { bgcolor: "#f0f7ff" },
+                                borderRadius: 2,
+                                transition: "all 0.2s",
+                                "&:hover": { bgcolor: "#f0f7ff", transform: "translateY(-2px)" },
                             }}
-                            onClick={() => navigate("/message")}
+                            onClick={handleMessageManagement}
                         >
                             <Email sx={{ fontSize: 40, mb: 1, color: "#3f51b5" }} />
                             <Typography variant="body2" sx={{ color: "#3f51b5", fontWeight: "bold" }}>
@@ -202,8 +228,8 @@ const Dashboard = () => {
 
                 {/* Stats Cards */}
                 <Grid container spacing={2} sx={{ mb: 4 }}>
-                    <Grid item xs={3}>
-                        <Paper elevation={0} sx={{ p: 2 }}>
+                    <Grid item xs={12} sm={6} md={3}>
+                        <Paper elevation={0} sx={{ p: 2, borderRadius: 2 }}>
                             <Box sx={{ display: "flex", alignItems: "center" }}>
                                 <Avatar sx={{ bgcolor: "#f5f5f5", color: "#555" }}>
                                     <Work />
@@ -219,8 +245,8 @@ const Dashboard = () => {
                             </Box>
                         </Paper>
                     </Grid>
-                    <Grid item xs={3}>
-                        <Paper elevation={0} sx={{ p: 2 }}>
+                    <Grid item xs={12} sm={6} md={3}>
+                        <Paper elevation={0} sx={{ p: 2, borderRadius: 2 }}>
                             <Box sx={{ display: "flex", alignItems: "center" }}>
                                 <Avatar sx={{ bgcolor: "#f5f5f5", color: "#555" }}>
                                     <Home />
@@ -236,11 +262,11 @@ const Dashboard = () => {
                             </Box>
                         </Paper>
                     </Grid>
-                    <Grid item xs={3}>
-                        <Paper elevation={0} sx={{ p: 2 }}>
+                    <Grid item xs={12} sm={6} md={3}>
+                        <Paper elevation={0} sx={{ p: 2, borderRadius: 2 }}>
                             <Box sx={{ display: "flex", alignItems: "center" }}>
                                 <Avatar sx={{ bgcolor: "#f5f5f5", color: "#555" }}>
-                                    <Description />
+                                    <InsertDriveFile />
                                 </Avatar>
                                 <Box sx={{ ml: 2 }}>
                                     <Typography variant="caption" color="textSecondary">
@@ -253,8 +279,8 @@ const Dashboard = () => {
                             </Box>
                         </Paper>
                     </Grid>
-                    <Grid item xs={3}>
-                        <Paper elevation={0} sx={{ p: 2 }}>
+                    <Grid item xs={12} sm={6} md={3}>
+                        <Paper elevation={0} sx={{ p: 2, borderRadius: 2 }}>
                             <Box sx={{ display: "flex", alignItems: "center" }}>
                                 <Avatar sx={{ bgcolor: "#f5f5f5", color: "#555" }}>
                                     <Person />
@@ -275,7 +301,7 @@ const Dashboard = () => {
                 {/* Recent Activities and Quick Actions */}
                 <Grid container spacing={3}>
                     <Grid item xs={12} md={7}>
-                        <Paper elevation={0} sx={{ p: 3 }}>
+                        <Paper elevation={0} sx={{ p: 3, borderRadius: 2 }}>
                             <Typography variant="h6" sx={{ mb: 2, fontWeight: "bold" }}>
                                 최근 활동
                             </Typography>
@@ -340,12 +366,12 @@ const Dashboard = () => {
                         </Paper>
                     </Grid>
                     <Grid item xs={12} md={5}>
-                        <Paper elevation={0} sx={{ p: 3 }}>
+                        <Paper elevation={0} sx={{ p: 3, borderRadius: 2 }}>
                             <Typography variant="h6" sx={{ mb: 2, fontWeight: "bold" }}>
                                 빠른 작업
                             </Typography>
                             <Grid container spacing={2}>
-                                <Grid item xs={6}>
+                                <Grid item xs={12} sm={6}>
                                     <Button
                                         variant="outlined"
                                         fullWidth
@@ -356,7 +382,7 @@ const Dashboard = () => {
                                         신규 고객 등록
                                     </Button>
                                 </Grid>
-                                <Grid item xs={6}>
+                                <Grid item xs={12} sm={6}>
                                     <Button
                                         variant="outlined"
                                         fullWidth
@@ -367,18 +393,18 @@ const Dashboard = () => {
                                         상담 등록하기
                                     </Button>
                                 </Grid>
-                                <Grid item xs={6}>
+                                <Grid item xs={12} sm={6}>
                                     <Button
                                         variant="outlined"
                                         fullWidth
-                                        startIcon={<Assignment />}
+                                        startIcon={<InsertDriveFile />}
                                         sx={{ justifyContent: "flex-start", p: 1.5, borderColor: "#e0e0e0", color: "#333" }}
-                                        onClick={() => navigate("/survey/create")}
+                                        onClick={() => navigate("/contract/create")}
                                     >
-                                        새 설문 만들기
+                                        계약 등록하기
                                     </Button>
                                 </Grid>
-                                <Grid item xs={6}>
+                                <Grid item xs={12} sm={6}>
                                     <Button
                                         variant="outlined"
                                         fullWidth

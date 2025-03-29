@@ -16,17 +16,12 @@ import {
     Chip,
     Divider,
     CircularProgress,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogContentText,
-    DialogTitle,
     Snackbar,
     Alert,
     MenuItem,
     Menu,
 } from "@mui/material"
-import { ArrowBack, Edit, Delete } from "@mui/icons-material"
+import { ArrowBack, Edit } from "@mui/icons-material"
 import { useNavigate, useParams } from "react-router-dom"
 import { consultationApi } from "../services/consultationApi"
 import { ConsultationStatus, ConsultationType } from "../types/consultation"
@@ -242,8 +237,16 @@ const ConsultationDetail = () => {
                 </Toolbar>
             </AppBar>
 
-            <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
-                <Paper elevation={0} sx={{ p: 4 }}>
+            <Container
+                maxWidth="md"
+                sx={{
+                    mt: 4,
+                    mb: 4,
+                    mx: "auto",
+                    px: { xs: 2, sm: 3, md: 4 },
+                }}
+            >
+                <Paper elevation={0} sx={{ p: 4, borderRadius: 2 }}>
                     <Box sx={{ display: "flex", alignItems: "center", mb: 4 }}>
                         <IconButton onClick={() => navigate("/consultation")} sx={{ mr: 1 }}>
                             <ArrowBack />
@@ -258,9 +261,6 @@ const ConsultationDetail = () => {
                             onClick={() => navigate(`/consultation/edit/${id}`)}
                         >
                             수정
-                        </Button>
-                        <Button startIcon={<Delete />} color="error" onClick={handleDeleteDialogOpen}>
-                            삭제
                         </Button>
                     </Box>
 
@@ -403,7 +403,7 @@ const ConsultationDetail = () => {
                             <Paper
                                 elevation={0}
                                 sx={{
-                                    p: 2,
+                                    p: 3,
                                     mt: 1,
                                     mb: 3,
                                     bgcolor: "#f9f9f9",
@@ -418,33 +418,10 @@ const ConsultationDetail = () => {
                 </Paper>
             </Container>
 
-            {/* 삭제 확인 다이얼로그 */}
-            <Dialog open={deleteDialogOpen} onClose={handleDeleteDialogClose}>
-                <DialogTitle>상담 삭제</DialogTitle>
-                <DialogContent>
-                    <DialogContentText>이 상담 기록을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.</DialogContentText>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleDeleteDialogClose} disabled={deleteLoading}>
-                        취소
-                    </Button>
-                    <Button onClick={handleDeleteConfirm} color="error" disabled={deleteLoading}>
-                        {deleteLoading ? <CircularProgress size={24} /> : "삭제"}
-                    </Button>
-                </DialogActions>
-            </Dialog>
-
             {/* 상태 변경 성공 메시지 */}
             <Snackbar open={statusSuccess} autoHideDuration={6000} onClose={() => setStatusSuccess(false)}>
                 <Alert onClose={() => setStatusSuccess(false)} severity="success" sx={{ width: "100%" }}>
                     상담 상태가 성공적으로 변경되었습니다.
-                </Alert>
-            </Snackbar>
-
-            {/* 삭제 성공 메시지 스낵바 */}
-            <Snackbar open={deleteSuccess} autoHideDuration={6000} onClose={() => setDeleteSuccess(false)}>
-                <Alert onClose={() => setDeleteSuccess(false)} severity="success" sx={{ width: "100%" }}>
-                    상담이 성공적으로 삭제되었습니다. 상담 목록 페이지로 이동합니다.
                 </Alert>
             </Snackbar>
 

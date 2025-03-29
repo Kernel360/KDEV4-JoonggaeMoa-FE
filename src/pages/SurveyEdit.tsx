@@ -165,7 +165,7 @@ const SurveyEdit = () => {
         const invalidOptions = questions.find(
             (q) =>
                 (q.type === QuestionTypeEnum.RADIO || q.type === QuestionTypeEnum.CHECKBOX) &&
-                (q.options.length === 0 || q.options.some((opt) => !opt.content.trim())),
+                (q.options.length === 0 || q.options.some((opt) => !opt.trim())),
         )
         if (invalidOptions) {
             setError("모든 선택 옵션에 내용을 입력해주세요.")

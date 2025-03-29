@@ -88,5 +88,30 @@ api.interceptors.response.use(
     },
 )
 
+// Remove the getCurrentAgentId function since it's no longer needed
+// The function is kept for backward compatibility but doesn't use agentId in paths anymore
+
+export const getCurrentAgentId = (): number => {
+    try {
+        const agentId = localStorage.getItem("agentId")
+        if (agentId) {
+            return Number(agentId)
+        }
+
+        // agentId가 없는 경우 로그아웃 처리 및 로그인 페이지로 리다이렉트
+        console.error("Agent ID not found in localStorage")
+        removeAccessToken()
+        localStorage.removeItem("agentId")
+        window.location.href = "/"
+        throw new Error("Authentication required")
+    } catch (error) {
+        console.error("Failed to get agent ID:", error)
+        removeAccessToken()
+        localStorage.removeItem("agentId")
+        window.location.href = "/"
+        throw new Error("Authentication required")
+    }
+}
+
 export default api
 

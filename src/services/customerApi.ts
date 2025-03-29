@@ -51,28 +51,19 @@ export interface CustomerResponse {
     updatedAt: string
 }
 
-// 현재 로그인한 에이전트 ID 가져오기
-// 실제 구현에서는 사용자 정보에서 가져와야 함
-const getAgentId = (): number => {
-    // 임시로 1을 반환, 실제로는 로그인한 사용자의 ID를 반환해야 함
-    return 1
-}
-
 // 고객 생성
 export const createCustomer = async (
     customerData: CreateCustomerRequest,
 ): Promise<AxiosResponse<ApiResponse<void>>> => {
-    const agentId = getAgentId()
-    return api.post(`/api/agents/${agentId}/customers`, customerData)
+    return api.post(`/api/customers`, customerData)
 }
 
 // 고객 일괄 생성 (엑셀 파일 업로드)
 export const bulkCreateCustomers = async (file: File): Promise<AxiosResponse<ApiResponse<void>>> => {
-    const agentId = getAgentId()
     const formData = new FormData()
     formData.append("file", file)
 
-    return api.post(`/api/agents/${agentId}/customers/bulk`, formData, {
+    return api.post(`/api/customers/bulk`, formData, {
         headers: {
             "Content-Type": "multipart/form-data",
         },
@@ -81,8 +72,7 @@ export const bulkCreateCustomers = async (file: File): Promise<AxiosResponse<Api
 
 // 고객 삭제
 export const deleteCustomer = async (customerId: number): Promise<AxiosResponse<ApiResponse<void>>> => {
-    const agentId = getAgentId()
-    return api.delete(`/api/agents/${agentId}/customers/${customerId}`)
+    return api.delete(`/api/customers/${customerId}`)
 }
 
 // 고객 수정
@@ -90,20 +80,17 @@ export const updateCustomer = async (
     customerId: number,
     customerData: UpdateCustomerRequest,
 ): Promise<AxiosResponse<ApiResponse<void>>> => {
-    const agentId = getAgentId()
-    return api.patch(`/api/agents/${agentId}/customers/${customerId}`, customerData)
+    return api.patch(`/api/customers/${customerId}`, customerData)
 }
 
 // 모든 고객 조회
 export const getCustomers = async (): Promise<AxiosResponse<ApiResponse<CustomerResponse[]>>> => {
-    const agentId = getAgentId()
-    return api.get(`/api/agents/${agentId}/customers`)
+    return api.get(`/api/customers`)
 }
 
 // 고객 상세 조회
 export const getCustomerById = async (customerId: number): Promise<AxiosResponse<ApiResponse<CustomerResponse>>> => {
-    const agentId = getAgentId()
-    return api.get(`/api/agents/${agentId}/customers/${customerId}`)
+    return api.get(`/api/customers/${customerId}`)
 }
 
 // Export both individual functions and the object for backward compatibility

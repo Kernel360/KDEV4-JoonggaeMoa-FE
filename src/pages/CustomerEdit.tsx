@@ -135,8 +135,16 @@ const CustomerEdit = () => {
                 </Toolbar>
             </AppBar>
 
-            <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
-                <Paper elevation={0} sx={{ p: 4 }}>
+            <Container
+                maxWidth="md"
+                sx={{
+                    mt: 4,
+                    mb: 4,
+                    mx: "auto",
+                    px: { xs: 2, sm: 3, md: 4 },
+                }}
+            >
+                <Paper elevation={0} sx={{ p: 4, borderRadius: 2 }}>
                     <Box sx={{ display: "flex", alignItems: "center", mb: 4 }}>
                         <IconButton onClick={() => navigate(`/customer-management/${id}`)} sx={{ mr: 1 }}>
                             <ArrowBack />
