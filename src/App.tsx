@@ -12,6 +12,8 @@ import SurveyList from "./pages/SurveyList"
 import SurveyDetail from "./pages/SurveyDetail"
 import SurveyCreate from "./pages/SurveyCreate"
 import SurveyEdit from "./pages/SurveyEdit"
+import SurveySubmit from "./pages/SurveySubmit"
+import SurveyAnswers from "./pages/SurveyAnswers" // 새로 추가된 설문 응답 페이지
 import ConsultationList from "./pages/ConsultationList"
 import ConsultationHistory from "./pages/ConsultationHistory"
 import ConsultationDetail from "./pages/ConsultationDetail"
@@ -112,6 +114,8 @@ function App() {
                                 </Box>
                             }
                         />
+                        {/* 공개 페이지: 설문 제출 */}
+                        <Route path="/surveys/submit/:surveyId" element={<SurveySubmit />} />
                         <Route
                             path="/dashboard"
                             element={
@@ -192,6 +196,15 @@ function App() {
                             element={
                                 <ProtectedRoute>
                                     <SurveyEdit />
+                                </ProtectedRoute>
+                            }
+                        />
+                        {/* 설문 응답 관리 라우트 추가 */}
+                        <Route
+                            path="/survey/answers"
+                            element={
+                                <ProtectedRoute>
+                                    <SurveyAnswers />
                                 </ProtectedRoute>
                             }
                         />

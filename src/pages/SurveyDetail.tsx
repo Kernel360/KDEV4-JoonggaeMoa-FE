@@ -28,7 +28,8 @@ import {
     FormGroup,
     Checkbox,
 } from "@mui/material"
-import { ArrowBack, Edit, Delete } from "@mui/icons-material"
+// Add ContentCopy icon import
+import { ArrowBack, Edit, Delete, ContentCopy } from "@mui/icons-material"
 import { useNavigate, useParams } from "react-router-dom"
 import { surveyApi } from "../services/surveyApi"
 import type { SurveyResponse } from "../types/survey"
@@ -45,6 +46,9 @@ const SurveyDetail = () => {
     const [deleteLoading, setDeleteLoading] = useState(false)
     const [deleteError, setDeleteError] = useState<string | null>(null)
     const [deleteSuccess, setDeleteSuccess] = useState(false)
+
+    // Add copyUrlSuccess state
+    const [copyUrlSuccess, setCopyUrlSuccess] = useState(false)
 
     useEffect(() => {
         if (id) {
@@ -107,6 +111,25 @@ const SurveyDetail = () => {
         } finally {
             setDeleteLoading(false)
         }
+    }
+
+    // Add handleCopyUrl function after handleDeleteConfirm
+    // URL 형식 수정 - 고객용 URL 경로 변경
+    const handleCopyUrl = () => {
+        if (!id) return
+
+        const surveyUrl = `${window.location.origin}/surveys/submit/${id}`
+
+        navigator.clipboard
+            .writeText(surveyUrl)
+            .then(() => {
+                setCopyUrlSuccess(true)
+                setTimeout(() => setCopyUrlSuccess(false), 3000)
+            })
+            .catch((err) => {
+                console.error("URL 복사 실패:", err)
+                setError("URL을 클립보드에 복사하는데 실패했습니다.")
+            })
     }
 
     // 질문 타입에 따른 UI 렌더링
@@ -184,6 +207,7 @@ const SurveyDetail = () => {
                         </Button>
                     </Box>
 
+                    {/* Add a section to display and copy the survey URL after the survey title and description */}
                     <Grid container spacing={3}>
                         <Grid item xs={12}>
                             <Typography variant="subtitle2" color="textSecondary">
@@ -200,6 +224,46 @@ const SurveyDetail = () => {
                             <Typography variant="body1" sx={{ mt: 1, mb: 3 }}>
                                 {survey.description || "설명이 없습니다."}
                             </Typography>
+                        </Grid>
+
+                        {/* Add URL section */}
+                        <Grid item xs={12}>
+                            <Typography variant="subtitle2" color="textSecondary">
+                                고객용 설문 URL
+                            </Typography>
+                            <Box
+                                sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    mt: 1,
+                                    mb: 3,
+                                    p: 2,
+                                    bgcolor: "#f0f7ff",
+                                    borderRadius: 1,
+                                    border: "1px solid #e0e0e0",
+                                }}
+                            >
+                                <Typography
+                                    variant="body2"
+                                    sx={{
+                                        flexGrow: 1,
+                                        fontFamily: "monospace",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                    }}
+                                >
+                                    {`${window.location.origin}/surveys/submit/${id}`}
+                                </Typography>
+                                <Button
+                                    startIcon={<ContentCopy />}
+                                    onClick={handleCopyUrl}
+                                    size="small"
+                                    variant="outlined"
+                                    sx={{ ml: 2 }}
+                                >
+                                    URL 복사
+                                </Button>
+                            </Box>
                         </Grid>
                     </Grid>
 
@@ -268,6 +332,13 @@ const SurveyDetail = () => {
             <Snackbar open={!!deleteError} autoHideDuration={6000} onClose={() => setDeleteError(null)}>
                 <Alert onClose={() => setDeleteError(null)} severity="error" sx={{ width: "100%" }}>
                     {deleteError}
+                </Alert>
+            </Snackbar>
+
+            {/* Add a new Snackbar for the copy URL success message */}
+            <Snackbar open={copyUrlSuccess} autoHideDuration={3000} onClose={() => setCopyUrlSuccess(false)}>
+                <Alert onClose={() => setCopyUrlSuccess(false)} severity="success" sx={{ width: "100%" }}>
+                    설문 URL이 클립보드에 복사되었습니다.
                 </Alert>
             </Snackbar>
 

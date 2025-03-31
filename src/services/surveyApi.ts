@@ -50,6 +50,19 @@ export const getAllSurveyAnswers = async (): Promise<AxiosResponse<ApiResponse<A
     return api.get(`/api/surveys/answer`)
 }
 
+// 고객용 설문 조회 API 추가
+export const getSurveyForCustomer = async (surveyId: number): Promise<AxiosResponse<ApiResponse<SurveyResponse>>> => {
+    return api.get(`/api/customers/surveys/${surveyId}`)
+}
+
+// 고객용 설문 답변 제출 API 추가
+export const submitSurveyAnswerForCustomer = async (
+    surveyId: number,
+    answerData: AnswerRequest,
+): Promise<AxiosResponse<ApiResponse<void>>> => {
+    return api.post(`/api/customers/surveys/${surveyId}/submit`, answerData)
+}
+
 // Export both individual functions and the object for backward compatibility
 export const surveyApi = {
     createSurvey,
@@ -59,5 +72,7 @@ export const surveyApi = {
     getSurveyById,
     submitSurveyAnswer,
     getAllSurveyAnswers,
+    getSurveyForCustomer,
+    submitSurveyAnswerForCustomer,
 }
 
