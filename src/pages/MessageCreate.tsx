@@ -34,6 +34,22 @@ import { MessageCategory } from "../types/message"
 import type { CustomerResponse } from "../services/customerApi"
 import type { MessageTemplateResponse } from "../services/messageTemplateApi"
 
+function getByteLength(str: string): number {
+    // Count bytes properly for Korean characters (UTF-8)
+    let byteLength = 0
+    for (let i = 0; i < str.length; i++) {
+        const charCode = str.charCodeAt(i)
+        if (charCode <= 0x007f) {
+            byteLength += 1
+        } else if (charCode <= 0x07ff) {
+            byteLength += 2
+        } else {
+            byteLength += 3
+        }
+    }
+    return byteLength
+}
+
 const MessageCreate = () => {
     const navigate = useNavigate()
     const [loading, setLoading] = useState(false)
@@ -56,6 +72,8 @@ const MessageCreate = () => {
     const [scheduledDate, setScheduledDate] = useState("")
     const [scheduledTime, setScheduledTime] = useState("")
 
+    const [byteCount, setByteCount] = useState(0)
+
     // 카테고리 표시 이름 매핑
     const categoryDisplayNames: Record<string, string> = {
         [MessageCategory.BIRTHDAY]: "생일 축하",
@@ -71,6 +89,9 @@ const MessageCreate = () => {
         const now = new Date()
         setScheduledDate(now.toISOString().split("T")[0])
         setScheduledTime(`${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`)
+
+        // Initialize byte count
+        setByteCount(getByteLength(content))
     }, [])
 
     const fetchCustomers = async () => {
@@ -96,7 +117,7 @@ const MessageCreate = () => {
 
             for (const category of Object.values(MessageCategory)) {
                 try {
-                    const response = await messageTemplateApi.getMessageTemplate(1, category)
+                    const response = await messageTemplateApi.getMessageTemplate(category)
                     if (response.data.success && response.data.data) {
                         templatesData.push(response.data.data)
                     }
@@ -117,9 +138,11 @@ const MessageCreate = () => {
 
         if (category) {
             try {
-                const response = await messageTemplateApi.getMessageTemplate(1, category)
+                const response = await messageTemplateApi.getMessageTemplate(category)
                 if (response.data.success && response.data.data) {
-                    setContent(response.data.data.content)
+                    const templateContent = response.data.data.content
+                    setContent(templateContent)
+                    setByteCount(getByteLength(templateContent))
                     setSelectedCategory(category as MessageCategory)
                 }
             } catch (error) {
@@ -156,6 +179,11 @@ const MessageCreate = () => {
 
         if (!content.trim()) {
             setError("문자 내용을 입력해주세요.")
+            return
+        }
+
+        if (byteCount > 90) {
+            setError("문자 내용은 최대 90바이트까지 입력 가능합니다.")
             return
         }
 
@@ -203,6 +231,17 @@ const MessageCreate = () => {
             (customer.phone && customer.phone.includes(searchTerm)),
     )
 
+    const [messageContent, setMessageContent] = useState("")
+    const [byteLength, setByteLength] = useState(0)
+
+    useEffect(() => {
+        setByteLength(getByteLength(messageContent))
+    }, [messageContent])
+
+    const handleMessageContentChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setMessageContent(event.target.value)
+    }
+
     return (
         <Box sx={{ flexGrow: 1, bgcolor: "#f5f5f5", minHeight: "100vh" }}>
             <AppBar position="static" color="default" elevation={0} sx={{ bgcolor: "white" }}>
@@ -213,7 +252,15 @@ const MessageCreate = () => {
                 </Toolbar>
             </AppBar>
 
-            <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+            <Container
+                maxWidth="lg"
+                sx={{
+                    mt: 4,
+                    mb: 4,
+                    mx: "auto",
+                    px: { xs: 2, sm: 3, md: 4 },
+                }}
+            >
                 <Box sx={{ display: "flex", alignItems: "center", mb: 4 }}>
                     <IconButton onClick={() => navigate("/message")} sx={{ mr: 1 }}>
                         <ArrowBack />
@@ -226,7 +273,7 @@ const MessageCreate = () => {
                 <form onSubmit={handleSubmit}>
                     <Grid container spacing={3}>
                         <Grid item xs={12} md={5}>
-                            <Paper elevation={0} sx={{ p: 3, height: "100%" }}>
+                            <Paper elevation={0} sx={{ p: 4, borderRadius: 2, height: "100%" }}>
                                 <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: "bold" }}>
                                     고객 선택
                                 </Typography>
@@ -298,7 +345,7 @@ const MessageCreate = () => {
                         </Grid>
 
                         <Grid item xs={12} md={7}>
-                            <Paper elevation={0} sx={{ p: 3 }}>
+                            <Paper elevation={0} sx={{ p: 4, borderRadius: 2 }}>
                                 <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: "bold" }}>
                                     메시지 정보
                                 </Typography>
@@ -325,10 +372,26 @@ const MessageCreate = () => {
                                     rows={6}
                                     label="문자 내용"
                                     value={content}
-                                    onChange={(e) => setContent(e.target.value)}
+                                    onChange={(e) => {
+                                        const newContent = e.target.value
+                                        const newByteCount = getByteLength(newContent)
+
+                                        if (newByteCount <= 90) {
+                                            setContent(newContent)
+                                            setByteCount(newByteCount)
+                                        }
+                                    }}
                                     placeholder="문자 내용을 입력하세요"
-                                    sx={{ mb: 3 }}
+                                    sx={{ mb: 1 }}
+                                    error={byteCount > 90}
+                                    helperText={byteCount > 90 ? "최대 90바이트까지 입력 가능합니다." : ""}
                                 />
+
+                                <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 3 }}>
+                                    <Typography variant="caption" color={byteCount > 90 ? "error" : "text.secondary"}>
+                                        {byteCount}/90 바이트
+                                    </Typography>
+                                </Box>
 
                                 <Divider sx={{ my: 2 }} />
 
@@ -391,7 +454,7 @@ const MessageCreate = () => {
 
             <Snackbar open={success} autoHideDuration={6000} onClose={() => setSuccess(false)}>
                 <Alert onClose={() => setSuccess(false)} severity="success" sx={{ width: "100%" }}>
-                    문자가 성공적으로 예약되었습니다.
+                    문자가 성공적으로 전송되었습니다.
                 </Alert>
             </Snackbar>
 

@@ -29,7 +29,8 @@ import {
     TextField,
     InputAdornment,
 } from "@mui/material"
-import { Add, Edit, Delete, ArrowBack, Search } from "@mui/icons-material"
+// Add ContentCopy icon import
+import { Add, Edit, Delete, ArrowBack, Search, ContentCopy, Assessment } from "@mui/icons-material"
 import { useNavigate } from "react-router-dom"
 import { surveyApi } from "../services/surveyApi"
 import type { SurveyResponse } from "../types/survey"
@@ -44,6 +45,8 @@ const SurveyList = () => {
     const [deleteLoading, setDeleteLoading] = useState(false)
     const [successMessage, setSuccessMessage] = useState<string | null>(null)
     const [searchTerm, setSearchTerm] = useState("")
+    // Add copyUrlSuccess state
+    const [copyUrlSuccess, setCopyUrlSuccess] = useState<string | null>(null)
 
     useEffect(() => {
         fetchSurveys()
@@ -96,6 +99,24 @@ const SurveyList = () => {
         }
     }
 
+    // Add handleCopyUrl function after handleDeleteConfirm
+    // URL 형식 수정 - 고객용 URL 경로 변경
+    const handleCopyUrl = (event: React.MouseEvent, surveyId: number) => {
+        event.stopPropagation()
+        const surveyUrl = `${window.location.origin}/surveys/submit/${surveyId}`
+
+        navigator.clipboard
+            .writeText(surveyUrl)
+            .then(() => {
+                setCopyUrlSuccess("설문 URL이 클립보드에 복사되었습니다.")
+                setTimeout(() => setCopyUrlSuccess(null), 3000)
+            })
+            .catch((err) => {
+                console.error("URL 복사 실패:", err)
+                setError("URL을 클립보드에 복사하는데 실패했습니다.")
+            })
+    }
+
     const handleCreateSurvey = () => {
         navigate("/survey/create")
     }
@@ -107,6 +128,10 @@ const SurveyList = () => {
     const handleEditSurvey = (event: React.MouseEvent, surveyId: number) => {
         event.stopPropagation()
         navigate(`/survey/edit/${surveyId}`)
+    }
+
+    const handleViewAnswers = () => {
+        navigate("/survey/answers")
     }
 
     // 검색어로 필터링
@@ -122,7 +147,15 @@ const SurveyList = () => {
                 </Toolbar>
             </AppBar>
 
-            <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+            <Container
+                maxWidth="lg"
+                sx={{
+                    mt: 4,
+                    mb: 4,
+                    mx: "auto",
+                    px: { xs: 2, sm: 3, md: 4 },
+                }}
+            >
                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
                     <Box sx={{ display: "flex", alignItems: "center" }}>
                         <IconButton onClick={() => navigate("/dashboard")} sx={{ mr: 1 }}>
@@ -132,20 +165,30 @@ const SurveyList = () => {
                             설문 관리
                         </Typography>
                     </Box>
-                    <Button
-                        variant="contained"
-                        startIcon={<Add />}
-                        sx={{
-                            bgcolor: "#000",
-                            "&:hover": { bgcolor: "#333" },
-                        }}
-                        onClick={handleCreateSurvey}
-                    >
-                        새 설문 만들기
-                    </Button>
+                    <Box>
+                        <Button
+                            variant="outlined"
+                            startIcon={<Assessment />}
+                            sx={{ mr: 2, borderColor: "#ddd", color: "#333" }}
+                            onClick={handleViewAnswers}
+                        >
+                            응답 확인
+                        </Button>
+                        <Button
+                            variant="contained"
+                            startIcon={<Add />}
+                            sx={{
+                                bgcolor: "#000",
+                                "&:hover": { bgcolor: "#333" },
+                            }}
+                            onClick={handleCreateSurvey}
+                        >
+                            새 설문 만들기
+                        </Button>
+                    </Box>
                 </Box>
 
-                <Paper elevation={0} sx={{ mb: 3, p: 2 }}>
+                <Paper elevation={0} sx={{ mb: 3, p: 3, borderRadius: 2 }}>
                     <TextField
                         placeholder="설문 제목으로 검색"
                         variant="outlined"
@@ -175,14 +218,17 @@ const SurveyList = () => {
                         </Button>
                     </Paper>
                 ) : (
-                    <TableContainer component={Paper} elevation={0}>
+                    <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2, overflow: "hidden" }}>
                         <Table>
+                            {/* Update the TableHead to include a new column for the URL copy button */}
                             <TableHead>
                                 <TableRow sx={{ bgcolor: "#f9f9f9" }}>
-                                    <TableCell>제목</TableCell>
-                                    <TableCell>설명</TableCell>
-                                    <TableCell>질문 수</TableCell>
-                                    <TableCell align="right">작업</TableCell>
+                                    <TableCell sx={{ fontWeight: 500 }}>제목</TableCell>
+                                    <TableCell sx={{ fontWeight: 500 }}>설명</TableCell>
+                                    <TableCell sx={{ fontWeight: 500 }}>질문 수</TableCell>
+                                    <TableCell sx={{ fontWeight: 500 }} align="right">
+                                        작업
+                                    </TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -197,7 +243,16 @@ const SurveyList = () => {
                                             <TableCell>{survey.title}</TableCell>
                                             <TableCell>{survey.description}</TableCell>
                                             <TableCell>{survey.questionList.length}</TableCell>
+                                            {/* Update the TableCell for actions to include the copy URL button */}
                                             <TableCell align="right">
+                                                <IconButton
+                                                    size="small"
+                                                    onClick={(e) => handleCopyUrl(e, survey.id)}
+                                                    sx={{ mr: 1 }}
+                                                    title="고객용 URL 복사"
+                                                >
+                                                    <ContentCopy fontSize="small" />
+                                                </IconButton>
                                                 <IconButton size="small" onClick={(e) => handleEditSurvey(e, survey.id)} sx={{ mr: 1 }}>
                                                     <Edit fontSize="small" />
                                                 </IconButton>
@@ -249,6 +304,13 @@ const SurveyList = () => {
             <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError(null)}>
                 <Alert onClose={() => setError(null)} severity="error" sx={{ width: "100%" }}>
                     {error}
+                </Alert>
+            </Snackbar>
+
+            {/* Add a new Snackbar for the copy URL success message */}
+            <Snackbar open={!!copyUrlSuccess} autoHideDuration={3000} onClose={() => setCopyUrlSuccess(null)}>
+                <Alert onClose={() => setCopyUrlSuccess(null)} severity="success" sx={{ width: "100%" }}>
+                    {copyUrlSuccess}
                 </Alert>
             </Snackbar>
 

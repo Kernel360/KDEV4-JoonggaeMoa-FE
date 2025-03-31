@@ -1,6 +1,6 @@
 // 설문 관련 타입 정의
 
-// 질문 타입 (라디오, 체크박스, 텍스트 등)
+// 질문 타입 (라디오, 체크박스, 텍스트 )
 export enum QuestionType {
     RADIO = "RADIO",
     CHECKBOX = "CHECKBOX",
@@ -55,17 +55,18 @@ export interface SurveyResponse {
     questionList: QuestionResponse[]
 }
 
-// 고객 응답 정보
+// 고객 정보
 export interface CustomerResponse {
     id: number
     name: string
     email: string
     phone: string
+    consent: boolean
 }
 
 // 질문 답변
 export interface QuestionAnswerResponse {
-    question: QuestionResponse
+    question: string
     answer: string[]
 }
 
@@ -84,5 +85,6 @@ export interface AnswerResponse {
     customer: CustomerResponse
     survey: SurveyResponse
     answer: QuestionAnswerResponse[]
+    createdAt?: string // 등록 날짜 필드 추가
 }
 

@@ -61,7 +61,7 @@ const MessageTemplateList = () => {
 
             for (const category of Object.values(MessageCategory)) {
                 try {
-                    const response = await messageTemplateApi.getMessageTemplate(1, category)
+                    const response = await messageTemplateApi.getMessageTemplate(category)
                     if (response.data.success && response.data.data) {
                         templatesData.push(response.data.data)
                     }

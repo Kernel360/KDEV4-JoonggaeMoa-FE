@@ -4,20 +4,12 @@ import type React from "react"
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import { useNavigate } from "react-router-dom"
 import { setAccessToken, removeAccessToken } from "../services/api"
-import { jwtDecode } from "jwt-decode"
 
 interface AuthContextType {
     isAuthenticated: boolean
-    login: (token: string) => void
+    login: (token: string, agentId: number) => void
     logout: () => void
     agentId: number | null
-}
-
-interface JwtPayload {
-    sub: string
-    agentId: number
-    exp: number
-    // 기타 필요한 JWT 필드들
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -30,35 +22,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Check if user is authenticated on mount
     useEffect(() => {
         const token = localStorage.getItem("accessToken")
-        if (token) {
-            try {
-                const decoded = jwtDecode<JwtPayload>(token)
-                setAgentId(decoded.agentId)
-                setIsAuthenticated(true)
-            } catch (error) {
-                console.error("Invalid token:", error)
-                removeAccessToken()
-                setIsAuthenticated(false)
-                setAgentId(null)
-            }
+        const storedAgentId = localStorage.getItem("agentId")
+
+        if (token && storedAgentId) {
+            setIsAuthenticated(true)
+            setAgentId(Number(storedAgentId))
         }
     }, [])
 
-    const login = (token: string) => {
+    // Update the login function to extract agentId from response headers
+    const login = (token: string, agentId: number) => {
         setAccessToken(token)
-        try {
-            const decoded = jwtDecode<JwtPayload>(token)
-            setAgentId(decoded.agentId)
-            setIsAuthenticated(true)
-        } catch (error) {
-            console.error("Invalid token:", error)
-            setIsAuthenticated(false)
-            setAgentId(null)
-        }
+        // Store agentId in localStorage
+        localStorage.setItem("agentId", agentId.toString())
+        setAgentId(agentId)
+        setIsAuthenticated(true)
     }
 
+    // Update the logout function to also remove agentId
     const logout = () => {
         removeAccessToken()
+        localStorage.removeItem("agentId")
         setIsAuthenticated(false)
         setAgentId(null)
         navigate("/")

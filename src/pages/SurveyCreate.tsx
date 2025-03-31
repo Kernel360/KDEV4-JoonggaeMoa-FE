@@ -112,6 +112,13 @@ const SurveyCreate = () => {
         setQuestions(newQuestions)
     }
 
+    // 중복 옵션 검사 함수
+    const hasDuplicateOptions = (options: string[]): boolean => {
+        const nonEmptyOptions = options.filter((opt) => opt.trim() !== "")
+        const uniqueOptions = new Set(nonEmptyOptions)
+        return uniqueOptions.size !== nonEmptyOptions.length
+    }
+
     // 설문 생성 제출
     const handleSubmit = async () => {
         // 유효성 검사
@@ -135,6 +142,15 @@ const SurveyCreate = () => {
         )
         if (invalidOptions) {
             setError("모든 선택 옵션에 내용을 입력해주세요.")
+            return
+        }
+
+        // 중복 옵션 검사
+        const questionWithDuplicates = questions.find(
+            (q) => (q.type === "RADIO" || q.type === "CHECKBOX") && hasDuplicateOptions(q.options),
+        )
+        if (questionWithDuplicates) {
+            setError("객관식 질문에 중복된 선택지가 있습니다. 모든 선택지는 서로 달라야 합니다.")
             return
         }
 
@@ -293,6 +309,16 @@ const SurveyCreate = () => {
                                                     onChange={(e) => handleOptionChange(questionIndex, optionIndex, e.target.value)}
                                                     placeholder={`옵션 ${optionIndex + 1}`}
                                                     sx={{ mr: 1 }}
+                                                    error={
+                                                        option.trim() !== "" &&
+                                                        question.options.filter((o) => o.trim() === option.trim()).length > 1
+                                                    }
+                                                    helperText={
+                                                        option.trim() !== "" &&
+                                                        question.options.filter((o) => o.trim() === option.trim()).length > 1
+                                                            ? "중복된 선택지입니다"
+                                                            : ""
+                                                    }
                                                 />
                                                 <IconButton
                                                     size="small"

@@ -3,7 +3,6 @@
 import { useState, type FormEvent } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import {
-    Container,
     Box,
     Typography,
     TextField,
@@ -39,9 +38,9 @@ function Login() {
                 password,
             }
 
-            // 로그인 요청은 axios 인스턴스를 직접 사용하지 않고 axios를 직접 사용하여
+            // 로그인 요청은 axios 인스턴스를 직접 사용하지 않고 axios 인스턴스를 직접 사용하여
             // 인터셉터의 영향을 받지 않도록 합니다.
-            const response = await axios.post("http://localhost:8080/api/agent/login", loginData, {
+            const response = await axios.post("http://localhost:8080/api/agents/login", loginData, {
                 withCredentials: true, // 쿠키를 받기 위해 필수
             })
 
@@ -49,13 +48,15 @@ function Login() {
             if (response.status >= 200 && response.status < 300) {
                 // Get access token from Authorization header
                 const accessToken = response.headers.authorization
+                // Get agentId from agentId header
+                const agentId = response.headers.agentid ? Number(response.headers.agentid) : null
 
-                if (accessToken) {
-                    // Store token and update auth state
-                    login(accessToken)
+                if (accessToken && agentId) {
+                    // Store token, agentId and update auth state
+                    login(accessToken, agentId)
                     navigate("/dashboard")
                 } else {
-                    throw new Error("No access token received")
+                    throw new Error("No access token or agentId received")
                 }
             } else {
                 setError("Login failed. Please try again.")
@@ -75,75 +76,76 @@ function Login() {
     }
 
     return (
-        <Container component="main" maxWidth="xs">
-            <Box
-                sx={{
-                    marginTop: 8,
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                }}
-            >
-                <Card sx={{ width: "100%", mt: 3 }}>
-                    <CardHeader
-                        title="Login"
-                        subheader="Enter your username and password to access your account"
-                        titleTypographyProps={{ align: "center", variant: "h5" }}
-                        subheaderTypographyProps={{ align: "center" }}
+        <Card sx={{ width: "100%", maxWidth: "400px", borderRadius: 2, overflow: "hidden" }}>
+            <CardHeader
+                title="Login"
+                subheader="Enter your username and password to access your account"
+                titleTypographyProps={{ align: "center", variant: "h5" }}
+                subheaderTypographyProps={{ align: "center" }}
+            />
+            <CardContent sx={{ p: 4 }}>
+                <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
+                    <TextField
+                        margin="normal"
+                        required
+                        fullWidth
+                        id="username"
+                        label="Username"
+                        name="username"
+                        autoComplete="username"
+                        autoFocus
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        disabled={loading}
                     />
-                    <CardContent>
-                        <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
-                            <TextField
-                                margin="normal"
-                                required
-                                fullWidth
-                                id="username"
-                                label="Username"
-                                name="username"
-                                autoComplete="username"
-                                autoFocus
-                                value={username}
-                                onChange={(e) => setUsername(e.target.value)}
-                                disabled={loading}
-                            />
-                            <TextField
-                                margin="normal"
-                                required
-                                fullWidth
-                                name="password"
-                                label="Password"
-                                type="password"
-                                id="password"
-                                autoComplete="current-password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                disabled={loading}
-                            />
-                            <Button type="submit" fullWidth variant="contained" sx={{ mt: 3, mb: 2 }} disabled={loading}>
-                                {loading ? "Signing In..." : "Sign In"}
-                            </Button>
-                        </Box>
-                    </CardContent>
-                    <Divider />
-                    <CardActions>
-                        <Box sx={{ width: "100%", textAlign: "center" }}>
-                            <Typography variant="body2" color="text.secondary">
-                                Don't have an account?{" "}
-                                <Link to="/register" style={{ textDecoration: "none" }}>
-                                    Register
-                                </Link>
-                            </Typography>
-                        </Box>
-                    </CardActions>
-                </Card>
-            </Box>
+                    <TextField
+                        margin="normal"
+                        required
+                        fullWidth
+                        name="password"
+                        label="Password"
+                        type="password"
+                        id="password"
+                        autoComplete="current-password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        disabled={loading}
+                    />
+                    <Button
+                        type="submit"
+                        fullWidth
+                        variant="contained"
+                        sx={{
+                            mt: 3,
+                            mb: 2,
+                            bgcolor: "#000",
+                            "&:hover": { bgcolor: "#333" },
+                            py: 1.5,
+                        }}
+                        disabled={loading}
+                    >
+                        {loading ? "Signing In..." : "Sign In"}
+                    </Button>
+                </Box>
+            </CardContent>
+            <Divider />
+            <CardActions>
+                <Box sx={{ width: "100%", textAlign: "center" }}>
+                    <Typography variant="body2" color="text.secondary">
+                        Don't have an account?{" "}
+                        <Link to="/register" style={{ textDecoration: "none" }}>
+                            Register
+                        </Link>
+                    </Typography>
+                </Box>
+            </CardActions>
 
             <Snackbar open={openSnackbar} autoHideDuration={6000} onClose={handleCloseSnackbar}>
                 <Alert onClose={handleCloseSnackbar} severity="error" sx={{ width: "100%" }}>
                     {error}
                 </Alert>
             </Snackbar>
-        </Container>
+        </Card>
     )
 }
 
