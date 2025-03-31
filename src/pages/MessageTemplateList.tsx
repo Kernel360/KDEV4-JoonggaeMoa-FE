@@ -29,6 +29,11 @@ import { messageTemplateApi } from "../services/messageTemplateApi"
 import { MessageCategory } from "../types/message"
 import type { MessageTemplateResponse } from "../services/messageTemplateApi"
 
+// Import 부분에 ListItemButton 추가
+import {
+    ListItemButton,
+} from "@mui/material"
+
 const MessageTemplateList = () => {
     const navigate = useNavigate()
     const [templates, setTemplates] = useState<MessageTemplateResponse[]>([])
@@ -213,11 +218,10 @@ const MessageTemplateList = () => {
                             ) : templates.length > 0 ? (
                                 <List sx={{ bgcolor: "#f9f9f9", borderRadius: 1 }}>
                                     {templates.map((template) => (
-                                        <ListItem
+                                        <ListItemButton
                                             key={template.category}
-                                            button
-                                            selected={selectedTemplate?.category === template.category}
                                             onClick={() => handleTemplateSelect(template)}
+                                            selected={selectedTemplate?.category === template.category}
                                             sx={{
                                                 borderRadius: 1,
                                                 mb: 0.5,
@@ -230,7 +234,7 @@ const MessageTemplateList = () => {
                                             }}
                                         >
                                             <ListItemText primary={categoryDisplayNames[template.category] || template.category} />
-                                        </ListItem>
+                                        </ListItemButton>
                                     ))}
                                 </List>
                             ) : (

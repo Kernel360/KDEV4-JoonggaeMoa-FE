@@ -139,45 +139,58 @@ const ConsultationList = () => {
         fetchConsultations()
     }, [])
 
-    // fetchConsultations 함수를 수정하여 서버 응답 데이터를 적절히 변환합니다
-    const fetchConsultations = async () => {
-        try {
-            setLoading(true)
-            const response = await consultationApi.getConsultations()
+    // 수정된 fetchConsultations 함수
+const fetchConsultations = async () => {
+    try {
+        setLoading(true)
+        const response = await consultationApi.getConsultations()
 
-            if (response.data.success && response.data.data) {
-                // 서버 응답 데이터를 컴포넌트에서 사용하는 형식으로 변환
-                const formattedConsultations = response.data.data.map((item: ConsultationResponse) => ({
-                    id: item.consultationId,
-                    customer: {
-                        id: item.customerId,
-                        name: item.customerName,
-                        phone: item.customerPhone,
-                        email: "",
-                    },
-                    consultationType: item.consultationType || ConsultationType.VISIT, // 기본값 설정
-                    scheduledAt: item.date,
-                    memo: item.memo || "",
-                    status: item.consultationStatus as ConsultationStatus,
-                    propertyInterest: item.interestProperty,
-                    budget: item.assetStatus,
-                    result: item.result,
-                    nextAction: item.nextAction,
-                    createdAt: item.date,
-                    updatedAt: item.date,
-                }))
+        if (response.data.success && response.data.data) {
+            // 서버 응답 데이터를 직접 ConsultationResponse 형식으로 매핑
+            const formattedConsultations: ConsultationResponse[] = response.data.data.map((item: any) => ({
+                id: item.consultationId,
+                consultationId: item.consultationId,
+                customerId: item.customerId,
+                customerName: item.customerName,
+                customerPhone: item.customerPhone,
+                content: item.content || "",
+                consultationType: item.consultationType || ConsultationType.VISIT,
+                date: item.date,
+                scheduledAt: item.date,
+                purpose: item.purpose || "",
+                interestProperty: item.interestProperty || "",
+                interestLocation: item.interestLocation || "",
+                contractType: item.contractType || "",
+                assetStatus: item.assetStatus || "",
+                memo: item.memo || "",
+                consultationStatus: item.consultationStatus as ConsultationStatus,
+                status: item.consultationStatus as ConsultationStatus,
+                result: item.result || "",
+                nextAction: item.nextAction || "",
+                propertyInterest: item.interestProperty || "",
+                budget: item.assetStatus || "",
+                createdAt: item.date,
+                updatedAt: item.date,
+                // 객체 내부에 객체를 생성하여 고객 정보를 설정
+                customer: {
+                    id: item.customerId,
+                    name: item.customerName,
+                    phone: item.customerPhone,
+                    email: item.customerEmail || "",
+                }
+            }))
 
-                setConsultations(formattedConsultations)
-            } else {
-                setError("상담 목록을 불러오는데 실패했습니다.")
-            }
-        } catch (err) {
-            console.error("Error fetching consultations:", err)
-            setError("상담 목록을 불러오는데 실패했습니다.")
-        } finally {
-            setLoading(false)
+            setConsultations(formattedConsultations)
+        } else {
+            setError("상담 내역을 불러오는데 실패했습니다.")
         }
+    } catch (err) {
+        console.error("Error fetching consultations:", err)
+        setError("상담 내역을 불러오는데 실패했습니다.")
+    } finally {
+        setLoading(false)
     }
+}
 
     // 고객 목록 가져오기
     const fetchCustomers = async () => {

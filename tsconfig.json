@@ -9,5 +9,7 @@
     "esModuleInterop": true,     // ES 모듈 호환 (import 사용 가능)
     "allowSyntheticDefaultImports": true, // Synthetic import 허용
     "skipLibCheck": true,
+    "noEmit": true, // allowImportingTsExtensions 설정에 따라 .ts 확장자 파일 import 허용
+    "allowImportingTsExtensions": true // .ts 확장자 파일 import 허용
   }
 }

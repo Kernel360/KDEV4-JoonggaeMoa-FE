@@ -15,7 +15,7 @@ import {
     Alert,
     Snackbar,
 } from "@mui/material"
-import { useAuth } from "../context/AuthContext"
+import { useAuth } from "../context/AuthContext.tsx"
 import axios from "axios"
 
 function Login() {

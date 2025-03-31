@@ -174,9 +174,12 @@ const SurveyCreate = () => {
             } else {
                 setError(response.data.error?.message || "설문 생성에 실패했습니다.")
             }
-        } catch (err: any) {
+        } catch (err: Error | unknown) {
             console.error("Error creating survey:", err)
-            setError(err.response?.data?.error?.message || "설문 생성에 실패했습니다.")
+            setError(
+                (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message ||
+                "설문 생성에 실패했습니다."
+            )
         } finally {
             setLoading(false)
         }

@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import { SelectChangeEvent } from '@mui/material/Select'
 
 import { useState, useEffect } from "react"
 import {
@@ -132,8 +133,8 @@ const MessageCreate = () => {
         }
     }
 
-    const handleTemplateChange = async (e: React.ChangeEvent<{ value: unknown }>) => {
-        const category = e.target.value as string
+    const handleTemplateChange = async (e: SelectChangeEvent<string>) => {
+        const category = e.target.value
         setSelectedTemplate(category)
 
         if (category) {
@@ -243,7 +244,7 @@ const MessageCreate = () => {
     }
 
     return (
-        <Box sx={{ flexGrow: 1, bgcolor: "#f5f5f5", minHeight: "100vh" }}>
+        <Box component="div" sx={{ flexGrow: 1, bgcolor: "#f5f5f5", minHeight: "100vh" }}>
             <AppBar position="static" color="default" elevation={0} sx={{ bgcolor: "white" }}>
                 <Toolbar>
                     <Typography variant="h6" component="div" sx={{ flexGrow: 1, color: "#888", fontWeight: 300 }}>
@@ -298,6 +299,7 @@ const MessageCreate = () => {
                                         ) : filteredCustomers.length > 0 ? (
                                             filteredCustomers.map((customer) => (
                                                 <Box
+                                                    component="div"  // 이 부분 추가
                                                     key={customer.id}
                                                     sx={{
                                                         display: "flex",

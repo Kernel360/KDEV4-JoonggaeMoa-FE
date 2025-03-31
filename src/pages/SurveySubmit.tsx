@@ -63,7 +63,7 @@ const SurveySubmit: React.FC = () => {
     const emailRef = useRef<HTMLDivElement>(null)
     const phoneRef = useRef<HTMLDivElement>(null)
     const consentRef = useRef<HTMLDivElement>(null)
-    const questionRefs = useRef<{ [key: number]: HTMLDivElement | null }>({})
+    const questionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
     // 설문 데이터 로드
     useEffect(() => {
@@ -281,7 +281,9 @@ const SurveySubmit: React.FC = () => {
                 key={question.id}
                 mb={3}
                 sx={{ backgroundColor: "#f9f9f9", p: 2, borderRadius: 1 }}
-                ref={(el) => (questionRefs.current[question.id] = el)}
+                ref={(el: HTMLDivElement | null) => {
+                    questionRefs.current[question.id] = el;
+                }}
             >
                 <FormControl required={question.isRequired} error={!!questionError} component="fieldset" fullWidth>
                     <FormLabel component="legend" sx={{ mb: 1, fontWeight: "bold" }}>
