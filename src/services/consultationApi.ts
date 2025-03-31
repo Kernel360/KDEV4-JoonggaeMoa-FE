@@ -103,6 +103,10 @@ export const getConsultationsByCustomer = async (
 }
 
 // Export both individual functions and the object for backward compatibility
+const deleteConsultation = (consultationId: number) => {
+    return api.delete(`/api/consultations/${consultationId}`)
+}
+
 export const consultationApi = {
     createConsultation,
     updateConsultation,
@@ -114,5 +118,6 @@ export const consultationApi = {
     getTodayConsultations,
     getConsultationsByDate,
     getConsultationsByCustomer,
+    deleteConsultation,
 }
 

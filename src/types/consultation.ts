@@ -15,11 +15,9 @@ export enum ConsultationType {
     VIDEO = "VIDEO", // 화상 상담
 }
 
-// 상담 생성 요청 타입을 백엔드 구조에 맞게 수정
 export interface ConsultationCreateRequest {
     customerId: number
     date: string // "yyyy-MM-dd HH:mm" 형식
-    // 아래 필드들은 백엔드에서 아직 처리하지 않지만 프론트엔드에서 사용 중
     purpose?: string
     interestProperty?: string
     interestLocation?: string
@@ -29,7 +27,6 @@ export interface ConsultationCreateRequest {
     consultationStatus?: string
 }
 
-// 상담 수정 요청 - 백엔드 API와 일치하도록 수정
 export interface ConsultationUpdateRequest {
     date?: string // "yyyy-MM-dd HH:mm" 형식
     purpose?: string
@@ -55,22 +52,35 @@ export interface CustomerInfo {
     email?: string
 }
 
-// 백엔드에서 제공하는 상담 응답 형태로 변경
 export interface ConsultationResponse {
-    consultationId: number
+    id: number
+    consultationId?: number  // 백엔드 응답용
     customerId: number
     customerName: string
     customerPhone: string
+    customer: {
+        id: number
+        name: string
+        phone: string
+        email?: string
+    }
+    content: string
+    consultationType: ConsultationType
     date: string
+    scheduledAt: string
     purpose?: string
     interestProperty?: string
     interestLocation?: string
     contractType?: string
     assetStatus?: string
     memo?: string
-    consultationStatus: string
+    consultationStatus: ConsultationStatus
+    status?: ConsultationStatus  // 프론트엔드용
     result?: string
     nextAction?: string
-    consultationType?: ConsultationType
+    propertyInterest?: string
+    budget?: string
+    createdAt: string
+    updatedAt: string
 }
 
