@@ -2,7 +2,8 @@ import axios, { type AxiosError, type AxiosResponse, type InternalAxiosRequestCo
 
 // Create axios instance with base URL
 const api = axios.create({
-    baseURL: "http://localhost:8080",
+    // baseURL: "http://localhost:8080",
+    baseURL: "http://54.180.147.127:8080/",
 })
 
 // Function to get access token from localStorage

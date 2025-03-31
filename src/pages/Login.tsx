@@ -40,7 +40,8 @@ function Login() {
 
             // 로그인 요청은 axios 인스턴스를 직접 사용하지 않고 axios 인스턴스를 직접 사용하여
             // 인터셉터의 영향을 받지 않도록 합니다.
-            const response = await axios.post("http://localhost:8080/api/agents/login", loginData, {
+            // const response = await axios.post("http://localhost:8080/api/agents/login", loginData, {
+            const response = await axios.post("http://54.180.147.127:8080/api/agents/login", loginData, {
                 withCredentials: true, // 쿠키를 받기 위해 필수
             })
 
