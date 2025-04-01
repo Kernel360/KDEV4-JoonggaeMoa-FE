@@ -51,6 +51,20 @@ export interface CustomerResponse {
     updatedAt: string
 }
 
+//Page 응답 타입
+export interface PageResponse<T>{
+    content: T[]
+    totalPages: number 
+    totalElements: number
+    number: number // 현재 페이지 번호 (0부터 시작)
+    size: number // 페이지당 데이터 수
+    // sort: Sort // 필요하다면 정렬 정보 추가
+    // pageable: Pageable // 필요하다면 페이지 정보 추가
+    first: boolean
+    last: boolean
+    empty: boolean
+}
+
 // 고객 생성
 export const createCustomer = async (
     customerData: CreateCustomerRequest,
@@ -83,9 +97,13 @@ export const updateCustomer = async (
     return api.patch(`/api/customers/${customerId}`, customerData)
 }
 
-// 모든 고객 조회
-export const getCustomers = async (): Promise<AxiosResponse<ApiResponse<CustomerResponse[]>>> => {
-    return api.get(`/api/customers`)
+// // 모든 고객 조회
+// export const getCustomers = async (p0: { page: number; size: number; sort: string }): Promise<AxiosResponse<ApiResponse<CustomerResponse[]>>> => {
+//     return api.get(`/api/customers`)
+// }
+// 모든 고객 조회 (페이지네이션 적용)
+export const getCustomers = async (page: number = 0, size: number = 10): Promise<AxiosResponse<ApiResponse<PageResponse<CustomerResponse>>>> => {
+    return api.get(`/api/customers?page=${page}&size=${size}`)
 }
 
 // 고객 상세 조회

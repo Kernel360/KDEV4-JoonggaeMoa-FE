@@ -58,8 +58,8 @@ function Register() {
         setError(null)
 
         try {
-            // const response = await axios.post("http://localhost:8080/api/agents/signup", formData)
-            const response = await axios.post("http://54.180.147.127:8080/api/agents/signup", formData)
+            const response = await axios.post("http://localhost:8080/api/agents/signup", formData)
+            //const response = await axios.post("http://54.180.147.127:8080/api/agents/signup", formData)
 
             // Check if registration was successful
             if (response.data.success) {

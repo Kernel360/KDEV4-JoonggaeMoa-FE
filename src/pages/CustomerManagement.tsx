@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef, useCallback } from "react" // useRef, useCallback 추가
 import {
     Box,
     Container,
@@ -18,7 +18,6 @@ import {
     Button,
     IconButton,
     Chip,
-    Pagination,
     AppBar,
     Toolbar,
     Dialog,
@@ -38,41 +37,49 @@ const CustomerManagement: React.FC = () => {
     const [customers, setCustomers] = useState<CustomerResponse[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
-    const [page, setPage] = useState(1)
+    const [page, setPage] = useState(0) // 페이지 번호 0부터 시작
+    const [totalPageCount, setTotalPageCount] = useState(0) // 총 페이지 state
     const [searchTerm, setSearchTerm] = useState("")
     const [openDialog, setOpenDialog] = useState(false)
     const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null)
+    const [hasMore, setHasMore] = useState(false) // 더 불러올 데이터가 있는지 여부
 
     const rowsPerPage = 10
+    const observer = useRef<IntersectionObserver | null>(null) // Intersection Observer ref
+
+    const fetchCustomers = useCallback(async () => {
+        try {
+            setLoading(true);
+            const response = await customerApi.getCustomers(page, rowsPerPage);
+            if (response.data.success && response.data.data) {
+                const newCustomers = response.data.data.content;
+                setCustomers((prevCustomers) => {
+                    const combined = [...prevCustomers, ...newCustomers];
+                    // ID를 기준으로 중복 제거
+                    const uniqueCustomers = Array.from(new Map(combined.map(customer => [customer.id, customer])).values());
+                    return uniqueCustomers;
+                });
+                setTotalPageCount(response.data.data.totalPages);
+                setHasMore(!response.data.data.last);
+            } else {
+                setError("고객 정보를 불러오는데 실패했습니다.");
+            }
+        } catch (err) {
+            console.error("Error fetching customers:", err);
+            setError("고객 정보를 불러오는데 실패했습니다.");
+        } finally {
+            setLoading(false);
+        }
+    }, [page, rowsPerPage]);
 
     useEffect(() => {
         fetchCustomers()
-    }, [])
-
-    const fetchCustomers = async () => {
-        try {
-            setLoading(true)
-            const response = await customerApi.getCustomers()
-            if (response.data.success && response.data.data) {
-                setCustomers(response.data.data)
-            } else {
-                setError("고객 정보를 불러오는데 실패했습니다.")
-            }
-        } catch (err) {
-            console.error("Error fetching customers:", err)
-            setError("고객 정보를 불러오는데 실패했습니다.")
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
-        setPage(value)
-    }
+    }, [fetchCustomers]) // fetchCustomers 함수가 변경될 때마다 호출
 
     const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setSearchTerm(event.target.value)
-        setPage(1) // Reset to first page on search
+        setPage(0) // 검색 시 첫 페이지부터 다시 로드
+        setCustomers([]) // 기존 고객 데이터 초기화
     }
 
     const handleDeleteCustomer = (id: number) => {
@@ -104,21 +111,18 @@ const CustomerManagement: React.FC = () => {
         setSelectedCustomerId(null)
     }
 
-    // Filter customers based on search term
-    const filteredCustomers = customers.filter((customer) => {
-        const matchesSearch =
-            customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            customer.phone.includes(searchTerm) ||
-            (customer.email && customer.email.toLowerCase().includes(searchTerm.toLowerCase()))
+    const lastCustomerRef = useCallback((node: HTMLTableRowElement) => {
+        if (loading) return
+        if (observer.current) observer.current.disconnect()
 
-        return matchesSearch
-    })
+        observer.current = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting && hasMore) {
+                setPage((prevPage) => prevPage + 1)
+            }
+        })
 
-    // Pagination
-    const paginatedCustomers = filteredCustomers.slice((page - 1) * rowsPerPage, page * rowsPerPage)
-
-    // Calculate total pages
-    const totalPages = Math.ceil(filteredCustomers.length / rowsPerPage)
+        if (node) observer.current.observe(node)
+    }, [loading, hasMore, fetchCustomers])
 
     return (
         <Box sx={{ flexGrow: 1, bgcolor: "#f5f5f5", minHeight: "100vh" }}>
@@ -190,14 +194,14 @@ const CustomerManagement: React.FC = () => {
                     />
                 </Paper>
 
-                {loading ? (
+                {loading && customers.length === 0 ? (
                     <Box sx={{ display: "flex", justifyContent: "center", my: 5 }}>
                         <CircularProgress />
                     </Box>
                 ) : error ? (
                     <Paper elevation={0} sx={{ p: 3, textAlign: "center", borderRadius: 2 }}>
                         <Typography color="error">{error}</Typography>
-                        <Button variant="contained" sx={{ mt: 2 }} onClick={fetchCustomers}>
+                        <Button variant="contained" sx={{ mt: 2 }} onClick={() => setPage(0)}> {/* 첫 페이지부터 다시 로드 */}
                             다시 시도
                         </Button>
                     </Paper>
@@ -217,51 +221,49 @@ const CustomerManagement: React.FC = () => {
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {paginatedCustomers.length > 0 ? (
-                                        paginatedCustomers.map((customer) => (
-                                            <TableRow
-                                                key={customer.id}
-                                                hover
-                                                onClick={() => navigate(`/customer-management/${customer.id}`)}
-                                                sx={{ cursor: "pointer" }}
-                                            >
-                                                <TableCell>{customer.name}</TableCell>
-                                                <TableCell>{customer.phone}</TableCell>
-                                                <TableCell>{customer.email}</TableCell>
-                                                <TableCell>{customer.job}</TableCell>
-                                                <TableCell>{new Date(customer.createdAt).toLocaleDateString()}</TableCell>
-                                                <TableCell>
-                                                    <Chip
-                                                        label={customer.isVip ? "VIP" : "일반"}
-                                                        color={customer.isVip ? "success" : "default"}
-                                                        size="small"
-                                                        sx={{
-                                                            bgcolor: customer.isVip ? "#e8f5e9" : "#f5f5f5",
-                                                            color: customer.isVip ? "#2e7d32" : "#757575",
-                                                            border: "none",
-                                                        }}
-                                                    />
-                                                </TableCell>
-                                                <TableCell>
-                                                    <IconButton
-                                                        size="small"
-                                                        color="error"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation()
-                                                            handleDeleteCustomer(customer.id)
-                                                        }}
-                                                    >
-                                                        <Delete fontSize="small" />
-                                                    </IconButton>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
-                                    ) : (
+                                    {customers.map((customer, index) => (
+                                        <TableRow
+                                            key={customer.id}
+                                            hover
+                                            onClick={() => navigate(`/customer-management/${customer.id}`)}
+                                            sx={{ cursor: "pointer" }}
+                                            ref={index === customers.length - 1 ? lastCustomerRef : null} // 마지막 요소에 ref 연결
+                                        >
+                                            <TableCell>{customer.name}</TableCell>
+                                            <TableCell>{customer.phone}</TableCell>
+                                            <TableCell>{customer.email}</TableCell>
+                                            <TableCell>{customer.job}</TableCell>
+                                            <TableCell>{new Date(customer.createdAt).toLocaleDateString()}</TableCell>
+                                            <TableCell>
+                                                <Chip
+                                                    label={customer.isVip ? "VIP" : "일반"}
+                                                    color={customer.isVip ? "success" : "default"}
+                                                    size="small"
+                                                    sx={{
+                                                        bgcolor: customer.isVip ? "#e8f5e9" : "#f5f5f5",
+                                                        color: customer.isVip ? "#2e7d32" : "#757575",
+                                                        border: "none",
+                                                    }}
+                                                />
+                                            </TableCell>
+                                            <TableCell>
+                                                <IconButton
+                                                    size="small"
+                                                    color="error"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        handleDeleteCustomer(customer.id)
+                                                    }}
+                                                >
+                                                    <Delete fontSize="small" />
+                                                </IconButton>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                    {loading && customers.length > 0 && (
                                         <TableRow>
-                                            <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
-                                                <Typography variant="body1">
-                                                    {searchTerm ? "검색 결과가 없습니다." : "등록된 고객이 없습니다."}
-                                                </Typography>
+                                            <TableCell colSpan={7} align="center">
+                                                <CircularProgress size={20} />
                                             </TableCell>
                                         </TableRow>
                                     )}
@@ -269,12 +271,10 @@ const CustomerManagement: React.FC = () => {
                             </Table>
                         </TableContainer>
 
-                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 2 }}>
+                        <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
                             <Typography variant="body2" color="textSecondary">
-                                전체 {filteredCustomers.length}건 중 {Math.min((page - 1) * rowsPerPage + 1, filteredCustomers.length)}
-                                에서 {Math.min(page * rowsPerPage, filteredCustomers.length)}까지 표시
+                                전체 {totalPageCount * rowsPerPage}건 중 {customers.length}건 표시
                             </Typography>
-                            <Pagination count={totalPages} page={page} onChange={handlePageChange} shape="rounded" />
                         </Box>
                     </>
                 )}
@@ -311,4 +311,3 @@ const CustomerManagement: React.FC = () => {
 }
 
 export default CustomerManagement
-
