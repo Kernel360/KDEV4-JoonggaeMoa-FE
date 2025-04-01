@@ -81,7 +81,15 @@ export const surveyApi = {
     },
     getSurveyById,
     submitSurveyAnswer,
-    getAllSurveyAnswers,
+    getAllSurveyAnswers: (page: number = 0, size: number = 10) => {
+        return api.get('/api/surveys/answer', {
+            params: {
+                page,
+                size,
+                sort: 'id,desc'
+            }
+        })
+    },
     getSurveyForCustomer,
     submitSurveyAnswerForCustomer,
 }
