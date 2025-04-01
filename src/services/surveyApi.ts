@@ -8,6 +8,8 @@ import type {
     AnswerResponse,
 } from "../types/survey"
 import type { ApiResponse } from "../types/api"
+import type { PageResponse } from "../types/survey" // PageResponse 타입 임포트
+import axios from "axios"
 
 // 설문 생성
 export const createSurvey = async (surveyData: SurveyCreateRequest): Promise<AxiosResponse<ApiResponse<void>>> => {
@@ -68,7 +70,15 @@ export const surveyApi = {
     createSurvey,
     deleteSurvey,
     updateSurvey,
-    getSurveys,
+    getSurveys: (page: number = 0, size: number = 10) => {
+        return api.get(`/api/surveys`, {
+            params: {
+                page,
+                size,
+                sort: 'id,desc'
+            }
+        })
+    },
     getSurveyById,
     submitSurveyAnswer,
     getAllSurveyAnswers,

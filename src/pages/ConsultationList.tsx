@@ -199,7 +199,7 @@ const fetchConsultations = async () => {
             const response = await customerApi.getCustomers()
 
             if (response.data.success && response.data.data) {
-                setCustomers(response.data.data)
+                setCustomers(response.data.data.content)
             } else {
                 setCreateError("고객 목록을 불러오는데 실패했습니다.")
             }
@@ -876,4 +876,3 @@ const fetchConsultations = async () => {
 }
 
 export default ConsultationList
-
