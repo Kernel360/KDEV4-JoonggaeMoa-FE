@@ -33,6 +33,17 @@ export interface QuestionResponse {
     options: string[]
 }
 
+export interface PageResponse<T> {
+    content: T[];
+    pageable: {
+        pageNumber: number;
+        pageSize: number;
+    };
+    last: boolean;
+    totalElements: number;
+    totalPages: number;
+}
+
 // 설문 생성 요청
 export interface SurveyCreateRequest {
     title: string

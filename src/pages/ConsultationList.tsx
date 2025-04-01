@@ -876,4 +876,3 @@ const fetchConsultations = async () => {
 }
 
 export default ConsultationList
-

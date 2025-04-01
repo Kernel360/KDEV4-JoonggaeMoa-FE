@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import {
     Box,
     Container,
@@ -37,7 +37,7 @@ import type { SurveyResponse } from "../types/survey"
 
 const SurveyList = () => {
     const navigate = useNavigate()
-    const [surveys, setSurveys] = useState<SurveyResponse[]>([])
+    const [surveys, setSurveys] = useState<SurveyResponse[]>([])  // Ensure it's initialized as an empty array
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -45,19 +45,68 @@ const SurveyList = () => {
     const [deleteLoading, setDeleteLoading] = useState(false)
     const [successMessage, setSuccessMessage] = useState<string | null>(null)
     const [searchTerm, setSearchTerm] = useState("")
-    // Add copyUrlSuccess state
     const [copyUrlSuccess, setCopyUrlSuccess] = useState<string | null>(null)
+    
+    // Add these new states and refs
+    const [page, setPage] = useState(0)
+    const [hasMore, setHasMore] = useState(true)
+    const [isLoadingMore, setIsLoadingMore] = useState(false)
+    const observerRef = useRef<IntersectionObserver | null>(null)
+    const loadingRef = useRef<HTMLDivElement | null>(null)
 
     useEffect(() => {
         fetchSurveys()
     }, [])
 
-    const fetchSurveys = async () => {
+    useEffect(() => {
+        if (loading) return
+
+        const observer = new IntersectionObserver(
+            entries => {
+                if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
+                    setPage(prev => {
+                        const nextPage = prev + 1
+                        fetchSurveys(nextPage)
+                        return nextPage
+                    })
+                }
+            },
+            { threshold: 1.0 }
+        )
+
+        observerRef.current = observer
+
+        if (loadingRef.current) {
+            observer.observe(loadingRef.current)
+        }
+
+        return () => {
+            if (observerRef.current) {
+                observerRef.current.disconnect()
+            }
+        }
+    }, [loading, hasMore, isLoadingMore])
+
+    const fetchSurveys = async (pageNum: number = 0) => {
         try {
-            setLoading(true)
-            const response = await surveyApi.getSurveys()
+            if (pageNum === 0) {
+                setLoading(true)
+            } else {
+                setIsLoadingMore(true)
+            }
+            
+            const response = await surveyApi.getSurveys(Number(pageNum))  // Ensure pageNum is a number
+            console.log('Survey response:', response)  // Add this for debugging
+            
             if (response.data.success && response.data.data) {
-                setSurveys(response.data.data)
+                const newSurveys = response.data.data.content || []
+                if (pageNum === 0) {
+                    setSurveys(newSurveys)
+                } else {
+                    setSurveys(prev => [...prev, ...newSurveys])
+                }
+                setHasMore(!response.data.data.last)
+                setError(null)  // Clear any existing error when successful
             } else {
                 setError("설문 목록을 불러오는데 실패했습니다.")
             }
@@ -66,6 +115,7 @@ const SurveyList = () => {
             setError("설문 목록을 불러오는데 실패했습니다.")
         } finally {
             setLoading(false)
+            setIsLoadingMore(false)
         }
     }
 
@@ -135,7 +185,9 @@ const SurveyList = () => {
     }
 
     // 검색어로 필터링
-    const filteredSurveys = surveys.filter((survey) => survey.title.toLowerCase().includes(searchTerm.toLowerCase()))
+    const filteredSurveys = Array.isArray(surveys) 
+        ? surveys.filter((survey) => survey.title.toLowerCase().includes(searchTerm.toLowerCase()))
+        : []
 
     return (
         <Box sx={{ flexGrow: 1, bgcolor: "#f5f5f5", minHeight: "100vh" }}>
@@ -273,6 +325,11 @@ const SurveyList = () => {
                                 )}
                             </TableBody>
                         </Table>
+                        {hasMore && (
+                            <Box ref={loadingRef} sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+                                {isLoadingMore && <CircularProgress size={24} />}
+                            </Box>
+                        )}
                     </TableContainer>
                 )}
             </Container>
