@@ -1,8 +1,7 @@
 "use client"
 
 import type React from "react"
-
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import {
     Box,
     Container,
@@ -79,16 +78,65 @@ const SurveyAnswers = () => {
     const [detailDialogOpen, setDetailDialogOpen] = useState(false)
     const [tabValue, setTabValue] = useState(0)
 
+    // Add new state variables for pagination
+    const [page, setPage] = useState(0)
+    const [hasMore, setHasMore] = useState(true)
+    const [isLoadingMore, setIsLoadingMore] = useState(false)
+    const observerRef = useRef<IntersectionObserver | null>(null)
+    const loadingRef = useRef<HTMLDivElement | null>(null)
+
     useEffect(() => {
         fetchSurveyAnswers()
     }, [])
 
-    const fetchSurveyAnswers = async () => {
+    // Add intersection observer effect
+    useEffect(() => {
+        if (loading) return
+
+        const observer = new IntersectionObserver(
+            entries => {
+                if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
+                    setPage(prev => {
+                        const nextPage = prev + 1
+                        fetchSurveyAnswers(nextPage)
+                        return nextPage
+                    })
+                }
+            },
+            { threshold: 1.0 }
+        )
+
+        observerRef.current = observer
+
+        if (loadingRef.current) {
+            observer.observe(loadingRef.current)
+        }
+
+        return () => {
+            if (observerRef.current) {
+                observerRef.current.disconnect()
+            }
+        }
+    }, [loading, hasMore, isLoadingMore])
+
+    // Modify fetchSurveyAnswers to handle pagination
+    const fetchSurveyAnswers = async (pageNum: number = 0) => {
         try {
-            setLoading(true)
-            const response = await surveyApi.getAllSurveyAnswers()
+            if (pageNum === 0) {
+                setLoading(true)
+            } else {
+                setIsLoadingMore(true)
+            }
+            
+            const response = await surveyApi.getAllSurveyAnswers(pageNum)
             if (response.data.success && response.data.data) {
-                setAnswers(response.data.data)
+                const newAnswers = response.data.data.content || []
+                if (pageNum === 0) {
+                    setAnswers(newAnswers)
+                } else {
+                    setAnswers(prev => [...prev, ...newAnswers])
+                }
+                setHasMore(!response.data.data.last)
             } else {
                 setError("설문 응답 목록을 불러오는데 실패했습니다.")
             }
@@ -97,6 +145,7 @@ const SurveyAnswers = () => {
             setError("설문 응답 목록을 불러오는데 실패했습니다.")
         } finally {
             setLoading(false)
+            setIsLoadingMore(false)
         }
     }
 
