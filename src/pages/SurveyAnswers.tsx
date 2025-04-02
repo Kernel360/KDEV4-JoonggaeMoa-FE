@@ -266,7 +266,11 @@ const SurveyAnswers = () => {
                 ) : error ? (
                     <Paper elevation={0} sx={{ p: 3, textAlign: "center" }}>
                         <Typography color="error">{error}</Typography>
-                        <Button variant="contained" sx={{ mt: 2 }} onClick={fetchSurveyAnswers}>
+                        <Button 
+                            variant="contained" 
+                            sx={{ mt: 2 }} 
+                            onClick={(e: React.MouseEvent<HTMLButtonElement>) => fetchSurveyAnswers(0)}
+                        >
                             다시 시도
                         </Button>
                     </Paper>

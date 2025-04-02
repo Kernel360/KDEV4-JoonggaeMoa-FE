@@ -57,21 +57,21 @@ const ContractCreate = () => {
     }, [])
 
     const fetchCustomers = async () => {
-        try {
-            setCustomerLoading(true)
-            const response = await customerApi.getCustomers()
-            if (response.data.success) {
-                setCustomers(response.data.data)
-            } else {
-                setError("고객 목록을 불러오는데 실패했습니다.")
-            }
-        } catch (err) {
-            console.error("Error fetching customers:", err)
+    try {
+        setCustomerLoading(true)
+        const response = await customerApi.getCustomers()
+        if (response.data.success && response.data.data) {
+            setCustomers(response.data.data.content)
+        } else {
             setError("고객 목록을 불러오는데 실패했습니다.")
-        } finally {
-            setCustomerLoading(false)
         }
+    } catch (err) {
+        console.error("Error fetching customers:", err)
+        setError("고객 목록을 불러오는데 실패했습니다.")
+    } finally {
+        setCustomerLoading(false)
     }
+}
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
@@ -216,7 +216,7 @@ const ContractCreate = () => {
                         <Grid container spacing={3}>
                             <Grid item xs={12} sm={6}>
                                 <Autocomplete
-                                    options={customers}
+                                    options={customers || []}
                                     loading={customerLoading}
                                     getOptionLabel={(option) => `${option.name} (${option.phone})`}
                                     value={selectedLandlord}
@@ -243,7 +243,7 @@ const ContractCreate = () => {
                             </Grid>
                             <Grid item xs={12} sm={6}>
                                 <Autocomplete
-                                    options={customers}
+                                    options={customers || []}
                                     loading={customerLoading}
                                     getOptionLabel={(option) => `${option.name} (${option.phone})`}
                                     value={selectedTenant}

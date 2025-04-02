@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import {
     Box,
     Container,
@@ -23,7 +23,7 @@ import {
 import { Search, Add, ArrowBack, History, Edit, Delete } from "@mui/icons-material"
 import { useNavigate } from "react-router-dom"
 import { messageApi } from "../services/messageApi"
-import type { ReservedMessage } from "../types/message"
+import type { ReservedMessage, ReservedMessageResponse } from "../types/message"
 
 const MessageList = () => {
     const navigate = useNavigate()
@@ -31,18 +31,40 @@ const MessageList = () => {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [searchTerm, setSearchTerm] = useState("")
+    const [page, setPage] = useState(0) // Start from page 0 to match API pagination
+    const [hasMore, setHasMore] = useState(true) // Assuming there is data initially
+    const [loadingMore, setLoadingMore] = useState(false)
+    const [pageSize] = useState(20) // Smaller page size for more frequent loading
+    const observer = useRef<IntersectionObserver>()
 
-    useEffect(() => {
-        fetchReservedMessages()
-    }, [])
-
-    const fetchReservedMessages = async () => {
+    const fetchReservedMessages = useCallback(async (currentPage: number = 0) => {
         try {
-            setLoading(true)
-            const response = await messageApi.getReservedMessages()
-            if (response.data.success) {
-                setMessages(response.data.data)
+            if (currentPage === 0) {
+                setLoading(true)
             } else {
+                setLoadingMore(true)
+            }
+            
+            const response = await messageApi.getReservedMessages({ 
+                page: currentPage,
+                size: pageSize
+            })
+            
+            if (response.data.success) {
+                const responseData = response.data.data as unknown as ReservedMessageResponse;
+                const newData = responseData.content || [];
+                const totalPages = responseData.totalPages || 0;
+                const totalElements = responseData.totalElements || 0;
+                
+                setMessages(prevMessages => {
+                    if (currentPage === 0) return newData;
+                    return [...prevMessages, ...newData];
+                });
+                
+                setHasMore(totalPages > currentPage + 1);
+                setPage(currentPage);
+            } else {
+                console.error('API Error:', response.data)
                 setError("예약된 메시지 목록을 불러오는데 실패했습니다.")
             }
         } catch (err) {
@@ -50,8 +72,13 @@ const MessageList = () => {
             setError("예약된 메시지 목록을 불러오는데 실패했습니다.")
         } finally {
             setLoading(false)
+            setLoadingMore(false)
         }
-    }
+    }, [pageSize])
+
+    useEffect(() => {
+        fetchReservedMessages(0) // Start from page 0
+    }, [fetchReservedMessages])
 
     // 날짜 형식화 함수
     const formatDate = (dateString: string) => {
@@ -70,10 +97,30 @@ const MessageList = () => {
     }
 
     // 검색어로 필터링
-    const filteredMessages = messages.filter(
+    const filteredMessages = messages?.filter(
         (message) =>
             message.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             message.content?.toLowerCase().includes(searchTerm.toLowerCase()),
+    ) || []
+
+    // lastMessageElementRef 수정 - 화면에 마지막 요소가 보일 때 다음 페이지 로드
+    const lastMessageElementRef = useCallback(
+        (node) => {
+            if (loading || loadingMore) return
+            if (observer.current) observer.current.disconnect()
+            
+            observer.current = new IntersectionObserver(entries => {
+                if (entries[0].isIntersecting && hasMore) {
+                    const nextPage = page + 1
+                    fetchReservedMessages(nextPage)
+                }
+            }, {
+                rootMargin: '100px' // Load earlier before user reaches the bottom
+            })
+            
+            if (node) observer.current.observe(node)
+        },
+        [loading, loadingMore, hasMore, page, fetchReservedMessages]
     )
 
     return (
@@ -152,14 +199,14 @@ const MessageList = () => {
                     />
                 </Paper>
 
-                {loading ? (
+                {loading && !loadingMore ? (
                     <Box sx={{ display: "flex", justifyContent: "center", my: 5 }}>
                         <CircularProgress />
                     </Box>
                 ) : error ? (
                     <Paper elevation={0} sx={{ p: 3, textAlign: "center", borderRadius: 2 }}>
                         <Typography color="error">{error}</Typography>
-                        <Button variant="contained" sx={{ mt: 2 }} onClick={fetchReservedMessages}>
+                        <Button variant="contained" sx={{ mt: 2 }} onClick={() => fetchReservedMessages(0)}>
                             다시 시도
                         </Button>
                     </Paper>
@@ -179,8 +226,16 @@ const MessageList = () => {
                             </TableHead>
                             <TableBody>
                                 {filteredMessages.length > 0 ? (
-                                    filteredMessages.map((message) => (
-                                        <TableRow key={message.id} hover>
+                                    filteredMessages.map((message, index) => (
+                                        <TableRow
+                                            key={message.id || index}
+                                            hover
+                                            ref={
+                                                filteredMessages.length === index + 1 && !searchTerm
+                                                    ? lastMessageElementRef
+                                                    : null
+                                            }
+                                        >
                                             <TableCell>{formatDate(message.sendAt)}</TableCell>
                                             <TableCell>{message.customerName}</TableCell>
                                             <TableCell>{message.customerPhone || "-"}</TableCell>
@@ -190,10 +245,24 @@ const MessageList = () => {
                                                 {message.content}
                                             </TableCell>
                                             <TableCell align="right">
-                                                <IconButton size="small" color="primary">
+                                                <IconButton 
+                                                    size="small" 
+                                                    color="primary" 
+                                                    onClick={() => navigate(`/message/edit/${message.id}`)}
+                                                >
                                                     <Edit fontSize="small" />
                                                 </IconButton>
-                                                <IconButton size="small" color="error" sx={{ ml: 1 }}>
+                                                <IconButton 
+                                                    size="small" 
+                                                    color="error" 
+                                                    sx={{ ml: 1 }}
+                                                    onClick={() => {
+                                                        // 여기에 삭제 로직 추가
+                                                        if (window.confirm('예약된 메시지를 삭제하시겠습니까?')) {
+                                                            // 삭제 API 호출 로직
+                                                        }
+                                                    }}
+                                                >
                                                     <Delete fontSize="small" />
                                                 </IconButton>
                                             </TableCell>
@@ -205,6 +274,13 @@ const MessageList = () => {
                                             <Typography variant="body1">
                                                 {searchTerm ? "검색 결과가 없습니다." : "예약된 문자가 없습니다."}
                                             </Typography>
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                                {loadingMore && (
+                                    <TableRow>
+                                        <TableCell colSpan={5} align="center" sx={{ py: 2 }}>
+                                            <CircularProgress size={24} />
                                         </TableCell>
                                     </TableRow>
                                 )}
@@ -224,4 +300,3 @@ const MessageList = () => {
 }
 
 export default MessageList
-
