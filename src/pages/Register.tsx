@@ -20,6 +20,8 @@ import {
 } from "@mui/material"
 import axios from "axios"
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 interface FormData {
     username: string
     password: string
@@ -58,8 +60,8 @@ function Register() {
         setError(null)
 
         try {
-            const response = await axios.post("http://localhost:8080/api/agents/signup", formData)
-            //const response = await axios.post("http://54.180.147.127:8080/api/agents/signup", formData)
+            const response = await axios.post(`${API_BASE_URL}/api/agents/signup`, formData)
+            //const response = await axios.post(`${API_BASE_URL}/api/agents/signup`, formData)
 
             // Check if registration was successful
             if (response.data.success) {

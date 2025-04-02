@@ -1,9 +1,11 @@
 import axios, { type AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from "axios"
 
+const { VITE_API_BASE_URL } = import.meta.env;
+
 // Create axios instance with base URL
 const api = axios.create({
-    baseURL: "http://localhost:8080",
-    //baseURL: "http://54.180.147.127:8080",
+    baseURL: VITE_API_BASE_URL,
+    // withCredentials: true,
 })
 
 // Function to get access token from localStorage
@@ -56,7 +58,7 @@ api.interceptors.response.use(
                     "/api/refresh-token",
                     {},
                     {
-                        baseURL: "http://localhost:8080",
+                        baseURL: VITE_API_BASE_URL,
                         withCredentials: true, // Important for sending cookies
                     },
                 )
