@@ -56,7 +56,15 @@ export const contractApi = {
     createContract,
     deleteContract,
     updateContract,
-    getAllContracts,
+    getAllContracts: (page: number = 0, size: number = 10) => {
+        return api.get('/api/contracts', {
+            params: {
+                page,
+                size,
+                sort: 'id,desc'
+            }
+        })
+    },
     getContractById,
 }
 

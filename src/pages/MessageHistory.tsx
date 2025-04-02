@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import {
     Box,
     Container,
@@ -29,35 +29,30 @@ import type { MessageResponse } from "../services/messageApi"
 
 const MessageHistory = () => {
     const navigate = useNavigate()
-    const [messages, setMessages] = useState<MessageResponse[]>([])
+    const [messages, setMessages] = useState<MessageResponse[]>(() => [])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [searchTerm, setSearchTerm] = useState("")
+    const [page, setPage] = useState(0)
+    const [hasMore, setHasMore] = useState(true)
+    const [loadingMore, setLoadingMore] = useState(false)
+    const [pageSize] = useState(10)
+    const observer = useRef<IntersectionObserver>()
 
-    // 카테고리 표시 이름 매핑
-    const categoryDisplayNames: Record<string, string> = {
-        [MessageCategory.BIRTHDAY]: "생일 축하",
-        [MessageCategory.EXPIRATION]: "계약 만료",
-        [MessageCategory.WELCOME]: "환영 메시지",
-    }
-
-    // 상태별 칩 색상 및 텍스트
-    const statusConfig = {
-        [MessageStatus.SENT]: { color: "#e8f5e9", textColor: "#2e7d32", label: "전송 완료" },
-        [MessageStatus.FAILED]: { color: "#ffebee", textColor: "#c62828", label: "전송 실패" },
-        [MessageStatus.PENDING]: { color: "#fff8e1", textColor: "#f57c00", label: "전송 대기" },
-    }
-
-    useEffect(() => {
-        fetchMessages()
-    }, [])
-
-    const fetchMessages = async () => {
+    const fetchMessages = useCallback(async (currentPage: number = 0) => {
         try {
-            setLoading(true)
-            const response = await messageApi.getMessages()
+            if (currentPage === 0) setLoading(true)
+            else setLoadingMore(true)
+
+            const response = await messageApi.getMessages({ page: currentPage, size: pageSize })
+
             if (response.data.success) {
-                setMessages(response.data.data)
+                const responseData = response.data.data
+                const newData = Array.isArray(responseData.content) ? responseData.content : []
+
+                setMessages(prevMessages => (currentPage === 0 ? newData : [...prevMessages, ...newData]))
+                setHasMore(!responseData.last)
+                setPage(currentPage)
             } else {
                 setError("메시지 목록을 불러오는데 실패했습니다.")
             }
@@ -66,10 +61,42 @@ const MessageHistory = () => {
             setError("메시지 목록을 불러오는데 실패했습니다.")
         } finally {
             setLoading(false)
+            setLoadingMore(false)
         }
+    }, [pageSize])
+
+    useEffect(() => {
+        fetchMessages(0)
+    }, [fetchMessages])
+
+    const lastMessageElementRef = useCallback(
+        (node) => {
+            if (loading || loadingMore || !hasMore) return
+            if (observer.current) observer.current.disconnect()
+
+            observer.current = new IntersectionObserver(entries => {
+                if (entries[0].isIntersecting && hasMore) {
+                    fetchMessages(page + 1)
+                }
+            }, { rootMargin: '100px' })
+
+            if (node) observer.current.observe(node)
+        },
+        [loading, loadingMore, hasMore, page, fetchMessages]
+    )
+
+    const categoryDisplayNames: Record<string, string> = {
+        [MessageCategory.BIRTHDAY]: "생일 축하",
+        [MessageCategory.EXPIRATION]: "계약 만료",
+        [MessageCategory.WELCOME]: "환영 메시지",
     }
 
-    // 날짜 형식화 함수
+    const statusConfig = {
+        [MessageStatus.SENT]: { color: "#e8f5e9", textColor: "#2e7d32", label: "전송 완료" },
+        [MessageStatus.FAILED]: { color: "#ffebee", textColor: "#c62828", label: "전송 실패" },
+        [MessageStatus.PENDING]: { color: "#fff8e1", textColor: "#f57c00", label: "전송 대기" },
+    }
+
     const formatDate = (dateString: string) => {
         try {
             const date = new Date(dateString)
@@ -85,12 +112,13 @@ const MessageHistory = () => {
         }
     }
 
-    // 검색어로 필터링
-    const filteredMessages = messages.filter(
-        (message) =>
-            message.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            message.content?.toLowerCase().includes(searchTerm.toLowerCase()),
-    )
+    const filteredMessages = searchTerm
+        ? (Array.isArray(messages) ? messages : []).filter(
+            (message) =>
+                message.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                message.content?.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+        : Array.isArray(messages) ? messages : []
 
     return (
         <Box sx={{ flexGrow: 1, bgcolor: "#f5f5f5", minHeight: "100vh" }}>
@@ -102,36 +130,7 @@ const MessageHistory = () => {
                 </Toolbar>
             </AppBar>
 
-            <Container
-                maxWidth="lg"
-                sx={{
-                    mt: 4,
-                    mb: 4,
-                    mx: "auto",
-                    px: { xs: 2, sm: 3, md: 4 },
-                }}
-            >
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
-                    <Box sx={{ display: "flex", alignItems: "center" }}>
-                        <IconButton onClick={() => navigate("/message")} sx={{ mr: 1 }}>
-                            <ArrowBack />
-                        </IconButton>
-                        <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                            지난 문자 조회
-                        </Typography>
-                    </Box>
-                    <Box>
-                        <Button
-                            variant="outlined"
-                            sx={{ mr: 2, borderColor: "#ddd", color: "#333" }}
-                            onClick={() => navigate("/message")}
-                            startIcon={<Schedule />}
-                        >
-                            예약된 문자 관리
-                        </Button>
-                    </Box>
-                </Box>
-
+            <Container maxWidth="lg" sx={{ mt: 4, mb: 4, mx: "auto", px: { xs: 2, sm: 3, md: 4 } }}>
                 <Paper elevation={0} sx={{ mb: 3, p: 3, borderRadius: 2 }}>
                     <TextField
                         placeholder="고객명 또는 내용으로 검색"
@@ -154,37 +153,30 @@ const MessageHistory = () => {
                     <Box sx={{ display: "flex", justifyContent: "center", my: 5 }}>
                         <CircularProgress />
                     </Box>
-                ) : error ? (
-                    <Paper elevation={0} sx={{ p: 3, textAlign: "center", borderRadius: 2 }}>
-                        <Typography color="error">{error}</Typography>
-                        <Button variant="contained" sx={{ mt: 2 }} onClick={fetchMessages}>
-                            다시 시도
-                        </Button>
-                    </Paper>
                 ) : (
-                    <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2, overflow: "hidden" }}>
+                    <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2 }}>
                         <Table>
                             <TableHead>
                                 <TableRow sx={{ bgcolor: "#f9f9f9" }}>
-                                    <TableCell sx={{ fontWeight: 500 }}>발송 시간</TableCell>
-                                    <TableCell sx={{ fontWeight: 500 }}>고객명</TableCell>
-                                    <TableCell sx={{ fontWeight: 500 }}>전화번호</TableCell>
-                                    <TableCell sx={{ fontWeight: 500 }}>내용</TableCell>
-                                    <TableCell sx={{ fontWeight: 500 }}>상태</TableCell>
+                                    <TableCell>발송 시간</TableCell>
+                                    <TableCell>고객명</TableCell>
+                                    <TableCell>전화번호</TableCell>
+                                    <TableCell>내용</TableCell>
+                                    <TableCell>상태</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
                                 {filteredMessages.length > 0 ? (
-                                    filteredMessages.map((message) => (
-                                        <TableRow key={message.id} hover>
+                                    filteredMessages.map((message, index) => (
+                                        <TableRow 
+                                            key={message.id} 
+                                            hover
+                                            ref={!searchTerm && index === filteredMessages.length - 1 ? lastMessageElementRef : null}
+                                        >
                                             <TableCell>{formatDate(message.createdAt)}</TableCell>
                                             <TableCell>{message.customerName}</TableCell>
                                             <TableCell>{message.customerPhone || "-"}</TableCell>
-                                            <TableCell
-                                                sx={{ maxWidth: "300px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
-                                            >
-                                                {message.content}
-                                            </TableCell>
+                                            <TableCell>{message.content}</TableCell>
                                             <TableCell>
                                                 <Chip
                                                     label={statusConfig[message.sendStatus]?.label || "알 수 없음"}
@@ -199,11 +191,7 @@ const MessageHistory = () => {
                                     ))
                                 ) : (
                                     <TableRow>
-                                        <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
-                                            <Typography variant="body1">
-                                                {searchTerm ? "검색 결과가 없습니다." : "전송된 문자가 없습니다."}
-                                            </Typography>
-                                        </TableCell>
+                                        <TableCell colSpan={5} align="center">전송된 문자가 없습니다.</TableCell>
                                     </TableRow>
                                 )}
                             </TableBody>
@@ -211,15 +199,8 @@ const MessageHistory = () => {
                     </TableContainer>
                 )}
             </Container>
-
-            <Box sx={{ bgcolor: "#fff", p: 2, textAlign: "center", mt: 4 }}>
-                <Typography variant="caption" color="textSecondary">
-                    © 2024 Customer Management System. All rights reserved.
-                </Typography>
-            </Box>
         </Box>
     )
 }
 
 export default MessageHistory
-

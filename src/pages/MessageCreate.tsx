@@ -96,21 +96,21 @@ const MessageCreate = () => {
     }, [])
 
     const fetchCustomers = async () => {
-        try {
-            setCustomerLoading(true)
-            const response = await customerApi.getCustomers()
-            if (response.data.success) {
-                setCustomers(response.data.data)
-            } else {
-                setError("고객 목록을 불러오는데 실패했습니다.")
-            }
-        } catch (err) {
-            console.error("Error fetching customers:", err)
+    try {
+        setCustomerLoading(true)
+        const response = await customerApi.getCustomers()
+        if (response.data.success && response.data.data) {
+            setCustomers(response.data.data.content)
+        } else {
             setError("고객 목록을 불러오는데 실패했습니다.")
-        } finally {
-            setCustomerLoading(false)
         }
+    } catch (err) {
+        console.error("Error fetching customers:", err)
+        setError("고객 목록을 불러오는데 실패했습니다.")
+    } finally {
+        setCustomerLoading(false)
     }
+}
 
     const fetchTemplates = async () => {
         try {

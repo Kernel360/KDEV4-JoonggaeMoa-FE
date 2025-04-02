@@ -25,14 +25,14 @@ export interface MessageResponse {
 }
 
 // 메시지 목록 조회 (과거 전송된 메시지)
-const getMessages = async (lastMessageId?: number): Promise<AxiosResponse<ApiResponse<MessageResponse[]>>> => {
-    const url = `/api/messages${lastMessageId ? `?lastMessageId=${lastMessageId}` : ""}`
+const getMessages = async (params: { page?: number; size?: number } = {}): Promise<AxiosResponse<ApiResponse<MessageResponse[]>>> => {
+    const url = `/api/messages${params.page ? `?page=${params.page}` : ""}${params.page && params.size ? `&size=${params.size}` : (params.size ? `?size=${params.size}` : "")}`
     return api.get(url)
 }
 
 // 예약된 메시지 목록 조회
-const getReservedMessages = async (lastMessageId?: number): Promise<AxiosResponse<ApiResponse<ReservedMessage[]>>> => {
-    const url = `/api/reserved-message${lastMessageId ? `?lastMessageId=${lastMessageId}` : ""}`
+const getReservedMessages = async (params: { page?: number; size?: number } = {}): Promise<AxiosResponse<ApiResponse<ReservedMessage[]>>> => {
+    const url = `/api/reserved-message${params.page ? `?page=${params.page}` : ""}${params.page && params.size ? `&size=${params.size}` : (params.size ? `?size=${params.size}` : "")}`
     return api.get(url)
 }
 
@@ -42,9 +42,17 @@ const createMessage = async (messageData: MessageRequest): Promise<AxiosResponse
 }
 
 // 모든 함수를 객체로 묶어서 export
+// Remove the duplicate getMessages function and update the export
 export const messageApi = {
-    getMessages,
+    getMessages: async (params: { page: number; size: number }) => {
+        return api.get('/api/messages', {
+            params: {
+                page: params.page,
+                size: params.size,
+                sort: 'createdAt,desc'
+            }
+        })
+    },
     getReservedMessages,
     createMessage,
 }
-

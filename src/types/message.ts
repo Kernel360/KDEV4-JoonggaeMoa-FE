@@ -24,12 +24,20 @@ export interface Message {
 
 // 예약된 메시지 타입
 export interface ReservedMessage {
-    id: number
-    sendAt: string
-    customerId: number
-    customerName: string
-    customerPhone?: string
-    content: string
+    id: number;
+    customerName: string;
+    customerPhone: string;
+    content: string;
+    sendAt: string;
+}
+
+export interface ReservedMessageResponse {
+    content: ReservedMessage[];
+    totalPages: number;
+    totalElements: number;
+    last: boolean;
+    size: number;
+    number: number;
 }
 
 // 메시지 템플릿 타입
