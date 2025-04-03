@@ -305,8 +305,6 @@ const ContractList = () => {
                             <TableHead>
                                 <TableRow sx={{ bgcolor: "#f9f9f9" }}>
                                     <TableCell sx={{ fontWeight: 500 }}>계약번호</TableCell>
-                                    {/* <TableCell sx={{ fontWeight: 500 }}>임대인 ID</TableCell>
-                                    <TableCell sx={{ fontWeight: 500 }}>임차인 ID</TableCell> */}
                                     <TableCell sx={{ fontWeight: 500 }}>임대인 이름</TableCell>
                                     <TableCell sx={{ fontWeight: 500 }}>임차인 이름</TableCell>
                                     <TableCell sx={{ fontWeight: 500 }}>계약일</TableCell>
@@ -330,8 +328,6 @@ const ContractList = () => {
                                                     sx={{ cursor: "pointer" }}
                                                 >
                                                     <TableCell>{contract.id}</TableCell>
-                                                    {/* <TableCell>{contract.landlordId}</TableCell>
-                                                    <TableCell>{contract.tenantId}</TableCell> */}
                                                     <TableCell>{contract.landlordName}</TableCell>
                                                     <TableCell>{contract.tenantName}</TableCell>
                                                     <TableCell>{formatDate(contract.createdAt)}</TableCell>
