@@ -1,23 +1,21 @@
 "use client"
 
-import React from "react"
+import React, { useState } from "react"
 import {
-    AppBar,
-    Toolbar,
-    Typography,
     Box,
-    Container,
-    Grid,
+    Typography,
+    List,
+    ListItem,
+    ListItemIcon,
+    ListItemText,
     Paper,
-    Button,
+    Grid,
     Avatar,
     IconButton,
     Badge,
-    List,
-    ListItem,
-    ListItemAvatar,
-    ListItemText,
-    Divider,
+    Button,
+    createTheme,
+    ThemeProvider,
 } from "@mui/material"
 import {
     Business,
@@ -25,19 +23,63 @@ import {
     Forum,
     Email,
     Home,
-    Work,
     Person,
     Notifications,
-    Add,
     Assignment,
     InsertDriveFile,
+    Search,
+    Dashboard as DashboardIcon,
+    Settings,
+    Menu as MenuIcon,
+    ChevronLeft,
 } from "@mui/icons-material"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 
+// 커스텀 테마 생성
+const theme = createTheme({
+    typography: {
+        fontFamily: "'Pretendard', -apple-system, sans-serif",
+        h4: {
+            fontWeight: 600,
+            fontSize: '1.5rem',
+        },
+        h6: {
+            fontWeight: 600,
+            fontSize: '1rem',
+        },
+        body1: {
+            fontSize: '0.9rem',
+        },
+        body2: {
+            fontSize: '0.875rem',
+        },
+    },
+    components: {
+        MuiButton: {
+            styleOverrides: {
+                root: {
+                    textTransform: 'none',
+                    borderRadius: '8px',
+                    fontWeight: 500,
+                },
+            },
+        },
+        MuiPaper: {
+            styleOverrides: {
+                root: {
+                    borderRadius: '12px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                },
+            },
+        },
+    },
+});
+
 const Dashboard = () => {
     const { logout } = useAuth()
     const navigate = useNavigate()
+    const [sidebarOpen, setSidebarOpen] = useState(true)
 
     const handleCustomerManagement = () => {
         navigate("/customer-management")
@@ -59,373 +101,398 @@ const Dashboard = () => {
         navigate("/message")
     }
 
+    const handleMyPage = () => {
+        navigate("/my-page")
+    }
+
     return (
-        <Box sx={{ flexGrow: 1, bgcolor: "#f5f5f5", minHeight: "100vh" }}>
-            <AppBar position="static" color="default" elevation={0} sx={{ bgcolor: "white" }}>
-                <Toolbar>
-                    <Typography variant="h6" component="div" sx={{ flexGrow: 1, color: "#888", fontWeight: 300 }}>
-                        대시보드
-                    </Typography>
-                    <Box sx={{ display: "flex", alignItems: "center" }}>
-                        <IconButton size="large" color="inherit">
-                            <Badge badgeContent={3} color="error">
-                                <Notifications />
-                            </Badge>
-                        </IconButton>
-                        <Box sx={{ display: "flex", alignItems: "center", ml: 2 }}>
-                            <Avatar sx={{ bgcolor: "#3f51b5", width: 36, height: 36 }}>김</Avatar>
-                            <Typography variant="body2" sx={{ ml: 1 }}>
-                                김부동 중개사
-                            </Typography>
-                        </Box>
-                        <Button
-                            variant="contained"
-                            color="primary"
-                            sx={{ ml: 2, bgcolor: "#000", "&:hover": { bgcolor: "#333" } }}
-                            onClick={logout}
-                        >
-                            로그아웃
-                        </Button>
+        <ThemeProvider theme={theme}>
+            <Box sx={{ display: 'flex', bgcolor: '#f8f9fa', minHeight: "100vh" }}>
+                {/* Sidebar */}
+                <Box
+                    sx={{
+                        width: 240,
+                        minWidth: sidebarOpen ? 240 : 0,
+                        bgcolor: '#111',
+                        color: 'white',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        transition: 'all 0.3s ease',
+                        position: 'fixed',
+                        height: '100vh',
+                        transform: sidebarOpen ? 'none' : 'translateX(-240px)',
+                        zIndex: 1200,
+                    }}
+                >
+                    {/* Toggle Button */}
+                    <IconButton
+                        onClick={() => setSidebarOpen(!sidebarOpen)}
+                        sx={{
+                            position: 'absolute',
+                            right: -20,
+                            top: 20,
+                            bgcolor: '#111',
+                            color: 'white',
+                            width: 20,
+                            height: 40,
+                            '&:hover': {
+                                bgcolor: '#333',
+                            },
+                            zIndex: 1200,
+                            borderRadius: '0 8px 8px 0',
+                        }}
+                    >
+                        <ChevronLeft sx={{ transform: sidebarOpen ? 'none' : 'scaleX(-1)' }} />
+                    </IconButton>
+
+                    {/* Logo */}
+                    <Box sx={{ p: 3, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                        <Typography variant="h5" sx={{ 
+                            fontWeight: 700, 
+                            color: 'white',
+                            fontSize: '1.25rem',
+                            whiteSpace: 'nowrap',
+                        }}>
+                            부동산 CRM
+                        </Typography>
                     </Box>
-                </Toolbar>
-            </AppBar>
 
-            <Container
-                maxWidth="lg"
-                sx={{
-                    mt: 4,
-                    mb: 4,
-                    mx: "auto",
-                    px: { xs: 2, sm: 3, md: 4 },
-                }}
-            >
-                {/* Menu Icons */}
-                <Grid container spacing={2} sx={{ mb: 4 }}>
-                    <Grid item xs={12} sm={4} md={2}>
-                        <Paper
-                            elevation={0}
-                            sx={{
-                                p: 3,
-                                display: "flex",
-                                flexDirection: "column",
-                                alignItems: "center",
-                                cursor: "pointer",
-                                borderRadius: 2,
-                                transition: "all 0.2s",
-                                "&:hover": { bgcolor: "#f0f7ff", transform: "translateY(-2px)" },
-                            }}
-                            onClick={handleContractManagement}
-                        >
-                            <InsertDriveFile sx={{ fontSize: 40, mb: 1, color: "#3f51b5" }} />
-                            <Typography variant="body2" sx={{ color: "#3f51b5", fontWeight: "bold" }}>
-                                계약관리
-                            </Typography>
-                        </Paper>
-                    </Grid>
-                    <Grid item xs={12} sm={4} md={2}>
-                        <Paper
-                            elevation={0}
-                            sx={{
-                                p: 3,
-                                display: "flex",
-                                flexDirection: "column",
-                                alignItems: "center",
-                                cursor: "default",
-                                borderRadius: 2,
-                                transition: "all 0.2s",
-                                "&:hover": { bgcolor: "#f0f7ff", transform: "translateY(-2px)" },
+                    {/* Menu Items */}
+                    <List sx={{ py: 1, whiteSpace: 'nowrap' }}>
+                        <ListItem 
+                            button 
+                            onClick={() => navigate("/dashboard")}
+                            selected 
+                            sx={{ 
+                                py: 1.5,
+                                bgcolor: 'rgba(255,255,255,0.1)',
+                                '&:hover': { bgcolor: 'rgba(255,255,255,0.15)' },
                             }}
                         >
-                            <Business sx={{ fontSize: 40, mb: 1 }} />
-                            <Typography variant="body2">매물관리</Typography>
-                        </Paper>
-                    </Grid>
-                    <Grid item xs={12} sm={4} md={2}>
-                        <Paper
-                            elevation={0}
-                            sx={{
-                                p: 3,
-                                display: "flex",
-                                flexDirection: "column",
-                                alignItems: "center",
-                                cursor: "pointer",
-                                borderRadius: 2,
-                                transition: "all 0.2s",
-                                "&:hover": { bgcolor: "#f0f7ff", transform: "translateY(-2px)" },
-                            }}
-                            onClick={handleCustomerManagement}
-                        >
-                            <People sx={{ fontSize: 40, mb: 1, color: "#3f51b5" }} />
-                            <Typography variant="body2" sx={{ color: "#3f51b5", fontWeight: "bold" }}>
-                                고객관리
-                            </Typography>
-                        </Paper>
-                    </Grid>
-                    <Grid item xs={12} sm={4} md={2}>
-                        <Paper
-                            elevation={0}
-                            sx={{
-                                p: 3,
-                                display: "flex",
-                                flexDirection: "column",
-                                alignItems: "center",
-                                cursor: "pointer",
-                                borderRadius: 2,
-                                transition: "all 0.2s",
-                                "&:hover": { bgcolor: "#f0f7ff", transform: "translateY(-2px)" },
-                            }}
-                            onClick={handleConsultationManagement}
-                        >
-                            <Forum sx={{ fontSize: 40, mb: 1, color: "#3f51b5" }} />
-                            <Typography variant="body2" sx={{ color: "#3f51b5", fontWeight: "bold" }}>
-                                상담관리
-                            </Typography>
-                        </Paper>
-                    </Grid>
-                    <Grid item xs={12} sm={4} md={2}>
-                        <Paper
-                            elevation={0}
-                            sx={{
-                                p: 3,
-                                display: "flex",
-                                flexDirection: "column",
-                                alignItems: "center",
-                                cursor: "pointer",
-                                borderRadius: 2,
-                                transition: "all 0.2s",
-                                "&:hover": { bgcolor: "#f0f7ff", transform: "translateY(-2px)" },
-                            }}
-                            onClick={handleSurveyManagement}
-                        >
-                            <Assignment sx={{ fontSize: 40, mb: 1, color: "#3f51b5" }} />
-                            <Typography variant="body2" sx={{ color: "#3f51b5", fontWeight: "bold" }}>
-                                설문관리
-                            </Typography>
-                        </Paper>
-                    </Grid>
-                    <Grid item xs={12} sm={4} md={2}>
-                        <Paper
-                            elevation={0}
-                            sx={{
-                                p: 3,
-                                display: "flex",
-                                flexDirection: "column",
-                                alignItems: "center",
-                                cursor: "pointer",
-                                borderRadius: 2,
-                                transition: "all 0.2s",
-                                "&:hover": { bgcolor: "#f0f7ff", transform: "translateY(-2px)" },
-                            }}
-                            onClick={handleMessageManagement}
-                        >
-                            <Email sx={{ fontSize: 40, mb: 1, color: "#3f51b5" }} />
-                            <Typography variant="body2" sx={{ color: "#3f51b5", fontWeight: "bold" }}>
-                                문자관리
-                            </Typography>
-                        </Paper>
-                    </Grid>
-                </Grid>
+                            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
+                                <DashboardIcon />
+                            </ListItemIcon>
+                            <ListItemText 
+                                primary="대시보드" 
+                                primaryTypographyProps={{
+                                    fontSize: '0.9rem',
+                                }}
+                            />
+                        </ListItem>
 
-                {/* Stats Cards */}
-                <Grid container spacing={2} sx={{ mb: 4 }}>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <Paper elevation={0} sx={{ p: 2, borderRadius: 2 }}>
-                            <Box sx={{ display: "flex", alignItems: "center" }}>
-                                <Avatar sx={{ bgcolor: "#f5f5f5", color: "#555" }}>
-                                    <Work />
-                                </Avatar>
-                                <Box sx={{ ml: 2 }}>
-                                    <Typography variant="caption" color="textSecondary">
-                                        금일 상담 예약
-                                    </Typography>
-                                    <Typography variant="h5" sx={{ fontWeight: "bold" }}>
-                                        8건
-                                    </Typography>
-                                </Box>
-                            </Box>
-                        </Paper>
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <Paper elevation={0} sx={{ p: 2, borderRadius: 2 }}>
-                            <Box sx={{ display: "flex", alignItems: "center" }}>
-                                <Avatar sx={{ bgcolor: "#f5f5f5", color: "#555" }}>
-                                    <Home />
-                                </Avatar>
-                                <Box sx={{ ml: 2 }}>
-                                    <Typography variant="caption" color="textSecondary">
-                                        신규 매물
-                                    </Typography>
-                                    <Typography variant="h5" sx={{ fontWeight: "bold" }}>
-                                        12건
-                                    </Typography>
-                                </Box>
-                            </Box>
-                        </Paper>
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <Paper elevation={0} sx={{ p: 2, borderRadius: 2 }}>
-                            <Box sx={{ display: "flex", alignItems: "center" }}>
-                                <Avatar sx={{ bgcolor: "#f5f5f5", color: "#555" }}>
-                                    <InsertDriveFile />
-                                </Avatar>
-                                <Box sx={{ ml: 2 }}>
-                                    <Typography variant="caption" color="textSecondary">
-                                        진행중 계약
-                                    </Typography>
-                                    <Typography variant="h5" sx={{ fontWeight: "bold" }}>
-                                        5건
-                                    </Typography>
-                                </Box>
-                            </Box>
-                        </Paper>
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <Paper elevation={0} sx={{ p: 2, borderRadius: 2 }}>
-                            <Box sx={{ display: "flex", alignItems: "center" }}>
-                                <Avatar sx={{ bgcolor: "#f5f5f5", color: "#555" }}>
-                                    <Person />
-                                </Avatar>
-                                <Box sx={{ ml: 2 }}>
-                                    <Typography variant="caption" color="textSecondary">
-                                        신규 문의
-                                    </Typography>
-                                    <Typography variant="h5" sx={{ fontWeight: "bold" }}>
-                                        15건
-                                    </Typography>
-                                </Box>
-                            </Box>
-                        </Paper>
-                    </Grid>
-                </Grid>
+                        <ListItem 
+                            disabled
+                            sx={{ 
+                                py: 1.5,
+                                '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' },
+                                opacity: 0.5,
+                            }}
+                        >
+                            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
+                                <Business />
+                            </ListItemIcon>
+                            <ListItemText 
+                                primary="매물 관리"
+                                primaryTypographyProps={{
+                                    fontSize: '0.9rem',
+                                }}
+                            />
+                        </ListItem>
 
-                {/* Recent Activities and Quick Actions */}
-                <Grid container spacing={3}>
-                    <Grid item xs={12} md={7}>
-                        <Paper elevation={0} sx={{ p: 3, borderRadius: 2 }}>
-                            <Typography variant="h6" sx={{ mb: 2, fontWeight: "bold" }}>
-                                최근 활동
-                            </Typography>
+                        <ListItem 
+                            button 
+                            onClick={() => navigate("/contract")}
+                            sx={{ 
+                                py: 1.5,
+                                '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' },
+                            }}
+                        >
+                            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
+                                <InsertDriveFile />
+                            </ListItemIcon>
+                            <ListItemText 
+                                primary="계약 관리"
+                                primaryTypographyProps={{
+                                    fontSize: '0.9rem',
+                                }}
+                            />
+                        </ListItem>
+
+                        <ListItem 
+                            button 
+                            onClick={() => navigate("/customer-management")}
+                            sx={{ 
+                                py: 1.5,
+                                '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' },
+                            }}
+                        >
+                            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
+                                <People />
+                            </ListItemIcon>
+                            <ListItemText 
+                                primary="고객 관리"
+                                primaryTypographyProps={{
+                                    fontSize: '0.9rem',
+                                }}
+                            />
+                        </ListItem>
+
+                        <ListItem 
+                            button 
+                            onClick={() => navigate("/consultation")}
+                            sx={{ 
+                                py: 1.5,
+                                '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' },
+                            }}
+                        >
+                            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
+                                <Forum />
+                            </ListItemIcon>
+                            <ListItemText 
+                                primary="상담 관리"
+                                primaryTypographyProps={{
+                                    fontSize: '0.9rem',
+                                }}
+                            />
+                        </ListItem>
+
+                        <ListItem 
+                            button 
+                            onClick={() => navigate("/survey")}
+                            sx={{ 
+                                py: 1.5,
+                                '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' },
+                            }}
+                        >
+                            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
+                                <Assignment />
+                            </ListItemIcon>
+                            <ListItemText 
+                                primary="설문 관리"
+                                primaryTypographyProps={{
+                                    fontSize: '0.9rem',
+                                }}
+                            />
+                        </ListItem>
+
+                        <ListItem 
+                            button 
+                            onClick={() => navigate("/message")}
+                            sx={{ 
+                                py: 1.5,
+                                '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' },
+                            }}
+                        >
+                            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
+                                <Email />
+                            </ListItemIcon>
+                            <ListItemText 
+                                primary="문자 관리"
+                                primaryTypographyProps={{
+                                    fontSize: '0.9rem',
+                                }}
+                            />
+                        </ListItem>
+                    </List>
+
+                    <Box sx={{ mt: 'auto', p: 2, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                        <ListItem 
+                            disabled
+                            sx={{ 
+                                borderRadius: '8px',
+                                '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' },
+                                opacity: 0.5,
+                            }}
+                        >
+                            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
+                                <Person />
+                            </ListItemIcon>
+                            <ListItemText 
+                                primary="마이페이지"
+                                primaryTypographyProps={{
+                                    fontSize: '0.9rem',
+                                }}
+                            />
+                        </ListItem>
+                    </Box>
+                </Box>
+
+                {/* Main Content */}
+                <Box sx={{ 
+                    flexGrow: 1, 
+                    p: 4,
+                    transition: 'all 0.3s ease',
+                    marginLeft: sidebarOpen ? '240px' : 0,
+                    width: sidebarOpen ? 'calc(100% - 240px)' : '100%',
+                }}>
+                    {/* Header */}
+                    <Box sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        mb: 4, 
+                        justifyContent: 'flex-end',
+                    }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                            <IconButton>
+                                <Badge badgeContent={5} color="error">
+                                    <Notifications />
+                                </Badge>
+                            </IconButton>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Avatar sx={{ width: 32, height: 32 }}>김</Avatar>
+                                <Typography variant="body2">김부동</Typography>
+                            </Box>
+                        </Box>
+                    </Box>
+
+                    {/* Stats */}
+                    <Grid container spacing={3} sx={{ mb: 4 }}>
+                        <Grid item xs={12} md={4}>
+                            <Paper sx={{ p: 3 }}>
+                                <Typography color="textSecondary" variant="body2" sx={{ mb: 1 }}>
+                                    활성 매물
+                                </Typography>
+                                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+                                    <Typography variant="h4">146</Typography>
+                                    <Typography 
+                                        variant="body2" 
+                                        sx={{ 
+                                            color: '#4caf50',
+                                            bgcolor: '#e8f5e9',
+                                            px: 1,
+                                            py: 0.5,
+                                            borderRadius: '4px',
+                                        }}
+                                    >
+                                        +12%
+                                    </Typography>
+                                </Box>
+                                <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                                    전주 대비
+                                </Typography>
+                            </Paper>
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                            <Paper sx={{ p: 3 }}>
+                                <Typography color="textSecondary" variant="body2" sx={{ mb: 1 }}>
+                                    진행중인 계약
+                                </Typography>
+                                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+                                    <Typography variant="h4">28</Typography>
+                                    <Typography 
+                                        variant="body2" 
+                                        sx={{ 
+                                            color: '#4caf50',
+                                            bgcolor: '#e8f5e9',
+                                            px: 1,
+                                            py: 0.5,
+                                            borderRadius: '4px',
+                                        }}
+                                    >
+                                        +5%
+                                    </Typography>
+                                </Box>
+                                <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                                    전주 대비
+                                </Typography>
+                            </Paper>
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                            <Paper sx={{ p: 3 }}>
+                                <Typography color="textSecondary" variant="body2" sx={{ mb: 1 }}>
+                                    이번달 거래 완료
+                                </Typography>
+                                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+                                    <Typography variant="h4">42</Typography>
+                                    <Typography 
+                                        variant="body2" 
+                                        sx={{ 
+                                            color: '#4caf50',
+                                            bgcolor: '#e8f5e9',
+                                            px: 1,
+                                            py: 0.5,
+                                            borderRadius: '4px',
+                                        }}
+                                    >
+                                        +18%
+                                    </Typography>
+                                </Box>
+                                <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                                    전월 대비
+                                </Typography>
+                            </Paper>
+                        </Grid>
+                    </Grid>
+
+                    {/* Charts */}
+                    <Grid container spacing={3}>
+                        <Grid item xs={12} md={8}>
+                            <Paper sx={{ p: 3 }}>
+                                <Typography variant="h6" sx={{ mb: 3 }}>월별 계약 실적</Typography>
+                                {/* Add Chart Component Here */}
+                            </Paper>
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                            <Paper sx={{ p: 3 }}>
+                                <Typography variant="h6" sx={{ mb: 3 }}>매물 유형별 분포</Typography>
+                                {/* Add Pie Chart Component Here */}
+                            </Paper>
+                        </Grid>
+                    </Grid>
+
+                    {/* Recent Activities */}
+                    <Box sx={{ mt: 3 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                            <Typography variant="h6">최근 활동</Typography>
+                            <Button variant="text" sx={{ color: '#666' }}>전체</Button>
+                        </Box>
+                        <Paper sx={{ p: 0 }}>
                             <List>
-                                <ListItem alignItems="flex-start">
-                                    <ListItemAvatar>
-                                        <Avatar sx={{ bgcolor: "#000" }}>KM</Avatar>
-                                    </ListItemAvatar>
+                                <ListItem sx={{ py: 2 }}>
+                                    <ListItemIcon>
+                                        <Avatar sx={{ bgcolor: '#e3f2fd', color: '#1976d2' }}>
+                                            <Business />
+                                        </Avatar>
+                                    </ListItemIcon>
                                     <ListItemText
-                                        primary="김민수님 상담 예약"
-                                        secondary={
-                                            <React.Fragment>
-                                                <Typography component="span" variant="body2" color="textPrimary">
-                                                    강남구 아파트 매매 관련 상담
-                                                </Typography>
-                                                <Typography variant="caption" display="block" color="textSecondary">
-                                                    10분 전
-                                                </Typography>
-                                            </React.Fragment>
-                                        }
+                                        primary="신규 매물 등록"
+                                        secondary="강남구 역삼동 2층 사무실"
+                                        secondaryTypographyProps={{ sx: { color: '#666' } }}
                                     />
+                                    <Typography variant="body2" color="textSecondary">방금 전</Typography>
                                 </ListItem>
-                                <Divider variant="inset" component="li" />
-                                <ListItem alignItems="flex-start">
-                                    <ListItemAvatar>
-                                        <Avatar sx={{ bgcolor: "#4caf50" }}>LP</Avatar>
-                                    </ListItemAvatar>
+                                <ListItem sx={{ py: 2 }}>
+                                    <ListItemIcon>
+                                        <Avatar sx={{ bgcolor: '#fce4ec', color: '#d81b60' }}>
+                                            <Person />
+                                        </Avatar>
+                                    </ListItemIcon>
                                     <ListItemText
-                                        primary="이평화님 매물 등록"
-                                        secondary={
-                                            <React.Fragment>
-                                                <Typography component="span" variant="body2" color="textPrimary">
-                                                    서초구 신규 매물 등록 완료
-                                                </Typography>
-                                                <Typography variant="caption" display="block" color="textSecondary">
-                                                    1시간 전
-                                                </Typography>
-                                            </React.Fragment>
-                                        }
+                                        primary="고객 상담 완료"
+                                        secondary="이창호 고객님 - 전세 문의"
+                                        secondaryTypographyProps={{ sx: { color: '#666' } }}
                                     />
+                                    <Typography variant="body2" color="textSecondary">1시간 전</Typography>
                                 </ListItem>
-                                <Divider variant="inset" component="li" />
-                                <ListItem alignItems="flex-start">
-                                    <ListItemAvatar>
-                                        <Avatar sx={{ bgcolor: "#ff9800" }}>PJ</Avatar>
-                                    </ListItemAvatar>
+                                <ListItem sx={{ py: 2 }}>
+                                    <ListItemIcon>
+                                        <Avatar sx={{ bgcolor: '#e8f5e9', color: '#43a047' }}>
+                                            <InsertDriveFile />
+                                        </Avatar>
+                                    </ListItemIcon>
                                     <ListItemText
-                                        primary="박정민님 계약 진행"
-                                        secondary={
-                                            <React.Fragment>
-                                                <Typography component="span" variant="body2" color="textPrimary">
-                                                    송파구 오피스텔 계약금 입금 완료
-                                                </Typography>
-                                                <Typography variant="caption" display="block" color="textSecondary">
-                                                    2시간 전
-                                                </Typography>
-                                            </React.Fragment>
-                                        }
+                                        primary="계약 진행 상태 변경"
+                                        secondary="서초동 오피스텔 - 계약금 입금"
+                                        secondaryTypographyProps={{ sx: { color: '#666' } }}
                                     />
+                                    <Typography variant="body2" color="textSecondary">2시간 전</Typography>
                                 </ListItem>
                             </List>
                         </Paper>
-                    </Grid>
-                    <Grid item xs={12} md={5}>
-                        <Paper elevation={0} sx={{ p: 3, borderRadius: 2 }}>
-                            <Typography variant="h6" sx={{ mb: 2, fontWeight: "bold" }}>
-                                빠른 작업
-                            </Typography>
-                            <Grid container spacing={2}>
-                                <Grid item xs={12} sm={6}>
-                                    <Button
-                                        variant="outlined"
-                                        fullWidth
-                                        startIcon={<Add />}
-                                        sx={{ justifyContent: "flex-start", p: 1.5, borderColor: "#e0e0e0", color: "#333" }}
-                                        onClick={() => navigate("/customer-management/add")}
-                                    >
-                                        신규 고객 등록
-                                    </Button>
-                                </Grid>
-                                <Grid item xs={12} sm={6}>
-                                    <Button
-                                        variant="outlined"
-                                        fullWidth
-                                        startIcon={<Forum />}
-                                        sx={{ justifyContent: "flex-start", p: 1.5, borderColor: "#e0e0e0", color: "#333" }}
-                                        onClick={() => navigate("/consultation/create")}
-                                    >
-                                        상담 등록하기
-                                    </Button>
-                                </Grid>
-                                <Grid item xs={12} sm={6}>
-                                    <Button
-                                        variant="outlined"
-                                        fullWidth
-                                        startIcon={<InsertDriveFile />}
-                                        sx={{ justifyContent: "flex-start", p: 1.5, borderColor: "#e0e0e0", color: "#333" }}
-                                        onClick={() => navigate("/contract/create")}
-                                    >
-                                        계약 등록하기
-                                    </Button>
-                                </Grid>
-                                <Grid item xs={12} sm={6}>
-                                    <Button
-                                        variant="outlined"
-                                        fullWidth
-                                        startIcon={<Email />}
-                                        sx={{ justifyContent: "flex-start", p: 1.5, borderColor: "#e0e0e0", color: "#333" }}
-                                        onClick={() => navigate("/message/create")}
-                                    >
-                                        문자 발송
-                                    </Button>
-                                </Grid>
-                            </Grid>
-                        </Paper>
-                    </Grid>
-                </Grid>
-            </Container>
-            <Box sx={{ bgcolor: "#fff", p: 2, textAlign: "center", mt: 4 }}>
-                <Typography variant="caption" color="textSecondary">
-                    © 2024 Customer Management System. All rights reserved.
-                </Typography>
+                    </Box>
+                </Box>
             </Box>
-        </Box>
+        </ThemeProvider>
     )
 }
 
