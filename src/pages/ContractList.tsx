@@ -202,9 +202,8 @@ const ContractList = () => {
 
     // 검색어와 상태 필터로 계약 필터링
     const filteredContracts = contracts.filter((contract) => {
-        // 검색어 필터링 (임대인, 임차인 ID로 검색)
+        // 검색어 필터링 (임대인, 임차인 이름으로 검색)
         const searchMatch =
-            // contract.landlordId.toString().includes(searchTerm) || contract.tenantId.toString().includes(searchTerm)
             contract.landlordName.toString().includes(searchTerm) || contract.tenantName.toString().includes(searchTerm)
 
         // 상태 필터링
@@ -258,7 +257,7 @@ const ContractList = () => {
                 <Paper elevation={0} sx={{ mb: 3, p: 3, borderRadius: 2 }}>
                     <Box sx={{ display: "flex", gap: 2 }}>
                         <TextField
-                            placeholder="임대인 또는 임차인 ID로 검색"
+                            placeholder="임대인 또는 임차인 이름으로 검색"
                             variant="outlined"
                             size="small"
                             fullWidth
