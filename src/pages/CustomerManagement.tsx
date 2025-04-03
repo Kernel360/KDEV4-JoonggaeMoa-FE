@@ -214,10 +214,7 @@ const CustomerManagement: React.FC = () => {
                                         <TableCell sx={{ fontWeight: 500 }}>고객명</TableCell>
                                         <TableCell sx={{ fontWeight: 500 }}>연락처</TableCell>
                                         <TableCell sx={{ fontWeight: 500 }}>이메일</TableCell>
-                                        <TableCell sx={{ fontWeight: 500 }}>직업</TableCell>
-                                        <TableCell sx={{ fontWeight: 500 }}>등록일자</TableCell>
                                         <TableCell sx={{ fontWeight: 500 }}>상태</TableCell>
-                                        <TableCell sx={{ fontWeight: 500 }}>작업</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -227,13 +224,11 @@ const CustomerManagement: React.FC = () => {
                                             hover
                                             onClick={() => navigate(`/customer-management/${customer.id}`)}
                                             sx={{ cursor: "pointer" }}
-                                            ref={index === customers.length - 1 ? lastCustomerRef : null} // 마지막 요소에 ref 연결
+                                            ref={index === customers.length - 1 ? lastCustomerRef : null}
                                         >
                                             <TableCell>{customer.name}</TableCell>
                                             <TableCell>{customer.phone}</TableCell>
                                             <TableCell>{customer.email}</TableCell>
-                                            <TableCell>{customer.job}</TableCell>
-                                            <TableCell>{new Date(customer.createdAt).toLocaleDateString()}</TableCell>
                                             <TableCell>
                                                 <Chip
                                                     label={customer.isVip ? "VIP" : "일반"}
@@ -246,23 +241,11 @@ const CustomerManagement: React.FC = () => {
                                                     }}
                                                 />
                                             </TableCell>
-                                            <TableCell>
-                                                <IconButton
-                                                    size="small"
-                                                    color="error"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation()
-                                                        handleDeleteCustomer(customer.id)
-                                                    }}
-                                                >
-                                                    <Delete fontSize="small" />
-                                                </IconButton>
-                                            </TableCell>
                                         </TableRow>
                                     ))}
                                     {loading && customers.length > 0 && (
                                         <TableRow>
-                                            <TableCell colSpan={7} align="center">
+                                            <TableCell colSpan={4} align="center">
                                                 <CircularProgress size={20} />
                                             </TableCell>
                                         </TableRow>

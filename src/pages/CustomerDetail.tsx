@@ -227,14 +227,6 @@ const CustomerDetail = () => {
                                 {customer.consent ? "동의함" : "동의하지 않음"}
                             </Typography>
                         </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <Typography variant="subtitle2" color="textSecondary">
-                                등록일
-                            </Typography>
-                            <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
-                                {new Date(customer.createdAt).toLocaleDateString()}
-                            </Typography>
-                        </Grid>
                         <Grid item xs={12}>
                             <Divider sx={{ my: 2 }} />
                             <Typography variant="subtitle2" color="textSecondary">
