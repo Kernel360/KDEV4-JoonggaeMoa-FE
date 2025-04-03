@@ -33,8 +33,8 @@ const ContractDetail = () => {
     const navigate = useNavigate()
     const { id } = useParams<{ id: string }>()
     const [contract, setContract] = useState<ContractResponse | null>(null)
-    const [landlord, setLandlord] = useState<CustomerResponse | null>(null)
-    const [tenant, setTenant] = useState<CustomerResponse | null>(null)
+    // const [landlord, setLandlord] = useState<CustomerResponse | null>(null)
+    // const [tenant, setTenant] = useState<CustomerResponse | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -57,24 +57,25 @@ const ContractDetail = () => {
                 setContract(contractData)
 
                 // 임대인 정보 조회
-                try {
-                    const landlordResponse = await customerApi.getCustomerById(contractData.landlordId)
-                    if (landlordResponse.data.success && landlordResponse.data.data) {
-                        setLandlord(landlordResponse.data.data)
-                    }
-                } catch (err) {
-                    console.error("Error fetching landlord details:", err)
-                }
+                // try {
+                //     // const landlordResponse = await customerApi.getCustomerById(contractData.landlordId)
+                //     const landlordResponse = await customerApi.getCustomerById(contractData.landlordName)
+                //     if (landlordResponse.data.success && landlordResponse.data.data) {
+                //         setLandlord(landlordResponse.data.data)
+                //     }
+                // } catch (err) {
+                //     console.error("Error fetching landlord details:", err)
+                // }
 
                 // 임차인 정보 조회
-                try {
-                    const tenantResponse = await customerApi.getCustomerById(contractData.tenantId)
-                    if (tenantResponse.data.success && tenantResponse.data.data) {
-                        setTenant(tenantResponse.data.data)
-                    }
-                } catch (err) {
-                    console.error("Error fetching tenant details:", err)
-                }
+                // try {
+                //     const tenantResponse = await customerApi.getCustomerById(contractData.tenantId)
+                //     if (tenantResponse.data.success && tenantResponse.data.data) {
+                //         setTenant(tenantResponse.data.data)
+                //     }
+                // } catch (err) {
+                //     console.error("Error fetching tenant details:", err)
+                // }
             } else {
                 setError("계약 정보를 불러오는데 실패했습니다.")
             }
@@ -285,7 +286,9 @@ const ContractDetail = () => {
                                 이름
                             </Typography>
                             <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
-                                {landlord ? landlord.name : `ID: ${contract.landlordId}`}
+                                {/* {landlord ? landlord.name : `ID: ${contract.landlordId}`} */}
+                                {/* {landlord ? landlord.name : `${contract.landlordName}`} */}
+                                {contract.landlordName || "-"}
                             </Typography>
                         </Grid>
                         <Grid item xs={12} sm={6}>
@@ -293,19 +296,19 @@ const ContractDetail = () => {
                                 연락처
                             </Typography>
                             <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
-                                {landlord ? landlord.phone : "-"}
+                                {/* {landlord ? landlord.phone : "-"} */}
+                                {contract.landlordPhone || "-"}
                             </Typography>
                         </Grid>
-                        {landlord && (
-                            <Grid item xs={12}>
-                                <Typography variant="subtitle2" color="textSecondary">
-                                    이메일
-                                </Typography>
-                                <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
-                                    {landlord.email || "-"}
-                                </Typography>
-                            </Grid>
-                        )}
+                        <Grid item xs={12}>
+                            <Typography variant="subtitle2" color="textSecondary">
+                                이메일
+                            </Typography>
+                            <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
+                                {/* {landlord.email || "-"} */}
+                                {contract.landlordEmail || "-"}
+                            </Typography>
+                        </Grid>
                     </Grid>
 
                     <Divider sx={{ my: 3 }} />
@@ -319,7 +322,9 @@ const ContractDetail = () => {
                                 이름
                             </Typography>
                             <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
-                                {tenant ? tenant.name : `ID: ${contract.tenantId}`}
+                                {/* {tenant ? tenant.name : `ID: ${contract.tenantId}`} */}
+                                {/* {tenant ? tenant.name : `${contract.tenantName}`} */}
+                                {contract.tenantName || "-"}
                             </Typography>
                         </Grid>
                         <Grid item xs={12} sm={6}>
@@ -327,19 +332,19 @@ const ContractDetail = () => {
                                 연락처
                             </Typography>
                             <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
-                                {tenant ? tenant.phone : "-"}
+                                {/* {tenant ? tenant.phone : "-"} */}
+                                {contract.tenantPhone || "-"}
                             </Typography>
                         </Grid>
-                        {tenant && (
-                            <Grid item xs={12}>
-                                <Typography variant="subtitle2" color="textSecondary">
-                                    이메일
-                                </Typography>
-                                <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
-                                    {tenant.email || "-"}
-                                </Typography>
-                            </Grid>
-                        )}
+                        <Grid item xs={12}>
+                            <Typography variant="subtitle2" color="textSecondary">
+                                이메일
+                            </Typography>
+                            <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
+                                {/* {tenant.email || "-"} */}
+                                {contract.tenantEmail || "-"}
+                            </Typography>
+                        </Grid>
                     </Grid>
                 </Paper>
             </Container>
