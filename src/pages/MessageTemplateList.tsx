@@ -12,13 +12,9 @@ import {
     AppBar,
     Toolbar,
     List,
-    ListItem,
+    ListItemButton,
     ListItemText,
     TextField,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
     CircularProgress,
     Snackbar,
     Alert,
@@ -26,13 +22,7 @@ import {
 import { ArrowBack, Edit, Delete, Add } from "@mui/icons-material"
 import { useNavigate } from "react-router-dom"
 import { messageTemplateApi } from "../services/messageTemplateApi"
-import { MessageCategory } from "../types/message"
-import type { MessageTemplateResponse } from "../services/messageTemplateApi"
-
-// Import 부분에 ListItemButton 추가
-import {
-    ListItemButton,
-} from "@mui/material"
+import type { MessageTemplateResponse, MessageTemplateRequest } from "../services/messageTemplateApi"
 
 const MessageTemplateList = () => {
     const navigate = useNavigate()
@@ -44,16 +34,9 @@ const MessageTemplateList = () => {
 
     // 편집 관련 상태
     const [isEditing, setIsEditing] = useState(false)
-    const [editCategory, setEditCategory] = useState<MessageCategory>(MessageCategory.WELCOME)
+    const [editTitle, setEditTitle] = useState("")
     const [editContent, setEditContent] = useState("")
     const [saveLoading, setSaveLoading] = useState(false)
-
-    // 카테고리 표시 이름 매핑
-    const categoryDisplayNames: Record<string, string> = {
-        [MessageCategory.BIRTHDAY]: "생일 축하",
-        [MessageCategory.EXPIRATION]: "계약 만료",
-        [MessageCategory.WELCOME]: "환영 메시지",
-    }
 
     useEffect(() => {
         fetchTemplates()
@@ -62,20 +45,19 @@ const MessageTemplateList = () => {
     const fetchTemplates = async () => {
         try {
             setLoading(true)
-            const templatesData: MessageTemplateResponse[] = []
+            const response = await messageTemplateApi.getMessageTemplates()
 
-            for (const category of Object.values(MessageCategory)) {
-                try {
-                    const response = await messageTemplateApi.getMessageTemplate(category)
-                    if (response.data.success && response.data.data) {
-                        templatesData.push(response.data.data)
-                    }
-                } catch (error) {
-                    console.error(`Failed to fetch template for category ${category}:`, error)
+            if (response.data.success) {
+                setTemplates(response.data.data || [])
+                console.log("cccccccccccccc")
+
+                // 첫 번째 템플릿 선택
+                if (response.data.data && response.data.data.length > 0) {
+                    setSelectedTemplate(response.data.data[0])
                 }
+            } else {
+                setError("템플릿 목록을 불러오는데 실패했습니다.")
             }
-
-            setTemplates(templatesData)
         } catch (error) {
             console.error("Failed to fetch templates:", error)
             setError("템플릿 목록을 불러오는데 실패했습니다.")
@@ -86,52 +68,54 @@ const MessageTemplateList = () => {
 
     const handleTemplateSelect = (template: MessageTemplateResponse) => {
         setSelectedTemplate(template)
-        setEditCategory(template.category as MessageCategory)
+        setEditTitle(template.title)
         setEditContent(template.content)
         setIsEditing(false)
     }
 
     const handleAddNew = () => {
         setSelectedTemplate(null)
-        setEditCategory(MessageCategory.WELCOME)
+        setEditTitle("")
         setEditContent("")
         setIsEditing(true)
     }
 
     const handleEdit = () => {
         if (selectedTemplate) {
-            setEditCategory(selectedTemplate.category as MessageCategory)
+            setEditTitle(selectedTemplate.title)
             setEditContent(selectedTemplate.content)
             setIsEditing(true)
         }
     }
 
     const handleSave = async () => {
-        if (!editContent.trim()) {
-            setError("템플릿 내용을 입력해주세요.")
+        if (!editTitle.trim() || !editContent.trim()) {
+            setError("템플릿 제목과 내용을 모두 입력해주세요.")
             return
         }
 
         try {
             setSaveLoading(true)
 
-            const templateData = {
-                category: editCategory,
+            const templateData: MessageTemplateRequest = {
+                title: editTitle,
                 content: editContent,
             }
 
-            const response = await messageTemplateApi.updateMessageTemplate(templateData)
+            let response
+
+            if (selectedTemplate) {
+                // 기존 템플릿 수정
+                response = await messageTemplateApi.updateMessageTemplate(selectedTemplate.id, templateData)
+            } else {
+                // 새 템플릿 생성
+                response = await messageTemplateApi.createMessageTemplate(templateData)
+            }
 
             if (response.data.success) {
-                setSuccess("템플릿이 성공적으로 저장되었습니다.")
+                setSuccess(selectedTemplate ? "템플릿이 성공적으로 수정되었습니다." : "템플릿이 성공적으로 생성되었습니다.")
                 setIsEditing(false)
-                fetchTemplates()
-
-                // 현재 편집 중인 템플릿을 선택된 템플릿으로 설정
-                setSelectedTemplate({
-                    category: editCategory,
-                    content: editContent,
-                })
+                fetchTemplates() // 템플릿 목록 새로고침
             } else {
                 setError(response.data.error?.message || "템플릿 저장에 실패했습니다.")
             }
@@ -151,12 +135,12 @@ const MessageTemplateList = () => {
         try {
             setSaveLoading(true)
 
-            const response = await messageTemplateApi.deleteMessageTemplate(selectedTemplate.category)
+            const response = await messageTemplateApi.deleteMessageTemplate(selectedTemplate.id)
 
             if (response.data.success) {
                 setSuccess("템플릿이 성공적으로 삭제되었습니다.")
                 setSelectedTemplate(null)
-                fetchTemplates()
+                fetchTemplates() // 템플릿 목록 새로고침
             } else {
                 setError(response.data.error?.message || "템플릿 삭제에 실패했습니다.")
             }
@@ -170,10 +154,10 @@ const MessageTemplateList = () => {
 
     const handleCancel = () => {
         if (selectedTemplate) {
-            setEditCategory(selectedTemplate.category as MessageCategory)
+            setEditTitle(selectedTemplate.title)
             setEditContent(selectedTemplate.content)
         } else {
-            setEditCategory(MessageCategory.WELCOME)
+            setEditTitle("")
             setEditContent("")
         }
         setIsEditing(false)
@@ -219,9 +203,9 @@ const MessageTemplateList = () => {
                                 <List sx={{ bgcolor: "#f9f9f9", borderRadius: 1 }}>
                                     {templates.map((template) => (
                                         <ListItemButton
-                                            key={template.category}
+                                            key={template.id}
                                             onClick={() => handleTemplateSelect(template)}
-                                            selected={selectedTemplate?.category === template.category}
+                                            selected={selectedTemplate?.id === template.id}
                                             sx={{
                                                 borderRadius: 1,
                                                 mb: 0.5,
@@ -233,7 +217,12 @@ const MessageTemplateList = () => {
                                                 },
                                             }}
                                         >
-                                            <ListItemText primary={categoryDisplayNames[template.category] || template.category} />
+                                            <ListItemText
+                                                primary={template.title}
+                                                secondary={
+                                                    template.content.length > 30 ? `${template.content.substring(0, 30)}...` : template.content
+                                                }
+                                            />
                                         </ListItemButton>
                                     ))}
                                 </List>
@@ -267,20 +256,14 @@ const MessageTemplateList = () => {
 
                             {isEditing ? (
                                 <Box>
-                                    <FormControl fullWidth sx={{ mb: 3 }}>
-                                        <InputLabel>카테고리</InputLabel>
-                                        <Select
-                                            value={editCategory}
-                                            label="카테고리"
-                                            onChange={(e) => setEditCategory(e.target.value as MessageCategory)}
-                                        >
-                                            {Object.values(MessageCategory).map((category) => (
-                                                <MenuItem key={category} value={category}>
-                                                    {categoryDisplayNames[category] || category}
-                                                </MenuItem>
-                                            ))}
-                                        </Select>
-                                    </FormControl>
+                                    <TextField
+                                        fullWidth
+                                        label="템플릿 제목"
+                                        value={editTitle}
+                                        onChange={(e) => setEditTitle(e.target.value)}
+                                        placeholder="템플릿 제목을 입력하세요"
+                                        sx={{ mb: 3 }}
+                                    />
 
                                     <TextField
                                         fullWidth
@@ -315,10 +298,10 @@ const MessageTemplateList = () => {
                             ) : selectedTemplate ? (
                                 <Box>
                                     <Typography variant="subtitle2" color="textSecondary" gutterBottom>
-                                        카테고리
+                                        제목
                                     </Typography>
                                     <Typography variant="body1" sx={{ mb: 3, p: 2, bgcolor: "#f9f9f9", borderRadius: 1 }}>
-                                        {categoryDisplayNames[selectedTemplate.category] || selectedTemplate.category}
+                                        {selectedTemplate.title}
                                     </Typography>
 
                                     <Typography variant="subtitle2" color="textSecondary" gutterBottom>
@@ -365,6 +348,7 @@ const MessageTemplateList = () => {
                 <Typography variant="caption" color="textSecondary">
                     © 2024 Customer Management System. All rights reserved.
                 </Typography>
+                sss
             </Box>
         </Box>
     )

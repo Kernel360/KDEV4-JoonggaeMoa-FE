@@ -5,14 +5,7 @@ export enum MessageStatus {
     FAILED = "FAILED",
 }
 
-// 메시지 카테고리 enum - 새로운 카테고리로 업데이트
-export enum MessageCategory {
-    BIRTHDAY = "BIRTHDAY",
-    EXPIRATION = "EXPIRATION",
-    WELCOME = "WELCOME",
-}
-
-// 메시지 타입
+// 메시지 타입 - 백엔드 DTO와 일치하도록 업데이트
 export interface Message {
     id: number
     customerId: number
@@ -22,36 +15,37 @@ export interface Message {
     sendStatus: MessageStatus
 }
 
-// 예약된 메시지 타입
+// 예약된 메시지 타입 - 백엔드 응답과 일치하도록 업데이트
 export interface ReservedMessage {
-    id: number;
-    customerName: string;
-    customerPhone: string;
-    content: string;
-    sendAt: string;
+    id: number
+    customerId: number
+    customerName: string
+    content: string
+    createdAt: string
+    sendStatus: MessageStatus
 }
 
 export interface ReservedMessageResponse {
-    content: ReservedMessage[];
-    totalPages: number;
-    totalElements: number;
-    last: boolean;
-    size: number;
-    number: number;
+    content: ReservedMessage[]
+    totalPages: number
+    totalElements: number
+    last: boolean
+    size: number
+    number: number
 }
 
 // 메시지 템플릿 타입
 export interface MessageTemplate {
-    category: string
+    id: number
+    title: string
     content: string
 }
 
-// 메시지 생성 요청 타입
+// 메시지 생성 요청 타입 - 백엔드 요청과 일치하도록 업데이트
 export interface MessageCreateRequest {
     content: string
     sendAt: string
     customerIdList: number[]
-    category?: MessageCategory // 카테고리 필드 추가
 }
 
 // 메시지 목록 응답 타입
