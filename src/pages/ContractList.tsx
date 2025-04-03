@@ -202,9 +202,9 @@ const ContractList = () => {
 
     // 검색어와 상태 필터로 계약 필터링
     const filteredContracts = contracts.filter((contract) => {
-        // 검색어 필터링 (임대인, 임차인 ID로 검색)
+        // 검색어 필터링 (임대인, 임차인 이름으로 검색)
         const searchMatch =
-            contract.landlordId.toString().includes(searchTerm) || contract.tenantId.toString().includes(searchTerm)
+            contract.landlordName.toString().includes(searchTerm) || contract.tenantName.toString().includes(searchTerm)
 
         // 상태 필터링
         const status = getContractStatus(contract.expiredAt)
@@ -257,7 +257,7 @@ const ContractList = () => {
                 <Paper elevation={0} sx={{ mb: 3, p: 3, borderRadius: 2 }}>
                     <Box sx={{ display: "flex", gap: 2 }}>
                         <TextField
-                            placeholder="임대인 또는 임차인 ID로 검색"
+                            placeholder="임대인 또는 임차인 이름으로 검색"
                             variant="outlined"
                             size="small"
                             fullWidth
@@ -304,8 +304,8 @@ const ContractList = () => {
                             <TableHead>
                                 <TableRow sx={{ bgcolor: "#f9f9f9" }}>
                                     <TableCell sx={{ fontWeight: 500 }}>계약번호</TableCell>
-                                    <TableCell sx={{ fontWeight: 500 }}>임대인 ID</TableCell>
-                                    <TableCell sx={{ fontWeight: 500 }}>임차인 ID</TableCell>
+                                    <TableCell sx={{ fontWeight: 500 }}>임대인 이름</TableCell>
+                                    <TableCell sx={{ fontWeight: 500 }}>임차인 이름</TableCell>
                                     <TableCell sx={{ fontWeight: 500 }}>계약일</TableCell>
                                     <TableCell sx={{ fontWeight: 500 }}>만료일</TableCell>
                                     <TableCell sx={{ fontWeight: 500 }}>상태</TableCell>
@@ -327,8 +327,8 @@ const ContractList = () => {
                                                     sx={{ cursor: "pointer" }}
                                                 >
                                                     <TableCell>{contract.id}</TableCell>
-                                                    <TableCell>{contract.landlordId}</TableCell>
-                                                    <TableCell>{contract.tenantId}</TableCell>
+                                                    <TableCell>{contract.landlordName}</TableCell>
+                                                    <TableCell>{contract.tenantName}</TableCell>
                                                     <TableCell>{formatDate(contract.createdAt)}</TableCell>
                                                     <TableCell>{formatDate(contract.expiredAt)}</TableCell>
                                                     <TableCell>
