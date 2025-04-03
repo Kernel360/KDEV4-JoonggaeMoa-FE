@@ -45,7 +45,25 @@ const CustomerAdd = () => {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target
-        setFormData((prev) => ({ ...prev, [name]: value }))
+        
+        if (name === 'phone') {
+            // Remove all non-numeric characters
+            const numericValue = value.replace(/\D/g, '')
+            
+            // Format the phone number
+            if (numericValue.length <= 11) {
+                let formattedPhone = numericValue
+                if (numericValue.length > 3) {
+                    formattedPhone = numericValue.slice(0, 3) + '-' + numericValue.slice(3)
+                }
+                if (numericValue.length > 7) {
+                    formattedPhone = formattedPhone.slice(0, 8) + '-' + formattedPhone.slice(8)
+                }
+                setFormData(prev => ({ ...prev, [name]: formattedPhone }))
+            }
+        } else {
+            setFormData(prev => ({ ...prev, [name]: value }))
+        }
     }
 
     const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -57,7 +75,7 @@ const CustomerAdd = () => {
         e.preventDefault()
 
         if (!formData.name || !formData.phone) {
-            setError("이름과 연락처는 필수 입력 항목입니다.")
+            setError("이름과 전화번호는 필수 입력 항목입니다.")
             return
         }
 
@@ -125,7 +143,7 @@ const CustomerAdd = () => {
                                 <TextField
                                     required
                                     fullWidth
-                                    label="연락처"
+                                    label="전화번호"
                                     name="phone"
                                     value={formData.phone}
                                     onChange={handleChange}
