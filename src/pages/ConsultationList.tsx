@@ -106,12 +106,23 @@ const formatDateToYYYYMMDD = (date: Date): string => {
     return `${year}-${month}-${day}`
 }
 
+// status information
+interface ConsultationStatusInfo {
+    consultationAll: number;
+    consultationWaiting: number;
+    consultationConfirmed: number;
+    consultationCancelled: number;
+    consultationCompleted: number;
+}
+
 const ConsultationList = () => {
     const navigate = useNavigate()
     const [consultations, setConsultations] = useState<ConsultationResponse[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [searchTerm, setSearchTerm] = useState("")
+    // Add dateFilteredConsultations state here
+    const [dateFilteredConsultations, setDateFilteredConsultations] = useState<ConsultationResponse[]>([])
 
     // 현재 월 상태
     const [currentDate, setCurrentDate] = useState(new Date())
@@ -136,61 +147,61 @@ const ConsultationList = () => {
     const [createError, setCreateError] = useState<string | null>(null)
 
     useEffect(() => {
-        fetchConsultations()
+        //fetchConsultations()
     }, [])
 
     // 수정된 fetchConsultations 함수
-const fetchConsultations = async () => {
-    try {
-        setLoading(true)
-        const response = await consultationApi.getConsultations()
+// const fetchConsultations = async () => {
+//     try {
+//         setLoading(true)
+//         const response = await consultationApi.getConsultations()
 
-        if (response.data.success && response.data.data) {
-            // 서버 응답 데이터를 직접 ConsultationResponse 형식으로 매핑
-            const formattedConsultations: ConsultationResponse[] = response.data.data.map((item: any) => ({
-                id: item.consultationId,
-                consultationId: item.consultationId,
-                customerId: item.customerId,
-                customerName: item.customerName,
-                customerPhone: item.customerPhone,
-                content: item.content || "",
-                consultationType: item.consultationType || ConsultationType.VISIT,
-                date: item.date,
-                scheduledAt: item.date,
-                purpose: item.purpose || "",
-                interestProperty: item.interestProperty || "",
-                interestLocation: item.interestLocation || "",
-                contractType: item.contractType || "",
-                assetStatus: item.assetStatus || "",
-                memo: item.memo || "",
-                consultationStatus: item.consultationStatus as ConsultationStatus,
-                status: item.consultationStatus as ConsultationStatus,
-                result: item.result || "",
-                nextAction: item.nextAction || "",
-                propertyInterest: item.interestProperty || "",
-                budget: item.assetStatus || "",
-                createdAt: item.date,
-                updatedAt: item.date,
-                // 객체 내부에 객체를 생성하여 고객 정보를 설정
-                customer: {
-                    id: item.customerId,
-                    name: item.customerName,
-                    phone: item.customerPhone,
-                    email: item.customerEmail || "",
-                }
-            }))
+//         if (response.data.success && response.data.data) {
+//             // 서버 응답 데이터를 직접 ConsultationResponse 형식으로 매핑
+//             const formattedConsultations: ConsultationResponse[] = response.data.data.map((item: any) => ({
+//                 id: item.consultationId,
+//                 consultationId: item.consultationId,
+//                 customerId: item.customerId,
+//                 customerName: item.customerName,
+//                 customerPhone: item.customerPhone,
+//                 content: item.content || "",
+//                 consultationType: item.consultationType || ConsultationType.VISIT,
+//                 date: item.date,
+//                 scheduledAt: item.date,
+//                 purpose: item.purpose || "",
+//                 interestProperty: item.interestProperty || "",
+//                 interestLocation: item.interestLocation || "",
+//                 contractType: item.contractType || "",
+//                 assetStatus: item.assetStatus || "",
+//                 memo: item.memo || "",
+//                 consultationStatus: item.consultationStatus as ConsultationStatus,
+//                 status: item.consultationStatus as ConsultationStatus,
+//                 result: item.result || "",
+//                 nextAction: item.nextAction || "",
+//                 propertyInterest: item.interestProperty || "",
+//                 budget: item.assetStatus || "",
+//                 createdAt: item.date,
+//                 updatedAt: item.date,
+//                 // 객체 내부에 객체를 생성하여 고객 정보를 설정
+//                 customer: {
+//                     id: item.customerId,
+//                     name: item.customerName,
+//                     phone: item.customerPhone,
+//                     email: item.customerEmail || "",
+//                 }
+//             }))
 
-            setConsultations(formattedConsultations)
-        } else {
-            setError("상담 내역을 불러오는데 실패했습니다.")
-        }
-    } catch (err) {
-        console.error("Error fetching consultations:", err)
-        setError("상담 내역을 불러오는데 실패했습니다.")
-    } finally {
-        setLoading(false)
-    }
-}
+//             setConsultations(formattedConsultations)
+//         } else {
+//             setError("상담 내역을 불러오는데 실패했습니다.")
+//         }
+//     } catch (err) {
+//         console.error("Error fetching consultations:", err)
+//         setError("상담 내역을 불러오는데 실패했습니다.")
+//     } finally {
+//         setLoading(false)
+//     }
+// }
 
     // 고객 목록 가져오기
     const fetchCustomers = async () => {
@@ -284,11 +295,52 @@ const fetchConsultations = async () => {
     }
 
     // 날짜를 선택했을 때 처리
-    const handleDateClick = (date: Date) => {
-        setSelectedDate(date)
-        // 날짜 클릭 시 해당 날짜의 상담 목록 필터링
-        // TODO: 백엔드 API로 날짜별 상담 목록 조회 구현
-    }
+    const handleDateClick = async (date: Date) => {
+        setSelectedDate(date);
+        try {
+            setLoading(true);
+            setError(null);
+            const formattedDate = `${formatDateToYYYYMMDD(date)}T00:00`;
+            const response = await consultationApi.getConsultationsByDate(formattedDate);
+            
+            if (response && response.data) {
+                const consultations = response.data;
+                const formattedConsultations = consultations.map((item) => ({
+                    id: item.consultationId,
+                    customerId: item.customerId,
+                    customerName: item.customerName,
+                    customerPhone: item.customerPhone,
+                    // Use date field if scheduledAt is not available
+                    scheduledAt: item.scheduledAt || item.date,
+                    consultationType: item.consultationType || ConsultationType.VISIT,
+                    status: item.consultationStatus || item.status || ConsultationStatus.WAITING,
+                    content: item.content || "",
+                    date: item.date || item.scheduledAt,
+                    customer: {
+                        id: item.customerId,
+                        name: item.customerName,
+                        phone: item.customerPhone,
+                        email: item.customerEmail || "",
+                    },
+                    purpose: item.purpose || "",
+                    result: item.result || "",
+                    nextAction: item.nextAction || "",
+                })) as ConsultationResponse[];
+                
+                console.log('API Response:', consultations); // Add this for debugging
+                console.log('Formatted Consultations:', formattedConsultations); // Add this for debugging
+                
+                setDateFilteredConsultations(formattedConsultations);
+            } else {
+                setDateFilteredConsultations([]);
+            }
+        } catch (err) {
+            console.error("Error fetching consultations:", err);
+            setDateFilteredConsultations([]);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     // 상담 상세 페이지로 이동
     const handleViewConsultation = (consultationId: number) => {
@@ -388,7 +440,7 @@ const fetchConsultations = async () => {
                 setCreateSuccess(true)
                 handleCreateModalClose()
                 // 상담 목록 다시 불러오기
-                fetchConsultations()
+                //fetchConsultations()
             } else {
                 setCreateError(response.data.error?.message || "상담 등록에 실패했습니다.")
             }
@@ -423,16 +475,7 @@ const fetchConsultations = async () => {
     const today = new Date()
     const todayString = formatDateToYYYYMMDD(today)
 
-    // 오늘 상담 카운트 - 오늘 날이면서 상태가 "예약 확정"인 상담만 필터링
-    const todayConsultations = consultations.filter((c) => {
-        if (!c.scheduledAt) return false
-
-        const consultDate = parseDate(c.scheduledAt)
-        if (!consultDate) return false
-
-        const consultDateString = formatDateToYYYYMMDD(consultDate)
-        return consultDateString === todayString && c.status === ConsultationStatus.CONFIRMED
-    })
+    
 
     const scheduledCount = consultations.filter((c) => c.status === ConsultationStatus.CONFIRMED).length
     const completedCount = consultations.filter((c) => c.status === ConsultationStatus.COMPLETED).length
@@ -451,7 +494,33 @@ const fetchConsultations = async () => {
         })
     }
 
-    // Update the ConsultationList component to use standardized container
+    // Add new state for status information
+    const [statusInfo, setStatusInfo] = useState<ConsultationStatusInfo>({
+        consultationAll: 0,
+        consultationWaiting: 0,
+        consultationConfirmed: 0,
+        consultationCancelled: 0,
+        consultationCompleted: 0
+    });
+
+    // Add new function to fetch status information
+    const fetchStatusInfo = async () => {
+        try {
+            const response = await consultationApi.getConsultationStatusInfo();
+            if (response.data.success) {
+                setStatusInfo(response.data.data);
+            }
+        } catch (err) {
+            console.error("Error fetching consultation status info:", err);
+        }
+    };
+
+    useEffect(() => {
+        fetchStatusInfo();
+        //fetchConsultations()
+    }, []);
+
+    // Update the summary information section in the render
     return (
         <Box sx={{ flexGrow: 1, bgcolor: "#f5f5f5", minHeight: "100vh", overflow: "auto" }}>
             <AppBar position="static" color="default" elevation={0} sx={{ bgcolor: "white" }}>
@@ -462,15 +531,7 @@ const fetchConsultations = async () => {
                 </Toolbar>
             </AppBar>
 
-            <Container
-                maxWidth="lg"
-                sx={{
-                    mt: 4,
-                    mb: 4,
-                    mx: "auto",
-                    px: { xs: 2, sm: 3, md: 4 },
-                }}
-            >
+            <Container maxWidth="lg" sx={{ mt: 4, mb: 4, mx: "auto", px: { xs: 2, sm: 3, md: 4 } }}>
                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
                     <Box sx={{ display: "flex", alignItems: "center" }}>
                         <IconButton onClick={() => navigate("/dashboard")} sx={{ mr: 1 }}>
@@ -501,10 +562,10 @@ const fetchConsultations = async () => {
                             sx={{ p: 3, borderRadius: 2, display: "flex", flexDirection: "column", alignItems: "center" }}
                         >
                             <Typography variant="subtitle2" color="textSecondary" gutterBottom>
-                                오늘 상담
+                                상담 대기
                             </Typography>
                             <Typography variant="h3" sx={{ color: "#2196f3", fontWeight: "bold" }}>
-                                {todayConsultations.length}
+                                {statusInfo.consultationWaiting}
                             </Typography>
                         </Paper>
                     </Grid>
@@ -514,10 +575,10 @@ const fetchConsultations = async () => {
                             sx={{ p: 3, borderRadius: 2, display: "flex", flexDirection: "column", alignItems: "center" }}
                         >
                             <Typography variant="subtitle2" color="textSecondary" gutterBottom>
-                                예약 상담
+                                상담 확정
                             </Typography>
                             <Typography variant="h3" sx={{ color: "#ff9800", fontWeight: "bold" }}>
-                                {scheduledCount}
+                                {statusInfo.consultationConfirmed}
                             </Typography>
                         </Paper>
                     </Grid>
@@ -530,110 +591,13 @@ const fetchConsultations = async () => {
                                 완료된 상담
                             </Typography>
                             <Typography variant="h3" sx={{ color: "#4caf50", fontWeight: "bold" }}>
-                                {completedCount}
+                                {statusInfo.consultationCompleted}
                             </Typography>
                         </Paper>
                     </Grid>
                 </Grid>
-
-                {/* 검색 필드 */}
-                <Paper elevation={0} sx={{ mb: 3, p: 3, borderRadius: 2 }}>
-                    <TextField
-                        placeholder="고객명, 연락처 또는 이메일로 검색"
-                        variant="outlined"
-                        size="small"
-                        fullWidth
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        InputProps={{
-                            startAdornment: (
-                                <InputAdornment position="start">
-                                    <Search />
-                                </InputAdornment>
-                            ),
-                        }}
-                    />
-                </Paper>
-
-                {loading ? (
-                    <Box sx={{ display: "flex", justifyContent: "center", my: 5 }}>
-                        <CircularProgress />
-                    </Box>
-                ) : error ? (
-                    <Paper elevation={0} sx={{ p: 3, textAlign: "center", borderRadius: 2 }}>
-                        <Typography color="error">{error}</Typography>
-                        <Button variant="contained" sx={{ mt: 2 }} onClick={fetchConsultations}>
-                            다시 시도
-                        </Button>
-                    </Paper>
-                ) : (
-                    <Grid container spacing={3}>
-                        {/* 상담 목록 테이블 */}
-                        <Grid item xs={12}>
-                            <Paper elevation={0} sx={{ p: 3, mb: 3, borderRadius: 2 }}>
-                                <Typography variant="h6" sx={{ mb: 2 }}>
-                                    상담 목록
-                                </Typography>
-                                <TableContainer>
-                                    <Table>
-                                        <TableHead>
-                                            <TableRow sx={{ bgcolor: "#f9f9f9" }}>
-                                                <TableCell sx={{ fontWeight: 500 }}>고객명</TableCell>
-                                                <TableCell sx={{ fontWeight: 500 }}>연락처</TableCell>
-                                                <TableCell sx={{ fontWeight: 500 }}>상담 일시</TableCell>
-                                                <TableCell sx={{ fontWeight: 500 }}>상담 유형</TableCell>
-                                                <TableCell sx={{ fontWeight: 500 }}>상태</TableCell>
-                                            </TableRow>
-                                        </TableHead>
-                                        <TableBody>
-                                            {filteredConsultations.length > 0 ? (
-                                                filteredConsultations.map((consultation) => (
-                                                    <TableRow
-                                                        key={consultation.id}
-                                                        hover
-                                                        onClick={() => handleViewConsultation(consultation.id)}
-                                                        sx={{ cursor: "pointer" }}
-                                                    >
-                                                        <TableCell>{consultation.customer.name}</TableCell>
-                                                        <TableCell>{consultation.customer.phone}</TableCell>
-                                                        <TableCell>
-                                                            {consultation.scheduledAt ? formatDateTime(consultation.scheduledAt) : "날짜 정보 없음"}
-                                                        </TableCell>
-                                                        <TableCell>{typeConfig[consultation.consultationType]}</TableCell>
-                                                        <TableCell>
-                                                            <Chip
-                                                                label={statusConfig[consultation.status]?.label || "알 수 없음"}
-                                                                size="small"
-                                                                sx={{
-                                                                    bgcolor: statusConfig[consultation.status]?.color || "#f5f5f5",
-                                                                    color: statusConfig[consultation.status]?.textColor || "#757575",
-                                                                    cursor: "pointer",
-                                                                }}
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation()
-                                                                    handleStatusMenuOpen(e, consultation.id)
-                                                                }}
-                                                            />
-                                                        </TableCell>
-                                                    </TableRow>
-                                                ))
-                                            ) : (
-                                                <TableRow>
-                                                    <TableCell colSpan={5} align="center">
-                                                        <Typography sx={{ py: 2 }}>
-                                                            {searchTerm ? "검색 결과가 없습니다." : "등록된 상담이 없습니다."}
-                                                        </Typography>
-                                                    </TableCell>
-                                                </TableRow>
-                                            )}
-                                        </TableBody>
-                                    </Table>
-                                </TableContainer>
-                            </Paper>
-                        </Grid>
-
-                        {/* 캘린더 뷰 */}
-                        <Grid item xs={12}>
+                {/* 캘린더 뷰 */}
+                <Grid item xs={12}>
                             <Paper elevation={0} sx={{ p: 3, borderRadius: 2 }}>
                                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
                                     <Typography variant="h6">
@@ -724,9 +688,77 @@ const fetchConsultations = async () => {
                                 </Table>
                             </Paper>
                         </Grid>
-                    </Grid>
-                )}
             </Container>
+
+            {/* Add consultation list table below calendar */}
+            {selectedDate && (
+                <Container maxWidth="lg" sx={{ mt: 4, mb: 4, mx: "auto", px: { xs: 2, sm: 3, md: 4 } }}>
+                    <Grid item xs={12}>
+                        <Paper elevation={0} sx={{ p: 3, borderRadius: 2 }}>
+                            <Typography variant="h6" sx={{ mb: 2 }}>
+                                {selectedDate.toLocaleDateString()} 상담 목록
+                            </Typography>
+                            <TableContainer>
+                                <Table>
+                                    <TableHead>
+                                        <TableRow>
+                                            <TableCell>고객명</TableCell>
+                                            <TableCell>연락처</TableCell>
+                                            <TableCell>상담 시간</TableCell>
+                                            <TableCell>상담 유형</TableCell>
+                                            <TableCell>상태</TableCell>
+                                            <TableCell></TableCell>
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {loading ? (
+                                            <TableRow>
+                                                <TableCell colSpan={6} align="center">
+                                                    <CircularProgress size={24} />
+                                                </TableCell>
+                                            </TableRow>
+                                        ) : dateFilteredConsultations.length > 0 ? (
+                                            dateFilteredConsultations.map((consultation) => (
+                                                <TableRow key={consultation.id}>
+                                                    <TableCell>{consultation.customerName}</TableCell>
+                                                    <TableCell>{consultation.customerPhone}</TableCell>
+                                                    <TableCell>
+                                                        {consultation.scheduledAt ? formatDateTime(consultation.scheduledAt) : '-'}
+                                                    </TableCell>
+                                                    <TableCell>{typeConfig[consultation.consultationType]}</TableCell>
+                                                    <TableCell>
+                                                        <Chip
+                                                            label={statusConfig[consultation.status].label}
+                                                            sx={{
+                                                                bgcolor: statusConfig[consultation.status].color,
+                                                                color: statusConfig[consultation.status].textColor,
+                                                            }}
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Button
+                                                            size="small"
+                                                            onClick={() => handleViewConsultation(consultation.id)}
+                                                        >
+                                                            상세보기
+                                                        </Button>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))
+                                        ) : (
+                                            <TableRow>
+                                                <TableCell colSpan={6} align="center">
+                                                    예약된 상담이 없습니다.
+                                                </TableCell>
+                                            </TableRow>
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
+                        </Paper>
+                    </Grid>
+                </Container>
+            )}
 
             {/* 상태 변경 메뉴 */}
             <Menu

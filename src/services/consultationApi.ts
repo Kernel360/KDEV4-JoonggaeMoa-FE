@@ -63,11 +63,6 @@ export const updateConsultationResult = async (
     return api.patch(`/api/consultations/${consultationId}/result`, resultData)
 }
 
-// 모든 상담 조회
-export const getConsultations = async (): Promise<AxiosResponse<ApiResponse<ConsultationResponse[]>>> => {
-    return api.get(`/api/consultations`)
-}
-
 // 상담 상세 조회
 export const getConsultationById = async (
     consultationId: number,
@@ -89,10 +84,21 @@ export const getTodayConsultations = async (): Promise<AxiosResponse<ApiResponse
 }
 
 // 날짜별 상담 조회
-export const getConsultationsByDate = async (
-    date: string, // YYYY-MM-DD 형식
-): Promise<AxiosResponse<ApiResponse<ConsultationResponse[]>>> => {
-    return api.get(`/api/consultations/date/${date}`)
+export const getConsultationsByDate = async (date: string): Promise<ApiResponse<ConsultationResponse[]>> => {
+    try {
+        const response = await api.get<ApiResponse<ConsultationResponse[]>>(`/api/consultations?date=${date}`);
+        return response.data;
+    } catch (error: any) {
+        console.error("날짜별 상담 조회 오류:", error);
+        return { 
+            success: false, 
+            data: [], 
+            error: {
+                code: 'FETCH_CONSULTATIONS_BY_DATE_FAILED', 
+                message: error.message || '날짜별 상담 조회 실패',
+            },
+        };
+    }
 }
 
 // 고객별 상담 조회
@@ -107,17 +113,21 @@ const deleteConsultation = (consultationId: number) => {
     return api.delete(`/api/consultations/${consultationId}`)
 }
 
+// Add this new method to your existing consultationApi
+const getConsultationStatusInfo = () => {
+    return api.get('/api/consultations/status-inform');
+};
+
 export const consultationApi = {
     createConsultation,
     updateConsultation,
     updateConsultationInfo,
     updateConsultationStatus,
     updateConsultationResult,
-    getConsultations,
     getConsultationById,
     getTodayConsultations,
     getConsultationsByDate,
     getConsultationsByCustomer,
     deleteConsultation,
-}
-
+    getConsultationStatusInfo
+};

@@ -84,3 +84,4 @@ export interface ConsultationResponse {
     updatedAt: string
 }
 
+
