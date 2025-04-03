@@ -1,3 +1,4 @@
+import axios from "axios"
 import api from "./api"
 import type { AxiosResponse } from "axios"
 
@@ -119,5 +120,10 @@ export const customerApi = {
     updateCustomer,
     getCustomers,
     getCustomerById,
+    
+    // Add new method for downloading excel format
+    getExcelFormat: () => {
+        return api.get<ApiResponse<string>>(`api/customers/builk`)
+    },
 }
 

@@ -74,6 +74,25 @@ const CustomerImport = () => {
         }
     }
 
+    const handleDownloadFormat = async () => {
+        try {
+            const response = await customerApi.getExcelFormat();
+            if (response.data.success && response.data.data) {
+                const link = document.createElement('a');
+                link.href = response.data.data;
+                link.download = 'customer_format.xlsx';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } else {
+                setError("양식 다운로드에 실패했습니다.");
+            }
+        } catch (err: any) {
+            console.error("Error downloading format:", err);
+            setError("양식 다운로드에 실패했습니다.");
+        }
+    };
+
     return (
         <Box sx={{ flexGrow: 1, bgcolor: "#f5f5f5", minHeight: "100vh" }}>
             <AppBar position="static" color="default" elevation={0} sx={{ bgcolor: "white" }}>
@@ -86,13 +105,22 @@ const CustomerImport = () => {
 
             <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
                 <Paper elevation={0} sx={{ p: 4 }}>
-                    <Box sx={{ display: "flex", alignItems: "center", mb: 4 }}>
-                        <IconButton onClick={() => navigate("/customer-management")} sx={{ mr: 1 }}>
-                            <ArrowBack />
-                        </IconButton>
-                        <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                            고객 정보 등록
-                        </Typography>
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 4, justifyContent: "space-between" }}>
+                        <Box sx={{ display: "flex", alignItems: "center" }}>
+                            <IconButton onClick={() => navigate("/customer-management")} sx={{ mr: 1 }}>
+                                <ArrowBack />
+                            </IconButton>
+                            <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                                고객 정보 등록
+                            </Typography>
+                        </Box>
+                        <Button
+                            variant="outlined"
+                            onClick={handleDownloadFormat}
+                            sx={{ borderColor: "#3f51b5", color: "#3f51b5" }}
+                        >
+                            엑셀 형식 다운로드
+                        </Button>
                     </Box>
 
                     <Typography variant="subtitle2" color="textSecondary" sx={{ mb: 3 }}>
