@@ -22,6 +22,10 @@ import {
 import { ArrowBack } from "@mui/icons-material"
 import { useNavigate } from "react-router-dom"
 import { customerApi, type CreateCustomerRequest } from "../services/customerApi"
+import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers"
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs"
+import dayjs from "dayjs"
+import "dayjs/locale/ko"
 
 const CustomerAdd = () => {
     const navigate = useNavigate()
@@ -41,7 +45,25 @@ const CustomerAdd = () => {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target
-        setFormData((prev) => ({ ...prev, [name]: value }))
+        
+        if (name === 'phone') {
+            // Remove all non-numeric characters
+            const numericValue = value.replace(/\D/g, '')
+            
+            // Format the phone number
+            if (numericValue.length <= 11) {
+                let formattedPhone = numericValue
+                if (numericValue.length > 3) {
+                    formattedPhone = numericValue.slice(0, 3) + '-' + numericValue.slice(3)
+                }
+                if (numericValue.length > 7) {
+                    formattedPhone = formattedPhone.slice(0, 8) + '-' + formattedPhone.slice(8)
+                }
+                setFormData(prev => ({ ...prev, [name]: formattedPhone }))
+            }
+        } else {
+            setFormData(prev => ({ ...prev, [name]: value }))
+        }
     }
 
     const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -53,7 +75,7 @@ const CustomerAdd = () => {
         e.preventDefault()
 
         if (!formData.name || !formData.phone) {
-            setError("이름과 연락처는 필수 입력 항목입니다.")
+            setError("이름과 전화번호는 필수 입력 항목입니다.")
             return
         }
 
@@ -121,7 +143,7 @@ const CustomerAdd = () => {
                                 <TextField
                                     required
                                     fullWidth
-                                    label="연락처"
+                                    label="전화번호"
                                     name="phone"
                                     value={formData.phone}
                                     onChange={handleChange}
@@ -142,15 +164,27 @@ const CustomerAdd = () => {
                                 <TextField fullWidth label="직업" name="job" value={formData.job} onChange={handleChange} />
                             </Grid>
                             <Grid item xs={12} sm={6}>
-                                <TextField
-                                    fullWidth
-                                    label="생년월일"
-                                    name="birthday"
-                                    value={formData.birthday}
-                                    onChange={handleChange}
-                                    placeholder="YYYY-MM-DD"
-                                    helperText="예: 1990-01-01 형식으로 입력해주세요"
-                                />
+                                <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="ko">
+                                    <DatePicker
+                                        label="생년월일"
+                                        value={formData.birthday ? dayjs(formData.birthday) : null}
+                                        onChange={(newValue) => {
+                                            if (newValue) {
+                                                const formattedDate = dayjs(newValue).format('YYYY-MM-DD')
+                                                setFormData(prev => ({ ...prev, birthday: formattedDate }))
+                                            } else {
+                                                setFormData(prev => ({ ...prev, birthday: '' }))
+                                            }
+                                        }}
+                                        format="YYYY-MM-DD"
+                                        slotProps={{
+                                            textField: {
+                                                fullWidth: true,
+                                                error: false
+                                            }
+                                        }}
+                                    />
+                                </LocalizationProvider>
                             </Grid>
                             <Grid item xs={12} sm={6}>
                                 <FormControlLabel
@@ -220,4 +254,3 @@ const CustomerAdd = () => {
 }
 
 export default CustomerAdd
-
