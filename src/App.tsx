@@ -26,6 +26,7 @@ import ContractList from "./pages/ContractList.tsx"
 import ContractCreate from "./pages/ContractCreate.tsx"
 import ContractDetail from "./pages/ContractDetail.tsx"
 import ContractEdit from "./pages/ContractEdit.tsx"
+import MyPage from "./pages/MyPage"
 // Change from default import to named import
 import { AuthProvider } from "./context/AuthContext.tsx"
 import ProtectedRoute from "./components/ProtectedRoute.tsx"
@@ -125,6 +126,7 @@ function App() {
                                 </ProtectedRoute>
                             }
                         />
+                        <Route path="/my-page" element={<MyPage />} />
                         {/* 나머지 라우트는 그대로 유지 */}
                         {/* 고객 관리 라우트 */}
                         <Route
