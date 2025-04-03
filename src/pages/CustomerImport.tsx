@@ -161,7 +161,7 @@ const CustomerImport = () => {
                             {file ? `선택된 파일: ${file.name}` : "엑셀 또는 CSV 파일을 선택해주세요"}
                         </Typography>
                         <Typography variant="caption" color="textSecondary" sx={{ display: "block", mt: 1 }}>
-                            지원 형식: .xlsx, .xls, .csv
+                            지원 형식: .xlsx
                         </Typography>
                     </Box>
 
