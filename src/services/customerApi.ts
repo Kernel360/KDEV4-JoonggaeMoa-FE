@@ -123,7 +123,7 @@ export const customerApi = {
     
     // Add new method for downloading excel format
     getExcelFormat: () => {
-        return api.get<ApiResponse<string>>(`api/customers/builk`)
+        return api.get<ApiResponse<string>>(`api/customers/bulk`)
     },
 }
 
