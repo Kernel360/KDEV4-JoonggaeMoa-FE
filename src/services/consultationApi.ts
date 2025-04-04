@@ -1,6 +1,6 @@
 import api from "./api"
 import type { AxiosResponse } from "axios"
-import type { ConsultationResultRequest, ConsultationResponse, ConsultationDateCount } from "../types/consultation"
+import type { ConsultationResultRequest, ConsultationResponse, ConsultationMonthInfo } from "../types/consultation"
 import type { ApiResponse } from "../types/api"
 
 // 상담 생성 - 백엔드 API 구조에 맞게 수정 (필수 필드만 받도록)
@@ -86,15 +86,15 @@ export const getTodayConsultations = async (): Promise<AxiosResponse<ApiResponse
 // 날짜별 상담 조회
 export const getConsultationsByDate = async (date: string): Promise<ApiResponse<ConsultationResponse[]>> => {
     try {
-        const response = await api.get<ApiResponse<ConsultationResponse[]>>(`/api/consultations?date=${date}`);
+        const response = await api.get<ApiResponse<ConsultationResponse[]>>(`/api/consultations/date?date=${date}`);
         return response.data;
     } catch (error: any) {
         console.error("날짜별 상담 조회 오류:", error);
-        return { 
-            success: false, 
-            data: [], 
+        return {
+            success: false,
+            data: [],
             error: {
-                code: 'FETCH_CONSULTATIONS_BY_DATE_FAILED', 
+                code: 'FETCH_CONSULTATIONS_BY_DATE_FAILED',
                 message: error.message || '날짜별 상담 조회 실패',
             },
         };
@@ -113,15 +113,9 @@ const deleteConsultation = (consultationId: number) => {
     return api.delete(`/api/consultations/${consultationId}`)
 }
 
-// status- information 
-const getConsultationStatusInfo = () => {
-    return api.get('/api/consultations/status-inform');
-};
-
-// 날짜별 상담 수 조회
-export const getConsultationDateCount = async (date: string): Promise<ConsultationDateCount> => {
-    const response = await api.get<ConsultationDateCount>(`/api/consultations/date-count?date=${date}`);
-    return response.data;
+// 월별 상담 정보 조회
+export const getConsultationMonthInfo = async (month: string): Promise<AxiosResponse<ApiResponse<ConsultationMonthInfo>>> => {
+    return api.get(`/api/consultations/month-inform?month=${month}`);
 };
 
 export const consultationApi = {
@@ -135,6 +129,5 @@ export const consultationApi = {
     getConsultationsByDate,
     getConsultationsByCustomer,
     deleteConsultation,
-    getConsultationStatusInfo,
-    getConsultationDateCount
+    getConsultationMonthInfo
 };
