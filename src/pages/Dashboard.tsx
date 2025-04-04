@@ -1,6 +1,6 @@
 "use client"
 
-import React from "react"
+import React, { useState, useEffect } from "react"
 import {
     AppBar,
     Toolbar,
@@ -34,10 +34,24 @@ import {
 } from "@mui/icons-material"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
+import { getAgent } from "../services/agentService"
 
 const Dashboard = () => {
     const { logout } = useAuth()
     const navigate = useNavigate()
+    const [agentName, setAgentName] = useState("")
+
+    useEffect(() => {
+        const fetchAgentInfo = async () => {
+            try {
+                const agentInfo = await getAgent()
+                setAgentName(agentInfo.name)
+            } catch (error) {
+                console.error("Failed to fetch agent info:", error)
+            }
+        }
+        fetchAgentInfo()
+    }, [])
 
     const handleCustomerManagement = () => {
         navigate("/customer-management")
@@ -59,6 +73,10 @@ const Dashboard = () => {
         navigate("/message")
     }
 
+    const handleMyPage = () => {
+        navigate("/my-page")
+    }
+
     return (
         <Box sx={{ flexGrow: 1, bgcolor: "#f5f5f5", minHeight: "100vh" }}>
             <AppBar position="static" color="default" elevation={0} sx={{ bgcolor: "white" }}>
@@ -72,12 +90,26 @@ const Dashboard = () => {
                                 <Notifications />
                             </Badge>
                         </IconButton>
-                        <Box sx={{ display: "flex", alignItems: "center", ml: 2 }}>
-                            <Avatar sx={{ bgcolor: "#3f51b5", width: 36, height: 36 }}>김</Avatar>
-                            <Typography variant="body2" sx={{ ml: 1 }}>
-                                김부동 중개사
-                            </Typography>
-                        </Box>
+                        <Button
+                            variant="text"
+                            startIcon={<Person />}
+                            onClick={handleMyPage}
+                            sx={{
+                                ml: 2,
+                                color: "#333",
+                                textTransform: "none",
+                                "&:hover": { bgcolor: "rgba(0, 0, 0, 0.04)" },
+                            }}
+                        >
+                            <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                    {agentName || "중개사"}
+                                </Typography>
+                                <Typography variant="caption" color="textSecondary">
+                                    마이페이지
+                                </Typography>
+                            </Box>
+                        </Button>
                         <Button
                             variant="contained"
                             color="primary"
