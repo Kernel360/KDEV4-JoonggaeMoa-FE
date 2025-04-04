@@ -39,9 +39,8 @@ import { useNavigate } from "react-router-dom"
 import { consultationApi } from "../services/consultationApi"
 import { customerApi } from "../services/customerApi"
 import { ConsultationStatus, ConsultationType } from "../types/consultation"
-import type { ConsultationResponse } from "../types/consultation"
+import type { ConsultationResponse, ConsultationMonthInfo } from "../types/consultation"
 import type { CustomerResponse } from "../types/customer"
-import { ConsultationDateCount } from '../types/consultation';
 
 // 상담 상태별 칩 색상 및 텍스트 - 새로운 상태 값에 맞게 업데이트
 const statusConfig = {
@@ -125,7 +124,6 @@ const ConsultationList = () => {
 
     // 날짜별 필터링
     const [dateFilteredConsultations, setDateFilteredConsultations] = useState<ConsultationResponse[]>([])
-    const [consultationCounts, setConsultationCounts] = useState<number[]>([]);
 
     // 현재 월 상태
     const [currentDate, setCurrentDate] = useState(new Date())
@@ -149,22 +147,6 @@ const ConsultationList = () => {
     const [createSuccess, setCreateSuccess] = useState(false)
     const [createError, setCreateError] = useState<string | null>(null)
 
-    // 날짜 별 상담 갯수 
-    useEffect(() => {
-        const fetchConsultationCounts = async () => {
-            try {
-                const dateString = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
-                const response = await consultationApi.getConsultationDateCount(dateString);
-                if (response.success) {
-                    setConsultationCounts(response.data);
-                }
-            } catch (error) {
-                console.error('Failed to fetch consultation counts:', error);
-            }
-        };
-    
-        fetchConsultationCounts();
-    }, [currentDate]);
 
 
     // 날짜 별 고객 목록 가져오기
@@ -240,25 +222,6 @@ const ConsultationList = () => {
         return weeks
     }
 
-    // 날짜별 상담 개수 계산 - 날짜 파싱 로직 수정
-    const getConsultationCountByDate = (date: Date) => {
-        if (!date) return 0
-
-        const dateString = formatDateToYYYYMMDD(date)
-
-        return consultations.filter((consultation) => {
-            // scheduledAt이 없는 경우 필터링에서 제외
-            if (!consultation.scheduledAt) return false
-
-            // 날짜 파싱
-            const consultDate = parseDate(consultation.scheduledAt)
-            if (!consultDate) return false
-
-            // 날짜만 비교 (시간 제외)
-            const consultDateString = formatDateToYYYYMMDD(consultDate)
-            return consultDateString === dateString
-        }).length
-    }
 
     // 날짜를 선택했을 때 처리
     const handleDateClick = async (date: Date) => {
@@ -376,47 +339,60 @@ const ConsultationList = () => {
     }
 
     // 상담 등록 처리
+    // Add this function near the other useEffect hooks
+    const refreshAllData = async () => {
+        try {
+            // Fetch month information
+            const monthString = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+            const monthResponse = await consultationApi.getConsultationMonthInfo(monthString);
+            if (monthResponse.data.success) {
+                setMonthInfo(monthResponse.data.data);
+            }
+    
+            // If a date is selected, refresh the consultations for that date
+            if (selectedDate) {
+                const formattedDate = `${selectedDate.getFullYear()}${String(selectedDate.getMonth() + 1).padStart(2, '0')}${String(selectedDate.getDate()).padStart(2, '0')}`;
+                const dateResponse = await consultationApi.getConsultationsByDate(formattedDate);
+                if (dateResponse.success) {
+                    setDateFilteredConsultations(dateResponse.data);
+                }
+            }
+        } catch (error) {
+            console.error("Error refreshing data:", error);
+        }
+    };
+    
+    // Update the handleCreateConsultation function
     const handleCreateConsultation = async () => {
-        // 유효성 검사
-        if (!selectedCustomer) {
-            setCreateError("고객을 선택해주세요.")
-            return
-        }
-
-        if (!scheduledDate || !scheduledTime) {
-            setCreateError("상담 일시를 입력해주세요.")
-            return
-        }
+        // ... existing validation code ...
 
         try {
-            setCreateLoading(true)
-            setCreateError(null)
+            setCreateLoading(true);
+            setCreateError(null);
 
-            // 날짜와 시간을 "yyyy-MM-ddTHH:mm:00" 형식으로 결합
-            const date = `${scheduledDate} ${scheduledTime}`
-
+            const date = `${scheduledDate} ${scheduledTime}`;
             const consultationData = {
                 customerId: selectedCustomer.id,
                 date: date,
-            }
+            };
 
-            const response = await consultationApi.createConsultation(consultationData)
+            const response = await consultationApi.createConsultation(consultationData);
 
             if (response.data.success) {
-                setCreateSuccess(true)
-                handleCreateModalClose()
-                // 상담 목록 다시 불러오기
-                //fetchConsultations()
+                setCreateSuccess(true);
+                handleCreateModalClose();
+                // Add this line to refresh data after successful creation
+                await refreshAllData();
             } else {
-                setCreateError(response.data.error?.message || "상담 등록에 실패했습니다.")
+                setCreateError(response.data.error?.message || "상담 등록에 실패했습니다.");
             }
         } catch (err: any) {
-            console.error("Error creating consultation:", err)
-            setCreateError(err.response?.data?.error?.message || "상담 등록에 실패했습니다.")
+            console.error("Error creating consultation:", err);
+            setCreateError(err.response?.data?.error?.message || "상담 등록에 실패했습니다.");
         } finally {
-            setCreateLoading(false)
+            setCreateLoading(false);
         }
-    }
+    };
 
     // 검색어로 필터링 - customer 객체가 존재하는지 확인하는 안전 검사 추가
     const filteredConsultations = consultations.filter((consultation) => {
@@ -460,31 +436,35 @@ const ConsultationList = () => {
         })
     }
 
-    // Add new state for status information
-    const [statusInfo, setStatusInfo] = useState<ConsultationStatusInfo>({
+
+    // Add monthInfo state
+    const [monthInfo, setMonthInfo] = useState<ConsultationMonthInfo>({
         consultationAll: 0,
         consultationWaiting: 0,
         consultationConfirmed: 0,
         consultationCancelled: 0,
-        consultationCompleted: 0
+        consultationCompleted: 0,
+        daysCount: Array(31).fill(0)  // Initialize with 31 zeros
     });
 
-    // Add new function to fetch status information
-    const fetchStatusInfo = async () => {
-        try {
-            const response = await consultationApi.getConsultationStatusInfo();
-            if (response.data.success) {
-                setStatusInfo(response.data.data);
-            }
-        } catch (err) {
-            console.error("Error fetching consultation status info:", err);
-        }
-    };
-
+    // Replace the old consultation counts effect
     useEffect(() => {
-        fetchStatusInfo();
-        //fetchConsultations()
-    }, []);
+        const fetchMonthInfo = async () => {
+            try {
+                const monthString = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+                const response = await consultationApi.getConsultationMonthInfo(monthString);
+                if (response.data.success) {
+                    setMonthInfo(response.data.data);
+                }
+            } catch (error) {
+                console.error('Failed to fetch month information:', error);
+            }
+        };
+
+        fetchMonthInfo();
+    }, [currentDate]);
+
+ 
 
     // Update the summary information section in the render
     return (
@@ -531,7 +511,7 @@ const ConsultationList = () => {
                                 상담 대기
                             </Typography>
                             <Typography variant="h3" sx={{ color: "#2196f3", fontWeight: "bold" }}>
-                                {statusInfo.consultationWaiting}
+                                {monthInfo.consultationWaiting}
                             </Typography>
                         </Paper>
                     </Grid>
@@ -544,7 +524,7 @@ const ConsultationList = () => {
                                 상담 확정
                             </Typography>
                             <Typography variant="h3" sx={{ color: "#ff9800", fontWeight: "bold" }}>
-                                {statusInfo.consultationConfirmed}
+                                {monthInfo.consultationConfirmed}
                             </Typography>
                         </Paper>
                     </Grid>
@@ -557,7 +537,7 @@ const ConsultationList = () => {
                                 완료된 상담
                             </Typography>
                             <Typography variant="h3" sx={{ color: "#4caf50", fontWeight: "bold" }}>
-                                {statusInfo.consultationCompleted}
+                                {monthInfo.consultationCompleted}
                             </Typography>
                         </Paper>
                     </Grid>
@@ -631,10 +611,11 @@ const ConsultationList = () => {
                                                                 pt: 1 
                                                             }}>
                                                                 <Typography variant="body2" sx={{ mb: 1 }}>{day.getDate()}</Typography>
-                                                                {consultationCounts[day.getDate() - 1] > 0 && (
+                                                                {/* Inside the TableCell component in the calendar */}
+                                                                {monthInfo.daysCount[day.getDate() - 1] > 0 && (
                                                                     <Chip
                                                                         size="small"
-                                                                        label={`${consultationCounts[day.getDate() - 1]}건`}
+                                                                        label={`${monthInfo.daysCount[day.getDate() - 1]}건`}
                                                                         sx={{
                                                                             bgcolor: "#e3f2fd",
                                                                             color: "#1976d2",

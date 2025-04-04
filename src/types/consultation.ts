@@ -86,10 +86,13 @@ export interface ConsultationResponse {
 }
 
 
-export interface ConsultationDateCount {
-    success: boolean;
-    data: number[];
-    error: null | string;
-}
 
+export interface ConsultationMonthInfo {
+    consultationAll: number;
+    consultationWaiting: number;
+    consultationConfirmed: number;
+    consultationCancelled: number;
+    consultationCompleted: number;
+    daysCount: number[];
+}
 
