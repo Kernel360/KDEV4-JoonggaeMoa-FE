@@ -167,7 +167,7 @@ const SignUp = () => {
           }
         );
         
-        if (response.status === 200) {
+        if (response.data.success) {
           setSnackbar({
             open: true,
             message: '회원가입이 완료되었습니다.\n로그인 페이지로 이동합니다.',
@@ -177,6 +177,12 @@ const SignUp = () => {
           setTimeout(() => {
             navigate('/login');
           }, 2000);
+        } else {
+          setSnackbar({
+            open: true,
+            message: response.data.error.message || '회원가입 중 오류가 발생했습니다.',
+            severity: 'error'
+          });
         }
       } catch (error: any) {
         console.error('Error:', error);

@@ -15,7 +15,6 @@ import SurveyEdit from "./pages/SurveyEdit.tsx"
 import SurveySubmit from "./pages/SurveySubmit.tsx"
 import SurveyAnswers from "./pages/SurveyAnswers.tsx" // 새로 추가된 설문 응답 페이지
 import ConsultationList from "./pages/ConsultationList.tsx"
-import ConsultationHistory from "./pages/ConsultationHistory.tsx"
 import ConsultationDetail from "./pages/ConsultationDetail.tsx"
 import ConsultationEdit from "./pages/ConsultationEdit.tsx"
 import MessageList from "./pages/MessageList.tsx"
@@ -218,14 +217,6 @@ function App() {
                             element={
                                 <ProtectedRoute>
                                     <ConsultationList />
-                                </ProtectedRoute>
-                            }
-                        />
-                        <Route
-                            path="/consultation/history"
-                            element={
-                                <ProtectedRoute>
-                                    <ConsultationHistory />
                                 </ProtectedRoute>
                             }
                         />
