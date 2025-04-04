@@ -1,58 +1,90 @@
 import api from "./api"
 import type { AxiosResponse } from "axios"
-import type { ApiResponse } from "./customerApi"
-import type { MessageCategory } from "../types/message"
-import type { ReservedMessage } from "../types/message"
-
-// 메시지 생성 요청 타입
-export interface MessageRequest {
-    content: string
-    sendAt: string
-    customerIdList: number[]
-    category?: MessageCategory
-}
+import type { ApiResponse } from "../types/api"
 
 // 메시지 응답 타입
 export interface MessageResponse {
     id: number
     customerId: number
     customerName: string
-    customerPhone?: string
+    customerPhone: string
     content: string
     createdAt: string
     sendStatus: string
-    category?: MessageCategory
 }
 
-// 메시지 목록 조회 (과거 전송된 메시지)
-const getMessages = async (params: { page?: number; size?: number } = {}): Promise<AxiosResponse<ApiResponse<MessageResponse[]>>> => {
-    const url = `/api/messages${params.page ? `?page=${params.page}` : ""}${params.page && params.size ? `&size=${params.size}` : (params.size ? `?size=${params.size}` : "")}`
-    return api.get(url)
+// 예약 메시지 요청 타입
+export interface MessageCreateRequest {
+    content: string
+    sendAt: string
+    customerIdList: number[]
 }
 
-// 예약된 메시지 목록 조회
-const getReservedMessages = async (params: { page?: number; size?: number } = {}): Promise<AxiosResponse<ApiResponse<ReservedMessage[]>>> => {
-    const url = `/api/reserved-message${params.page ? `?page=${params.page}` : ""}${params.page && params.size ? `&size=${params.size}` : (params.size ? `?size=${params.size}` : "")}`
-    return api.get(url)
+// 메시지 수정 요청 타입
+export interface MessageUpdateRequest {
+    content: string
+    sendAt: string
 }
 
-// 메시지 생성 (예약)
-const createMessage = async (messageData: MessageRequest): Promise<AxiosResponse<ApiResponse<void>>> => {
-    return api.post(`/api/messages`, messageData)
+// 예약 메시지 응답 타입
+export interface ReservedMessageResponse {
+    id: number
+    customerId: number
+    customerName: string
+    customerPhone?: string
+    content: string
+    sendAt: string
 }
 
-// 모든 함수를 객체로 묶어서 export
-// Remove the duplicate getMessages function and update the export
+// 페이지 응답 타입
+export interface PageResponse<T> {
+    content: T[]
+    totalPages: number
+    totalElements: number
+    last: boolean
+    size: number
+    number: number
+}
+
+export interface MessagePaginationParams {
+    lastMessageId?: number
+    page?: number
+    size?: number
+}
+
+// 메시지 API 함수들
 export const messageApi = {
-    getMessages: async (params: { page: number; size: number }) => {
-        return api.get('/api/messages', {
-            params: {
-                page: params.page,
-                size: params.size,
-                sort: 'createdAt,desc'
-            }
-        })
+    // 전송된 메시지 목록 조회
+    getMessages: async (
+        params?: MessagePaginationParams,
+    ): Promise<AxiosResponse<ApiResponse<PageResponse<MessageResponse>>>> => {
+        return api.get("/api/messages", { params })
     },
-    getReservedMessages,
-    createMessage,
+
+    // 메시지 예약/전송
+    createMessage: async (data: MessageCreateRequest): Promise<AxiosResponse<ApiResponse<void>>> => {
+        return api.post("/api/reserved-messages", data)
+    },
+
+    // 예약된 메시지 목록 조회
+    getReservedMessages: async (
+        params?: MessagePaginationParams,
+    ): Promise<AxiosResponse<ApiResponse<PageResponse<ReservedMessageResponse>>>> => {
+        return api.get("/api/reserved-messages", { params })
+    },
+
+    // 메시지 상세 조회
+    getReservedMessageById: async (reservedMessageId: number): Promise<AxiosResponse<ApiResponse<ReservedMessageResponse>>> => {
+        return api.get(`/api/reserved-messages/${reservedMessageId}`)
+    },
+
+    // 메시지 수정
+    updateMessage: async (reservedMessageId: number, data: MessageUpdateRequest): Promise<AxiosResponse<ApiResponse<void>>> => {
+        return api.patch(`/api/reserved-messages/${reservedMessageId}`, data)
+    },
+
+    // 메시지 삭제
+    deleteMessage: async (reservedMessageId: number): Promise<AxiosResponse<ApiResponse<void>>> => {
+        return api.delete(`/api/reserved-messages/${reservedMessageId}`)
+    },
 }

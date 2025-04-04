@@ -12,83 +12,99 @@ import {
     TableContainer,
     TableHead,
     TableRow,
-    Button,
-    IconButton,
     AppBar,
     Toolbar,
     TextField,
     InputAdornment,
     Chip,
     CircularProgress,
+    IconButton,
 } from "@mui/material"
-import { Search, ArrowBack, Schedule } from "@mui/icons-material"
+import { Search, ArrowBack } from "@mui/icons-material"
 import { useNavigate } from "react-router-dom"
 import { messageApi } from "../services/messageApi"
-import { MessageStatus, MessageCategory } from "../types/message"
+import { MessageStatus } from "../types/message"
 import type { MessageResponse } from "../services/messageApi"
 
 const MessageHistory = () => {
     const navigate = useNavigate()
-    const [messages, setMessages] = useState<MessageResponse[]>(() => [])
+    const [messages, setMessages] = useState<MessageResponse[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [searchTerm, setSearchTerm] = useState("")
-    const [page, setPage] = useState(0)
+    const [lastMessageId, setLastMessageId] = useState<number | undefined>(undefined)
     const [hasMore, setHasMore] = useState(true)
     const [loadingMore, setLoadingMore] = useState(false)
-    const [pageSize] = useState(10)
     const observer = useRef<IntersectionObserver>()
+    const [page, setPage] = useState(0)
 
-    const fetchMessages = useCallback(async (currentPage: number = 0) => {
-        try {
-            if (currentPage === 0) setLoading(true)
-            else setLoadingMore(true)
+    const fetchMessages = useCallback(
+        async (reset = false) => {
+            try {
+                if (reset) {
+                    setLoading(true)
+                    setLastMessageId(undefined)
+                } else {
+                    setLoadingMore(true)
+                }
 
-            const response = await messageApi.getMessages({ page: currentPage, size: pageSize })
+                const response = await messageApi.getMessages({
+                    page: reset ? 0 : page,
+                    size: 10,
+                })
 
-            if (response.data.success) {
-                const responseData = response.data.data
-                const newData = Array.isArray(responseData.content) ? responseData.content : []
+                if (response.data.success && response.data.data) {
+                    const newData = response.data.data.content || []
 
-                setMessages(prevMessages => (currentPage === 0 ? newData : [...prevMessages, ...newData]))
-                setHasMore(!responseData.last)
-                setPage(currentPage)
-            } else {
+                    setMessages((prevMessages) => {
+                        if (reset) return newData
+                        return [...prevMessages, ...newData]
+                    })
+
+                    // Update pagination info
+                    setHasMore(!response.data.data.last)
+                    setPage(response.data.data.number)
+                } else {
+                    setError("메시지 목록을 불러오는데 실패했습니다.")
+                }
+            } catch (err) {
+                console.error("Error fetching messages:", err)
                 setError("메시지 목록을 불러오는데 실패했습니다.")
+            } finally {
+                setLoading(false)
+                setLoadingMore(false)
             }
-        } catch (err) {
-            console.error("Error fetching messages:", err)
-            setError("메시지 목록을 불러오는데 실패했습니다.")
-        } finally {
-            setLoading(false)
-            setLoadingMore(false)
-        }
-    }, [pageSize])
+        },
+        [page],
+    )
 
     useEffect(() => {
-        fetchMessages(0)
-    }, [fetchMessages])
+        fetchMessages(true)
+    }, [])
 
     const lastMessageElementRef = useCallback(
         (node) => {
             if (loading || loadingMore || !hasMore) return
             if (observer.current) observer.current.disconnect()
 
-            observer.current = new IntersectionObserver(entries => {
-                if (entries[0].isIntersecting && hasMore) {
-                    fetchMessages(page + 1)
-                }
-            }, { rootMargin: '100px' })
+            observer.current = new IntersectionObserver(
+                (entries) => {
+                    if (entries[0].isIntersecting && hasMore) {
+                        fetchMessages(false)
+                    }
+                },
+                { rootMargin: "100px" },
+            )
 
             if (node) observer.current.observe(node)
         },
-        [loading, loadingMore, hasMore, page, fetchMessages]
+        [loading, loadingMore, hasMore, fetchMessages],
     )
 
     const categoryDisplayNames: Record<string, string> = {
-        [MessageCategory.BIRTHDAY]: "생일 축하",
-        [MessageCategory.EXPIRATION]: "계약 만료",
-        [MessageCategory.WELCOME]: "환영 메시지",
+        // [MessageCategory.BIRTHDAY]: "생일 축하",  // MessageCategory is removed
+        // [MessageCategory.EXPIRATION]: "계약 만료",
+        // [MessageCategory.WELCOME]: "환영 메시지",
     }
 
     const statusConfig = {
@@ -116,9 +132,16 @@ const MessageHistory = () => {
         ? (Array.isArray(messages) ? messages : []).filter(
             (message) =>
                 message.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                message.content?.toLowerCase().includes(searchTerm.toLowerCase())
+                message.content?.toLowerCase().includes(searchTerm.toLowerCase()),
         )
-        : Array.isArray(messages) ? messages : []
+        : Array.isArray(messages)
+            ? messages
+            : []
+
+    // Handle message row click to navigate to detail page
+    const handleMessageClick = (messageId: number) => {
+        navigate(`/message/${messageId}`)
+    }
 
     return (
         <Box sx={{ flexGrow: 1, bgcolor: "#f5f5f5", minHeight: "100vh" }}>
@@ -131,6 +154,14 @@ const MessageHistory = () => {
             </AppBar>
 
             <Container maxWidth="lg" sx={{ mt: 4, mb: 4, mx: "auto", px: { xs: 2, sm: 3, md: 4 } }}>
+                <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+                    <IconButton onClick={() => navigate(-1)} sx={{ mr: 1 }}>
+                        <ArrowBack />
+                    </IconButton>
+                    <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                        지난 문자 조회
+                    </Typography>
+                </Box>
                 <Paper elevation={0} sx={{ mb: 3, p: 3, borderRadius: 2 }}>
                     <TextField
                         placeholder="고객명 또는 내용으로 검색"
@@ -168,9 +199,11 @@ const MessageHistory = () => {
                             <TableBody>
                                 {filteredMessages.length > 0 ? (
                                     filteredMessages.map((message, index) => (
-                                        <TableRow 
-                                            key={message.id} 
+                                        <TableRow
+                                            key={message.id}
                                             hover
+                                            onClick={() => handleMessageClick(message.id)}
+                                            sx={{ cursor: "pointer" }}
                                             ref={!searchTerm && index === filteredMessages.length - 1 ? lastMessageElementRef : null}
                                         >
                                             <TableCell>{formatDate(message.createdAt)}</TableCell>
@@ -191,7 +224,9 @@ const MessageHistory = () => {
                                     ))
                                 ) : (
                                     <TableRow>
-                                        <TableCell colSpan={5} align="center">전송된 문자가 없습니다.</TableCell>
+                                        <TableCell colSpan={5} align="center">
+                                            전송된 문자가 없습니다.
+                                        </TableCell>
                                     </TableRow>
                                 )}
                             </TableBody>
@@ -204,3 +239,4 @@ const MessageHistory = () => {
 }
 
 export default MessageHistory
+

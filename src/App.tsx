@@ -21,11 +21,13 @@ import ConsultationEdit from "./pages/ConsultationEdit.tsx"
 import MessageList from "./pages/MessageList.tsx"
 import MessageHistory from "./pages/MessageHistory.tsx"
 import MessageCreate from "./pages/MessageCreate.tsx"
+import MessageDetail from "./pages/MessageDetail.tsx"
 import MessageTemplateCreate from "./pages/MessageTemplateCreate.tsx"
 import ContractList from "./pages/ContractList.tsx"
 import ContractCreate from "./pages/ContractCreate.tsx"
 import ContractDetail from "./pages/ContractDetail.tsx"
 import ContractEdit from "./pages/ContractEdit.tsx"
+import MyPage from "./pages/MyPage"
 // Change from default import to named import
 import { AuthProvider } from "./context/AuthContext.tsx"
 import ProtectedRoute from "./components/ProtectedRoute.tsx"
@@ -125,6 +127,7 @@ function App() {
                                 </ProtectedRoute>
                             }
                         />
+                        <Route path="/my-page" element={<MyPage />} />
                         {/* 나머지 라우트는 그대로 유지 */}
                         {/* 고객 관리 라우트 */}
                         <Route
@@ -264,6 +267,15 @@ function App() {
                             element={
                                 <ProtectedRoute>
                                     <MessageCreate />
+                                </ProtectedRoute>
+                            }
+                        />
+                        {/* 메시지 상세 페이지 라우트 추가 */}
+                        <Route
+                            path="/message/:id"
+                            element={
+                                <ProtectedRoute>
+                                    <MessageDetail />
                                 </ProtectedRoute>
                             }
                         />

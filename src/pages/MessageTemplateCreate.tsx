@@ -14,10 +14,6 @@ import {
     AppBar,
     Toolbar,
     IconButton,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
     CircularProgress,
     Snackbar,
     Alert,
@@ -29,8 +25,7 @@ import {
 import { ArrowBack, Add, Search, Edit, Delete } from "@mui/icons-material"
 import { useNavigate, useParams } from "react-router-dom"
 import { messageTemplateApi } from "../services/messageTemplateApi"
-import { MessageCategory } from "../types/message"
-import type { MessageTemplateResponse } from "../services/messageTemplateApi"
+import type { MessageTemplateResponse, MessageTemplateRequest } from "../services/messageTemplateApi"
 
 const MessageTemplateCreate = () => {
     const navigate = useNavigate()
@@ -46,49 +41,29 @@ const MessageTemplateCreate = () => {
 
     // 템플릿 편집 상태
     const [templateTitle, setTemplateTitle] = useState("")
-    const [templateCategory, setTemplateCategory] = useState<MessageCategory>(MessageCategory.BIRTHDAY)
     const [templateContent, setTemplateContent] = useState("")
     const [previewContent, setPreviewContent] = useState("")
 
-    // 카테고리 표시 이름 매핑
-    const categoryDisplayNames: Record<string, string> = {
-        [MessageCategory.BIRTHDAY]: "생일",
-        [MessageCategory.EXPIRATION]: "계약 만료",
-        [MessageCategory.WELCOME]: "신규 회원 가입",
-    }
-
     useEffect(() => {
-        // 페이지 로드 시 모든 카테고리의 템플릿 조회
-        fetchAllTemplates()
+        // 페이지 로드 시 템플릿 목록 조회
+        fetchTemplates()
     }, [])
 
-    // 모든 카테고리의 템플릿 조회
-    const fetchAllTemplates = async () => {
+    // 템플릿 목록 조회
+    const fetchTemplates = async () => {
         try {
             setLoading(true)
-            const templatesData: MessageTemplateResponse[] = []
+            const response = await messageTemplateApi.getMessageTemplates()
 
-            for (const category of Object.values(MessageCategory)) {
-                try {
-                    const response = await messageTemplateApi.getMessageTemplate(category)
-                    if (response.data.success && response.data.data) {
-                        const template = response.data.data
-                        // 템플릿 제목 추가 (백엔드에서 제공하지 않으므로 프론트에서 설정)
-                        templatesData.push({
-                            ...template,
-                            title: categoryDisplayNames[template.category] || template.category,
-                        })
-                    }
-                } catch (error) {
-                    console.error(`Failed to fetch template for category ${category}:`, error)
+            if (response.data.success) {
+                setTemplates(response.data.data || [])
+
+                // 첫 번째 템플릿이 있으면 선택
+                if (response.data.data && response.data.data.length > 0) {
+                    handleTemplateSelect(response.data.data[0])
                 }
-            }
-
-            setTemplates(templatesData)
-
-            // 첫 번째 템플릿이 있으면 선택
-            if (templatesData.length > 0) {
-                handleTemplateSelect(templatesData[0])
+            } else {
+                setError("템플릿 목록을 불러오는데 실패했습니다.")
             }
         } catch (error) {
             console.error("Failed to fetch templates:", error)
@@ -100,8 +75,7 @@ const MessageTemplateCreate = () => {
 
     const handleTemplateSelect = (template: MessageTemplateResponse) => {
         setSelectedTemplate(template)
-        setTemplateTitle(template.title || categoryDisplayNames[template.category] || template.category)
-        setTemplateCategory(template.category as MessageCategory)
+        setTemplateTitle(template.title)
         setTemplateContent(template.content)
         updatePreview(template.content)
     }
@@ -109,7 +83,6 @@ const MessageTemplateCreate = () => {
     const handleAddTemplate = () => {
         setSelectedTemplate(null)
         setTemplateTitle("")
-        setTemplateCategory(MessageCategory.WELCOME)
         setTemplateContent("")
         updatePreview("")
     }
@@ -128,6 +101,11 @@ const MessageTemplateCreate = () => {
     }
 
     const handleSave = async () => {
+        if (!templateTitle.trim()) {
+            setError("템플릿 제목을 입력해주세요.")
+            return
+        }
+
         if (!templateContent.trim()) {
             setError("템플릿 내용을 입력해주세요.")
             return
@@ -137,27 +115,24 @@ const MessageTemplateCreate = () => {
             setLoading(true)
             setError(null)
 
-            const templateData = {
-                category: templateCategory,
+            const templateData: MessageTemplateRequest = {
+                title: templateTitle,
                 content: templateContent,
             }
 
-            const response = await messageTemplateApi.updateMessageTemplate(templateData)
+            let response
+
+            if (selectedTemplate) {
+                // 기존 템플릿 수정
+                response = await messageTemplateApi.updateMessageTemplate(selectedTemplate.id, templateData)
+            } else {
+                // 새 템플릿 생성
+                response = await messageTemplateApi.createMessageTemplate(templateData)
+            }
 
             if (response.data.success) {
                 setSuccess(true)
-
-                // 템플릿 목록 업데이트
-                setTemplates(templates.map((t) => (t.category === templateCategory ? { ...t, content: templateContent } : t)))
-
-                // 현재 선택된 템플릿 업데이트
-                if (selectedTemplate) {
-                    setSelectedTemplate({
-                        ...selectedTemplate,
-                        content: templateContent,
-                        category: templateCategory,
-                    })
-                }
+                fetchTemplates() // 템플릿 목록 새로고침
             } else {
                 setError(response.data.error?.message || "템플릿 저장에 실패했습니다.")
             }
@@ -178,13 +153,13 @@ const MessageTemplateCreate = () => {
             setLoading(true)
             setError(null)
 
-            const response = await messageTemplateApi.deleteMessageTemplate(selectedTemplate.category)
+            const response = await messageTemplateApi.deleteMessageTemplate(selectedTemplate.id)
 
             if (response.data.success) {
                 setSuccess(true)
 
                 // 템플릿 목록에서 삭제
-                const updatedTemplates = templates.filter((t) => t.category !== selectedTemplate.category)
+                const updatedTemplates = templates.filter((t) => t.id !== selectedTemplate.id)
                 setTemplates(updatedTemplates)
 
                 // 다른 템플릿 선택 또는 초기화
@@ -206,8 +181,7 @@ const MessageTemplateCreate = () => {
 
     const handleReset = () => {
         if (selectedTemplate) {
-            setTemplateTitle(selectedTemplate.title || "")
-            setTemplateCategory(selectedTemplate.category as MessageCategory)
+            setTemplateTitle(selectedTemplate.title)
             setTemplateContent(selectedTemplate.content)
             updatePreview(selectedTemplate.content)
         } else {
@@ -220,8 +194,8 @@ const MessageTemplateCreate = () => {
     // 검색어로 템플릿 필터링
     const filteredTemplates = templates.filter(
         (template) =>
-            template.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            template.content?.toLowerCase().includes(searchTerm.toLowerCase()),
+            template.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            template.content.toLowerCase().includes(searchTerm.toLowerCase()),
     )
 
     return (
@@ -275,33 +249,22 @@ const MessageTemplateCreate = () => {
                             <Box sx={{ maxHeight: "500px", overflow: "auto" }}>
                                 {filteredTemplates.map((template) => (
                                     <Card
-                                        key={template.category}
+                                        key={template.id}
                                         variant="outlined"
                                         sx={{
                                             mb: 1,
                                             cursor: "pointer",
-                                            bgcolor: selectedTemplate?.category === template.category ? "#f0f7ff" : "white",
-                                            border:
-                                                selectedTemplate?.category === template.category ? "1px solid #1976d2" : "1px solid #e0e0e0",
+                                            bgcolor: selectedTemplate?.id === template.id ? "#f0f7ff" : "white",
+                                            border: selectedTemplate?.id === template.id ? "1px solid #1976d2" : "1px solid #e0e0e0",
                                         }}
                                         onClick={() => handleTemplateSelect(template)}
                                     >
                                         <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
                                             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                                 <Typography variant="subtitle2" sx={{ fontWeight: "bold" }}>
-                                                    {template.title || categoryDisplayNames[template.category] || template.category}
+                                                    {template.title}
                                                 </Typography>
                                                 <Box>
-                                                    <IconButton
-                                                        size="small"
-                                                        sx={{ p: 0.5 }}
-                                                        onClick={(e) => {
-                                                            e.stopPropagation()
-                                                            handleTemplateSelect(template)
-                                                        }}
-                                                    >
-                                                        <Edit fontSize="small" />
-                                                    </IconButton>
                                                     <IconButton
                                                         size="small"
                                                         sx={{ p: 0.5 }}
@@ -358,22 +321,6 @@ const MessageTemplateCreate = () => {
                                 placeholder="템플릿 제목을 입력하세요"
                                 sx={{ mb: 3 }}
                             />
-
-                            <FormControl fullWidth sx={{ mb: 3 }}>
-                                <InputLabel>카테고리</InputLabel>
-                                <Select
-                                    value={templateCategory}
-                                    label="카테고리"
-                                    onChange={(e) => setTemplateCategory(e.target.value as MessageCategory)}
-                                    disabled={!!selectedTemplate} // 선택된 템플릿이 있으면 카테고리 변경 불가
-                                >
-                                    {Object.values(MessageCategory).map((category) => (
-                                        <MenuItem key={category} value={category}>
-                                            {categoryDisplayNames[category] || category}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
 
                             <Typography variant="subtitle2" color="textSecondary" sx={{ mb: 1 }}>
                                 템플릿 내용
