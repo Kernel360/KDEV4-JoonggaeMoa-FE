@@ -41,6 +41,7 @@ import { customerApi } from "../services/customerApi"
 import { ConsultationStatus, ConsultationType } from "../types/consultation"
 import type { ConsultationResponse } from "../types/consultation"
 import type { CustomerResponse } from "../types/customer"
+import { ConsultationDateCount } from '../types/consultation';
 
 // 상담 상태별 칩 색상 및 텍스트 - 새로운 상태 값에 맞게 업데이트
 const statusConfig = {
@@ -121,8 +122,10 @@ const ConsultationList = () => {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [searchTerm, setSearchTerm] = useState("")
-    // Add dateFilteredConsultations state here
+
+    // 날짜별 필터링
     const [dateFilteredConsultations, setDateFilteredConsultations] = useState<ConsultationResponse[]>([])
+    const [consultationCounts, setConsultationCounts] = useState<number[]>([]);
 
     // 현재 월 상태
     const [currentDate, setCurrentDate] = useState(new Date())
@@ -146,64 +149,25 @@ const ConsultationList = () => {
     const [createSuccess, setCreateSuccess] = useState(false)
     const [createError, setCreateError] = useState<string | null>(null)
 
+    // 날짜 별 상담 갯수 
     useEffect(() => {
-        //fetchConsultations()
-    }, [])
+        const fetchConsultationCounts = async () => {
+            try {
+                const dateString = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+                const response = await consultationApi.getConsultationDateCount(dateString);
+                if (response.success) {
+                    setConsultationCounts(response.data);
+                }
+            } catch (error) {
+                console.error('Failed to fetch consultation counts:', error);
+            }
+        };
+    
+        fetchConsultationCounts();
+    }, [currentDate]);
 
-    // 수정된 fetchConsultations 함수
-// const fetchConsultations = async () => {
-//     try {
-//         setLoading(true)
-//         const response = await consultationApi.getConsultations()
 
-//         if (response.data.success && response.data.data) {
-//             // 서버 응답 데이터를 직접 ConsultationResponse 형식으로 매핑
-//             const formattedConsultations: ConsultationResponse[] = response.data.data.map((item: any) => ({
-//                 id: item.consultationId,
-//                 consultationId: item.consultationId,
-//                 customerId: item.customerId,
-//                 customerName: item.customerName,
-//                 customerPhone: item.customerPhone,
-//                 content: item.content || "",
-//                 consultationType: item.consultationType || ConsultationType.VISIT,
-//                 date: item.date,
-//                 scheduledAt: item.date,
-//                 purpose: item.purpose || "",
-//                 interestProperty: item.interestProperty || "",
-//                 interestLocation: item.interestLocation || "",
-//                 contractType: item.contractType || "",
-//                 assetStatus: item.assetStatus || "",
-//                 memo: item.memo || "",
-//                 consultationStatus: item.consultationStatus as ConsultationStatus,
-//                 status: item.consultationStatus as ConsultationStatus,
-//                 result: item.result || "",
-//                 nextAction: item.nextAction || "",
-//                 propertyInterest: item.interestProperty || "",
-//                 budget: item.assetStatus || "",
-//                 createdAt: item.date,
-//                 updatedAt: item.date,
-//                 // 객체 내부에 객체를 생성하여 고객 정보를 설정
-//                 customer: {
-//                     id: item.customerId,
-//                     name: item.customerName,
-//                     phone: item.customerPhone,
-//                     email: item.customerEmail || "",
-//                 }
-//             }))
-
-//             setConsultations(formattedConsultations)
-//         } else {
-//             setError("상담 내역을 불러오는데 실패했습니다.")
-//         }
-//     } catch (err) {
-//         console.error("Error fetching consultations:", err)
-//         setError("상담 내역을 불러오는데 실패했습니다.")
-//     } finally {
-//         setLoading(false)
-//     }
-// }
-
-    // 고객 목록 가져오기
+    // 날짜 별 고객 목록 가져오기
     const fetchCustomers = async () => {
         try {
             setCustomersLoading(true)
@@ -220,6 +184,8 @@ const ConsultationList = () => {
         } finally {
             setCustomersLoading(false)
         }
+
+
     }
 
     // 이전 달로 이동
@@ -643,42 +609,43 @@ const ConsultationList = () => {
                                                             width: "14.28%",
                                                             position: "relative",
                                                             cursor: day ? "pointer" : "default",
-                                                            bgcolor:
-                                                                selectedDate && day && selectedDate.toDateString() === day.toDateString()
-                                                                    ? "#f5f5f5"
-                                                                    : "inherit",
+                                                            bgcolor: selectedDate && day && selectedDate.toDateString() === day.toDateString()
+                                                                ? "#f5f5f5"
+                                                                : "inherit",
                                                             color: day
                                                                 ? dayIndex === 0
                                                                     ? "error.main"
-                                                                    : // 일요일
-                                                                    dayIndex === 6
+                                                                    : dayIndex === 6
                                                                         ? "primary.main"
-                                                                        : // 토요일
-                                                                        "inherit"
+                                                                        : "inherit"
                                                                 : "#aaa",
                                                         }}
                                                         onClick={() => day && handleDateClick(day)}
                                                     >
                                                         {day && (
-                                                            <>
-                                                                <Typography variant="body2">{day.getDate()}</Typography>
-                                                                {getConsultationCountByDate(day) > 0 && (
+                                                            <Box sx={{ 
+                                                                display: 'flex', 
+                                                                flexDirection: 'column', 
+                                                                alignItems: 'center',
+                                                                height: '100%',
+                                                                pt: 1 
+                                                            }}>
+                                                                <Typography variant="body2" sx={{ mb: 1 }}>{day.getDate()}</Typography>
+                                                                {consultationCounts[day.getDate() - 1] > 0 && (
                                                                     <Chip
                                                                         size="small"
-                                                                        label={`${getConsultationCountByDate(day)}건`}
+                                                                        label={`${consultationCounts[day.getDate() - 1]}건`}
                                                                         sx={{
-                                                                            position: "absolute",
-                                                                            bottom: "5px",
-                                                                            left: "50%",
-                                                                            transform: "translateX(-50%)",
                                                                             bgcolor: "#e3f2fd",
                                                                             color: "#1976d2",
                                                                             fontSize: "0.7rem",
                                                                             height: "20px",
+                                                                            mt: 'auto',
+                                                                            mb: 1
                                                                         }}
                                                                     />
                                                                 )}
-                                                            </>
+                                                            </Box>
                                                         )}
                                                     </TableCell>
                                                 ))}

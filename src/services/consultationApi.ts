@@ -1,6 +1,6 @@
 import api from "./api"
 import type { AxiosResponse } from "axios"
-import type { ConsultationResultRequest, ConsultationResponse } from "../types/consultation"
+import type { ConsultationResultRequest, ConsultationResponse, ConsultationDateCount } from "../types/consultation"
 import type { ApiResponse } from "../types/api"
 
 // 상담 생성 - 백엔드 API 구조에 맞게 수정 (필수 필드만 받도록)
@@ -108,14 +108,20 @@ export const getConsultationsByCustomer = async (
     return api.get(`/api/customers/${customerId}/consultations`)
 }
 
-// Export both individual functions and the object for backward compatibility
+// 상담 삭제
 const deleteConsultation = (consultationId: number) => {
     return api.delete(`/api/consultations/${consultationId}`)
 }
 
-// Add this new method to your existing consultationApi
+// status- information 
 const getConsultationStatusInfo = () => {
     return api.get('/api/consultations/status-inform');
+};
+
+// 날짜별 상담 수 조회
+export const getConsultationDateCount = async (date: string): Promise<ConsultationDateCount> => {
+    const response = await api.get<ConsultationDateCount>(`/api/consultations/date-count?date=${date}`);
+    return response.data;
 };
 
 export const consultationApi = {
@@ -129,5 +135,6 @@ export const consultationApi = {
     getConsultationsByDate,
     getConsultationsByCustomer,
     deleteConsultation,
-    getConsultationStatusInfo
+    getConsultationStatusInfo,
+    getConsultationDateCount
 };

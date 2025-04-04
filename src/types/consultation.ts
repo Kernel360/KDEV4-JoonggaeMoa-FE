@@ -53,6 +53,7 @@ export interface CustomerInfo {
 }
 
 export interface ConsultationResponse {
+    customerEmail: string
     id: number
     consultationId?: number  // 백엔드 응답용
     customerId: number
@@ -82,6 +83,13 @@ export interface ConsultationResponse {
     budget?: string
     createdAt: string
     updatedAt: string
+}
+
+
+export interface ConsultationDateCount {
+    success: boolean;
+    data: number[];
+    error: null | string;
 }
 
 
