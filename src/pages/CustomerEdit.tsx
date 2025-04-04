@@ -23,6 +23,8 @@ import { ArrowBack } from "@mui/icons-material"
 import { useNavigate, useParams } from "react-router-dom"
 import { customerApi, type UpdateCustomerRequest } from "../services/customerApi"
 import dayjs from "dayjs"
+import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers"
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs"
 
 const CustomerEdit = () => {
     const navigate = useNavigate()
@@ -89,8 +91,8 @@ const CustomerEdit = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
-        if (!formData.name || !formData.phone) {
-            setError("이름과 연락처는 필수 입력 항목입니다.")
+        if (!formData.name || !formData.phone || !formData.email || !formData.birthday) {
+            setError("이름, 전화번호, 이메일, 생년월일은 필수 입력 항목입니다.")
             return
         }
 
@@ -167,7 +169,14 @@ const CustomerEdit = () => {
                     <form onSubmit={handleSubmit}>
                         <Grid container spacing={3}>
                             <Grid item xs={12} sm={6}>
-                                <TextField required fullWidth label="이름" name="name" value={formData.name} onChange={handleChange} />
+                                <TextField 
+                                    required
+                                    fullWidth
+                                    label="이름"
+                                    name="name"
+                                    value={formData.name}
+                                    onChange={handleChange}
+                                />
                             </Grid>
                             <Grid item xs={12} sm={6}>
                                 <TextField
@@ -182,6 +191,7 @@ const CustomerEdit = () => {
                             </Grid>
                             <Grid item xs={12} sm={6}>
                                 <TextField
+                                    required
                                     fullWidth
                                     label="이메일"
                                     name="email"
@@ -194,15 +204,28 @@ const CustomerEdit = () => {
                                 <TextField fullWidth label="직업" name="job" value={formData.job} onChange={handleChange} />
                             </Grid>
                             <Grid item xs={12} sm={6}>
-                                <TextField
-                                    fullWidth
-                                    label="생년월일"
-                                    name="birthday"
-                                    value={formData.birthday}
-                                    onChange={handleChange}
-                                    placeholder="YYYY-MM-DD"
-                                    helperText="예: 1990-01-01 형식으로 입력해주세요"
-                                />
+                                <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="ko">
+                                    <DatePicker
+                                        label="생년월일"
+                                        value={formData.birthday ? dayjs(formData.birthday) : null}
+                                        onChange={(newValue) => {
+                                            if (newValue) {
+                                                const formattedDate = dayjs(newValue).format('YYYY-MM-DD')
+                                                setFormData(prev => ({ ...prev, birthday: formattedDate }))
+                                            } else {
+                                                setFormData(prev => ({ ...prev, birthday: '' }))
+                                            }
+                                        }}
+                                        format="YYYY-MM-DD"
+                                        slotProps={{
+                                            textField: {
+                                                fullWidth: true,
+                                                required: true,
+                                                error: false
+                                            }
+                                        }}
+                                    />
+                                </LocalizationProvider>
                             </Grid>
                             <Grid item xs={12} sm={6}>
                                 <FormControlLabel
