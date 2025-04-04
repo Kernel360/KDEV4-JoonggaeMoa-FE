@@ -107,7 +107,37 @@ const SignUp = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    
+    // 휴대폰 번호 입력 시 자동 포맷팅
+    if (name === 'phone') {
+      const numbersOnly = value.replace(/[^\d]/g, '');
+      let formattedNumber = numbersOnly;
+      
+      if (numbersOnly.length > 0) {
+        if (numbersOnly.length <= 3) {
+          formattedNumber = numbersOnly;
+        } else if (numbersOnly.length <= 7) {
+          formattedNumber = `${numbersOnly.slice(0, 3)}-${numbersOnly.slice(3)}`;
+        } else {
+          formattedNumber = `${numbersOnly.slice(0, 3)}-${numbersOnly.slice(3, 7)}-${numbersOnly.slice(7, 11)}`;
+        }
+      }
+      
+      setFormData(prev => ({ ...prev, [name]: formattedNumber }));
+      return;
+    }
+    
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
   const formatPhoneNumber = (phone: string) => {
+    // 이미 하이픈이 포함된 형식이면 그대로 반환
+    if (phone.includes('-')) {
+      return phone;
+    }
+    // 숫자만 있는 경우 하이픈 추가
     return phone.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
   };
 
@@ -161,19 +191,6 @@ const SignUp = () => {
 
   const handleSnackbarClose = () => {
     setSnackbar(prev => ({ ...prev, open: false }));
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    
-    // 휴대폰 번호 입력 시 숫자만 허용
-    if (name === 'phone') {
-      const numbersOnly = value.replace(/[^\d]/g, '').slice(0, 11);
-      setFormData(prev => ({ ...prev, [name]: numbersOnly }));
-      return;
-    }
-    
-    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   return (
@@ -234,9 +251,9 @@ const SignUp = () => {
               value={formData.phone}
               onChange={handleChange}
               error={!!errors.phone}
-              helperText={errors.phone || '숫자만 입력해주세요 (예: 01012345678)'}
+              helperText={errors.phone}
               required
-              inputProps={{ maxLength: 11 }}
+              inputProps={{ maxLength: 13 }}
             />
             <TextField
               name="email"
