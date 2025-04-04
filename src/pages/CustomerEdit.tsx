@@ -22,6 +22,7 @@ import {
 import { ArrowBack } from "@mui/icons-material"
 import { useNavigate, useParams } from "react-router-dom"
 import { customerApi, type UpdateCustomerRequest } from "../services/customerApi"
+import dayjs from "dayjs"
 
 const CustomerEdit = () => {
     const navigate = useNavigate()
@@ -90,6 +91,11 @@ const CustomerEdit = () => {
 
         if (!formData.name || !formData.phone) {
             setError("이름과 연락처는 필수 입력 항목입니다.")
+            return
+        }
+
+        if (formData.birthday && dayjs(formData.birthday).isAfter(dayjs())) {
+            setError("생년월일은 현재 날짜 이전이어야 합니다.");
             return
         }
 
