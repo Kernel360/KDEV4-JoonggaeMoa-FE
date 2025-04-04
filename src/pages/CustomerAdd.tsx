@@ -74,8 +74,8 @@ const CustomerAdd = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
-        if (!formData.name || !formData.phone) {
-            setError("이름과 전화번호는 필수 입력 항목입니다.")
+        if (!formData.name || !formData.phone || !formData.email || !formData.birthday) {
+            setError("이름, 전화번호, 이메일, 생년월일은 필수 입력 항목입니다.")
             return
         }
         
@@ -142,7 +142,14 @@ const CustomerAdd = () => {
                     <form onSubmit={handleSubmit}>
                         <Grid container spacing={3}>
                             <Grid item xs={12} sm={6}>
-                                <TextField required fullWidth label="이름" name="name" value={formData.name} onChange={handleChange} />
+                                <TextField
+                                    required
+                                    fullWidth
+                                    label="이름"
+                                    name="name"
+                                    value={formData.name}
+                                    onChange={handleChange}
+                                />
                             </Grid>
                             <Grid item xs={12} sm={6}>
                                 <TextField
@@ -157,6 +164,7 @@ const CustomerAdd = () => {
                             </Grid>
                             <Grid item xs={12} sm={6}>
                                 <TextField
+                                    required
                                     fullWidth
                                     label="이메일"
                                     name="email"
@@ -185,6 +193,7 @@ const CustomerAdd = () => {
                                         slotProps={{
                                             textField: {
                                                 fullWidth: true,
+                                                required: true,
                                                 error: false
                                             }
                                         }}
