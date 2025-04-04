@@ -108,6 +108,11 @@ const ContractCreate = () => {
             return
         }
 
+        if (selectedLandlord.id === selectedTenant.id) {
+            setError("임대인과 임차인은 동일할 수 없습니다.")
+            return
+        }
+
         if (!createdAt) {
             setError("계약일을 입력해주세요.")
             return
