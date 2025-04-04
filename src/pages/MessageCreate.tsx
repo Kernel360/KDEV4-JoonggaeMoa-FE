@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { SelectChangeEvent } from '@mui/material/Select'
+import type { SelectChangeEvent } from "@mui/material/Select"
 
 import { useState, useEffect } from "react"
 import {
@@ -25,13 +25,13 @@ import {
     Alert,
     Divider,
     Checkbox,
+    FormHelperText,
 } from "@mui/material"
-import { ArrowBack } from "@mui/icons-material"
+import { ArrowBack, InfoOutlined } from "@mui/icons-material"
 import { useNavigate } from "react-router-dom"
 import { messageApi } from "../services/messageApi"
 import { messageTemplateApi } from "../services/messageTemplateApi"
 import { customerApi } from "../services/customerApi"
-import { MessageCategory } from "../types/message"
 import type { CustomerResponse } from "../services/customerApi"
 import type { MessageTemplateResponse } from "../services/messageTemplateApi"
 
@@ -51,6 +51,34 @@ function getByteLength(str: string): number {
     return byteLength
 }
 
+// 현재 시간에서 10분 후의 시간을 반환하는 함수
+function getTenMinutesLater(): { date: string; time: string } {
+    const now = new Date()
+    const tenMinutesLater = new Date(now.getTime() + 10 * 60 * 1000) // 10분 추가
+
+    const year = tenMinutesLater.getFullYear()
+    const month = String(tenMinutesLater.getMonth() + 1).padStart(2, "0")
+    const day = String(tenMinutesLater.getDate()).padStart(2, "0")
+    const hours = String(tenMinutesLater.getHours()).padStart(2, "0")
+    const minutes = String(tenMinutesLater.getMinutes()).padStart(2, "0")
+
+    return {
+        date: `${year}-${month}-${day}`,
+        time: `${hours}:${minutes}`,
+    }
+}
+
+// 선택된 시간이 현재 시간으로부터 10분 이후인지 확인하는 함수
+function isTimeAtLeastTenMinutesLater(date: string, time: string): boolean {
+    const now = new Date()
+    const selectedTime = new Date(`${date}T${time}:59`)
+    const tenMinutesLater = new Date(now.getTime() + 10 * 60 * 1000)
+
+    console.log(selectedTime, tenMinutesLater)
+
+    return selectedTime >= tenMinutesLater
+}
+
 const MessageCreate = () => {
     const navigate = useNavigate()
     const [loading, setLoading] = useState(false)
@@ -65,89 +93,76 @@ const MessageCreate = () => {
 
     // 메시지 관련 상태
     const [content, setContent] = useState("")
-    const [selectedCategory, setSelectedCategory] = useState<MessageCategory>(MessageCategory.WELCOME)
     const [templates, setTemplates] = useState<MessageTemplateResponse[]>([])
     const [selectedTemplate, setSelectedTemplate] = useState("")
 
     // 전송 시간 관련 상태
     const [scheduledDate, setScheduledDate] = useState("")
     const [scheduledTime, setScheduledTime] = useState("")
+    const [timeError, setTimeError] = useState(false)
 
     const [byteCount, setByteCount] = useState(0)
-
-    // 카테고리 표시 이름 매핑
-    const categoryDisplayNames: Record<string, string> = {
-        [MessageCategory.BIRTHDAY]: "생일 축하",
-        [MessageCategory.EXPIRATION]: "계약 만료",
-        [MessageCategory.WELCOME]: "환영 메시지",
-    }
 
     useEffect(() => {
         fetchCustomers()
         fetchTemplates()
 
-        // 현재 날짜와 시간으로 초기화
-        const now = new Date()
-        setScheduledDate(now.toISOString().split("T")[0])
-        setScheduledTime(`${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`)
+        // 현재 시간에서 10분 후로 초기화
+        const { date, time } = getTenMinutesLater()
+        setScheduledDate(date)
+        setScheduledTime(time)
 
         // Initialize byte count
         setByteCount(getByteLength(content))
     }, [])
 
-    const fetchCustomers = async () => {
-    try {
-        setCustomerLoading(true)
-        const response = await customerApi.getCustomers()
-        if (response.data.success && response.data.data) {
-            setCustomers(response.data.data.content)
-        } else {
-            setError("고객 목록을 불러오는데 실패했습니다.")
+    // 시간이 변경될 때마다 유효성 검사
+    useEffect(() => {
+        if (scheduledDate && scheduledTime) {
+            setTimeError(!isTimeAtLeastTenMinutesLater(scheduledDate, scheduledTime))
         }
-    } catch (err) {
-        console.error("Error fetching customers:", err)
-        setError("고객 목록을 불러오는데 실패했습니다.")
-    } finally {
-        setCustomerLoading(false)
+    }, [scheduledDate, scheduledTime])
+
+    const fetchCustomers = async () => {
+        try {
+            setCustomerLoading(true)
+            const response = await customerApi.getCustomers()
+            if (response.data.success && response.data.data) {
+                setCustomers(response.data.data.content)
+            } else {
+                setError("고객 목록을 불러오는데 실패했습니다.")
+            }
+        } catch (err) {
+            console.error("Error fetching customers:", err)
+            setError("고객 목록을 불러오는데 실패했습니다.")
+        } finally {
+            setCustomerLoading(false)
+        }
     }
-}
 
     const fetchTemplates = async () => {
         try {
-            const templatesData: MessageTemplateResponse[] = []
+            const response = await messageTemplateApi.getMessageTemplates()
 
-            for (const category of Object.values(MessageCategory)) {
-                try {
-                    const response = await messageTemplateApi.getMessageTemplate(category)
-                    if (response.data.success && response.data.data) {
-                        templatesData.push(response.data.data)
-                    }
-                } catch (error) {
-                    console.error(`Failed to fetch template for category ${category}:`, error)
-                }
+            if (response.data.success && response.data.data) {
+                setTemplates(response.data.data)
+            } else {
+                console.error("Failed to fetch templates")
             }
-
-            setTemplates(templatesData)
         } catch (error) {
             console.error("Failed to fetch templates:", error)
         }
     }
 
-    const handleTemplateChange = async (e: SelectChangeEvent<string>) => {
-        const category = e.target.value
-        setSelectedTemplate(category)
+    const handleTemplateChange = (e: SelectChangeEvent<string>) => {
+        const templateId = e.target.value
+        setSelectedTemplate(templateId)
 
-        if (category) {
-            try {
-                const response = await messageTemplateApi.getMessageTemplate(category)
-                if (response.data.success && response.data.data) {
-                    const templateContent = response.data.data.content
-                    setContent(templateContent)
-                    setByteCount(getByteLength(templateContent))
-                    setSelectedCategory(category as MessageCategory)
-                }
-            } catch (error) {
-                console.error("Failed to fetch template content:", error)
+        if (templateId) {
+            const selectedTemplateObj = templates.find((template) => template.id.toString() === templateId)
+            if (selectedTemplateObj) {
+                setContent(selectedTemplateObj.content)
+                setByteCount(getByteLength(selectedTemplateObj.content))
             }
         }
     }
@@ -193,18 +208,24 @@ const MessageCreate = () => {
             return
         }
 
+        // 시간이 현재 시간으로부터 10분 이후인지 확인
+        if (!isTimeAtLeastTenMinutesLater(scheduledDate, scheduledTime)) {
+            setError("전송 시간은 현재 시간으로부터 최소 10분 이후로 설정해야 합니다.")
+            setTimeError(true)
+            return
+        }
+
         try {
             setLoading(true)
             setError(null)
 
             // 전송 시간 설정
-            const sendAt = `${scheduledDate}T${scheduledTime}:00`
+            const sendAt = `${scheduledDate} ${scheduledTime}`
 
             const messageData = {
                 content,
                 sendAt,
                 customerIdList: selectedCustomers,
-                category: selectedCategory,
             }
 
             const response = await messageApi.createMessage(messageData)
@@ -226,11 +247,11 @@ const MessageCreate = () => {
     }
 
     // 검색어로 고객 필터링
-    const filteredCustomers = customers.filter(
+    const filteredCustomers = customers ? customers.filter(
         (customer) =>
             customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             (customer.phone && customer.phone.includes(searchTerm)),
-    )
+    ) : []
 
     const [messageContent, setMessageContent] = useState("")
     const [byteLength, setByteLength] = useState(0)
@@ -241,6 +262,14 @@ const MessageCreate = () => {
 
     const handleMessageContentChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setMessageContent(event.target.value)
+    }
+
+    // 현재 시간 + 10분 이후의 시간으로 재설정하는 함수
+    const resetToTenMinutesLater = () => {
+        const { date, time } = getTenMinutesLater()
+        setScheduledDate(date)
+        setScheduledTime(time)
+        setTimeError(false)
     }
 
     return (
@@ -299,7 +328,7 @@ const MessageCreate = () => {
                                         ) : filteredCustomers.length > 0 ? (
                                             filteredCustomers.map((customer) => (
                                                 <Box
-                                                    component="div"  // 이 부분 추가
+                                                    component="div" // 이 부분 추가
                                                     key={customer.id}
                                                     sx={{
                                                         display: "flex",
@@ -359,8 +388,8 @@ const MessageCreate = () => {
                                             <Select value={selectedTemplate} label="템플릿 선택" onChange={handleTemplateChange}>
                                                 <MenuItem value="">직접 입력</MenuItem>
                                                 {templates.map((template) => (
-                                                    <MenuItem key={template.category} value={template.category}>
-                                                        {categoryDisplayNames[template.category] || template.category}
+                                                    <MenuItem key={template.id} value={template.id.toString()}>
+                                                        {template.title}
                                                     </MenuItem>
                                                 ))}
                                             </Select>
@@ -397,9 +426,27 @@ const MessageCreate = () => {
 
                                 <Divider sx={{ my: 2 }} />
 
-                                <Typography variant="subtitle1" sx={{ mb: 2 }}>
-                                    발송 예약
-                                </Typography>
+                                <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                                    <Typography variant="subtitle1" sx={{ mr: 1 }}>
+                                        발송 예약
+                                    </Typography>
+                                    <Box
+                                        sx={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            bgcolor: "#f5f5f5",
+                                            borderRadius: 1,
+                                            px: 1.5,
+                                            py: 0.5,
+                                            ml: 1,
+                                        }}
+                                    >
+                                        <InfoOutlined fontSize="small" sx={{ mr: 0.5, color: "#666" }} />
+                                        <Typography variant="caption" color="text.secondary">
+                                            현재 시간으로부터 최소 10분 이후로 설정해야 합니다
+                                        </Typography>
+                                    </Box>
+                                </Box>
 
                                 <Grid container spacing={2}>
                                     <Grid item xs={12} sm={6}>
@@ -410,6 +457,7 @@ const MessageCreate = () => {
                                             value={scheduledDate}
                                             onChange={(e) => setScheduledDate(e.target.value)}
                                             InputLabelProps={{ shrink: true }}
+                                            error={timeError}
                                         />
                                     </Grid>
                                     <Grid item xs={12} sm={6}>
@@ -420,9 +468,23 @@ const MessageCreate = () => {
                                             value={scheduledTime}
                                             onChange={(e) => setScheduledTime(e.target.value)}
                                             InputLabelProps={{ shrink: true }}
+                                            error={timeError}
                                         />
                                     </Grid>
                                 </Grid>
+
+                                {timeError && (
+                                    <Box sx={{ mt: 1, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                                        <FormHelperText error>현재 시간으로부터 최소 10분 이후로 설정해야 합니다</FormHelperText>
+                                        <Button
+                                            size="small"
+                                            onClick={resetToTenMinutesLater}
+                                            sx={{ color: "#1976d2", fontSize: "0.75rem" }}
+                                        >
+                                            10분 후로 재설정
+                                        </Button>
+                                    </Box>
+                                )}
 
                                 <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 3 }}>
                                     <Button
@@ -439,7 +501,7 @@ const MessageCreate = () => {
                                         sx={{ bgcolor: "#000", "&:hover": { bgcolor: "#333" } }}
                                         disabled={loading}
                                     >
-                                        {loading ? <CircularProgress size={24} /> : "전송하기"}
+                                        {loading ? <CircularProgress size={24} /> : "예약하기"}
                                     </Button>
                                 </Box>
                             </Paper>
@@ -456,7 +518,7 @@ const MessageCreate = () => {
 
             <Snackbar open={success} autoHideDuration={6000} onClose={() => setSuccess(false)}>
                 <Alert onClose={() => setSuccess(false)} severity="success" sx={{ width: "100%" }}>
-                    문자가 성공적으로 전송되었습니다.
+                    문자가 성공적으로 예약되었습니다.
                 </Alert>
             </Snackbar>
 
