@@ -16,6 +16,8 @@ import {
     Button,
     createTheme,
     ThemeProvider,
+    Menu,
+    MenuItem,
 } from "@mui/material"
 import {
     Business,
@@ -84,6 +86,7 @@ const Dashboard = () => {
     const [profile, setProfile] = useState<{ name: string; email: string } | null>(null);
     const[loading, setLoading] = useState(true);
     const[error, setError] = useState<string | null>(null);
+    const[anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
     const handleCustomerManagement = () => {
         navigate("/customer-management")
@@ -107,6 +110,24 @@ const Dashboard = () => {
 
     const handleMyPage = () => {
         navigate("/my-page")
+    }
+
+    const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+        if (anchorEl) {
+            handleMenuClose();
+        } else {
+            setAnchorEl(event.currentTarget);
+        }
+    }
+
+    const handleMenuClose = () => {
+        setAnchorEl(null);
+    }
+
+    const handleLogout = () => {
+        logout();
+        navigate("/");
+        handleMenuClose();
     }
 
     useEffect(() => {
@@ -368,11 +389,8 @@ const Dashboard = () => {
                                     <Notifications />
                                 </Badge>
                             </IconButton>
-                            {/* <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Avatar sx={{ width: 32, height: 32 }}>김</Avatar>
-                                <Typography variant="body2">김부동</Typography>
-                            </Box> */}
-                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                            {/* 프로필 이니셜 및 이름 */}
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1, cursor: "pointer" }} onClick={handleMenuOpen}>
                                 <Avatar sx={{ width: 32, height: 32 }}>
                                     {profile?.name?.charAt(0) || "?"}
                                 </Avatar>
@@ -387,6 +405,25 @@ const Dashboard = () => {
                                         <Typography variant="body2">{profile?.name}</Typography>
                                     </Box>
                                 )}
+
+                                {/* 드롭다운 메뉴 */}
+                                <Menu
+                                    anchorEl={anchorEl}
+                                    open={Boolean(anchorEl)}
+                                    onClose={handleMenuClose}
+                                    anchorOrigin={{
+                                        vertical: "bottom",
+                                        horizontal: "right",
+                                    }}
+                                    transformOrigin={{
+                                        vertical: "top",
+                                        horizontal: "right",
+                                    }}
+                                >
+                                    <MenuItem onClick={handleMyPage}>마이페이지</MenuItem>
+                                    <MenuItem onClick={handleLogout}>로그아웃</MenuItem>
+                                </Menu>
+                                
                             </Box>
 
                         </Box>
