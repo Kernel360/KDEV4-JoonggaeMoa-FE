@@ -10,6 +10,7 @@ interface AuthContextType {
     login: (token: string, agentId: number) => void
     logout: () => void
     agentId: number | null
+    loading: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -18,6 +19,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false)
     const [agentId, setAgentId] = useState<number | null>(null)
     const navigate = useNavigate()
+    const [loading, setLoading] = useState(true)
 
     // Check if user is authenticated on mount
     useEffect(() => {
@@ -27,7 +29,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (token && storedAgentId) {
             setIsAuthenticated(true)
             setAgentId(Number(storedAgentId))
+        } else {
+            setIsAuthenticated(false);
+            setAgentId(null);
         }
+        setLoading(false);
     }, [])
 
     // Update the login function to extract agentId from response headers
@@ -48,7 +54,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         navigate("/")
     }
 
-    return <AuthContext.Provider value={{ isAuthenticated, login, logout, agentId }}>{children}</AuthContext.Provider>
+    return <AuthContext.Provider value={{ isAuthenticated, login, logout, agentId, loading }}>{children}</AuthContext.Provider>
 }
 
 export const useAuth = (): AuthContextType => {
