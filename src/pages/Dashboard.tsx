@@ -298,7 +298,8 @@ const Dashboard = () => {
 
                     <Box sx={{ mt: 'auto', p: 2, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
                         <ListItem 
-                            disabled
+                            button
+                            onClick={() => navigate("/my-page")}
                             sx={{ 
                                 borderRadius: '8px',
                                 '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' },
