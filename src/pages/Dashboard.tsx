@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import {
     Box,
     Typography,
@@ -35,7 +35,7 @@ import {
 } from "@mui/icons-material"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
-import { getAgent } from "../services/agentService"
+import api from "../services/api"
 
 // 커스텀 테마 생성
 const theme = createTheme({
@@ -81,6 +81,9 @@ const Dashboard = () => {
     const { logout } = useAuth()
     const navigate = useNavigate()
     const [sidebarOpen, setSidebarOpen] = useState(true)
+    const [profile, setProfile] = useState<{ name: string; email: string } | null>(null);
+    const[loading, setLoading] = useState(true);
+    const[error, setError] = useState<string | null>(null);
 
     const handleCustomerManagement = () => {
         navigate("/customer-management")
@@ -105,6 +108,31 @@ const Dashboard = () => {
     const handleMyPage = () => {
         navigate("/my-page")
     }
+
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                const response = await api.get("/api/agents"); // API 요청
+                if (response.data.success && response.data.data) {
+                    setProfile({
+                        name: response.data.data.name,
+                        email: response.data.data.email,
+                    });
+                    console.log(response.data.data.name);
+                    
+                } else {
+                    setError("프로필 정보를 불러오는데 실패했습니다.");
+                }
+            } catch (err) {
+                console.error("Error fetching profile:", err);
+                setError("프로필 정보를 불러오는데 실패했습니다.");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProfile();
+    }, []); // 컴포넌트 마운트 시 실행
 
     return (
         <ThemeProvider theme={theme}>
@@ -340,10 +368,27 @@ const Dashboard = () => {
                                     <Notifications />
                                 </Badge>
                             </IconButton>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            {/* <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                 <Avatar sx={{ width: 32, height: 32 }}>김</Avatar>
                                 <Typography variant="body2">김부동</Typography>
+                            </Box> */}
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                <Avatar sx={{ width: 32, height: 32 }}>
+                                    {profile?.name?.charAt(0) || "?"}
+                                </Avatar>
+                                {loading ? (
+                                    <Typography variant="body2">로딩 중...</Typography>
+                                ) : error ? (
+                                    <Typography variant="body2" color="error">
+                                        {error}
+                                    </Typography>
+                                ) : (
+                                    <Box>
+                                        <Typography variant="body2">{profile?.name}</Typography>
+                                    </Box>
+                                )}
                             </Box>
+
                         </Box>
                     </Box>
 
