@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom"
 import { ThemeProvider, createTheme, CssBaseline, Box } from "@mui/material"
 import Login from "./pages/Login.tsx"
-import Register from "./pages/Register.tsx"
+import SignUp from './pages/SignUp'
 import Dashboard from "./pages/Dashboard.tsx"
 import CustomerManagement from "./pages/CustomerManagement.tsx"
 import CustomerAdd from "./pages/CustomerAdd.tsx"
@@ -99,7 +99,7 @@ function App() {
                             }
                         />
                         <Route
-                            path="/register"
+                            path="/signup"
                             element={
                                 <Box
                                     sx={{
@@ -111,7 +111,7 @@ function App() {
                                         backgroundColor: "#f5f5f5",
                                     }}
                                 >
-                                    <Register />
+                                    <SignUp />
                                 </Box>
                             }
                         />

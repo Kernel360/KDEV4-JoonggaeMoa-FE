@@ -135,8 +135,8 @@ function Login() {
                 <Box sx={{ width: "100%", textAlign: "center" }}>
                     <Typography variant="body2" color="text.secondary">
                         Don't have an account?{" "}
-                        <Link to="/register" style={{ textDecoration: "none" }}>
-                            Register
+                        <Link to="/signup" style={{ textDecoration: "none" }}>
+                            sign up
                         </Link>
                     </Typography>
                 </Box>
