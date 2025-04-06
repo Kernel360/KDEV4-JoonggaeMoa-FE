@@ -26,6 +26,7 @@ import ContractList from "./pages/ContractList.tsx"
 import ContractCreate from "./pages/ContractCreate.tsx"
 import ContractDetail from "./pages/ContractDetail.tsx"
 import ContractEdit from "./pages/ContractEdit.tsx"
+import ArticleList from "./pages/ArticleList.tsx"
 import MyPage from "./pages/MyPage"
 // Change from default import to named import
 import { AuthProvider } from "./context/AuthContext.tsx"
@@ -308,6 +309,15 @@ function App() {
                             element={
                                 <ProtectedRoute>
                                     <ContractEdit />
+                                </ProtectedRoute>
+                            }
+                        />
+                        {/* 매물 관리 라우트 */}
+                        <Route
+                            path="/article"
+                            element={
+                                <ProtectedRoute>
+                                    <ArticleList />
                                 </ProtectedRoute>
                             }
                         />

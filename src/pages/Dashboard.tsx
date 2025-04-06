@@ -108,6 +108,10 @@ const Dashboard = () => {
         navigate("/message")
     }
 
+    const handleArticleManagement = () => {
+        navigate("/article")
+    }
+
     const handleMyPage = () => {
         navigate("/my-page")
     }
@@ -231,11 +235,11 @@ const Dashboard = () => {
                         </ListItem>
 
                         <ListItem 
-                            disabled
+                            button
+                            onClick={handleArticleManagement}
                             sx={{ 
                                 py: 1.5,
                                 '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' },
-                                opacity: 0.5,
                             }}
                         >
                             <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
