@@ -31,9 +31,10 @@ export interface ReservedMessageResponse {
     id: number
     customerId: number
     customerName: string
-    customerPhone?: string
+    customerPhone: string
     content: string
     sendAt: string
+    sendStatus: string
 }
 
 // 페이지 응답 타입
@@ -63,7 +64,7 @@ export const messageApi = {
 
     // 메시지 예약/전송
     createMessage: async (data: MessageCreateRequest): Promise<AxiosResponse<ApiResponse<void>>> => {
-        return api.post("/api/reserved-messages", data)
+        return api.post("/api/messages", data)
     },
 
     // 예약된 메시지 목록 조회
@@ -80,7 +81,7 @@ export const messageApi = {
 
     // 메시지 수정
     updateMessage: async (reservedMessageId: number, data: MessageUpdateRequest): Promise<AxiosResponse<ApiResponse<void>>> => {
-        return api.patch(`/api/reserved-messages/${reservedMessageId}`, data)
+        return api.patch(`/api/messages/${reservedMessageId}`, data)
     },
 
     // 메시지 삭제
