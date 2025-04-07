@@ -41,7 +41,7 @@ const SurveyList = () => {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-    const [surveyToDelete, setSurveyToDelete] = useState<number | null>(null)
+    const [surveyToDelete, setSurveyToDelete] = useState<string | null>(null)
     const [deleteLoading, setDeleteLoading] = useState(false)
     const [successMessage, setSuccessMessage] = useState<string | null>(null)
     const [searchTerm, setSearchTerm] = useState("")
@@ -119,7 +119,7 @@ const SurveyList = () => {
         }
     }
 
-    const handleDeleteClick = (event: React.MouseEvent, surveyId: number) => {
+    const handleDeleteClick = (event: React.MouseEvent, surveyId: string) => {
         event.stopPropagation()
         setSurveyToDelete(surveyId)
         setDeleteDialogOpen(true)
@@ -151,7 +151,7 @@ const SurveyList = () => {
 
     // Add handleCopyUrl function after handleDeleteConfirm
     // URL 형식 수정 - 고객용 URL 경로 변경
-    const handleCopyUrl = (event: React.MouseEvent, surveyId: number) => {
+    const handleCopyUrl = (event: React.MouseEvent, surveyId: string) => {
         event.stopPropagation()
         const surveyUrl = `${window.location.origin}/surveys/submit/${surveyId}`
 
@@ -171,11 +171,11 @@ const SurveyList = () => {
         navigate("/survey/create")
     }
 
-    const handleViewSurvey = (surveyId: number) => {
+    const handleViewSurvey = (surveyId: string) => {
         navigate(`/survey/${surveyId}`)
     }
 
-    const handleEditSurvey = (event: React.MouseEvent, surveyId: number) => {
+    const handleEditSurvey = (event: React.MouseEvent, surveyId: string) => {
         event.stopPropagation()
         navigate(`/survey/edit/${surveyId}`)
     }
@@ -279,14 +279,13 @@ const SurveyList = () => {
                 ) : (
                     <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2, overflow: "hidden" }}>
                         <Table>
-                            {/* Update the TableHead to include a new column for the URL copy button */}
                             <TableHead>
                                 <TableRow sx={{ bgcolor: "#f9f9f9" }}>
                                     <TableCell sx={{ fontWeight: 500 }}>제목</TableCell>
                                     <TableCell sx={{ fontWeight: 500 }}>설명</TableCell>
                                     <TableCell sx={{ fontWeight: 500 }}>질문 수</TableCell>
+                                    <TableCell sx={{ fontWeight: 500 }}>등록일</TableCell>
                                     <TableCell sx={{ fontWeight: 500 }} align="right">
-                                        작업
                                     </TableCell>
                                 </TableRow>
                             </TableHead>
@@ -299,10 +298,14 @@ const SurveyList = () => {
                                             onClick={() => handleViewSurvey(survey.id)}
                                             sx={{ cursor: "pointer" }}
                                         >
-                                            <TableCell>{survey.title}</TableCell>
-                                            <TableCell>{survey.description}</TableCell>
+                                            <TableCell sx={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                {survey.title}
+                                            </TableCell>
+                                            <TableCell sx={{ maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                {survey.description}
+                                            </TableCell>
                                             <TableCell>{survey.questionList.length}</TableCell>
-                                            {/* Update the TableCell for actions to include the copy URL button */}
+                                            <TableCell>{survey.createdAt}</TableCell>
                                             <TableCell align="right">
                                                 <IconButton
                                                     size="small"
@@ -312,18 +315,12 @@ const SurveyList = () => {
                                                 >
                                                     <ContentCopy fontSize="small" />
                                                 </IconButton>
-                                                <IconButton size="small" onClick={(e) => handleEditSurvey(e, survey.id)} sx={{ mr: 1 }}>
-                                                    <Edit fontSize="small" />
-                                                </IconButton>
-                                                <IconButton size="small" color="error" onClick={(e) => handleDeleteClick(e, survey.id)}>
-                                                    <Delete fontSize="small" />
-                                                </IconButton>
                                             </TableCell>
                                         </TableRow>
                                     ))
                                 ) : (
                                     <TableRow>
-                                        <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
+                                        <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
                                             <Typography variant="body1">
                                                 {searchTerm ? "검색 결과가 없습니다." : "등록된 설문이 없습니다."}
                                             </Typography>

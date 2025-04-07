@@ -52,11 +52,11 @@ const SurveyDetail = () => {
 
     useEffect(() => {
         if (id) {
-            fetchSurveyDetails(Number.parseInt(id))
+            fetchSurveyDetails(id)
         }
     }, [id])
 
-    const fetchSurveyDetails = async (surveyId: number) => {
+    const fetchSurveyDetails = async (surveyId: string) => {
         try {
             setLoading(true)
             const response = await surveyApi.getSurveyById(surveyId)
@@ -92,7 +92,7 @@ const SurveyDetail = () => {
             setDeleteLoading(true)
             setDeleteError(null)
 
-            const response = await surveyApi.deleteSurvey(Number.parseInt(id))
+            const response = await surveyApi.deleteSurvey(id)
 
             if (response.data.success) {
                 setDeleteSuccess(true)
@@ -213,7 +213,7 @@ const SurveyDetail = () => {
                             <Typography variant="subtitle2" color="textSecondary">
                                 설문 제목
                             </Typography>
-                            <Typography variant="h5" sx={{ mt: 1, mb: 2, fontWeight: "bold" }}>
+                            <Typography variant="h5" sx={{ mt: 1, mb: 2, fontWeight: "bold", wordBreak: "break-word" }}>
                                 {survey.title}
                             </Typography>
                         </Grid>
@@ -221,8 +221,16 @@ const SurveyDetail = () => {
                             <Typography variant="subtitle2" color="textSecondary">
                                 설문 설명
                             </Typography>
-                            <Typography variant="body1" sx={{ mt: 1, mb: 3 }}>
+                            <Typography variant="body1" sx={{ mt: 1, mb: 3, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
                                 {survey.description || "설명이 없습니다."}
+                            </Typography>
+                        </Grid>
+                        <Grid item xs={12}>
+                            <Typography variant="subtitle2" color="textSecondary">
+                                등록일
+                            </Typography>
+                            <Typography variant="body1" sx={{ mt: 1, mb: 3 }}>
+                                {survey.createdAt}
                             </Typography>
                         </Grid>
 

@@ -51,16 +51,16 @@ function getByteLength(str: string): number {
     return byteLength
 }
 
-// 현재 시간에서 10분 후의 시간을 반환하는 함수
-function getTenMinutesLater(): { date: string; time: string } {
+// 현재 시간에서 30분 후의 시간을 반환하는 함수
+function getThirtyMinutesLater(): { date: string; time: string } {
     const now = new Date()
-    const tenMinutesLater = new Date(now.getTime() + 10 * 60 * 1000) // 10분 추가
+    const thirtyMinutesLater = new Date(now.getTime() + 30 * 60 * 1000) // 30분 추가
 
-    const year = tenMinutesLater.getFullYear()
-    const month = String(tenMinutesLater.getMonth() + 1).padStart(2, "0")
-    const day = String(tenMinutesLater.getDate()).padStart(2, "0")
-    const hours = String(tenMinutesLater.getHours()).padStart(2, "0")
-    const minutes = String(tenMinutesLater.getMinutes()).padStart(2, "0")
+    const year = thirtyMinutesLater.getFullYear()
+    const month = String(thirtyMinutesLater.getMonth() + 1).padStart(2, "0")
+    const day = String(thirtyMinutesLater.getDate()).padStart(2, "0")
+    const hours = String(thirtyMinutesLater.getHours()).padStart(2, "0")
+    const minutes = String(thirtyMinutesLater.getMinutes()).padStart(2, "0")
 
     return {
         date: `${year}-${month}-${day}`,
@@ -68,15 +68,15 @@ function getTenMinutesLater(): { date: string; time: string } {
     }
 }
 
-// 선택된 시간이 현재 시간으로부터 10분 이후인지 확인하는 함수
-function isTimeAtLeastTenMinutesLater(date: string, time: string): boolean {
+// 선택된 시간이 현재 시간으로부터 30분 이후인지 확인하는 함수
+function isTimeAtLeastThirtyMinutesLater(date: string, time: string): boolean {
     const now = new Date()
     const selectedTime = new Date(`${date}T${time}:59`)
-    const tenMinutesLater = new Date(now.getTime() + 10 * 60 * 1000)
+    const thirtyMinutesLater = new Date(now.getTime() + 30 * 60 * 1000)
 
-    console.log(selectedTime, tenMinutesLater)
+    console.log(selectedTime, thirtyMinutesLater)
 
-    return selectedTime >= tenMinutesLater
+    return selectedTime >= thirtyMinutesLater
 }
 
 const MessageCreate = () => {
@@ -107,8 +107,8 @@ const MessageCreate = () => {
         fetchCustomers()
         fetchTemplates()
 
-        // 현재 시간에서 10분 후로 초기화
-        const { date, time } = getTenMinutesLater()
+        // 현재 시간에서 30분 후로 초기화
+        const { date, time } = getThirtyMinutesLater()
         setScheduledDate(date)
         setScheduledTime(time)
 
@@ -119,7 +119,7 @@ const MessageCreate = () => {
     // 시간이 변경될 때마다 유효성 검사
     useEffect(() => {
         if (scheduledDate && scheduledTime) {
-            setTimeError(!isTimeAtLeastTenMinutesLater(scheduledDate, scheduledTime))
+            setTimeError(!isTimeAtLeastThirtyMinutesLater(scheduledDate, scheduledTime))
         }
     }, [scheduledDate, scheduledTime])
 
@@ -208,9 +208,9 @@ const MessageCreate = () => {
             return
         }
 
-        // 시간이 현재 시간으로부터 10분 이후인지 확인
-        if (!isTimeAtLeastTenMinutesLater(scheduledDate, scheduledTime)) {
-            setError("전송 시간은 현재 시간으로부터 최소 10분 이후로 설정해야 합니다.")
+        // 시간이 현재 시간으로부터 30분 이후인지 확인
+        if (!isTimeAtLeastThirtyMinutesLater(scheduledDate, scheduledTime)) {
+            setError("전송 시간은 현재 시간으로부터 최소 30분 이후로 설정해야 합니다.")
             setTimeError(true)
             return
         }
@@ -265,8 +265,8 @@ const MessageCreate = () => {
     }
 
     // 현재 시간 + 10분 이후의 시간으로 재설정하는 함수
-    const resetToTenMinutesLater = () => {
-        const { date, time } = getTenMinutesLater()
+    const resetToThirtyMinutesLater = () => {
+        const { date, time } = getThirtyMinutesLater()
         setScheduledDate(date)
         setScheduledTime(time)
         setTimeError(false)
@@ -443,7 +443,7 @@ const MessageCreate = () => {
                                     >
                                         <InfoOutlined fontSize="small" sx={{ mr: 0.5, color: "#666" }} />
                                         <Typography variant="caption" color="text.secondary">
-                                            현재 시간으로부터 최소 10분 이후로 설정해야 합니다
+                                            현재 시간으로부터 최소 30분 이후로 설정해야 합니다
                                         </Typography>
                                     </Box>
                                 </Box>
@@ -475,13 +475,13 @@ const MessageCreate = () => {
 
                                 {timeError && (
                                     <Box sx={{ mt: 1, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                                        <FormHelperText error>현재 시간으로부터 최소 10분 이후로 설정해야 합니다</FormHelperText>
+                                        <FormHelperText error>현재 시간으로부터 최소 30분 이후로 설정해야 합니다</FormHelperText>
                                         <Button
                                             size="small"
-                                            onClick={resetToTenMinutesLater}
+                                            onClick={resetToThirtyMinutesLater}
                                             sx={{ color: "#1976d2", fontSize: "0.75rem" }}
                                         >
-                                            10분 후로 재설정
+                                            30분 후로 재설정
                                         </Button>
                                     </Box>
                                 )}
