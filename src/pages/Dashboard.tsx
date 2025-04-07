@@ -182,7 +182,7 @@ const Dashboard = () => {
                 navigate('/');
                 return;
             }
-
+    
             await api.patch("/api/notification/read", null, {
                 params: {
                     notificationId: notification.id,
@@ -194,18 +194,17 @@ const Dashboard = () => {
             
             // Update local state to mark notification as read
             setNotifications(prev => 
-                prev.map(item => 
-                    item.id === notification.id ? { ...item, isRead: true } : item
+                prev.map(n => 
+                    n.id === notification.id ? { ...n, isRead: true } : n
                 )
             );
             
-            if (!notification.isRead) {
-                setUnreadCount(prev => Math.max(0, prev - 1));
-            }
+            // Update unread count
+            setUnreadCount(prev => Math.max(0, prev - 1));
             
             handleNotificationClose();
             
-            // Update navigation paths to match your route structure
+            // Navigate based on type
             switch (notification.type) {
                 case 'SURVEY':
                     handleSurveyManagement();  
@@ -267,21 +266,57 @@ const Dashboard = () => {
     }, []);
 
     useEffect(() => {
-        // 알림 정보를 가져오는 함수
+        const agentId = localStorage.getItem('agentId');
+        let eventSource: EventSource | null = null;
+
+        const setupEventSource = () => {
+            if (eventSource) {
+                eventSource.close();
+            }
+            
+            eventSource = new EventSource(`${api.defaults.baseURL}/api/notification/subscribe?agentId=${agentId}`);
+            
+            eventSource.onmessage = (event) => {
+                const rawNotification = JSON.parse(event.data);
+                const newNotification = {
+                    ...rawNotification,
+                    isRead: rawNotification.read // read 값을 isRead로 매핑
+                };
+                
+                setNotifications(prev => {
+                    // 중복 체크
+                    const isDuplicate = prev.some(n => n.id === newNotification.id);
+                    if (isDuplicate) return prev;
+                    
+                    // 새로운 알림이 읽지 않은 상태라면 카운트 증가
+                    if (!newNotification.isRead) {
+                        setUnreadCount(count => count + 1);
+                    }
+                    
+                    // 새로운 알림을 배열 맨 앞에 추가
+                    return [newNotification, ...prev].sort((a, b) => b.id - a.id);
+                });
+            };
+
+            eventSource.onerror = () => {
+                eventSource?.close();
+                setTimeout(setupEventSource, 30000);
+            };
+        };
+
+        // 초기 알림 데이터 로드
         const fetchNotifications = async () => {
             try {
                 const response = await api.get("/api/notification");
-                console.log("Notification Response:", response.data); // Add this log
                 if (response.data.success) {
-                    const allNotifications = response.data.data;
-                    console.log("All Notifications:", allNotifications); // Add this log
+                    const allNotifications = response.data.data.map(notification => ({
+                        ...notification,
+                        isRead: notification.read
+                    }));
+                    
                     setNotifications(allNotifications);
-                    const unreadNotifications = allNotifications.filter(
-                        (notification: Notification) => !notification.isRead
-                    );
-                    setUnreadCount(unreadNotifications.length);
-                } else {
-                    setNotificationError("알림을 불러오는데 실패했습니다");
+                    const unreadCount = allNotifications.filter(n => !n.isRead).length;
+                    setUnreadCount(unreadCount);
                 }
             } catch (err) {
                 console.error("Error fetching notifications:", err);
@@ -289,42 +324,13 @@ const Dashboard = () => {
             }
         };
 
-        // 초기 데이터 로드
         fetchNotifications();
-        
-        // 주기적으로 알림 정보 업데이트 (1분마다)
-        const notificationInterval = setInterval(fetchNotifications, 60 * 1000);
+        setupEventSource();
 
-        // Get agentId from localStorage
-        const agentId = localStorage.getItem('agentId');
-        
-        // Add agentId as a query parameter to the EventSource URL
-        const eventSource = new EventSource(`${api.defaults.baseURL}/api/notification/subscribe?agentId=${agentId}`);
-        
-        eventSource.onmessage = (event) => {
-            const newNotification = JSON.parse(event.data);
-            setNotifications(prev => [newNotification, ...prev]);
-            setUnreadCount(prev => prev + 1);
-            
-            // 새 알림이 오면 자동으로 모든 데이터 새로고침
-            fetchNotifications();
-        };
-
-        eventSource.onerror = (error) => {
-            console.error('SSE Error:', error);
-            eventSource.close();
-            
-            // 에러 발생 시 30초 후 재연결 시도
-            setTimeout(() => {
-                const newEventSource = new EventSource(`${api.defaults.baseURL}/api/notification/subscribe?agentId=${agentId}`);
-                // 이벤트 핸들러 다시 설정
-            }, 30000);
-        };
-
-        // Cleanup on component unmount
         return () => {
-            clearInterval(notificationInterval);
-            eventSource.close();
+            if (eventSource) {
+                eventSource.close();
+            }
         };
     }, []);
 
@@ -564,6 +570,7 @@ const Dashboard = () => {
                                     <Notifications />
                                 </Badge>
                             </IconButton>
+                            {/* In the Menu component, filter notifications to show only unread ones */}
                             <Menu
                                 anchorEl={notificationAnchorEl}
                                 open={Boolean(notificationAnchorEl)}
@@ -587,60 +594,79 @@ const Dashboard = () => {
                             >
                                 <Box sx={{ p: 2, borderBottom: '1px solid rgba(0,0,0,0.1)' }}>
                                     <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600 }}>
-                                        알림
+                                        알림 ({unreadCount})
                                     </Typography>
                                 </Box>
-                                {notifications.map((notification) => (
-                                    <MenuItem 
-                                        key={notification.id}
-                                        onClick={() => handleNotificationNavigation(notification)}
-                                        sx={{ 
-                                            py: 2,
-                                            px: 2,
-                                            borderBottom: '1px solid rgba(0,0,0,0.06)',
-                                            '&:last-child': { borderBottom: 'none' },
+                                {notifications
+                                        .slice() // Create a copy to avoid mutating the original array
+                                        .sort((a, b) => b.id - a.id) // Sort by id in descending order
+                                        .map((notification) => (
+                                            <MenuItem 
+                                                key={`${notification.id}-${notification.isRead}`}
+                                                onClick={() => handleNotificationNavigation(notification)}
+                                                sx={{ 
+                                                    py: 2,
+                                                    px: 2,
+                                                    borderBottom: '1px solid rgba(0,0,0,0.06)',
+                                                    '&:last-child': { borderBottom: 'none' },
+                                                    bgcolor: notification.isRead ? 'action.hover' : 'transparent',
+                                                }}
+                                            >
+                                                <Box sx={{ 
+                                                    width: 4, 
+                                                    height: 40, 
+                                                    borderRadius: '4px',
+                                                    bgcolor: notification.isRead ? 'grey.400' : getNotificationColor(notification.type),
+                                                    mr: 2
+                                                }} />
+                                                <Box>
+                                                    <Typography 
+                                                        variant="body1" 
+                                                        sx={{ 
+                                                            fontWeight: notification.isRead ? 400 : 600,
+                                                            color: notification.isRead ? 'text.disabled' : 'text.primary',
+                                                            mb: 0.5,
+                                                            fontSize: '0.95rem',
+                                                        }}
+                                                    >
+                                                        {notification.content}
+                                                    </Typography>
+                                                    <Typography 
+                                                        component="span"
+                                                        variant="body2"
+                                                        sx={{
+                                                            display: 'inline-flex',
+                                                            alignItems: 'center',
+                                                            bgcolor: notification.isRead ? 'grey.100' : `${getNotificationColor(notification.type)}15`,
+                                                            color: notification.isRead ? 'grey.500' : getNotificationColor(notification.type),
+                                                            py: 0.5,
+                                                            px: 1,
+                                                            borderRadius: '4px',
+                                                            fontSize: '0.8rem',
+                                                            fontWeight: 600,
+                                                        }}
+                                                    >
+                                                        {notification.type}
+                                                    </Typography>
+                                                </Box>
+                                            </MenuItem>
+                                        ))}
+                                <Box sx={{ p: 2, borderTop: '1px solid rgba(0,0,0,0.1)' }}>
+                                    <Button 
+                                        fullWidth
+                                        variant="text"
+                                        onClick={() => {
+                                            handleNotificationClose();
+                                            navigate('/notification-list');
+                                        }}
+                                        sx={{
+                                            color: 'primary.main',
+                                            '&:hover': { bgcolor: 'rgba(25, 118, 210, 0.04)' },
                                         }}
                                     >
-                                        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
-                                            <Box sx={{ 
-                                                width: 4, 
-                                                height: 40, 
-                                                borderRadius: '4px',
-                                                bgcolor: getNotificationColor(notification.type),
-                                            }} />
-                                            <Box>
-                                                <Typography 
-                                                    variant="body1" 
-                                                    sx={{ 
-                                                        fontWeight: notification.isRead ? 400 : 600,
-                                                        color: 'text.primary',
-                                                        fontSize: '0.9rem',
-                                                        mb: 0.5,
-                                                    }}
-                                                >
-                                                    {notification.content}
-                                                </Typography>
-                                                <Typography 
-                                                    component="span" 
-                                                    variant="body2"
-                                                    sx={{
-                                                        display: 'inline-flex',
-                                                        alignItems: 'center',
-                                                        bgcolor: `${getNotificationColor(notification.type)}15`,
-                                                        color: getNotificationColor(notification.type),
-                                                        py: 0.5,
-                                                        px: 1,
-                                                        borderRadius: '4px',
-                                                        fontSize: '0.75rem',
-                                                        fontWeight: 500,
-                                                    }}
-                                                >
-                                                    {notification.type}
-                                                </Typography>
-                                            </Box>
-                                        </Box>
-                                    </MenuItem>
-                                ))}
+                                        전체 알림 보기
+                                    </Button>
+                                </Box>
                             </Menu>
                             
                             {/* Add profile display here */}
@@ -782,6 +808,7 @@ const Dashboard = () => {
                             </Paper>
                         </Grid>
                     </Grid>
+                    {/* In the activity list section */}
                     <Box sx={{ mt: 3 }}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                             <Typography variant="h6" sx={{ fontWeight: 600 }}>최근 활동</Typography>
@@ -793,7 +820,11 @@ const Dashboard = () => {
                                 <Typography color="textSecondary" sx={{ fontWeight: 500 }}>최근 활동이 없습니다.</Typography>
                             ) : (
                                 <List sx={{ '& .MuiListItem-root': { px: 2 } }}>
-                                    {notifications.map((notification) => (
+                                    {notifications
+                                        .slice()
+                                        .sort((a, b) => b.id - a.id)
+                                        .slice(0, 5)
+                                        .map((notification) => (
                                         <ListItem 
                                             key={notification.id}
                                             sx={{ 
@@ -813,41 +844,41 @@ const Dashboard = () => {
                                                 width: 4, 
                                                 height: 40, 
                                                 borderRadius: '4px',
-                                                bgcolor: getNotificationColor(notification.type),
+                                                bgcolor: notification.isRead ? 'grey.400' : getNotificationColor(notification.type),
                                                 mr: 2 
                                             }} />
                                             <ListItemText 
                                                 primary={
-                                                    <Typography 
-                                                        variant="body1" 
-                                                        sx={{ 
-                                                            fontWeight: notification.isRead ? 400 : 600,
-                                                            color: 'text.primary',
-                                                            mb: 0.5,
-                                                            fontSize: '0.95rem',
-                                                        }}
-                                                    >
-                                                        {notification.content}
-                                                    </Typography>
-                                                }
-                                                secondary={
-                                                    <Typography 
-                                                        component="span" 
-                                                        variant="body2"
-                                                        sx={{
-                                                            display: 'inline-flex',
-                                                            alignItems: 'center',
-                                                            bgcolor: `${getNotificationColor(notification.type)}15`,
-                                                            color: getNotificationColor(notification.type),
-                                                            py: 0.5,
-                                                            px: 1,
-                                                            borderRadius: '4px',
-                                                            fontSize: '0.8rem',
-                                                            fontWeight: 600,
-                                                        }}
-                                                    >
-                                                        {notification.type}
-                                                    </Typography>
+                                                    <>
+                                                        <Typography 
+                                                            variant="body1" 
+                                                            sx={{ 
+                                                                fontWeight: notification.isRead ? 400 : 600,
+                                                                color: notification.isRead ? 'text.disabled' : 'text.primary',
+                                                                mb: 0.5,
+                                                                fontSize: '0.95rem',
+                                                            }}
+                                                        >
+                                                            {notification.content}
+                                                        </Typography>
+                                                        <Typography 
+                                                            component="span"
+                                                            variant="body2"
+                                                            sx={{
+                                                                display: 'inline-flex',
+                                                                alignItems: 'center',
+                                                                bgcolor: notification.isRead ? 'grey.100' : `${getNotificationColor(notification.type)}15`,
+                                                                color: notification.isRead ? 'grey.500' : getNotificationColor(notification.type),
+                                                                py: 0.5,
+                                                                px: 1,
+                                                                borderRadius: '4px',
+                                                                fontSize: '0.8rem',
+                                                                fontWeight: 600,
+                                                            }}
+                                                        >
+                                                            {notification.type}
+                                                        </Typography>
+                                                    </>
                                                 }
                                             />
                                         </ListItem>
