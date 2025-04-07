@@ -60,15 +60,16 @@ export interface SurveyUpdateRequest {
 
 // 설문 응답
 export interface SurveyResponse {
-    id: number
+    id: string
     title: string
     description: string
     questionList: QuestionResponse[]
+    createdAt: string
 }
 
 // 고객 정보
 export interface CustomerResponse {
-    id: number
+    id: string
     name: string
     email: string
     phone: string

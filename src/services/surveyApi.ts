@@ -17,13 +17,13 @@ export const createSurvey = async (surveyData: SurveyCreateRequest): Promise<Axi
 }
 
 // 설문 삭제
-export const deleteSurvey = async (surveyId: number): Promise<AxiosResponse<ApiResponse<void>>> => {
+export const deleteSurvey = async (surveyId: string): Promise<AxiosResponse<ApiResponse<void>>> => {
     return api.delete(`/api/surveys/${surveyId}`)
 }
 
 // 설문 수정
 export const updateSurvey = async (
-    surveyId: number,
+    surveyId: string,
     surveyData: SurveyUpdateRequest,
 ): Promise<AxiosResponse<ApiResponse<void>>> => {
     return api.patch(`/api/surveys/${surveyId}`, surveyData)
@@ -35,13 +35,13 @@ export const getSurveys = async (): Promise<AxiosResponse<ApiResponse<SurveyResp
 }
 
 // 설문 상세 조회
-export const getSurveyById = async (surveyId: number): Promise<AxiosResponse<ApiResponse<SurveyResponse>>> => {
+export const getSurveyById = async (surveyId: string): Promise<AxiosResponse<ApiResponse<SurveyResponse>>> => {
     return api.get(`/api/surveys/${surveyId}`)
 }
 
 // 설문 답변 제출
 export const submitSurveyAnswer = async (
-    surveyId: number,
+    surveyId: string,
     answerData: AnswerRequest,
 ): Promise<AxiosResponse<ApiResponse<void>>> => {
     return api.post(`/api/surveys/${surveyId}/submit`, answerData)
@@ -53,13 +53,13 @@ export const getAllSurveyAnswers = async (): Promise<AxiosResponse<ApiResponse<A
 }
 
 // 고객용 설문 조회 API 추가
-export const getSurveyForCustomer = async (surveyId: number): Promise<AxiosResponse<ApiResponse<SurveyResponse>>> => {
+export const getSurveyForCustomer = async (surveyId: string): Promise<AxiosResponse<ApiResponse<SurveyResponse>>> => {
     return api.get(`/api/customers/surveys/${surveyId}`)
 }
 
 // 고객용 설문 답변 제출 API 추가
 export const submitSurveyAnswerForCustomer = async (
-    surveyId: number,
+    surveyId: string,
     answerData: AnswerRequest,
 ): Promise<AxiosResponse<ApiResponse<void>>> => {
     return api.post(`/api/customers/surveys/${surveyId}/submit`, answerData)

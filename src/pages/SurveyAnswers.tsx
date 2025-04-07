@@ -39,8 +39,9 @@ import {
     ListItemText,
     Tabs,
     Tab,
+    Link,
 } from "@mui/material"
-import { ArrowBack, Search, ExpandMore } from "@mui/icons-material"
+import { ArrowBack, Search, ExpandMore, Person } from "@mui/icons-material"
 import { useNavigate } from "react-router-dom"
 import { surveyApi } from "../services/surveyApi"
 import type { AnswerResponse, QuestionAnswerResponse } from "../types/survey"
@@ -205,20 +206,9 @@ const SurveyAnswers = () => {
         {} as Record<number, { customer: AnswerResponse["customer"]; answers: AnswerResponse[] }>,
     )
 
-    // 날짜 형식화 함수
-    const formatDate = (dateString: string) => {
-        try {
-            const date = new Date(dateString)
-            return date.toLocaleDateString("ko-KR", {
-                year: "numeric",
-                month: "2-digit",
-                day: "2-digit",
-                hour: "2-digit",
-                minute: "2-digit",
-            })
-        } catch (e) {
-            return dateString
-        }
+    // 고객 상세 페이지로 이동
+    const handleViewCustomerDetail = (customerId: string) => {
+        navigate(`/customer-management/${customerId}`)
     }
 
     return (
@@ -280,7 +270,6 @@ const SurveyAnswers = () => {
                             <Tabs value={tabValue} onChange={handleTabChange} aria-label="survey answers tabs">
                                 <Tab label="전체 응답" />
                                 <Tab label="설문별 보기" />
-                                <Tab label="고객별 보기" />
                             </Tabs>
                         </Box>
 
@@ -312,7 +301,7 @@ const SurveyAnswers = () => {
                                                     <TableCell>{answer.customer.email}</TableCell>
                                                     <TableCell>{answer.survey.title}</TableCell>
                                                     <TableCell>{answer.answer.length}</TableCell>
-                                                    <TableCell>{formatDate(answer.createdAt || "")}</TableCell>
+                                                    <TableCell>{answer.createdAt}</TableCell>
                                                 </TableRow>
                                             ))}
                                         </TableBody>
@@ -368,64 +357,7 @@ const SurveyAnswers = () => {
                                                                 <TableCell>{answer.customer.name}</TableCell>
                                                                 <TableCell>{answer.customer.phone}</TableCell>
                                                                 <TableCell>{answer.customer.email}</TableCell>
-                                                                <TableCell>{formatDate(answer.createdAt || "")}</TableCell>
-                                                            </TableRow>
-                                                        ))}
-                                                    </TableBody>
-                                                </Table>
-                                            </TableContainer>
-                                        </AccordionDetails>
-                                    </Accordion>
-                                ))
-                            ) : (
-                                <Box sx={{ p: 3, textAlign: "center" }}>
-                                    <Typography variant="body1">
-                                        {searchTerm ? "검색 결과가 없습니다." : "등록된 설문 응답이 없습니다."}
-                                    </Typography>
-                                </Box>
-                            )}
-                        </TabPanel>
-
-                        {/* 고객별 보기 탭 */}
-                        <TabPanel value={tabValue} index={2}>
-                            {Object.keys(groupedByCustomer).length > 0 ? (
-                                Object.values(groupedByCustomer).map((group) => (
-                                    <Accordion key={group.customer.id} sx={{ mb: 2 }}>
-                                        <AccordionSummary expandIcon={<ExpandMore />}>
-                                            <Box
-                                                sx={{ display: "flex", alignItems: "center", width: "100%", justifyContent: "space-between" }}
-                                            >
-                                                <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
-                                                    {group.customer.name} ({group.customer.phone})
-                                                </Typography>
-                                                <Chip
-                                                    label={`${group.answers.length}개의 설문 참여`}
-                                                    size="small"
-                                                    sx={{ bgcolor: "#e8f5e9", color: "#2e7d32" }}
-                                                />
-                                            </Box>
-                                        </AccordionSummary>
-                                        <AccordionDetails>
-                                            <TableContainer>
-                                                <Table size="small">
-                                                    <TableHead>
-                                                        <TableRow sx={{ bgcolor: "#f9f9f9" }}>
-                                                            <TableCell sx={{ fontWeight: 500 }}>설문 제목</TableCell>
-                                                            <TableCell sx={{ fontWeight: 500 }}>응답 수</TableCell>
-                                                            <TableCell sx={{ fontWeight: 500 }}>등록 날짜</TableCell>
-                                                        </TableRow>
-                                                    </TableHead>
-                                                    <TableBody>
-                                                        {group.answers.map((answer, index) => (
-                                                            <TableRow
-                                                                key={`${answer.survey.id}-${index}`}
-                                                                hover
-                                                                onClick={() => handleViewDetail(answer)}
-                                                                sx={{ cursor: "pointer" }}
-                                                            >
-                                                                <TableCell>{answer.survey.title}</TableCell>
-                                                                <TableCell>{answer.answer.length}</TableCell>
-                                                                <TableCell>{formatDate(answer.createdAt || "")}</TableCell>
+                                                                <TableCell>{answer.createdAt}</TableCell>
                                                             </TableRow>
                                                         ))}
                                                     </TableBody>
@@ -478,9 +410,19 @@ const SurveyAnswers = () => {
                                 <Grid item xs={12} md={6}>
                                     <Card variant="outlined" sx={{ height: "100%" }}>
                                         <CardContent>
-                                            <Typography variant="subtitle1" sx={{ fontWeight: "bold", mb: 2 }}>
-                                                고객 정보
-                                            </Typography>
+                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                                <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
+                                                    고객 정보
+                                                </Typography>
+                                                <Button
+                                                    variant="outlined"
+                                                    size="small"
+                                                    startIcon={<Person />}
+                                                    onClick={() => handleViewCustomerDetail(selectedAnswer.customer.id.toString())}
+                                                >
+                                                    고객 상세
+                                                </Button>
+                                            </Box>
                                             <List dense>
                                                 <ListItem>
                                                     <ListItemText primary="이름" secondary={selectedAnswer.customer.name} />
@@ -505,7 +447,7 @@ const SurveyAnswers = () => {
                                             </Typography>
                                             <List dense>
                                                 <ListItem>
-                                                    <ListItemText primary="응답 수" secondary={`${selectedAnswer.answer.length}개 질문에 응답`} />
+                                                    <ListItemText primary="등록일" secondary={new Date(selectedAnswer.createdAt).toLocaleDateString()} />
                                                 </ListItem>
                                                 <ListItem>
                                                     <ListItemText
