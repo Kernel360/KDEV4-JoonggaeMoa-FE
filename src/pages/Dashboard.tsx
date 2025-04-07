@@ -79,7 +79,35 @@ const theme = createTheme({
     },
 });
 
+interface Notification {
+    id: number;
+    type: string;
+    content: string;
+}
+
+// Add this helper function before the Dashboard component
+const getNotificationColor = (type: string) => {
+    switch (type) {
+        case 'SURVEY':
+            return '#2196f3';
+        case 'ARTICLE':
+            return '#4caf50';
+        case 'CONSULTATION':
+            return '#ff9800';
+        case 'MESSAGE':
+            return '#9c27b0';
+        case 'CONTRACT':
+            return '#f44336';
+        default:
+            return '#757575';
+    }
+};
+
 const Dashboard = () => {
+    // Add these two state declarations with the other state variables
+    const [notifications, setNotifications] = useState<Notification[]>([]);
+    const [notificationError, setNotificationError] = useState<string | null>(null);
+    
     const { logout } = useAuth()
     const navigate = useNavigate()
     const [sidebarOpen, setSidebarOpen] = useState(true)
@@ -158,6 +186,24 @@ const Dashboard = () => {
 
         fetchProfile();
     }, []); // 컴포넌트 마운트 시 실행
+
+    useEffect(() => {
+        const fetchNotifications = async () => {
+            try {
+                const response = await api.get("/api/notification");
+                if (response.data.success) {
+                    setNotifications(response.data.data.slice(0, 5));
+                } else {
+                    setNotificationError("Failed to load notifications");
+                }
+            } catch (err) {
+                console.error("Error fetching notifications:", err);
+                setNotificationError("Failed to load notifications");
+            }
+        };
+
+        fetchNotifications();
+    }, []);
 
     return (
         <ThemeProvider theme={theme}>
@@ -527,55 +573,82 @@ const Dashboard = () => {
                             </Paper>
                         </Grid>
                     </Grid>
-
-                    {/* Recent Activities */}
                     <Box sx={{ mt: 3 }}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                            <Typography variant="h6">최근 활동</Typography>
-                            <Button variant="text" sx={{ color: '#666' }}>전체</Button>
+                            <Typography variant="h6" sx={{ fontWeight: 600 }}>최근 활동</Typography>
                         </Box>
-                        <Paper sx={{ p: 0 }}>
-                            <List>
-                                <ListItem sx={{ py: 2 }}>
-                                    <ListItemIcon>
-                                        <Avatar sx={{ bgcolor: '#e3f2fd', color: '#1976d2' }}>
-                                            <Business />
-                                        </Avatar>
-                                    </ListItemIcon>
-                                    <ListItemText
-                                        primary="신규 매물 등록"
-                                        secondary="강남구 역삼동 2층 사무실"
-                                        secondaryTypographyProps={{ sx: { color: '#666' } }}
-                                    />
-                                    <Typography variant="body2" color="textSecondary">방금 전</Typography>
-                                </ListItem>
-                                <ListItem sx={{ py: 2 }}>
-                                    <ListItemIcon>
-                                        <Avatar sx={{ bgcolor: '#fce4ec', color: '#d81b60' }}>
-                                            <Person />
-                                        </Avatar>
-                                    </ListItemIcon>
-                                    <ListItemText
-                                        primary="고객 상담 완료"
-                                        secondary="이창호 고객님 - 전세 문의"
-                                        secondaryTypographyProps={{ sx: { color: '#666' } }}
-                                    />
-                                    <Typography variant="body2" color="textSecondary">1시간 전</Typography>
-                                </ListItem>
-                                <ListItem sx={{ py: 2 }}>
-                                    <ListItemIcon>
-                                        <Avatar sx={{ bgcolor: '#e8f5e9', color: '#43a047' }}>
-                                            <InsertDriveFile />
-                                        </Avatar>
-                                    </ListItemIcon>
-                                    <ListItemText
-                                        primary="계약 진행 상태 변경"
-                                        secondary="서초동 오피스텔 - 계약금 입금"
-                                        secondaryTypographyProps={{ sx: { color: '#666' } }}
-                                    />
-                                    <Typography variant="body2" color="textSecondary">2시간 전</Typography>
-                                </ListItem>
-                            </List>
+                        <Paper sx={{ p: 3 }}>
+                            {notificationError ? (
+                                <Typography color="error" sx={{ fontWeight: 500 }}>{notificationError}</Typography>
+                            ) : notifications.length === 0 ? (
+                                <Typography color="textSecondary" sx={{ fontWeight: 500 }}>최근 활동이 없습니다.</Typography>
+                            ) : (
+                                <List sx={{ '& .MuiListItem-root': { px: 2 } }}>
+                                    {notifications.map((notification) => (
+                                        <ListItem 
+                                            key={notification.id}
+                                            sx={{ 
+                                                py: 2,
+                                                borderBottom: '1px solid rgba(0,0,0,0.06)',
+                                                '&:last-child': { borderBottom: 'none' },
+                                                borderRadius: '8px',
+                                                '&:hover': {
+                                                    bgcolor: 'rgba(0,0,0,0.02)',
+                                                },
+                                                transition: 'all 0.2s ease',
+                                            }}
+                                        >
+                                            <Box sx={{ 
+                                                width: 4, 
+                                                height: 40, 
+                                                borderRadius: '4px',
+                                                bgcolor: getNotificationColor(notification.type),
+                                                mr: 2 
+                                            }} />
+                                            <ListItemText 
+                                                primary={
+                                                    <Typography 
+                                                        variant="body1" 
+                                                        sx={{ 
+                                                            fontWeight: 600,
+                                                            color: 'text.primary',
+                                                            mb: 0.5,
+                                                            fontSize: '0.95rem',
+                                                        }}
+                                                    >
+                                                        {notification.content}
+                                                    </Typography>
+                                                }
+                                                secondary={
+                                                    <Box sx={{ 
+                                                        display: 'inline-flex', 
+                                                        alignItems: 'center', 
+                                                        gap: 1 
+                                                    }}>
+                                                        <Typography 
+                                                            component="span" 
+                                                            variant="body2"
+                                                            sx={{
+                                                                display: 'inline-flex',
+                                                                alignItems: 'center',
+                                                                bgcolor: `${getNotificationColor(notification.type)}15`,
+                                                                color: getNotificationColor(notification.type),
+                                                                py: 0.5,
+                                                                px: 1,
+                                                                borderRadius: '4px',
+                                                                fontSize: '0.8rem',
+                                                                fontWeight: 600,
+                                                            }}
+                                                        >
+                                                            {notification.type}
+                                                        </Typography>
+                                                    </Box>
+                                                }
+                                            />
+                                        </ListItem>
+                                    ))}
+                                </List>
+                            )}
                         </Paper>
                     </Box>
                 </Box>

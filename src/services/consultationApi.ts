@@ -51,7 +51,7 @@ export const updateConsultationStatus = async (
 ): Promise<AxiosResponse<ApiResponse<void>>> => {
     // 백엔드 API 구조에 맞게 수정 필요
     // 현재는 쿼리 파라미터로 전달하지만, 백엔드 API가 요청 본문을 기대한다면 수정 필요
-    return api.patch(`/api/consultations/${consultationId}`, { consultationStatus })
+    return api.patch(`/api/consultations/${consultationId}/status?consultationStatus=${consultationStatus}`)
 }
 
 // 상담 결과 업데이트

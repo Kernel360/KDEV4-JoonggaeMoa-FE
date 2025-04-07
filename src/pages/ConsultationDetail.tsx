@@ -191,8 +191,11 @@ const ConsultationDetail = () => {
                 setStatusSuccess(true)
                 handleStatusMenuClose()
 
-                // 상담 정보 다시 불러오기
-                fetchConsultationDetails(Number.parseInt(id))
+                // Update only the status while preserving other consultation data
+                setConsultation(prevConsultation => ({
+                    ...prevConsultation,
+                    status: newStatus
+                }))
             } else {
                 setError(response.data.error?.message || "상담 상태 변경에 실패했습니다.")
             }
@@ -227,6 +230,7 @@ const ConsultationDetail = () => {
         )
     }
 
+    
     return (
         <Box sx={{ flexGrow: 1, bgcolor: "#f5f5f5", minHeight: "100vh" }}>
             <AppBar position="static" color="default" elevation={0} sx={{ bgcolor: "white" }}>
