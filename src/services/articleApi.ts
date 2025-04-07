@@ -9,7 +9,7 @@ export const getAllArticles = async (params: any = {}): Promise<AxiosResponse<Ap
     content: ArticleResponse[];
     totalElements: number;
     totalPages: number;
-    size: number;x
+    size: number;
     number: number;
     last: boolean;
 }>>> => {
