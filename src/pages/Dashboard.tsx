@@ -269,36 +269,40 @@ const Dashboard = () => {
         const agentId = localStorage.getItem('agentId');
         let eventSource: EventSource | null = null;
 
+        if (!agentId) {
+            console.warn("agentId is missing or invalid:", agentId);
+            return;
+        }    
+
         const setupEventSource = () => {
             if (eventSource) {
                 eventSource.close();
             }
+            console.log("Setting up EventSource with agentId:", agentId);
             
             eventSource = new EventSource(`${api.defaults.baseURL}/api/notification/subscribe?agentId=${agentId}`);
+
+            eventSource.onopen = () => {
+                console.log("SSE connection opened");
+            };
             
-            eventSource.onmessage = (event) => {
+            eventSource.addEventListener("notification", (event)  => {
+                console.log("Received notification:", event.data);
                 const rawNotification = JSON.parse(event.data);
                 const newNotification = {
                     ...rawNotification,
-                    isRead: rawNotification.read // read 값을 isRead로 매핑
+                    isRead: rawNotification.read
                 };
                 
                 setNotifications(prev => {
-                    // 중복 체크
-                    const isDuplicate = prev.some(n => n.id === newNotification.id);
-                    if (isDuplicate) return prev;
-                    
-                    // 새로운 알림이 읽지 않은 상태라면 카운트 증가
-                    if (!newNotification.isRead) {
-                        setUnreadCount(count => count + 1);
-                    }
-                    
-                    // 새로운 알림을 배열 맨 앞에 추가
                     return [newNotification, ...prev].sort((a, b) => b.id - a.id);
                 });
-            };
 
-            eventSource.onerror = () => {
+                setUnreadCount(count => count + 1);
+            });
+
+            eventSource.onerror = (err) => {
+                console.error("SSE error:", err);
                 eventSource?.close();
                 setTimeout(setupEventSource, 30000);
             };
@@ -334,7 +338,6 @@ const Dashboard = () => {
         };
     }, []);
 
-    // Remove duplicate fetchNotifications() call that was causing the error
     
     return (
         <ThemeProvider theme={theme}>
