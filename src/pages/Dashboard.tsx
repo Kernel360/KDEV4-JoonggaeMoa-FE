@@ -34,6 +34,7 @@ import {
     Settings,
     Menu as MenuIcon,
     ChevronLeft,
+    Logout, // 로그아웃 아이콘 추가
 } from "@mui/icons-material"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
@@ -83,6 +84,7 @@ interface Notification {
     id: number;
     type: string;
     content: string;
+    isRead: boolean;
 }
 
 // Add this helper function before the Dashboard component
@@ -104,9 +106,10 @@ const getNotificationColor = (type: string) => {
 };
 
 const Dashboard = () => {
-    // Add these two state declarations with the other state variables
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [notificationError, setNotificationError] = useState<string | null>(null);
+    const [notificationAnchorEl, setNotificationAnchorEl] = useState<null | HTMLElement>(null);
+    const [unreadCount, setUnreadCount] = useState(0);
     
     const { logout } = useAuth()
     const navigate = useNavigate()
@@ -115,6 +118,15 @@ const Dashboard = () => {
     const[loading, setLoading] = useState(true);
     const[error, setError] = useState<string | null>(null);
     const[anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+
+    // Add these missing notification handler functions
+    const handleNotificationClick = (event: React.MouseEvent<HTMLElement>) => {
+        setNotificationAnchorEl(event.currentTarget);
+    };
+
+    const handleNotificationClose = () => {
+        setNotificationAnchorEl(null);
+    };
 
     const handleCustomerManagement = () => {
         navigate("/customer-management")
@@ -161,8 +173,69 @@ const Dashboard = () => {
         navigate("/");
         handleMenuClose();
     }
+    
+    const handleNotificationNavigation = async (notification: Notification) => {
+        console.log("Notification being handled:", notification);
+        try {
+            const token = localStorage.getItem('accessToken');
+            if (!token) {
+                navigate('/');
+                return;
+            }
+
+            await api.patch("/api/notification/read", null, {
+                params: {
+                    notificationId: notification.id,
+                },
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            
+            // Update local state to mark notification as read
+            setNotifications(prev => 
+                prev.map(item => 
+                    item.id === notification.id ? { ...item, isRead: true } : item
+                )
+            );
+            
+            if (!notification.isRead) {
+                setUnreadCount(prev => Math.max(0, prev - 1));
+            }
+            
+            handleNotificationClose();
+            
+            // Update navigation paths to match your route structure
+            switch (notification.type) {
+                case 'SURVEY':
+                    handleSurveyManagement();  
+                    break;
+                case 'ARTICLE':
+                    handleArticleManagement();
+                    break;
+                case 'CONSULTATION':
+                    handleConsultationManagement();
+                    break;
+                case 'MESSAGE':
+                    handleMessageManagement();
+                    break;
+                case 'CONTRACT':
+                    handleContractManagement();
+                    break;
+                default:
+                    navigate('/dashboard');
+            }
+        } catch (error: any) {
+            console.error("Error marking notification as read:", error);
+            if (error.response && error.response.status === 401) {
+                console.log("Authentication error, redirecting to login");
+                navigate('/');
+            }
+        }
+    };
 
     useEffect(() => {
+        // 프로필 정보를 가져오는 함수
         const fetchProfile = async () => {
             try {
                 const response = await api.get("/api/agents"); // API 요청
@@ -171,8 +244,6 @@ const Dashboard = () => {
                         name: response.data.data.name,
                         email: response.data.data.email,
                     });
-                    console.log(response.data.data.name);
-                    
                 } else {
                     setError("프로필 정보를 불러오는데 실패했습니다.");
                 }
@@ -185,26 +256,80 @@ const Dashboard = () => {
         };
 
         fetchProfile();
-    }, []); // 컴포넌트 마운트 시 실행
+        
+        // 주기적으로 프로필 정보 업데이트 (5분마다)
+        const profileInterval = setInterval(fetchProfile, 5 * 60 * 1000);
+        
+        // 컴포넌트 언마운트 시 인터벌 정리
+        return () => {
+            clearInterval(profileInterval);
+        };
+    }, []);
 
     useEffect(() => {
+        // 알림 정보를 가져오는 함수
         const fetchNotifications = async () => {
             try {
                 const response = await api.get("/api/notification");
+                console.log("Notification Response:", response.data); // Add this log
                 if (response.data.success) {
-                    setNotifications(response.data.data.slice(0, 5));
+                    const allNotifications = response.data.data;
+                    console.log("All Notifications:", allNotifications); // Add this log
+                    setNotifications(allNotifications);
+                    const unreadNotifications = allNotifications.filter(
+                        (notification: Notification) => !notification.isRead
+                    );
+                    setUnreadCount(unreadNotifications.length);
                 } else {
-                    setNotificationError("Failed to load notifications");
+                    setNotificationError("알림을 불러오는데 실패했습니다");
                 }
             } catch (err) {
                 console.error("Error fetching notifications:", err);
-                setNotificationError("Failed to load notifications");
+                setNotificationError("알림을 불러오는데 실패했습니다");
             }
         };
 
+        // 초기 데이터 로드
         fetchNotifications();
+        
+        // 주기적으로 알림 정보 업데이트 (1분마다)
+        const notificationInterval = setInterval(fetchNotifications, 60 * 1000);
+
+        // Get agentId from localStorage
+        const agentId = localStorage.getItem('agentId');
+        
+        // Add agentId as a query parameter to the EventSource URL
+        const eventSource = new EventSource(`${api.defaults.baseURL}/api/notification/subscribe?agentId=${agentId}`);
+        
+        eventSource.onmessage = (event) => {
+            const newNotification = JSON.parse(event.data);
+            setNotifications(prev => [newNotification, ...prev]);
+            setUnreadCount(prev => prev + 1);
+            
+            // 새 알림이 오면 자동으로 모든 데이터 새로고침
+            fetchNotifications();
+        };
+
+        eventSource.onerror = (error) => {
+            console.error('SSE Error:', error);
+            eventSource.close();
+            
+            // 에러 발생 시 30초 후 재연결 시도
+            setTimeout(() => {
+                const newEventSource = new EventSource(`${api.defaults.baseURL}/api/notification/subscribe?agentId=${agentId}`);
+                // 이벤트 핸들러 다시 설정
+            }, 30000);
+        };
+
+        // Cleanup on component unmount
+        return () => {
+            clearInterval(notificationInterval);
+            eventSource.close();
+        };
     }, []);
 
+    // Remove duplicate fetchNotifications() call that was causing the error
+    
     return (
         <ThemeProvider theme={theme}>
             <Box sx={{ display: 'flex', bgcolor: '#f8f9fa', minHeight: "100vh" }}>
@@ -434,51 +559,135 @@ const Dashboard = () => {
                         justifyContent: 'flex-end',
                     }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                            <IconButton>
-                                <Badge badgeContent={5} color="error">
+                            <IconButton onClick={handleNotificationClick}>
+                                <Badge badgeContent={unreadCount} color="error">
                                     <Notifications />
                                 </Badge>
                             </IconButton>
-                            {/* 프로필 이니셜 및 이름 */}
-                            <Box sx={{ display: "flex", alignItems: "center", gap: 1, cursor: "pointer" }} onClick={handleMenuOpen}>
-                                <Avatar sx={{ width: 32, height: 32 }}>
-                                    {profile?.name?.charAt(0) || "?"}
-                                </Avatar>
-                                {loading ? (
-                                    <Typography variant="body2">로딩 중...</Typography>
-                                ) : error ? (
-                                    <Typography variant="body2" color="error">
-                                        {error}
+                            <Menu
+                                anchorEl={notificationAnchorEl}
+                                open={Boolean(notificationAnchorEl)}
+                                onClose={handleNotificationClose}
+                                anchorOrigin={{
+                                    vertical: "bottom",
+                                    horizontal: "right",
+                                }}
+                                transformOrigin={{
+                                    vertical: "top",
+                                    horizontal: "right",
+                                }}
+                                PaperProps={{
+                                    sx: {
+                                        mt: 1.5,
+                                        width: 360,
+                                        maxHeight: 400,
+                                        overflowY: 'auto',
+                                    }
+                                }}
+                            >
+                                <Box sx={{ p: 2, borderBottom: '1px solid rgba(0,0,0,0.1)' }}>
+                                    <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600 }}>
+                                        알림
                                     </Typography>
-                                ) : (
-                                    <Box>
-                                        <Typography variant="body2">{profile?.name}</Typography>
+                                </Box>
+                                {notifications.map((notification) => (
+                                    <MenuItem 
+                                        key={notification.id}
+                                        onClick={() => handleNotificationNavigation(notification)}
+                                        sx={{ 
+                                            py: 2,
+                                            px: 2,
+                                            borderBottom: '1px solid rgba(0,0,0,0.06)',
+                                            '&:last-child': { borderBottom: 'none' },
+                                        }}
+                                    >
+                                        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+                                            <Box sx={{ 
+                                                width: 4, 
+                                                height: 40, 
+                                                borderRadius: '4px',
+                                                bgcolor: getNotificationColor(notification.type),
+                                            }} />
+                                            <Box>
+                                                <Typography 
+                                                    variant="body1" 
+                                                    sx={{ 
+                                                        fontWeight: notification.isRead ? 400 : 600,
+                                                        color: 'text.primary',
+                                                        fontSize: '0.9rem',
+                                                        mb: 0.5,
+                                                    }}
+                                                >
+                                                    {notification.content}
+                                                </Typography>
+                                                <Typography 
+                                                    component="span" 
+                                                    variant="body2"
+                                                    sx={{
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        bgcolor: `${getNotificationColor(notification.type)}15`,
+                                                        color: getNotificationColor(notification.type),
+                                                        py: 0.5,
+                                                        px: 1,
+                                                        borderRadius: '4px',
+                                                        fontSize: '0.75rem',
+                                                        fontWeight: 500,
+                                                    }}
+                                                >
+                                                    {notification.type}
+                                                </Typography>
+                                            </Box>
+                                        </Box>
+                                    </MenuItem>
+                                ))}
+                            </Menu>
+                            
+                            {/* Add profile display here */}
+                            {profile && (
+                                <Box sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={handleMenuOpen}>
+                                    <Avatar sx={{ width: 36, height: 36, bgcolor: '#1976d2' }}>
+                                        {profile.name ? profile.name.charAt(0).toUpperCase() : 'U'}
+                                    </Avatar>
+                                    <Box sx={{ ml: 1, display: { xs: 'none', sm: 'block' } }}>
+                                        <Typography variant="body1" sx={{ fontWeight: 600, fontSize: '0.9rem' }}>
+                                            {profile.name}
+                                        </Typography>
+                                        <Typography variant="body2" color="textSecondary" sx={{ fontSize: '0.8rem' }}>
+                                            {profile.email}
+                                        </Typography>
                                     </Box>
-                                )}
-
-                                {/* 드롭다운 메뉴 */}
-                                <Menu
-                                    anchorEl={anchorEl}
-                                    open={Boolean(anchorEl)}
-                                    onClose={handleMenuClose}
-                                    anchorOrigin={{
-                                        vertical: "bottom",
-                                        horizontal: "right",
-                                    }}
-                                    transformOrigin={{
-                                        vertical: "top",
-                                        horizontal: "right",
-                                    }}
-                                >
-                                    <MenuItem onClick={handleMyPage}>마이페이지</MenuItem>
-                                    <MenuItem onClick={handleLogout}>로그아웃</MenuItem>
-                                </Menu>
-                                
-                            </Box>
-
+                                </Box>
+                            )}
+                            
+                            <Menu
+                                anchorEl={anchorEl}
+                                open={Boolean(anchorEl)}
+                                onClose={handleMenuClose}
+                                anchorOrigin={{
+                                    vertical: 'bottom',
+                                    horizontal: 'right',
+                                }}
+                                transformOrigin={{
+                                    vertical: 'top',
+                                    horizontal: 'right',
+                                }}
+                            >
+                                <MenuItem onClick={() => { navigate("/my-page"); handleMenuClose(); }}>
+                                    <ListItemIcon>
+                                        <Person fontSize="small" />
+                                    </ListItemIcon>
+                                    마이페이지
+                                </MenuItem>
+                                <MenuItem onClick={handleLogout}>
+                                    <ListItemIcon>
+                                        <Logout fontSize="small" /> {/* Settings에서 Logout으로 변경 */}
+                                    </ListItemIcon>
+                                    로그아웃
+                                </MenuItem>
+                            </Menu>
                         </Box>
                     </Box>
-
                     {/* Stats */}
                     <Grid container spacing={3} sx={{ mb: 4 }}>
                         <Grid item xs={12} md={4}>
@@ -594,9 +803,11 @@ const Dashboard = () => {
                                                 borderRadius: '8px',
                                                 '&:hover': {
                                                     bgcolor: 'rgba(0,0,0,0.02)',
+                                                    cursor: 'pointer'
                                                 },
                                                 transition: 'all 0.2s ease',
                                             }}
+                                            onClick={() => handleNotificationNavigation(notification)}
                                         >
                                             <Box sx={{ 
                                                 width: 4, 
@@ -610,7 +821,7 @@ const Dashboard = () => {
                                                     <Typography 
                                                         variant="body1" 
                                                         sx={{ 
-                                                            fontWeight: 600,
+                                                            fontWeight: notification.isRead ? 400 : 600,
                                                             color: 'text.primary',
                                                             mb: 0.5,
                                                             fontSize: '0.95rem',
@@ -620,29 +831,23 @@ const Dashboard = () => {
                                                     </Typography>
                                                 }
                                                 secondary={
-                                                    <Box sx={{ 
-                                                        display: 'inline-flex', 
-                                                        alignItems: 'center', 
-                                                        gap: 1 
-                                                    }}>
-                                                        <Typography 
-                                                            component="span" 
-                                                            variant="body2"
-                                                            sx={{
-                                                                display: 'inline-flex',
-                                                                alignItems: 'center',
-                                                                bgcolor: `${getNotificationColor(notification.type)}15`,
-                                                                color: getNotificationColor(notification.type),
-                                                                py: 0.5,
-                                                                px: 1,
-                                                                borderRadius: '4px',
-                                                                fontSize: '0.8rem',
-                                                                fontWeight: 600,
-                                                            }}
-                                                        >
-                                                            {notification.type}
-                                                        </Typography>
-                                                    </Box>
+                                                    <Typography 
+                                                        component="span" 
+                                                        variant="body2"
+                                                        sx={{
+                                                            display: 'inline-flex',
+                                                            alignItems: 'center',
+                                                            bgcolor: `${getNotificationColor(notification.type)}15`,
+                                                            color: getNotificationColor(notification.type),
+                                                            py: 0.5,
+                                                            px: 1,
+                                                            borderRadius: '4px',
+                                                            fontSize: '0.8rem',
+                                                            fontWeight: 600,
+                                                        }}
+                                                    >
+                                                        {notification.type}
+                                                    </Typography>
                                                 }
                                             />
                                         </ListItem>
@@ -658,4 +863,3 @@ const Dashboard = () => {
 }
 
 export default Dashboard
-
