@@ -34,6 +34,7 @@ import {
     Settings,
     Menu as MenuIcon,
     ChevronLeft,
+    Logout, // 로그아웃 아이콘 추가
 } from "@mui/icons-material"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
@@ -79,7 +80,37 @@ const theme = createTheme({
     },
 });
 
+interface Notification {
+    id: number;
+    type: string;
+    content: string;
+    isRead: boolean;
+}
+
+// Add this helper function before the Dashboard component
+const getNotificationColor = (type: string) => {
+    switch (type) {
+        case 'SURVEY':
+            return '#2196f3';
+        case 'ARTICLE':
+            return '#4caf50';
+        case 'CONSULTATION':
+            return '#ff9800';
+        case 'MESSAGE':
+            return '#9c27b0';
+        case 'CONTRACT':
+            return '#f44336';
+        default:
+            return '#757575';
+    }
+};
+
 const Dashboard = () => {
+    const [notifications, setNotifications] = useState<Notification[]>([]);
+    const [notificationError, setNotificationError] = useState<string | null>(null);
+    const [notificationAnchorEl, setNotificationAnchorEl] = useState<null | HTMLElement>(null);
+    const [unreadCount, setUnreadCount] = useState(0);
+    
     const { logout } = useAuth()
     const navigate = useNavigate()
     const [sidebarOpen, setSidebarOpen] = useState(true)
@@ -87,6 +118,15 @@ const Dashboard = () => {
     const[loading, setLoading] = useState(true);
     const[error, setError] = useState<string | null>(null);
     const[anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+
+    // Add these missing notification handler functions
+    const handleNotificationClick = (event: React.MouseEvent<HTMLElement>) => {
+        setNotificationAnchorEl(event.currentTarget);
+    };
+
+    const handleNotificationClose = () => {
+        setNotificationAnchorEl(null);
+    };
 
     const handleCustomerManagement = () => {
         navigate("/customer-management")
@@ -133,8 +173,68 @@ const Dashboard = () => {
         navigate("/");
         handleMenuClose();
     }
+    
+    const handleNotificationNavigation = async (notification: Notification) => {
+        console.log("Notification being handled:", notification);
+        try {
+            const token = localStorage.getItem('accessToken');
+            if (!token) {
+                navigate('/');
+                return;
+            }
+    
+            await api.patch("/api/notification/read", null, {
+                params: {
+                    notificationId: notification.id,
+                },
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            
+            // Update local state to mark notification as read
+            setNotifications(prev => 
+                prev.map(n => 
+                    n.id === notification.id ? { ...n, isRead: true } : n
+                )
+            );
+            
+            // Update unread count
+            setUnreadCount(prev => Math.max(0, prev - 1));
+            
+            handleNotificationClose();
+            
+            // Navigate based on type
+            switch (notification.type) {
+                case 'SURVEY':
+                    handleSurveyManagement();  
+                    break;
+                case 'ARTICLE':
+                    handleArticleManagement();
+                    break;
+                case 'CONSULTATION':
+                    handleConsultationManagement();
+                    break;
+                case 'MESSAGE':
+                    handleMessageManagement();
+                    break;
+                case 'CONTRACT':
+                    handleContractManagement();
+                    break;
+                default:
+                    navigate('/dashboard');
+            }
+        } catch (error: any) {
+            console.error("Error marking notification as read:", error);
+            if (error.response && error.response.status === 401) {
+                console.log("Authentication error, redirecting to login");
+                navigate('/');
+            }
+        }
+    };
 
     useEffect(() => {
+        // 프로필 정보를 가져오는 함수
         const fetchProfile = async () => {
             try {
                 const response = await api.get("/api/agents"); // API 요청
@@ -143,8 +243,6 @@ const Dashboard = () => {
                         name: response.data.data.name,
                         email: response.data.data.email,
                     });
-                    console.log(response.data.data.name);
-                    
                 } else {
                     setError("프로필 정보를 불러오는데 실패했습니다.");
                 }
@@ -157,8 +255,90 @@ const Dashboard = () => {
         };
 
         fetchProfile();
-    }, []); // 컴포넌트 마운트 시 실행
+        
+        // 주기적으로 프로필 정보 업데이트 (5분마다)
+        const profileInterval = setInterval(fetchProfile, 5 * 60 * 1000);
+        
+        // 컴포넌트 언마운트 시 인터벌 정리
+        return () => {
+            clearInterval(profileInterval);
+        };
+    }, []);
 
+    useEffect(() => {
+        const agentId = localStorage.getItem('agentId');
+        let eventSource: EventSource | null = null;
+
+        if (!agentId) {
+            console.warn("agentId is missing or invalid:", agentId);
+            return;
+        }    
+
+        const setupEventSource = () => {
+            if (eventSource) {
+                eventSource.close();
+            }
+            console.log("Setting up EventSource with agentId:", agentId);
+            
+            eventSource = new EventSource(`${api.defaults.baseURL}/api/notification/subscribe?agentId=${agentId}`);
+
+            eventSource.onopen = () => {
+                console.log("SSE connection opened");
+            };
+            
+            eventSource.addEventListener("notification", (event)  => {
+                console.log("Received notification:", event.data);
+                const rawNotification = JSON.parse(event.data);
+                const newNotification = {
+                    ...rawNotification,
+                    isRead: rawNotification.read
+                };
+                
+                setNotifications(prev => {
+                    return [newNotification, ...prev].sort((a, b) => b.id - a.id);
+                });
+
+                setUnreadCount(count => count + 1);
+            });
+
+            eventSource.onerror = (err) => {
+                console.error("SSE error:", err);
+                eventSource?.close();
+                setTimeout(setupEventSource, 30000);
+            };
+        };
+
+        // 초기 알림 데이터 로드
+        const fetchNotifications = async () => {
+            try {
+                const response = await api.get("/api/notification");
+                if (response.data.success) {
+                    const allNotifications = response.data.data.map(notification => ({
+                        ...notification,
+                        isRead: notification.read
+                    }));
+                    
+                    setNotifications(allNotifications);
+                    const unreadCount = allNotifications.filter(n => !n.isRead).length;
+                    setUnreadCount(unreadCount);
+                }
+            } catch (err) {
+                console.error("Error fetching notifications:", err);
+                setNotificationError("알림을 불러오는데 실패했습니다");
+            }
+        };
+
+        fetchNotifications();
+        setupEventSource();
+
+        return () => {
+            if (eventSource) {
+                eventSource.close();
+            }
+        };
+    }, []);
+
+    
     return (
         <ThemeProvider theme={theme}>
             <Box sx={{ display: 'flex', bgcolor: '#f8f9fa', minHeight: "100vh" }}>
@@ -388,51 +568,155 @@ const Dashboard = () => {
                         justifyContent: 'flex-end',
                     }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                            <IconButton>
-                                <Badge badgeContent={5} color="error">
+                            <IconButton onClick={handleNotificationClick}>
+                                <Badge badgeContent={unreadCount} color="error">
                                     <Notifications />
                                 </Badge>
                             </IconButton>
-                            {/* 프로필 이니셜 및 이름 */}
-                            <Box sx={{ display: "flex", alignItems: "center", gap: 1, cursor: "pointer" }} onClick={handleMenuOpen}>
-                                <Avatar sx={{ width: 32, height: 32 }}>
-                                    {profile?.name?.charAt(0) || "?"}
-                                </Avatar>
-                                {loading ? (
-                                    <Typography variant="body2">로딩 중...</Typography>
-                                ) : error ? (
-                                    <Typography variant="body2" color="error">
-                                        {error}
+                            {/* In the Menu component, filter notifications to show only unread ones */}
+                            <Menu
+                                anchorEl={notificationAnchorEl}
+                                open={Boolean(notificationAnchorEl)}
+                                onClose={handleNotificationClose}
+                                anchorOrigin={{
+                                    vertical: "bottom",
+                                    horizontal: "right",
+                                }}
+                                transformOrigin={{
+                                    vertical: "top",
+                                    horizontal: "right",
+                                }}
+                                PaperProps={{
+                                    sx: {
+                                        mt: 1.5,
+                                        width: 360,
+                                        maxHeight: 400,
+                                        overflowY: 'auto',
+                                    }
+                                }}
+                            >
+                                <Box sx={{ p: 2, borderBottom: '1px solid rgba(0,0,0,0.1)' }}>
+                                    <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600 }}>
+                                        알림 ({unreadCount})
                                     </Typography>
-                                ) : (
-                                    <Box>
-                                        <Typography variant="body2">{profile?.name}</Typography>
+                                </Box>
+                                {notifications
+                                        .slice() // Create a copy to avoid mutating the original array
+                                        .sort((a, b) => b.id - a.id) // Sort by id in descending order
+                                        .map((notification) => (
+                                            <MenuItem 
+                                                key={`${notification.id}-${notification.isRead}`}
+                                                onClick={() => handleNotificationNavigation(notification)}
+                                                sx={{ 
+                                                    py: 2,
+                                                    px: 2,
+                                                    borderBottom: '1px solid rgba(0,0,0,0.06)',
+                                                    '&:last-child': { borderBottom: 'none' },
+                                                    bgcolor: notification.isRead ? 'action.hover' : 'transparent',
+                                                }}
+                                            >
+                                                <Box sx={{ 
+                                                    width: 4, 
+                                                    height: 40, 
+                                                    borderRadius: '4px',
+                                                    bgcolor: notification.isRead ? 'grey.400' : getNotificationColor(notification.type),
+                                                    mr: 2
+                                                }} />
+                                                <Box>
+                                                    <Typography 
+                                                        variant="body1" 
+                                                        sx={{ 
+                                                            fontWeight: notification.isRead ? 400 : 600,
+                                                            color: notification.isRead ? 'text.disabled' : 'text.primary',
+                                                            mb: 0.5,
+                                                            fontSize: '0.95rem',
+                                                        }}
+                                                    >
+                                                        {notification.content}
+                                                    </Typography>
+                                                    <Typography 
+                                                        component="span"
+                                                        variant="body2"
+                                                        sx={{
+                                                            display: 'inline-flex',
+                                                            alignItems: 'center',
+                                                            bgcolor: notification.isRead ? 'grey.100' : `${getNotificationColor(notification.type)}15`,
+                                                            color: notification.isRead ? 'grey.500' : getNotificationColor(notification.type),
+                                                            py: 0.5,
+                                                            px: 1,
+                                                            borderRadius: '4px',
+                                                            fontSize: '0.8rem',
+                                                            fontWeight: 600,
+                                                        }}
+                                                    >
+                                                        {notification.type}
+                                                    </Typography>
+                                                </Box>
+                                            </MenuItem>
+                                        ))}
+                                <Box sx={{ p: 2, borderTop: '1px solid rgba(0,0,0,0.1)' }}>
+                                    <Button 
+                                        fullWidth
+                                        variant="text"
+                                        onClick={() => {
+                                            handleNotificationClose();
+                                            navigate('/notification-list');
+                                        }}
+                                        sx={{
+                                            color: 'primary.main',
+                                            '&:hover': { bgcolor: 'rgba(25, 118, 210, 0.04)' },
+                                        }}
+                                    >
+                                        전체 알림 보기
+                                    </Button>
+                                </Box>
+                            </Menu>
+                            
+                            {/* Add profile display here */}
+                            {profile && (
+                                <Box sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={handleMenuOpen}>
+                                    <Avatar sx={{ width: 36, height: 36, bgcolor: '#1976d2' }}>
+                                        {profile.name ? profile.name.charAt(0).toUpperCase() : 'U'}
+                                    </Avatar>
+                                    <Box sx={{ ml: 1, display: { xs: 'none', sm: 'block' } }}>
+                                        <Typography variant="body1" sx={{ fontWeight: 600, fontSize: '0.9rem' }}>
+                                            {profile.name}
+                                        </Typography>
+                                        <Typography variant="body2" color="textSecondary" sx={{ fontSize: '0.8rem' }}>
+                                            {profile.email}
+                                        </Typography>
                                     </Box>
-                                )}
-
-                                {/* 드롭다운 메뉴 */}
-                                <Menu
-                                    anchorEl={anchorEl}
-                                    open={Boolean(anchorEl)}
-                                    onClose={handleMenuClose}
-                                    anchorOrigin={{
-                                        vertical: "bottom",
-                                        horizontal: "right",
-                                    }}
-                                    transformOrigin={{
-                                        vertical: "top",
-                                        horizontal: "right",
-                                    }}
-                                >
-                                    <MenuItem onClick={handleMyPage}>마이페이지</MenuItem>
-                                    <MenuItem onClick={handleLogout}>로그아웃</MenuItem>
-                                </Menu>
-                                
-                            </Box>
-
+                                </Box>
+                            )}
+                            
+                            <Menu
+                                anchorEl={anchorEl}
+                                open={Boolean(anchorEl)}
+                                onClose={handleMenuClose}
+                                anchorOrigin={{
+                                    vertical: 'bottom',
+                                    horizontal: 'right',
+                                }}
+                                transformOrigin={{
+                                    vertical: 'top',
+                                    horizontal: 'right',
+                                }}
+                            >
+                                <MenuItem onClick={() => { navigate("/my-page"); handleMenuClose(); }}>
+                                    <ListItemIcon>
+                                        <Person fontSize="small" />
+                                    </ListItemIcon>
+                                    마이페이지
+                                </MenuItem>
+                                <MenuItem onClick={handleLogout}>
+                                    <ListItemIcon>
+                                        <Logout fontSize="small" /> {/* Settings에서 Logout으로 변경 */}
+                                    </ListItemIcon>
+                                    로그아웃
+                                </MenuItem>
+                            </Menu>
                         </Box>
                     </Box>
-
                     {/* Stats */}
                     <Grid container spacing={3} sx={{ mb: 4 }}>
                         <Grid item xs={12} md={4}>
@@ -527,55 +811,83 @@ const Dashboard = () => {
                             </Paper>
                         </Grid>
                     </Grid>
-
-                    {/* Recent Activities */}
+                    {/* In the activity list section */}
                     <Box sx={{ mt: 3 }}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                            <Typography variant="h6">최근 활동</Typography>
-                            <Button variant="text" sx={{ color: '#666' }}>전체</Button>
+                            <Typography variant="h6" sx={{ fontWeight: 600 }}>최근 활동</Typography>
                         </Box>
-                        <Paper sx={{ p: 0 }}>
-                            <List>
-                                <ListItem sx={{ py: 2 }}>
-                                    <ListItemIcon>
-                                        <Avatar sx={{ bgcolor: '#e3f2fd', color: '#1976d2' }}>
-                                            <Business />
-                                        </Avatar>
-                                    </ListItemIcon>
-                                    <ListItemText
-                                        primary="신규 매물 등록"
-                                        secondary="강남구 역삼동 2층 사무실"
-                                        secondaryTypographyProps={{ sx: { color: '#666' } }}
-                                    />
-                                    <Typography variant="body2" color="textSecondary">방금 전</Typography>
-                                </ListItem>
-                                <ListItem sx={{ py: 2 }}>
-                                    <ListItemIcon>
-                                        <Avatar sx={{ bgcolor: '#fce4ec', color: '#d81b60' }}>
-                                            <Person />
-                                        </Avatar>
-                                    </ListItemIcon>
-                                    <ListItemText
-                                        primary="고객 상담 완료"
-                                        secondary="이창호 고객님 - 전세 문의"
-                                        secondaryTypographyProps={{ sx: { color: '#666' } }}
-                                    />
-                                    <Typography variant="body2" color="textSecondary">1시간 전</Typography>
-                                </ListItem>
-                                <ListItem sx={{ py: 2 }}>
-                                    <ListItemIcon>
-                                        <Avatar sx={{ bgcolor: '#e8f5e9', color: '#43a047' }}>
-                                            <InsertDriveFile />
-                                        </Avatar>
-                                    </ListItemIcon>
-                                    <ListItemText
-                                        primary="계약 진행 상태 변경"
-                                        secondary="서초동 오피스텔 - 계약금 입금"
-                                        secondaryTypographyProps={{ sx: { color: '#666' } }}
-                                    />
-                                    <Typography variant="body2" color="textSecondary">2시간 전</Typography>
-                                </ListItem>
-                            </List>
+                        <Paper sx={{ p: 3 }}>
+                            {notificationError ? (
+                                <Typography color="error" sx={{ fontWeight: 500 }}>{notificationError}</Typography>
+                            ) : notifications.length === 0 ? (
+                                <Typography color="textSecondary" sx={{ fontWeight: 500 }}>최근 활동이 없습니다.</Typography>
+                            ) : (
+                                <List sx={{ '& .MuiListItem-root': { px: 2 } }}>
+                                    {notifications
+                                        .slice()
+                                        .sort((a, b) => b.id - a.id)
+                                        .slice(0, 5)
+                                        .map((notification) => (
+                                        <ListItem 
+                                            key={notification.id}
+                                            sx={{ 
+                                                py: 2,
+                                                borderBottom: '1px solid rgba(0,0,0,0.06)',
+                                                '&:last-child': { borderBottom: 'none' },
+                                                borderRadius: '8px',
+                                                '&:hover': {
+                                                    bgcolor: 'rgba(0,0,0,0.02)',
+                                                    cursor: 'pointer'
+                                                },
+                                                transition: 'all 0.2s ease',
+                                            }}
+                                            onClick={() => handleNotificationNavigation(notification)}
+                                        >
+                                            <Box sx={{ 
+                                                width: 4, 
+                                                height: 40, 
+                                                borderRadius: '4px',
+                                                bgcolor: notification.isRead ? 'grey.400' : getNotificationColor(notification.type),
+                                                mr: 2 
+                                            }} />
+                                            <ListItemText 
+                                                primary={
+                                                    <>
+                                                        <Typography 
+                                                            variant="body1" 
+                                                            sx={{ 
+                                                                fontWeight: notification.isRead ? 400 : 600,
+                                                                color: notification.isRead ? 'text.disabled' : 'text.primary',
+                                                                mb: 0.5,
+                                                                fontSize: '0.95rem',
+                                                            }}
+                                                        >
+                                                            {notification.content}
+                                                        </Typography>
+                                                        <Typography 
+                                                            component="span"
+                                                            variant="body2"
+                                                            sx={{
+                                                                display: 'inline-flex',
+                                                                alignItems: 'center',
+                                                                bgcolor: notification.isRead ? 'grey.100' : `${getNotificationColor(notification.type)}15`,
+                                                                color: notification.isRead ? 'grey.500' : getNotificationColor(notification.type),
+                                                                py: 0.5,
+                                                                px: 1,
+                                                                borderRadius: '4px',
+                                                                fontSize: '0.8rem',
+                                                                fontWeight: 600,
+                                                            }}
+                                                        >
+                                                            {notification.type}
+                                                        </Typography>
+                                                    </>
+                                                }
+                                            />
+                                        </ListItem>
+                                    ))}
+                                </List>
+                            )}
                         </Paper>
                     </Box>
                 </Box>
@@ -585,4 +897,3 @@ const Dashboard = () => {
 }
 
 export default Dashboard
-

@@ -32,6 +32,7 @@ import MyPage from "./pages/MyPage"
 import { AuthProvider } from "./context/AuthContext.tsx"
 import ProtectedRoute from "./components/ProtectedRoute.tsx"
 import "./App.css"
+import NotificationList from "./pages/NotificationList.tsx"  // Add this import at the top with other imports
 
 // Create a theme instance
 const theme = createTheme({
@@ -318,6 +319,14 @@ function App() {
                             element={
                                 <ProtectedRoute>
                                     <ArticleList />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route
+                            path="/notification-list"
+                            element={
+                                <ProtectedRoute>
+                                    <NotificationList />
                                 </ProtectedRoute>
                             }
                         />
