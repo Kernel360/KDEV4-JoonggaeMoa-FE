@@ -1070,6 +1070,147 @@ const Dashboard = () => {
                         </Grid>
                     </Grid>
 
+                    {/* Quick Action Buttons */}
+                    <Box sx={{ mb: 4 }}>
+                        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                            빠른 이동
+                        </Typography>
+                        <Grid container spacing={2}>
+                            <Grid item xs={12} sm={6} md={2}>
+                                <Button
+                                    variant="contained"
+                                    fullWidth
+                                    onClick={() => navigate("/customer-management/add")}
+                                    sx={{
+                                        py: 2,
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: 1,
+                                        bgcolor: '#4CAF50',
+                                        '&:hover': {
+                                            bgcolor: '#43A047',
+                                        },
+                                    }}
+                                >
+                                    <Person sx={{ fontSize: 32 }} />
+                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                        고객 등록
+                                    </Typography>
+                                </Button>
+                            </Grid>
+                            <Grid item xs={12} sm={6} md={2}>
+                                <Button
+                                    variant="contained"
+                                    fullWidth
+                                    onClick={() => navigate("/survey/create")}
+                                    sx={{
+                                        py: 2,
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: 1,
+                                        bgcolor: '#2196F3',
+                                        '&:hover': {
+                                            bgcolor: '#1E88E5',
+                                        },
+                                    }}
+                                >
+                                    <Assignment sx={{ fontSize: 32 }} />
+                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                        설문 작성
+                                    </Typography>
+                                </Button>
+                            </Grid>
+                            <Grid item xs={12} sm={6} md={2}>
+                                <Button
+                                    variant="contained"
+                                    fullWidth
+                                    onClick={() => navigate("/survey/answers")}
+                                    sx={{
+                                        py: 2,
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: 1,
+                                        bgcolor: '#9C27B0',
+                                        '&:hover': {
+                                            bgcolor: '#8E24AA',
+                                        },
+                                    }}
+                                >
+                                    <Assignment sx={{ fontSize: 32 }} />
+                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                        설문 응답
+                                    </Typography>
+                                </Button>
+                            </Grid>
+                            <Grid item xs={12} sm={6} md={2}>
+                                <Button
+                                    variant="contained"
+                                    fullWidth
+                                    onClick={() => navigate("/contract/create")}
+                                    sx={{
+                                        py: 2,
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: 1,
+                                        bgcolor: '#FF9800',
+                                        '&:hover': {
+                                            bgcolor: '#F57C00',
+                                        },
+                                    }}
+                                >
+                                    <InsertDriveFile sx={{ fontSize: 32 }} />
+                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                        계약 등록
+                                    </Typography>
+                                </Button>
+                            </Grid>
+                            <Grid item xs={12} sm={6} md={2}>
+                                <Button
+                                    variant="contained"
+                                    fullWidth
+                                    onClick={() => navigate("/message/create")}
+                                    sx={{
+                                        py: 2,
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: 1,
+                                        bgcolor: '#FF5722',
+                                        '&:hover': {
+                                            bgcolor: '#F4511E',
+                                        },
+                                    }}
+                                >
+                                    <Email sx={{ fontSize: 32 }} />
+                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                        문자 작성
+                                    </Typography>
+                                </Button>
+                            </Grid>
+                            <Grid item xs={12} sm={6} md={2}>
+                                <Button
+                                    variant="contained"
+                                    fullWidth
+                                    onClick={() => navigate("/message/history")}
+                                    sx={{
+                                        py: 2,
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: 1,
+                                        bgcolor: '#607D8B',
+                                        '&:hover': {
+                                            bgcolor: '#546E7A',
+                                        },
+                                    }}
+                                >
+                                    <Email sx={{ fontSize: 32 }} />
+                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                        보낸 문자
+                                    </Typography>
+                                </Button>
+                            </Grid>
+                        </Grid>
+                    </Box>
+
                     {/* Charts */}
                     <Grid container spacing={3}>
                         <Grid item xs={12} md={6}>
