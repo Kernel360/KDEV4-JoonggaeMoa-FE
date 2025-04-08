@@ -61,6 +61,9 @@ import type {
 import { TooltipModel } from "@toast-ui/chart/types/components/tooltip"
 import { TooltipTheme } from "@toast-ui/chart/types/theme"
 
+import { toast } from 'react-toastify';
+
+
 // 커스텀 테마 생성
 const theme = createTheme({
     typography: {
@@ -349,6 +352,41 @@ const Dashboard = () => {
                 });
 
                 setUnreadCount(count => count + 1);
+                
+                // Only show toast for non-CONNECTION type notifications
+                if (newNotification.type !== 'CONNECTION') {
+                    toast.info(
+                        <div 
+                            style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
+                            onClick={() => handleNotificationNavigation(newNotification)}
+                        >
+                            <div
+                                style={{
+                                    width: 4,
+                                    height: 40,
+                                    borderRadius: 4,
+                                    backgroundColor: getNotificationColor(newNotification.type),
+                                    marginRight: 12
+                                }}
+                            />
+                            <div>
+                                <div style={{ fontWeight: 600, marginBottom: 4 }}>{newNotification.content}</div>
+                                <span
+                                    style={{
+                                        backgroundColor: `${getNotificationColor(newNotification.type)}15`,
+                                        color: getNotificationColor(newNotification.type),
+                                        padding: '4px 8px',
+                                        borderRadius: 4,
+                                        fontSize: '0.8rem',
+                                        fontWeight: 600
+                                    }}
+                                >
+                                    {newNotification.type}
+                                </span>
+                            </div>
+                        </div>
+                    );
+                }
             });
 
             eventSource.onerror = (err) => {
