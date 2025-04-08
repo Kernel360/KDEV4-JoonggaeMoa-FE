@@ -13,7 +13,7 @@ import SurveyDetail from "./pages/SurveyDetail.tsx"
 import SurveyCreate from "./pages/SurveyCreate.tsx"
 import SurveyEdit from "./pages/SurveyEdit.tsx"
 import SurveySubmit from "./pages/SurveySubmit.tsx"
-import SurveyAnswers from "./pages/SurveyAnswers.tsx" // 새로 추가된 설문 응답 페이지
+import SurveyAnswers from "./pages/SurveyAnswers.tsx" 
 import ConsultationList from "./pages/ConsultationList.tsx"
 import ConsultationDetail from "./pages/ConsultationDetail.tsx"
 import ConsultationEdit from "./pages/ConsultationEdit.tsx"
@@ -32,7 +32,9 @@ import MyPage from "./pages/MyPage"
 import { AuthProvider } from "./context/AuthContext.tsx"
 import ProtectedRoute from "./components/ProtectedRoute.tsx"
 import "./App.css"
-import NotificationList from "./pages/NotificationList.tsx"  // Add this import at the top with other imports
+import NotificationList from "./pages/NotificationList.tsx" 
+import 'react-toastify/dist/ReactToastify.css';
+import { ToastContainer } from 'react-toastify';
 
 // Create a theme instance
 const theme = createTheme({
@@ -334,6 +336,18 @@ function App() {
                     </Routes>
                 </AuthProvider>
             </Router>
+            <ToastContainer
+                position="top-right"
+                autoClose={5000}
+                hideProgressBar={false}
+                newestOnTop
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="light"
+            />
         </ThemeProvider>
     )
 }
