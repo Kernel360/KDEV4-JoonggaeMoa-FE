@@ -117,7 +117,7 @@ const SurveyDetail = () => {
     const handleCopyUrl = () => {
         if (!id) return
 
-        const surveyUrl = `${window.location.origin}/surveys/submit/${id}?customerId=${id}`
+        const surveyUrl = `${window.location.origin}/surveys/submit/${id}`
 
         if(navigator.clipboard && window.isSecureContext){
             navigator.clipboard
@@ -137,6 +137,26 @@ const SurveyDetail = () => {
         copy(surveyUrl)
 
     }
+
+    const copy =  (textToCopy : string) => {
+        const textArea = document.createElement("textarea");
+               textArea.value = textToCopy;
+                   
+               // Move textarea out of the viewport so it's not visible
+               textArea.style.position = "absolute";
+               textArea.style.left = "-999999px";
+                   
+               document.body.prepend(textArea);
+               textArea.select();
+       
+               try {
+                   document.execCommand('copy');
+               } catch (error) {
+                   console.error(error);
+               } finally {
+                   textArea.remove();
+               }
+       }
 
     // 질문 타입에 따른 UI 렌더링
     const renderQuestionOptions = (question: SurveyResponse["questionList"][0]) => {
