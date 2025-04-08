@@ -54,7 +54,8 @@ import { dashboardApi } from "../services/dashboardApi"
 import type { 
     RealEstateTypeSummaryResponse, 
     TradeTypeSummaryResponse,
-    CustomerSummaryResponse
+    CustomerSummaryResponse,
+    ContractSummaryResponse
 } from "../types/dashboard"
 import { TooltipModel } from "@toast-ui/chart/types/components/tooltip"
 import { TooltipTheme } from "@toast-ui/chart/types/theme"
@@ -142,6 +143,7 @@ const Dashboard = () => {
     const [realEstateTypeData, setRealEstateTypeData] = useState<RealEstateTypeSummaryResponse[]>([]);
     const [tradeTypeData, setTradeTypeData] = useState<TradeTypeSummaryResponse[]>([]);
     const [customerSummary, setCustomerSummary] = useState<CustomerSummaryResponse | null>(null);
+    const [contractSummary, setContractSummary] = useState<ContractSummaryResponse | null>(null);
     
     // 차트 인스턴스 ref
     const realEstateTypeChartInstance = useRef<any>(null);
@@ -155,11 +157,13 @@ const Dashboard = () => {
     const [realEstateTypeLoading, setRealEstateTypeLoading] = useState(false);
     const [tradeTypeLoading, setTradeTypeLoading] = useState(false);
     const [customerSummaryLoading, setCustomerSummaryLoading] = useState(false);
+    const [contractSummaryLoading, setContractSummaryLoading] = useState(false);
     
     // 에러 상태 분리
     const [realEstateTypeError, setRealEstateTypeError] = useState<string | null>(null);
     const [tradeTypeError, setTradeTypeError] = useState<string | null>(null);
     const [customerSummaryError, setCustomerSummaryError] = useState<string | null>(null);
+    const [contractSummaryError, setContractSummaryError] = useState<string | null>(null);
 
     // Add these missing notification handler functions
     const handleNotificationClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -390,7 +394,8 @@ const Dashboard = () => {
                 await Promise.all([
                     fetchRealEstateTypeData(realEstateTypePeriod),
                     fetchTradeTypeData(tradeTypePeriod),
-                    fetchCustomerSummary()
+                    fetchCustomerSummary(),
+                    fetchContractSummary()
                 ]);
                 
                 setError(null);
@@ -461,6 +466,24 @@ const Dashboard = () => {
             return false;
         } finally {
             setCustomerSummaryLoading(false);
+        }
+    };
+
+    const fetchContractSummary = async () => {
+        try {
+            setContractSummaryLoading(true);
+            setContractSummaryError(null);
+            const response = await dashboardApi.getContractSummary();
+            if (response.data.success && response.data.data) {
+                setContractSummary(response.data.data);
+            }
+            return true;
+        } catch (err) {
+            console.error("Error fetching contract summary data:", err);
+            setContractSummaryError("계약 요약 데이터를 불러오는데 실패했습니다.");
+            return false;
+        } finally {
+            setContractSummaryLoading(false);
         }
     };
 
@@ -1207,24 +1230,40 @@ const Dashboard = () => {
                                 <Typography color="textSecondary" variant="body2" sx={{ mb: 1 }}>
                                     진행중인 계약
                                 </Typography>
-                                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
-                                    <Typography variant="h4">28</Typography>
-                                    <Typography 
-                                        variant="body2" 
-                                        sx={{ 
-                                            color: '#4caf50',
-                                            bgcolor: '#e8f5e9',
-                                            px: 1,
-                                            py: 0.5,
-                                            borderRadius: '4px',
-                                        }}
-                                    >
-                                        +5%
+                                {contractSummaryLoading ? (
+                                    <Box sx={{ display: "flex", justifyContent: "center", my: 2 }}>
+                                        <CircularProgress size={24} />
+                                    </Box>
+                                ) : contractSummaryError ? (
+                                    <Typography color="error" variant="body2">
+                                        {contractSummaryError}
                                     </Typography>
-                                </Box>
-                                <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-                                    전주 대비
-                                </Typography>
+                                ) : contractSummary ? (
+                                    <>
+                                        <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+                                            <Typography variant="h4">{contractSummary.count}</Typography>
+                                            <Typography 
+                                                variant="body2" 
+                                                sx={{ 
+                                                    color: contractSummary.rate >= 0 ? '#4caf50' : '#f44336',
+                                                    bgcolor: contractSummary.rate >= 0 ? '#e8f5e9' : '#ffebee',
+                                                    px: 1,
+                                                    py: 0.5,
+                                                    borderRadius: '4px',
+                                                }}
+                                            >
+                                                {contractSummary.rate >= 0 ? '+' : ''}{contractSummary.rate.toFixed(1)}%
+                                            </Typography>
+                                        </Box>
+                                        <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                                            전주 대비
+                                        </Typography>
+                                    </>
+                                ) : (
+                                    <Typography variant="body2" color="textSecondary">
+                                        데이터를 불러올 수 없습니다.
+                                    </Typography>
+                                )}
                             </Paper>
                         </Grid>
                         <Grid item xs={12} md={4}>

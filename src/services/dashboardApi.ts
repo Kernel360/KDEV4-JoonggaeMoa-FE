@@ -2,7 +2,8 @@ import api from "./api";
 import type { 
     RealEstateTypeSummaryResponse, 
     TradeTypeSummaryResponse,
-    CustomerSummaryResponse
+    CustomerSummaryResponse,
+    ContractSummaryResponse
 } from "../types/dashboard";
 import type { ApiResponse } from "../types/api";
 
@@ -24,5 +25,9 @@ export const dashboardApi = {
 
     getCustomerSummary: async () => {
         return await api.get<ApiResponse<CustomerSummaryResponse>>('/api/dashboard/customer-summary');
+    },
+
+    getContractSummary: async () => {
+        return await api.get<ApiResponse<ContractSummaryResponse>>('/api/dashboard/contract-summary');
     }
 }; 

@@ -16,3 +16,8 @@ export interface CustomerSummaryResponse {
     count: number;
     rate: number;
 }
+
+export interface ContractSummaryResponse {
+    count: number;
+    rate: number;
+}
