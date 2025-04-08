@@ -21,3 +21,8 @@ export interface ContractSummaryResponse {
     count: number;
     rate: number;
 }
+
+export interface ConsultationSummaryResponse {
+    todayCount: number;
+    remainingCount: number;
+}

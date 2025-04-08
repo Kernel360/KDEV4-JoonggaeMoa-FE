@@ -55,7 +55,8 @@ import type {
     RealEstateTypeSummaryResponse, 
     TradeTypeSummaryResponse,
     CustomerSummaryResponse,
-    ContractSummaryResponse
+    ContractSummaryResponse,
+    ConsultationSummaryResponse
 } from "../types/dashboard"
 import { TooltipModel } from "@toast-ui/chart/types/components/tooltip"
 import { TooltipTheme } from "@toast-ui/chart/types/theme"
@@ -144,6 +145,7 @@ const Dashboard = () => {
     const [tradeTypeData, setTradeTypeData] = useState<TradeTypeSummaryResponse[]>([]);
     const [customerSummary, setCustomerSummary] = useState<CustomerSummaryResponse | null>(null);
     const [contractSummary, setContractSummary] = useState<ContractSummaryResponse | null>(null);
+    const [consultationSummary, setConsultationSummary] = useState<ConsultationSummaryResponse | null>(null);
     
     // 차트 인스턴스 ref
     const realEstateTypeChartInstance = useRef<any>(null);
@@ -158,12 +160,14 @@ const Dashboard = () => {
     const [tradeTypeLoading, setTradeTypeLoading] = useState(false);
     const [customerSummaryLoading, setCustomerSummaryLoading] = useState(false);
     const [contractSummaryLoading, setContractSummaryLoading] = useState(false);
+    const [consultationSummaryLoading, setConsultationSummaryLoading] = useState(false);
     
     // 에러 상태 분리
     const [realEstateTypeError, setRealEstateTypeError] = useState<string | null>(null);
     const [tradeTypeError, setTradeTypeError] = useState<string | null>(null);
     const [customerSummaryError, setCustomerSummaryError] = useState<string | null>(null);
     const [contractSummaryError, setContractSummaryError] = useState<string | null>(null);
+    const [consultationSummaryError, setConsultationSummaryError] = useState<string | null>(null);
 
     // Add these missing notification handler functions
     const handleNotificationClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -395,7 +399,8 @@ const Dashboard = () => {
                     fetchRealEstateTypeData(realEstateTypePeriod),
                     fetchTradeTypeData(tradeTypePeriod),
                     fetchCustomerSummary(),
-                    fetchContractSummary()
+                    fetchContractSummary(),
+                    fetchConsultationSummary()
                 ]);
                 
                 setError(null);
@@ -484,6 +489,24 @@ const Dashboard = () => {
             return false;
         } finally {
             setContractSummaryLoading(false);
+        }
+    };
+
+    const fetchConsultationSummary = async () => {
+        try {
+            setConsultationSummaryLoading(true);
+            setConsultationSummaryError(null);
+            const response = await dashboardApi.getConsultationSummary();
+            if (response.data.success && response.data.data) {
+                setConsultationSummary(response.data.data);
+            }
+            return true;
+        } catch (err) {
+            console.error("Error fetching consultation summary data:", err);
+            setConsultationSummaryError("상담 요약 데이터를 불러오는데 실패했습니다.");
+            return false;
+        } finally {
+            setConsultationSummaryLoading(false);
         }
     };
 
@@ -1204,8 +1227,8 @@ const Dashboard = () => {
                                             <Typography 
                                                 variant="body2" 
                                                 sx={{ 
-                                                    color: customerSummary.rate >= 0 ? '#4caf50' : '#f44336',
-                                                    bgcolor: customerSummary.rate >= 0 ? '#e8f5e9' : '#ffebee',
+                                                    color: customerSummary.rate >= 0 ? '#f44336' : '#2196f3',
+                                                    bgcolor: customerSummary.rate >= 0 ? '#ffebee' : '#e3f2fd',
                                                     px: 1,
                                                     py: 0.5,
                                                     borderRadius: '4px',
@@ -1245,8 +1268,8 @@ const Dashboard = () => {
                                             <Typography 
                                                 variant="body2" 
                                                 sx={{ 
-                                                    color: contractSummary.rate >= 0 ? '#4caf50' : '#f44336',
-                                                    bgcolor: contractSummary.rate >= 0 ? '#e8f5e9' : '#ffebee',
+                                                    color: contractSummary.rate >= 0 ? '#f44336' : '#2196f3',
+                                                    bgcolor: contractSummary.rate >= 0 ? '#ffebee' : '#e3f2fd',
                                                     px: 1,
                                                     py: 0.5,
                                                     borderRadius: '4px',
@@ -1269,26 +1292,42 @@ const Dashboard = () => {
                         <Grid item xs={12} md={4}>
                             <Paper sx={{ p: 3 }}>
                                 <Typography color="textSecondary" variant="body2" sx={{ mb: 1 }}>
-                                    이번달 거래 완료
+                                    오늘 상담
                                 </Typography>
-                                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
-                                    <Typography variant="h4">42</Typography>
-                                    <Typography 
-                                        variant="body2" 
-                                        sx={{ 
-                                            color: '#4caf50',
-                                            bgcolor: '#e8f5e9',
-                                            px: 1,
-                                            py: 0.5,
-                                            borderRadius: '4px',
-                                        }}
-                                    >
-                                        +18%
+                                {consultationSummaryLoading ? (
+                                    <Box sx={{ display: "flex", justifyContent: "center", my: 2 }}>
+                                        <CircularProgress size={24} />
+                                    </Box>
+                                ) : consultationSummaryError ? (
+                                    <Typography color="error" variant="body2">
+                                        {consultationSummaryError}
                                     </Typography>
-                                </Box>
-                                <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-                                    전월 대비
-                                </Typography>
+                                ) : consultationSummary ? (
+                                    <>
+                                        <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+                                            <Typography variant="h4">{consultationSummary.todayCount}</Typography>
+                                            <Typography 
+                                                variant="body2" 
+                                                sx={{ 
+                                                    color: '#f44336',
+                                                    bgcolor: '#ffebee',
+                                                    px: 1,
+                                                    py: 0.5,
+                                                    borderRadius: '4px',
+                                                }}
+                                            >
+                                                {consultationSummary.remainingCount}건 남음
+                                            </Typography>
+                                        </Box>
+                                        <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                                            오늘의 상담 일정
+                                        </Typography>
+                                    </>
+                                ) : (
+                                    <Typography variant="body2" color="textSecondary">
+                                        데이터를 불러올 수 없습니다.
+                                    </Typography>
+                                )}
                             </Paper>
                         </Grid>
                     </Grid>
