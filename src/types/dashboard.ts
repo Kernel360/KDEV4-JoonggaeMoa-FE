@@ -11,3 +11,8 @@ export interface TradeTypeSummaryResponse {
     type: string;
     ratio: number;
 }
+
+export interface CustomerSummaryResponse {
+    count: number;
+    rate: number;
+}

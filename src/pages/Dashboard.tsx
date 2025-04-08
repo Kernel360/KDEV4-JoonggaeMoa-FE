@@ -51,7 +51,11 @@ import { useAuth } from "../context/AuthContext"
 import api from "../services/api"
 import { PieChart } from "@toast-ui/chart"
 import { dashboardApi } from "../services/dashboardApi"
-import type { RealEstateTypeSummaryResponse, TradeTypeSummaryResponse } from "../types/dashboard"
+import type { 
+    RealEstateTypeSummaryResponse, 
+    TradeTypeSummaryResponse,
+    CustomerSummaryResponse
+} from "../types/dashboard"
 import { TooltipModel } from "@toast-ui/chart/types/components/tooltip"
 import { TooltipTheme } from "@toast-ui/chart/types/theme"
 
@@ -137,6 +141,7 @@ const Dashboard = () => {
     const [tradeTypePeriod, setTradeTypePeriod] = useState<string>("daily");
     const [realEstateTypeData, setRealEstateTypeData] = useState<RealEstateTypeSummaryResponse[]>([]);
     const [tradeTypeData, setTradeTypeData] = useState<TradeTypeSummaryResponse[]>([]);
+    const [customerSummary, setCustomerSummary] = useState<CustomerSummaryResponse | null>(null);
     
     // 차트 인스턴스 ref
     const realEstateTypeChartInstance = useRef<any>(null);
@@ -149,10 +154,12 @@ const Dashboard = () => {
     // 로딩 상태 분리
     const [realEstateTypeLoading, setRealEstateTypeLoading] = useState(false);
     const [tradeTypeLoading, setTradeTypeLoading] = useState(false);
+    const [customerSummaryLoading, setCustomerSummaryLoading] = useState(false);
     
     // 에러 상태 분리
     const [realEstateTypeError, setRealEstateTypeError] = useState<string | null>(null);
     const [tradeTypeError, setTradeTypeError] = useState<string | null>(null);
+    const [customerSummaryError, setCustomerSummaryError] = useState<string | null>(null);
 
     // Add these missing notification handler functions
     const handleNotificationClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -382,7 +389,8 @@ const Dashboard = () => {
                 // 초기 데이터 로딩
                 await Promise.all([
                     fetchRealEstateTypeData(realEstateTypePeriod),
-                    fetchTradeTypeData(tradeTypePeriod)
+                    fetchTradeTypeData(tradeTypePeriod),
+                    fetchCustomerSummary()
                 ]);
                 
                 setError(null);
@@ -400,7 +408,7 @@ const Dashboard = () => {
         return () => {
             cleanupCharts();
         };
-    }, []); // 의존성 배열 비움 - 컴포넌트 마운트 시 한 번만 실행tradeTypePeriod]);
+    }, []); // 의존성 배열 비움 - 컴포넌트 마운트 시 한 번만 실행
 
     const fetchRealEstateTypeData = async (period) => {
         try {
@@ -435,6 +443,24 @@ const Dashboard = () => {
             return false;
         } finally {
             setTradeTypeLoading(false);
+        }
+    };
+
+    const fetchCustomerSummary = async () => {
+        try {
+            setCustomerSummaryLoading(true);
+            setCustomerSummaryError(null);
+            const response = await dashboardApi.getCustomerSummary();
+            if (response.data.success && response.data.data) {
+                setCustomerSummary(response.data.data);
+            }
+            return true;
+        } catch (err) {
+            console.error("Error fetching customer summary data:", err);
+            setCustomerSummaryError("고객 요약 데이터를 불러오는데 실패했습니다.");
+            return false;
+        } finally {
+            setCustomerSummaryLoading(false);
         }
     };
 
@@ -991,87 +1017,9 @@ const Dashboard = () => {
                             </Menu>
                         </Box>
                     </Box>
-                    {/* Stats */}
-                    <Grid container spacing={3} sx={{ mb: 4 }}>
-                        <Grid item xs={12} md={4}>
-                            <Paper sx={{ p: 3 }}>
-                                <Typography color="textSecondary" variant="body2" sx={{ mb: 1 }}>
-                                    활성 매물
-                                </Typography>
-                                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
-                                    <Typography variant="h4">146</Typography>
-                                    <Typography 
-                                        variant="body2" 
-                                        sx={{ 
-                                            color: '#4caf50',
-                                            bgcolor: '#e8f5e9',
-                                            px: 1,
-                                            py: 0.5,
-                                            borderRadius: '4px',
-                                        }}
-                                    >
-                                        +12%
-                                    </Typography>
-                                </Box>
-                                <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-                                    전주 대비
-                                </Typography>
-                            </Paper>
-                        </Grid>
-                        <Grid item xs={12} md={4}>
-                            <Paper sx={{ p: 3 }}>
-                                <Typography color="textSecondary" variant="body2" sx={{ mb: 1 }}>
-                                    진행중인 계약
-                                </Typography>
-                                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
-                                    <Typography variant="h4">28</Typography>
-                                    <Typography 
-                                        variant="body2" 
-                                        sx={{ 
-                                            color: '#4caf50',
-                                            bgcolor: '#e8f5e9',
-                                            px: 1,
-                                            py: 0.5,
-                                            borderRadius: '4px',
-                                        }}
-                                    >
-                                        +5%
-                                    </Typography>
-                                </Box>
-                                <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-                                    전주 대비
-                                </Typography>
-                            </Paper>
-                        </Grid>
-                        <Grid item xs={12} md={4}>
-                            <Paper sx={{ p: 3 }}>
-                                <Typography color="textSecondary" variant="body2" sx={{ mb: 1 }}>
-                                    이번달 거래 완료
-                                </Typography>
-                                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
-                                    <Typography variant="h4">42</Typography>
-                                    <Typography 
-                                        variant="body2" 
-                                        sx={{ 
-                                            color: '#4caf50',
-                                            bgcolor: '#e8f5e9',
-                                            px: 1,
-                                            py: 0.5,
-                                            borderRadius: '4px',
-                                        }}
-                                    >
-                                        +18%
-                                    </Typography>
-                                </Box>
-                                <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-                                    전월 대비
-                                </Typography>
-                            </Paper>
-                        </Grid>
-                    </Grid>
 
-                    {/* Quick Action Buttons */}
-                    <Box sx={{ mb: 4 }}>
+{/* Quick Action Buttons */}
+<Box sx={{ mb: 4 }}>
                         <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
                             빠른 이동
                         </Typography>
@@ -1210,6 +1158,101 @@ const Dashboard = () => {
                             </Grid>
                         </Grid>
                     </Box>
+
+                    {/* Stats */}
+                    <Grid container spacing={3} sx={{ mb: 4 }}>
+                        <Grid item xs={12} md={4}>
+                            <Paper sx={{ p: 3 }}>
+                                <Typography color="textSecondary" variant="body2" sx={{ mb: 1 }}>
+                                    금주 신규 고객
+                                </Typography>
+                                {customerSummaryLoading ? (
+                                    <Box sx={{ display: "flex", justifyContent: "center", my: 2 }}>
+                                        <CircularProgress size={24} />
+                                    </Box>
+                                ) : customerSummaryError ? (
+                                    <Typography color="error" variant="body2">
+                                        {customerSummaryError}
+                                    </Typography>
+                                ) : customerSummary ? (
+                                    <>
+                                        <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+                                            <Typography variant="h4">{customerSummary.count}</Typography>
+                                            <Typography 
+                                                variant="body2" 
+                                                sx={{ 
+                                                    color: customerSummary.rate >= 0 ? '#4caf50' : '#f44336',
+                                                    bgcolor: customerSummary.rate >= 0 ? '#e8f5e9' : '#ffebee',
+                                                    px: 1,
+                                                    py: 0.5,
+                                                    borderRadius: '4px',
+                                                }}
+                                            >
+                                                {customerSummary.rate >= 0 ? '+' : ''}{customerSummary.rate.toFixed(1)}%
+                                            </Typography>
+                                        </Box>
+                                        <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                                            전주 대비
+                                        </Typography>
+                                    </>
+                                ) : (
+                                    <Typography variant="body2" color="textSecondary">
+                                        데이터를 불러올 수 없습니다.
+                                    </Typography>
+                                )}
+                            </Paper>
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                            <Paper sx={{ p: 3 }}>
+                                <Typography color="textSecondary" variant="body2" sx={{ mb: 1 }}>
+                                    진행중인 계약
+                                </Typography>
+                                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+                                    <Typography variant="h4">28</Typography>
+                                    <Typography 
+                                        variant="body2" 
+                                        sx={{ 
+                                            color: '#4caf50',
+                                            bgcolor: '#e8f5e9',
+                                            px: 1,
+                                            py: 0.5,
+                                            borderRadius: '4px',
+                                        }}
+                                    >
+                                        +5%
+                                    </Typography>
+                                </Box>
+                                <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                                    전주 대비
+                                </Typography>
+                            </Paper>
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                            <Paper sx={{ p: 3 }}>
+                                <Typography color="textSecondary" variant="body2" sx={{ mb: 1 }}>
+                                    이번달 거래 완료
+                                </Typography>
+                                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+                                    <Typography variant="h4">42</Typography>
+                                    <Typography 
+                                        variant="body2" 
+                                        sx={{ 
+                                            color: '#4caf50',
+                                            bgcolor: '#e8f5e9',
+                                            px: 1,
+                                            py: 0.5,
+                                            borderRadius: '4px',
+                                        }}
+                                    >
+                                        +18%
+                                    </Typography>
+                                </Box>
+                                <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                                    전월 대비
+                                </Typography>
+                            </Paper>
+                        </Grid>
+                    </Grid>
 
                     {/* Charts */}
                     <Grid container spacing={3}>

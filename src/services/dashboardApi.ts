@@ -1,5 +1,10 @@
 import api from "./api";
-import type { RealEstateTypeSummaryResponse, TradeTypeSummaryResponse } from "../types/dashboard";
+import type { 
+    RealEstateTypeSummaryResponse, 
+    TradeTypeSummaryResponse,
+    CustomerSummaryResponse
+} from "../types/dashboard";
+import type { ApiResponse } from "../types/api";
 
 // 대시보드 API 서비스
 export const dashboardApi = {
@@ -15,5 +20,9 @@ export const dashboardApi = {
         return api.get<{ success: boolean; data: TradeTypeSummaryResponse[]; error?: { message: string } }>(
             `/api/dashboard/trade-type-summary?period=${period}`
         );
+    },
+
+    getCustomerSummary: async () => {
+        return await api.get<ApiResponse<CustomerSummaryResponse>>('/api/dashboard/customer-summary');
     }
 }; 
