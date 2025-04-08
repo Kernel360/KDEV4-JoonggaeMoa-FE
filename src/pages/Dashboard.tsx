@@ -39,6 +39,7 @@ import {
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 import api from "../services/api"
+import { toast } from 'react-toastify';
 
 // 커스텀 테마 생성
 const theme = createTheme({
@@ -299,6 +300,41 @@ const Dashboard = () => {
                 });
 
                 setUnreadCount(count => count + 1);
+                
+                // Only show toast for non-CONNECTION type notifications
+                if (newNotification.type !== 'CONNECTION') {
+                    toast.info(
+                        <div 
+                            style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
+                            onClick={() => handleNotificationNavigation(newNotification)}
+                        >
+                            <div
+                                style={{
+                                    width: 4,
+                                    height: 40,
+                                    borderRadius: 4,
+                                    backgroundColor: getNotificationColor(newNotification.type),
+                                    marginRight: 12
+                                }}
+                            />
+                            <div>
+                                <div style={{ fontWeight: 600, marginBottom: 4 }}>{newNotification.content}</div>
+                                <span
+                                    style={{
+                                        backgroundColor: `${getNotificationColor(newNotification.type)}15`,
+                                        color: getNotificationColor(newNotification.type),
+                                        padding: '4px 8px',
+                                        borderRadius: 4,
+                                        fontSize: '0.8rem',
+                                        fontWeight: 600
+                                    }}
+                                >
+                                    {newNotification.type}
+                                </span>
+                            </div>
+                        </div>
+                    );
+                }
             });
 
             eventSource.onerror = (err) => {
