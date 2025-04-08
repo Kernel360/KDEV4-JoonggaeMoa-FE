@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, useRef } from "react"
 import {
     Box,
     Typography,
@@ -18,6 +18,15 @@ import {
     ThemeProvider,
     Menu,
     MenuItem,
+    Container,
+    AppBar,
+    Toolbar,
+    CircularProgress,
+    ToggleButtonGroup,
+    ToggleButton,
+    Snackbar,
+    Alert,
+    Checkbox,
 } from "@mui/material"
 import {
     Business,
@@ -34,12 +43,26 @@ import {
     Settings,
     Menu as MenuIcon,
     ChevronLeft,
-    Logout, // 로그아웃 아이콘 추가
+    Logout,
+    ArrowBack,
 } from "@mui/icons-material"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 import api from "../services/api"
+import { PieChart } from "@toast-ui/chart"
+import { dashboardApi } from "../services/dashboardApi"
+import type { 
+    RealEstateTypeSummaryResponse, 
+    TradeTypeSummaryResponse,
+    CustomerSummaryResponse,
+    ContractSummaryResponse,
+    ConsultationSummaryResponse
+} from "../types/dashboard"
+import { TooltipModel } from "@toast-ui/chart/types/components/tooltip"
+import { TooltipTheme } from "@toast-ui/chart/types/theme"
+
 import { toast } from 'react-toastify';
+
 
 // 커스텀 테마 생성
 const theme = createTheme({
@@ -116,9 +139,38 @@ const Dashboard = () => {
     const navigate = useNavigate()
     const [sidebarOpen, setSidebarOpen] = useState(true)
     const [profile, setProfile] = useState<{ name: string; email: string } | null>(null);
-    const[loading, setLoading] = useState(true);
-    const[error, setError] = useState<string | null>(null);
-    const[anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const [realEstateTypePeriod, setRealEstateTypePeriod] = useState<string>("daily");
+    const [tradeTypePeriod, setTradeTypePeriod] = useState<string>("daily");
+    const [realEstateTypeData, setRealEstateTypeData] = useState<RealEstateTypeSummaryResponse[]>([]);
+    const [tradeTypeData, setTradeTypeData] = useState<TradeTypeSummaryResponse[]>([]);
+    const [customerSummary, setCustomerSummary] = useState<CustomerSummaryResponse | null>(null);
+    const [contractSummary, setContractSummary] = useState<ContractSummaryResponse | null>(null);
+    const [consultationSummary, setConsultationSummary] = useState<ConsultationSummaryResponse | null>(null);
+    
+    // 차트 인스턴스 ref
+    const realEstateTypeChartInstance = useRef<any>(null);
+    const tradeTypeChartInstance = useRef<any>(null);
+    
+    // 차트 컨테이너 ref
+    const realEstateTypeChartRef = useRef<HTMLDivElement>(null);
+    const tradeTypeChartRef = useRef<HTMLDivElement>(null);
+    
+    // 로딩 상태 분리
+    const [realEstateTypeLoading, setRealEstateTypeLoading] = useState(false);
+    const [tradeTypeLoading, setTradeTypeLoading] = useState(false);
+    const [customerSummaryLoading, setCustomerSummaryLoading] = useState(false);
+    const [contractSummaryLoading, setContractSummaryLoading] = useState(false);
+    const [consultationSummaryLoading, setConsultationSummaryLoading] = useState(false);
+    
+    // 에러 상태 분리
+    const [realEstateTypeError, setRealEstateTypeError] = useState<string | null>(null);
+    const [tradeTypeError, setTradeTypeError] = useState<string | null>(null);
+    const [customerSummaryError, setCustomerSummaryError] = useState<string | null>(null);
+    const [contractSummaryError, setContractSummaryError] = useState<string | null>(null);
+    const [consultationSummaryError, setConsultationSummaryError] = useState<string | null>(null);
 
     // Add these missing notification handler functions
     const handleNotificationClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -374,7 +426,303 @@ const Dashboard = () => {
         };
     }, []);
 
+    // 초기 로딩 시에만 전체 데이터를 가져오는 useEffect
+    useEffect(() => {
+        const initialFetch = async () => {
+            try {
+                setLoading(true);
+                
+                // 초기 데이터 로딩
+                await Promise.all([
+                    fetchRealEstateTypeData(realEstateTypePeriod),
+                    fetchTradeTypeData(tradeTypePeriod),
+                    fetchCustomerSummary(),
+                    fetchContractSummary(),
+                    fetchConsultationSummary()
+                ]);
+                
+                setError(null);
+            } catch (err) {
+                console.error("Error fetching initial dashboard data:", err);
+                setError("초기 대시보드 데이터를 불러오는데 실패했습니다.");
+            } finally {
+                setLoading(false);
+            }
+        };
+        
+        initialFetch();
+        
+        // 컴포넌트 언마운트 시 차트 인스턴스 정리
+        return () => {
+            cleanupCharts();
+        };
+    }, []); // 의존성 배열 비움 - 컴포넌트 마운트 시 한 번만 실행
+
+    const fetchRealEstateTypeData = async (period) => {
+        try {
+            setRealEstateTypeLoading(true);
+            setRealEstateTypeError(null);
+            const response = await dashboardApi.getRealEstateTypeSummary(period);
+            if (response.data.success && response.data.data) {
+                setRealEstateTypeData(response.data.data);
+            }
+            return true;
+        } catch (err) {
+            console.error("Error fetching real estate type data:", err);
+            setRealEstateTypeError("부동산 유형 데이터를 불러오는데 실패했습니다.");
+            return false;
+        } finally {
+            setRealEstateTypeLoading(false);
+        }
+    };
+
+    const fetchTradeTypeData = async (period) => {
+        try {
+            setTradeTypeLoading(true);
+            setTradeTypeError(null);
+            const response = await dashboardApi.getTradeTypeSummary(period);
+            if (response.data.success && response.data.data) {
+                setTradeTypeData(response.data.data);
+            }
+            return true;
+        } catch (err) {
+            console.error("Error fetching trade type data:", err);
+            setTradeTypeError("거래 유형 데이터를 불러오는데 실패했습니다.");
+            return false;
+        } finally {
+            setTradeTypeLoading(false);
+        }
+    };
+
+    const fetchCustomerSummary = async () => {
+        try {
+            setCustomerSummaryLoading(true);
+            setCustomerSummaryError(null);
+            const response = await dashboardApi.getCustomerSummary();
+            if (response.data.success && response.data.data) {
+                setCustomerSummary(response.data.data);
+            }
+            return true;
+        } catch (err) {
+            console.error("Error fetching customer summary data:", err);
+            setCustomerSummaryError("고객 요약 데이터를 불러오는데 실패했습니다.");
+            return false;
+        } finally {
+            setCustomerSummaryLoading(false);
+        }
+    };
+
+    const fetchContractSummary = async () => {
+        try {
+            setContractSummaryLoading(true);
+            setContractSummaryError(null);
+            const response = await dashboardApi.getContractSummary();
+            if (response.data.success && response.data.data) {
+                setContractSummary(response.data.data);
+            }
+            return true;
+        } catch (err) {
+            console.error("Error fetching contract summary data:", err);
+            setContractSummaryError("계약 요약 데이터를 불러오는데 실패했습니다.");
+            return false;
+        } finally {
+            setContractSummaryLoading(false);
+        }
+    };
+
+    const fetchConsultationSummary = async () => {
+        try {
+            setConsultationSummaryLoading(true);
+            setConsultationSummaryError(null);
+            const response = await dashboardApi.getConsultationSummary();
+            if (response.data.success && response.data.data) {
+                setConsultationSummary(response.data.data);
+            }
+            return true;
+        } catch (err) {
+            console.error("Error fetching consultation summary data:", err);
+            setConsultationSummaryError("상담 요약 데이터를 불러오는데 실패했습니다.");
+            return false;
+        } finally {
+            setConsultationSummaryLoading(false);
+        }
+    };
+
+    const cleanupCharts = () => {
+        if (realEstateTypeChartInstance.current) {
+            realEstateTypeChartInstance.current.destroy();
+            realEstateTypeChartInstance.current = null;
+        }
+        if (tradeTypeChartInstance.current) {
+            tradeTypeChartInstance.current.destroy();
+            tradeTypeChartInstance.current = null;
+        }
+    };
+
+    // 부동산 유형 기간 변경 핸들러
+    const handleRealEstateTypePeriodChange = (event, newPeriod) => {
+        if (newPeriod !== null) {
+            setRealEstateTypePeriod(newPeriod);
+            fetchRealEstateTypeData(newPeriod);
+        }
+    };
     
+    const handleTradeTypePeriodChange = (event, newPeriod) => {
+        if (newPeriod !== null) {
+            setTradeTypePeriod(newPeriod);
+            fetchTradeTypeData(newPeriod);
+        }
+    };
+
+    // 차트 렌더링
+    useEffect(() => {
+        if (!realEstateTypeData.length || !realEstateTypeChartRef.current) return;
+
+        // 부동산 유형 차트 렌더링
+        if (realEstateTypeChartInstance.current) {
+            realEstateTypeChartInstance.current.destroy();
+            realEstateTypeChartInstance.current = null;
+        }
+
+        // 5% 미만인 부동산 유형을 '기타'로 통합
+        const THRESHOLD = 5;
+        const sortedRealEstateTypes = [...realEstateTypeData]
+            .sort((a, b) => b.ratio - a.ratio);
+
+        const mainTypes = sortedRealEstateTypes.filter(item => item.ratio >= THRESHOLD);
+        const otherTypes = sortedRealEstateTypes.filter(item => item.ratio < THRESHOLD);
+        
+        const otherRatio = otherTypes.reduce((sum, item) => sum + item.ratio, 0);
+        
+        const realEstateChartData = {
+            series: [
+                ...mainTypes.map(item => ({
+                    name: item.type,
+                    data: item.ratio
+                })),
+                ...(otherRatio > 0 ? [{
+                    name: '기타',
+                    data: otherRatio
+                }] : [])
+            ]
+        };
+
+        try {
+            realEstateTypeChartInstance.current = new PieChart({
+                el: realEstateTypeChartRef.current,
+                data: realEstateChartData,
+                options: {
+                    chart: { 
+                    },
+                    series: {
+                        dataLabels: {
+                            visible: true,
+                            anchor: 'outer',
+                            formatter: (value: any) => `${parseFloat(value).toFixed(1)}%`,
+                        },
+                        radiusRange: {
+                            inner: '40%',
+                            outer: '100%'
+                        },
+                        selectable: true
+                    },
+                    theme: {
+                        series: {
+                            colors: [
+                                '#4CAF50', '#2196F3', '#FFC107', '#9C27B0', 
+                                '#FF5722', '#607D8B', '#795548', '#3F51B5'
+                            ]
+                        }
+                    },
+                    tooltip: {
+                        template: (model: TooltipModel) => {
+                            return ``;
+                        }
+                    },
+                    exportMenu: {
+                        visible: false
+                    }
+                }
+            });
+        } catch (err) {
+            console.error("Error creating real estate type chart:", err);
+        }
+
+        return () => {
+            if (realEstateTypeChartInstance.current) {
+                realEstateTypeChartInstance.current.destroy();
+                realEstateTypeChartInstance.current = null;
+            }
+        };
+    }, [realEstateTypeData]);
+
+    // 거래 유형 차트 렌더링
+    useEffect(() => {
+        if (!tradeTypeData.length || !tradeTypeChartRef.current) return;
+
+        // 거래 유형 차트 렌더링
+        if (tradeTypeChartInstance.current) {
+            tradeTypeChartInstance.current.destroy();
+            tradeTypeChartInstance.current = null;
+        }
+
+        const types = tradeTypeData.filter(item => item.ratio >= 0.5);
+        
+        const tradeTypeChartData = {
+            series: types.map(item => ({
+                name: item.type,
+                data: item.ratio
+            }))
+        };
+
+        try {
+            tradeTypeChartInstance.current = new PieChart({
+                el: tradeTypeChartRef.current,
+                data: tradeTypeChartData,
+                options: {
+                    chart: { 
+                        // width: 400, 
+                        // height: 350 
+                    },
+                    series: {
+                        dataLabels: {
+                            visible: true,
+                            anchor: 'outer',
+                            formatter: (value: any) => `${parseFloat(value).toFixed(1)}%`,
+                        },
+                        radiusRange: {
+                            inner: '40%',
+                            outer: '100%'
+                        },
+                        selectable: true
+                    },
+                    theme: {
+                        series: {
+                            colors: ['#2196F3', '#4CAF50', '#FFC107', '#FF5722']
+                        }
+                    },
+                    tooltip: {
+                        template: (model: TooltipModel) => {
+                            return ``;
+                        }
+                    },
+                    exportMenu: {
+                        visible: false
+                    }
+                }
+            });
+        } catch (err) {
+            console.error("Error creating trade type chart:", err);
+        }
+
+        return () => {
+            if (tradeTypeChartInstance.current) {
+                tradeTypeChartInstance.current.destroy();
+                tradeTypeChartInstance.current = null;
+            }
+        };
+    }, [tradeTypeData]);
+
     return (
         <ThemeProvider theme={theme}>
             <Box sx={{ display: 'flex', bgcolor: '#f8f9fa', minHeight: "100vh" }}>
@@ -753,31 +1101,189 @@ const Dashboard = () => {
                             </Menu>
                         </Box>
                     </Box>
+
+{/* Quick Action Buttons */}
+<Box sx={{ mb: 4 }}>
+                        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                            빠른 이동
+                        </Typography>
+                        <Grid container spacing={2}>
+                            <Grid item xs={12} sm={6} md={2}>
+                                <Button
+                                    variant="contained"
+                                    fullWidth
+                                    onClick={() => navigate("/customer-management/add")}
+                                    sx={{
+                                        py: 2,
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: 1,
+                                        bgcolor: '#4CAF50',
+                                        '&:hover': {
+                                            bgcolor: '#43A047',
+                                        },
+                                    }}
+                                >
+                                    <Person sx={{ fontSize: 32 }} />
+                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                        고객 등록
+                                    </Typography>
+                                </Button>
+                            </Grid>
+                            <Grid item xs={12} sm={6} md={2}>
+                                <Button
+                                    variant="contained"
+                                    fullWidth
+                                    onClick={() => navigate("/survey/create")}
+                                    sx={{
+                                        py: 2,
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: 1,
+                                        bgcolor: '#2196F3',
+                                        '&:hover': {
+                                            bgcolor: '#1E88E5',
+                                        },
+                                    }}
+                                >
+                                    <Assignment sx={{ fontSize: 32 }} />
+                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                        설문 작성
+                                    </Typography>
+                                </Button>
+                            </Grid>
+                            <Grid item xs={12} sm={6} md={2}>
+                                <Button
+                                    variant="contained"
+                                    fullWidth
+                                    onClick={() => navigate("/survey/answers")}
+                                    sx={{
+                                        py: 2,
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: 1,
+                                        bgcolor: '#9C27B0',
+                                        '&:hover': {
+                                            bgcolor: '#8E24AA',
+                                        },
+                                    }}
+                                >
+                                    <Assignment sx={{ fontSize: 32 }} />
+                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                        설문 응답
+                                    </Typography>
+                                </Button>
+                            </Grid>
+                            <Grid item xs={12} sm={6} md={2}>
+                                <Button
+                                    variant="contained"
+                                    fullWidth
+                                    onClick={() => navigate("/contract/create")}
+                                    sx={{
+                                        py: 2,
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: 1,
+                                        bgcolor: '#FF9800',
+                                        '&:hover': {
+                                            bgcolor: '#F57C00',
+                                        },
+                                    }}
+                                >
+                                    <InsertDriveFile sx={{ fontSize: 32 }} />
+                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                        계약 등록
+                                    </Typography>
+                                </Button>
+                            </Grid>
+                            <Grid item xs={12} sm={6} md={2}>
+                                <Button
+                                    variant="contained"
+                                    fullWidth
+                                    onClick={() => navigate("/message/create")}
+                                    sx={{
+                                        py: 2,
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: 1,
+                                        bgcolor: '#FF5722',
+                                        '&:hover': {
+                                            bgcolor: '#F4511E',
+                                        },
+                                    }}
+                                >
+                                    <Email sx={{ fontSize: 32 }} />
+                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                        문자 작성
+                                    </Typography>
+                                </Button>
+                            </Grid>
+                            <Grid item xs={12} sm={6} md={2}>
+                                <Button
+                                    variant="contained"
+                                    fullWidth
+                                    onClick={() => navigate("/message/history")}
+                                    sx={{
+                                        py: 2,
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: 1,
+                                        bgcolor: '#607D8B',
+                                        '&:hover': {
+                                            bgcolor: '#546E7A',
+                                        },
+                                    }}
+                                >
+                                    <Email sx={{ fontSize: 32 }} />
+                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                        보낸 문자
+                                    </Typography>
+                                </Button>
+                            </Grid>
+                        </Grid>
+                    </Box>
+
                     {/* Stats */}
                     <Grid container spacing={3} sx={{ mb: 4 }}>
                         <Grid item xs={12} md={4}>
                             <Paper sx={{ p: 3 }}>
                                 <Typography color="textSecondary" variant="body2" sx={{ mb: 1 }}>
-                                    활성 매물
+                                    금주 신규 고객
                                 </Typography>
-                                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
-                                    <Typography variant="h4">146</Typography>
-                                    <Typography 
-                                        variant="body2" 
-                                        sx={{ 
-                                            color: '#4caf50',
-                                            bgcolor: '#e8f5e9',
-                                            px: 1,
-                                            py: 0.5,
-                                            borderRadius: '4px',
-                                        }}
-                                    >
-                                        +12%
+                                {customerSummaryLoading ? (
+                                    <Box sx={{ display: "flex", justifyContent: "center", my: 2 }}>
+                                        <CircularProgress size={24} />
+                                    </Box>
+                                ) : customerSummaryError ? (
+                                    <Typography color="error" variant="body2">
+                                        {customerSummaryError}
                                     </Typography>
-                                </Box>
-                                <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-                                    전주 대비
-                                </Typography>
+                                ) : customerSummary ? (
+                                    <>
+                                        <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+                                            <Typography variant="h4">{customerSummary.count}</Typography>
+                                            <Typography 
+                                                variant="body2" 
+                                                sx={{ 
+                                                    color: customerSummary.rate >= 0 ? '#f44336' : '#2196f3',
+                                                    bgcolor: customerSummary.rate >= 0 ? '#ffebee' : '#e3f2fd',
+                                                    px: 1,
+                                                    py: 0.5,
+                                                    borderRadius: '4px',
+                                                }}
+                                            >
+                                                {customerSummary.rate >= 0 ? '+' : ''}{customerSummary.rate.toFixed(1)}%
+                                            </Typography>
+                                        </Box>
+                                        <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                                            전주 대비
+                                        </Typography>
+                                    </>
+                                ) : (
+                                    <Typography variant="body2" color="textSecondary">
+                                        데이터를 불러올 수 없습니다.
+                                    </Typography>
+                                )}
                             </Paper>
                         </Grid>
                         <Grid item xs={12} md={4}>
@@ -785,65 +1291,191 @@ const Dashboard = () => {
                                 <Typography color="textSecondary" variant="body2" sx={{ mb: 1 }}>
                                     진행중인 계약
                                 </Typography>
-                                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
-                                    <Typography variant="h4">28</Typography>
-                                    <Typography 
-                                        variant="body2" 
-                                        sx={{ 
-                                            color: '#4caf50',
-                                            bgcolor: '#e8f5e9',
-                                            px: 1,
-                                            py: 0.5,
-                                            borderRadius: '4px',
-                                        }}
-                                    >
-                                        +5%
+                                {contractSummaryLoading ? (
+                                    <Box sx={{ display: "flex", justifyContent: "center", my: 2 }}>
+                                        <CircularProgress size={24} />
+                                    </Box>
+                                ) : contractSummaryError ? (
+                                    <Typography color="error" variant="body2">
+                                        {contractSummaryError}
                                     </Typography>
-                                </Box>
-                                <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-                                    전주 대비
-                                </Typography>
+                                ) : contractSummary ? (
+                                    <>
+                                        <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+                                            <Typography variant="h4">{contractSummary.count}</Typography>
+                                            <Typography 
+                                                variant="body2" 
+                                                sx={{ 
+                                                    color: contractSummary.rate >= 0 ? '#f44336' : '#2196f3',
+                                                    bgcolor: contractSummary.rate >= 0 ? '#ffebee' : '#e3f2fd',
+                                                    px: 1,
+                                                    py: 0.5,
+                                                    borderRadius: '4px',
+                                                }}
+                                            >
+                                                {contractSummary.rate >= 0 ? '+' : ''}{contractSummary.rate.toFixed(1)}%
+                                            </Typography>
+                                        </Box>
+                                        <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                                            전주 대비
+                                        </Typography>
+                                    </>
+                                ) : (
+                                    <Typography variant="body2" color="textSecondary">
+                                        데이터를 불러올 수 없습니다.
+                                    </Typography>
+                                )}
                             </Paper>
                         </Grid>
                         <Grid item xs={12} md={4}>
                             <Paper sx={{ p: 3 }}>
                                 <Typography color="textSecondary" variant="body2" sx={{ mb: 1 }}>
-                                    이번달 거래 완료
+                                    오늘 상담
                                 </Typography>
-                                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
-                                    <Typography variant="h4">42</Typography>
-                                    <Typography 
-                                        variant="body2" 
-                                        sx={{ 
-                                            color: '#4caf50',
-                                            bgcolor: '#e8f5e9',
-                                            px: 1,
-                                            py: 0.5,
-                                            borderRadius: '4px',
-                                        }}
-                                    >
-                                        +18%
+                                {consultationSummaryLoading ? (
+                                    <Box sx={{ display: "flex", justifyContent: "center", my: 2 }}>
+                                        <CircularProgress size={24} />
+                                    </Box>
+                                ) : consultationSummaryError ? (
+                                    <Typography color="error" variant="body2">
+                                        {consultationSummaryError}
                                     </Typography>
-                                </Box>
-                                <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-                                    전월 대비
-                                </Typography>
+                                ) : consultationSummary ? (
+                                    <>
+                                        <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+                                            <Typography variant="h4">{consultationSummary.todayCount}</Typography>
+                                            <Typography 
+                                                variant="body2" 
+                                                sx={{ 
+                                                    color: '#f44336',
+                                                    bgcolor: '#ffebee',
+                                                    px: 1,
+                                                    py: 0.5,
+                                                    borderRadius: '4px',
+                                                }}
+                                            >
+                                                {consultationSummary.remainingCount}건 남음
+                                            </Typography>
+                                        </Box>
+                                        <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                                            오늘의 상담 일정
+                                        </Typography>
+                                    </>
+                                ) : (
+                                    <Typography variant="body2" color="textSecondary">
+                                        데이터를 불러올 수 없습니다.
+                                    </Typography>
+                                )}
                             </Paper>
                         </Grid>
                     </Grid>
 
                     {/* Charts */}
                     <Grid container spacing={3}>
-                        <Grid item xs={12} md={8}>
+                        <Grid item xs={12} md={6}>
                             <Paper sx={{ p: 3 }}>
-                                <Typography variant="h6" sx={{ mb: 3 }}>월별 계약 실적</Typography>
-                                {/* Add Chart Component Here */}
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                                    <Typography variant="h6">부동산 유형 분포</Typography>
+                                    <ToggleButtonGroup
+                                        value={realEstateTypePeriod}
+                                        exclusive
+                                        onChange={handleRealEstateTypePeriodChange}
+                                        aria-label="부동산 유형 기간 선택"
+                                        size="small"
+                                    >
+                                        <ToggleButton value="daily" aria-label="일간">
+                                            일간
+                                        </ToggleButton>
+                                        <ToggleButton value="weekly" aria-label="주간">
+                                            주간
+                                        </ToggleButton>
+                                        <ToggleButton value="monthly" aria-label="월간">
+                                            월간
+                                        </ToggleButton>
+                                    </ToggleButtonGroup>
+                                </Box>
+                                
+                                {realEstateTypeLoading ? (
+                                    <Box sx={{ display: "flex", justifyContent: "center", my: 5 }}>
+                                        <CircularProgress />
+                                    </Box>
+                                ) : realEstateTypeError ? (
+                                    <Box sx={{ textAlign: "center", py: 3 }}>
+                                        <Typography color="error">{realEstateTypeError}</Typography>
+                                        <Button 
+                                            variant="contained" 
+                                            sx={{ mt: 2 }} 
+                                            onClick={() => handleRealEstateTypePeriodChange(null as any, realEstateTypePeriod)}
+                                        >
+                                            다시 시도
+                                        </Button>
+                                    </Box>
+                                ) : (
+                                    <Box 
+                                        ref={realEstateTypeChartRef} 
+                                        sx={{ 
+                                            width: '100%',
+                                            height: '350px',
+                                            '& canvas': {
+                                                width: '100% !important',
+                                                height: '100% !important'
+                                            }
+                                        }} 
+                                    />
+                                )}
                             </Paper>
                         </Grid>
-                        <Grid item xs={12} md={4}>
+                        <Grid item xs={12} md={6}>
                             <Paper sx={{ p: 3 }}>
-                                <Typography variant="h6" sx={{ mb: 3 }}>매물 유형별 분포</Typography>
-                                {/* Add Pie Chart Component Here */}
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                                    <Typography variant="h6">거래 유형 분포</Typography>
+                                    <ToggleButtonGroup
+                                        value={tradeTypePeriod}
+                                        exclusive
+                                        onChange={handleTradeTypePeriodChange}
+                                        aria-label="거래 유형 기간 선택"
+                                        size="small"
+                                    >
+                                        <ToggleButton value="daily" aria-label="일간">
+                                            일간
+                                        </ToggleButton>
+                                        <ToggleButton value="weekly" aria-label="주간">
+                                            주간
+                                        </ToggleButton>
+                                        <ToggleButton value="monthly" aria-label="월간">
+                                            월간
+                                        </ToggleButton>
+                                    </ToggleButtonGroup>
+                                </Box>
+                                
+                                {tradeTypeLoading ? (
+                                    <Box sx={{ display: "flex", justifyContent: "center", my: 5 }}>
+                                        <CircularProgress />
+                                    </Box>
+                                ) : tradeTypeError ? (
+                                    <Box sx={{ textAlign: "center", py: 3 }}>
+                                        <Typography color="error">{tradeTypeError}</Typography>
+                                        <Button 
+                                            variant="contained" 
+                                            sx={{ mt: 2 }} 
+                                            onClick={() => handleTradeTypePeriodChange(null as any, tradeTypePeriod)}
+                                        >
+                                            다시 시도
+                                        </Button>
+                                    </Box>
+                                ) : (
+                                    <Box 
+                                        ref={tradeTypeChartRef} 
+                                        sx={{ 
+                                            width: '100%',
+                                            height: '350px',
+                                            '& canvas': {
+                                                width: '100% !important',
+                                                height: '100% !important'
+                                            }
+                                        }} 
+                                    />
+                                )}
                             </Paper>
                         </Grid>
                     </Grid>
@@ -927,6 +1559,19 @@ const Dashboard = () => {
                         </Paper>
                     </Box>
                 </Box>
+            </Box>
+
+            {/* 에러 메시지 스낵바 */}
+            <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError(null)}>
+                <Alert onClose={() => setError(null)} severity="error" sx={{ width: "100%" }}>
+                    {error}
+                </Alert>
+            </Snackbar>
+
+            <Box sx={{ bgcolor: "#fff", p: 2, textAlign: "center", mt: 4 }}>
+                <Typography variant="caption" color="textSecondary">
+                    © 2024 Customer Management System. All rights reserved.
+                </Typography>
             </Box>
         </ThemeProvider>
     )
