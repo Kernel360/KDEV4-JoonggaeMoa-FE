@@ -285,68 +285,68 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             }
             console.log("Setting up EventSource with agentId:", agentId);
             
-            eventSource = new EventSource(`${api.defaults.baseURL}/api/notification/subscribe?agentId=${agentId}`);
+        //     eventSource = new EventSource(`${api.defaults.baseURL}/api/notification/subscribe?agentId=${agentId}`);
 
-            eventSource.onopen = () => {
-                console.log("SSE connection opened");
-            };
+        //     eventSource.onopen = () => {
+        //         console.log("SSE connection opened");
+        //     };
             
-            eventSource.addEventListener("notification", (event)  => {
-                console.log("Received notification:", event.data);
-                const rawNotification = JSON.parse(event.data);
-                const newNotification = {
-                    ...rawNotification,
-                    isRead: rawNotification.read
-                };
+        //     eventSource.addEventListener("notification", (event)  => {
+        //         console.log("Received notification:", event.data);
+        //         const rawNotification = JSON.parse(event.data);
+        //         const newNotification = {
+        //             ...rawNotification,
+        //             isRead: rawNotification.read
+        //         };
                 
-                setNotifications(prev => {
-                    return [newNotification, ...prev].sort((a, b) => b.id - a.id);
-                });
+        //         setNotifications(prev => {
+        //             return [newNotification, ...prev].sort((a, b) => b.id - a.id);
+        //         });
 
-                setUnreadCount(count => count + 1);
+        //         setUnreadCount(count => count + 1);
                 
-                // Only show toast for non-CONNECTION type notifications
-                if (newNotification.type !== 'CONNECTION') {
-                    toast.info(
-                        <div 
-                            style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
-                            onClick={() => handleNotificationNavigation(newNotification)}
-                        >
-                            <div
-                                style={{
-                                    width: 4,
-                                    height: 40,
-                                    borderRadius: 4,
-                                    backgroundColor: getNotificationColor(newNotification.type),
-                                    marginRight: 12
-                                }}
-                            />
-                            <div>
-                                <div style={{ fontWeight: 600, marginBottom: 4 }}>{newNotification.content}</div>
-                                <span
-                                    style={{
-                                        backgroundColor: `${getNotificationColor(newNotification.type)}15`,
-                                        color: getNotificationColor(newNotification.type),
-                                        padding: '4px 8px',
-                                        borderRadius: 4,
-                                        fontSize: '0.8rem',
-                                        fontWeight: 600
-                                    }}
-                                >
-                                    {newNotification.type}
-                                </span>
-                            </div>
-                        </div>
-                    );
-                }
-            });
+        //         // Only show toast for non-CONNECTION type notifications
+        //         if (newNotification.type !== 'CONNECTION') {
+        //             toast.info(
+        //                 <div 
+        //                     style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
+        //                     onClick={() => handleNotificationNavigation(newNotification)}
+        //                 >
+        //                     <div
+        //                         style={{
+        //                             width: 4,
+        //                             height: 40,
+        //                             borderRadius: 4,
+        //                             backgroundColor: getNotificationColor(newNotification.type),
+        //                             marginRight: 12
+        //                         }}
+        //                     />
+        //                     <div>
+        //                         <div style={{ fontWeight: 600, marginBottom: 4 }}>{newNotification.content}</div>
+        //                         <span
+        //                             style={{
+        //                                 backgroundColor: `${getNotificationColor(newNotification.type)}15`,
+        //                                 color: getNotificationColor(newNotification.type),
+        //                                 padding: '4px 8px',
+        //                                 borderRadius: 4,
+        //                                 fontSize: '0.8rem',
+        //                                 fontWeight: 600
+        //                             }}
+        //                         >
+        //                             {newNotification.type}
+        //                         </span>
+        //                     </div>
+        //                 </div>
+        //             );
+        //         }
+        //     });
 
-            eventSource.onerror = (err) => {
-                console.error("SSE error:", err);
-                eventSource?.close();
-                setTimeout(setupEventSource, 30000);
-            };
-        };
+        //     eventSource.onerror = (err) => {
+        //         console.error("SSE error:", err);
+        //         eventSource?.close();
+        //         setTimeout(setupEventSource, 30000);
+        //     };
+        // };
 
         // 초기 알림 데이터 로드
         const fetchNotifications = async () => {
@@ -369,12 +369,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         };
 
         fetchNotifications();
-        setupEventSource();
+        //setupEventSource();
 
         return () => {
-            if (eventSource) {
-                eventSource.close();
-            }
+            // if (eventSource) {
+            //     eventSource.close();
+         }
         };
     }, []);
 
@@ -785,4 +785,4 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     );
 };
 
-export default Layout; 
+export default Layout;
