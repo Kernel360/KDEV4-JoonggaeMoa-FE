@@ -108,14 +108,6 @@ const CustomerAdd = () => {
 
     return (
         <Box sx={{ flexGrow: 1, bgcolor: "#f5f5f5", minHeight: "100vh" }}>
-            <AppBar position="static" color="default" elevation={0} sx={{ bgcolor: "white" }}>
-                <Toolbar>
-                    <Typography variant="h6" component="div" sx={{ flexGrow: 1, color: "#888", fontWeight: 300 }}>
-                        고객 관리
-                    </Typography>
-                </Toolbar>
-            </AppBar>
-
             <Container
                 maxWidth="md"
                 sx={{

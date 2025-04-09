@@ -9,8 +9,6 @@ import {
     TextField,
     Button,
     IconButton,
-    AppBar,
-    Toolbar,
     Grid,
     FormControlLabel,
     Checkbox,
@@ -318,14 +316,6 @@ const SurveyCreate = () => {
 
     return (
         <Box sx={{ flexGrow: 1, bgcolor: "#f5f5f5", minHeight: "100vh" }}>
-            <AppBar position="static" color="default" elevation={0} sx={{ bgcolor: "white" }}>
-                <Toolbar>
-                    <Typography variant="h6" component="div" sx={{ flexGrow: 1, color: "#888", fontWeight: 300 }}>
-                        설문지 만들기
-                    </Typography>
-                </Toolbar>
-            </AppBar>
-
             <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
                 <Paper elevation={0} sx={{ p: 4 }}>
                     <Box sx={{ display: "flex", alignItems: "center", mb: 4 }}>

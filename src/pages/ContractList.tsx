@@ -16,8 +16,6 @@ import {
     TableRow,
     Button,
     IconButton,
-    AppBar,
-    Toolbar,
     TextField,
     InputAdornment,
     Chip,
@@ -215,14 +213,6 @@ const ContractList = () => {
 
     return (
         <Box sx={{ flexGrow: 1, bgcolor: "#f5f5f5", minHeight: "100vh" }}>
-            <AppBar position="static" color="default" elevation={0} sx={{ bgcolor: "white" }}>
-                <Toolbar>
-                    <Typography variant="h6" component="div" sx={{ flexGrow: 1, color: "#888", fontWeight: 300 }}>
-                        계약 관리
-                    </Typography>
-                </Toolbar>
-            </AppBar>
-
             <Container
                 maxWidth="lg"
                 sx={{
@@ -309,9 +299,6 @@ const ContractList = () => {
                                     <TableCell sx={{ fontWeight: 500 }}>계약일</TableCell>
                                     <TableCell sx={{ fontWeight: 500 }}>만료일</TableCell>
                                     <TableCell sx={{ fontWeight: 500 }}>상태</TableCell>
-                                    <TableCell sx={{ fontWeight: 500 }} align="right">
-                                        작업
-                                    </TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -340,14 +327,6 @@ const ContractList = () => {
                                                                 color: statusConfig[status as keyof typeof statusConfig].textColor,
                                                             }}
                                                         />
-                                                    </TableCell>
-                                                    <TableCell align="right">
-                                                        <IconButton size="small" onClick={(e) => handleEditContract(e, contract.id)} sx={{ mr: 1 }}>
-                                                            <Edit fontSize="small" />
-                                                        </IconButton>
-                                                        <IconButton size="small" color="error" onClick={(e) => handleDeleteClick(e, contract.id)}>
-                                                            <Delete fontSize="small" />
-                                                        </IconButton>
                                                     </TableCell>
                                                 </TableRow>
                                             )

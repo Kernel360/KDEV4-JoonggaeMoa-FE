@@ -95,4 +95,3 @@ export interface ConsultationMonthInfo {
     consultationCompleted: number;
     daysCount: number[];
 }
-

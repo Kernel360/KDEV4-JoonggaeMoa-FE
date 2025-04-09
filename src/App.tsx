@@ -130,7 +130,14 @@ function App() {
                                 </ProtectedRoute>
                             }
                         />
-                        <Route path="/my-page" element={<MyPage />} />
+                        <Route 
+                            path="/my-page" 
+                            element={
+                                <ProtectedRoute>
+                                    <MyPage />
+                                </ProtectedRoute>
+                            } 
+                        />
                         {/* 나머지 라우트는 그대로 유지 */}
                         {/* 고객 관리 라우트 */}
                         <Route

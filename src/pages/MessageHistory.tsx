@@ -145,14 +145,6 @@ const MessageHistory = () => {
 
     return (
         <Box sx={{ flexGrow: 1, bgcolor: "#f5f5f5", minHeight: "100vh" }}>
-            <AppBar position="static" color="default" elevation={0} sx={{ bgcolor: "white" }}>
-                <Toolbar>
-                    <Typography variant="h6" component="div" sx={{ flexGrow: 1, color: "#888", fontWeight: 300 }}>
-                        지난 문자 조회
-                    </Typography>
-                </Toolbar>
-            </AppBar>
-
             <Container maxWidth="lg" sx={{ mt: 4, mb: 4, mx: "auto", px: { xs: 2, sm: 3, md: 4 } }}>
                 <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
                     <IconButton onClick={() => navigate(-1)} sx={{ mr: 1 }}>

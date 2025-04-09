@@ -11,8 +11,6 @@ import {
     TextField,
     Button,
     Grid,
-    AppBar,
-    Toolbar,
     IconButton,
     CircularProgress,
     Snackbar,
@@ -159,14 +157,6 @@ const ContractCreate = () => {
 
     return (
         <Box sx={{ flexGrow: 1, bgcolor: "#f5f5f5", minHeight: "100vh" }}>
-            <AppBar position="static" color="default" elevation={0} sx={{ bgcolor: "white" }}>
-                <Toolbar>
-                    <Typography variant="h6" component="div" sx={{ flexGrow: 1, color: "#888", fontWeight: 300 }}>
-                        신규 계약 등록
-                    </Typography>
-                </Toolbar>
-            </AppBar>
-
             <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
                 <Box sx={{ display: "flex", alignItems: "center", mb: 4 }}>
                     <IconButton onClick={() => navigate("/contract")} sx={{ mr: 1 }}>
