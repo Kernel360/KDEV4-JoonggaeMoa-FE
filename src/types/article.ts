@@ -19,4 +19,6 @@ export interface ArticleResponse {
     companyName: string;
     agentName: string;
     cortarName: string;
+    roadAddressName: string;
+    lotAddressName: string;
 }

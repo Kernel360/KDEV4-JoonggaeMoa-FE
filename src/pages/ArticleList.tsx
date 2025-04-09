@@ -1,43 +1,31 @@
 "use client"
 
-import React, { useState, useEffect, useRef } from "react"
+import { ArrowBack, Close, Search } from "@mui/icons-material"
 import {
+    Alert,
+    AppBar,
     Box,
-    Container,
-    Typography,
+    Chip,
+    CircularProgress,
+    FormControl,
+    Grid,
+    IconButton,
+    InputAdornment,
+    InputLabel,
+    MenuItem,
     Paper,
+    Select,
     Table,
     TableBody,
     TableCell,
     TableContainer,
     TableHead,
     TableRow,
-    Button,
-    IconButton,
-    AppBar,
-    Toolbar,
     TextField,
-    InputAdornment,
-    Chip,
-    CircularProgress,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogContentText,
-    DialogTitle,
-    Snackbar,
-    Alert,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
-    Grid,
-    Card,
-    CardContent,
-    CardMedia,
-    CardActionArea,
+    Toolbar,
+    Typography
 } from "@mui/material"
-import { Add, Search, ArrowBack, Delete, Edit, LocationOn, Home, Business, DirectionsSubway, Close } from "@mui/icons-material"
+import React, { useEffect, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { articleApi } from "../services/articleApi"
 import type { ArticleResponse } from "../types/article"
@@ -57,6 +45,117 @@ const ArticleList = () => {
     const [hasMore, setHasMore] = useState(true)
     const [isLoadingMore, setIsLoadingMore] = useState(false)
     const observerTarget = useRef<HTMLDivElement>(null)
+    const mapRef = useRef<HTMLDivElement>(null)
+    const KAKAO_APP_KEY = import.meta.env.VITE_KAKAO_APP_KEY;
+    const [map, setMap] = useState<any>(null);
+    const [markers, setMarkers] = useState<any[]>([]);
+    // const mapInstance = useRef<any>(null);
+
+    // useEffect(() => {
+    //     if (!KAKAO_APP_KEY) {
+    //         console.error('Kakao API key is not defined');
+    //         return;
+    //     }
+
+    //     const script = document.createElement('script');
+    //     script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_APP_KEY}&autoload=false`;
+    //     script.async = true;
+        
+    //     script.onload = () => {
+    //         window.kakao.maps.load(() => {
+    //             if (mapRef.current) {
+    //                 const container = mapRef.current;
+    //                 const options = {
+    //                     center: new window.kakao.maps.LatLng(37.5665, 126.9780),
+    //                     level: 9
+    //                 };
+    //                 const newMap = new window.kakao.maps.Map(container, options);
+    //                 mapInstance.current = newMap;
+    //                 setMap(newMap);
+    //             } else {
+    //                 console.error('Map container not found');
+    //             }
+    //         });
+    //     };
+
+    //     script.onerror = (error) => {
+    //         console.error('Failed to load Kakao Map SDK:', error);
+    //     };
+
+    //     document.head.appendChild(script);
+
+    //     return () => {
+    //         document.head.removeChild(script);
+    //     };
+    // }, []);
+
+    // // 매물 데이터가 변경될 때 마커 업데이트
+    // useEffect(() => {
+    //     if (mapInstance.current && articles.length > 0) {
+    //         // 기존 마커 제거
+    //         markers.forEach(marker => marker.setMap(null));
+    //         setMarkers([]);
+
+    //         // 새로운 마커 생성
+    //         const newMarkers = articles.map(article => {
+    //             if (article.latitude && article.longitude) {
+    //                 const markerPosition = new window.kakao.maps.LatLng(
+    //                     article.latitude,
+    //                     article.longitude
+    //                 );
+    //                 const marker = new window.kakao.maps.Marker({
+    //                     position: markerPosition,
+    //                     map: mapInstance.current
+    //                 });
+
+    //                 // 마커에 클릭 이벤트 추가
+    //                 window.kakao.maps.event.addListener(marker, 'click', () => {
+    //                     handleArticleClick(article);
+    //                 });
+
+    //                 return marker;
+    //             }
+    //             return null;
+    //         }).filter(marker => marker !== null);
+
+    //         setMarkers(newMarkers);
+
+    //         // 모든 마커가 보이도록 지도 범위 조정
+    //         if (newMarkers.length > 0) {
+    //             const bounds = new window.kakao.maps.LatLngBounds();
+    //             newMarkers.forEach(marker => {
+    //                 bounds.extend(marker.getPosition());
+    //             });
+    //             mapInstance.current.setBounds(bounds);
+    //         }
+    //     }
+    // }, [articles]);
+
+    // // 선택된 매물이 변경될 때 마커 업데이트
+    // useEffect(() => {
+    //     if (mapInstance.current) {
+    //         // 기존 마커 제거
+    //         markers.forEach(marker => marker.setMap(null));
+    //         setMarkers([]);
+
+    //         // 선택된 매물이 있으면 해당 위치에 마커 생성
+    //         if (selectedArticle && selectedArticle.latitude && selectedArticle.longitude) {
+    //             const markerPosition = new window.kakao.maps.LatLng(
+    //                 selectedArticle.latitude,
+    //                 selectedArticle.longitude
+    //             );
+    //             const marker = new window.kakao.maps.Marker({
+    //                 position: markerPosition,
+    //                 map: mapInstance.current
+    //             });
+    //             setMarkers([marker]);
+
+    //             // 지도를 마커 위치로 이동
+    //             mapInstance.current.setCenter(markerPosition);
+    //             mapInstance.current.setLevel(3); // Zoom in to level 3
+    //         }
+    //     }
+    // }, [selectedArticle]);
 
     useEffect(() => {
         fetchArticles()
@@ -247,9 +346,9 @@ const ArticleList = () => {
     const handleArticleClick = (article: ArticleResponse) => {
         // Toggle selection - if already selected, deselect it
         if (selectedArticle?.id === article.id) {
-            setSelectedArticle(null)
+            setSelectedArticle(null);
         } else {
-            setSelectedArticle(article)
+            setSelectedArticle(article);
         }
     }
 
@@ -484,7 +583,13 @@ const ArticleList = () => {
                     </Box>
                 </Toolbar>
             </AppBar>
-
+{/* 
+            {!loading && !error && articles.length > 0 && (
+            <Box sx={{ mb: 3 }}>
+                <div id="map" ref={mapRef} style={{ width: '100%', height: '400px' }}></div>
+            </Box>
+            )}
+ */}
             {loading ? (
                 <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
                     <CircularProgress />
@@ -579,7 +684,7 @@ const ArticleList = () => {
                                                 <TableCell colSpan={7} sx={{ p: 0 }}>
                                                     <Paper sx={{ m: 1, p: 2 }}>
                                                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                                                            <Typography variant="subtitle1" fontWeight="bold">매물 상세 정보</Typography>
+                                                            <Typography variant="h5" fontWeight="bold">매물 상세 정보</Typography>
                                                             <IconButton size="small" onClick={() => setSelectedArticle(null)}>
                                                                 <Close />
                                                             </IconButton>
@@ -631,57 +736,110 @@ const ArticleList = () => {
                                                                                 <Typography variant="body2">{formatPrice(selectedArticle.rentPrice)}</Typography>
                                                                             </Box>
                                                                         )}
-                                                                        <Box sx={{ display: 'flex' }}>
-                                                                            <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>등록일:</Typography>
-                                                                            <Typography variant="body2">{formatDate(selectedArticle.confirmedAt)}</Typography>
-                                                                        </Box>
+                                                                        
+                                                                        <Grid item xs={4}>
+                                                                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                                                                                <Box sx={{ display: 'flex' }}>
+                                                                                    <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>거래 유형:</Typography>
+                                                                                    <Chip
+                                                                                        label={selectedArticle.tradeType}
+                                                                                        size="small"
+                                                                                        sx={{
+                                                                                            bgcolor: getTradeTypeColor(selectedArticle.tradeType),
+                                                                                            color: "white",
+                                                                                        }}
+                                                                                    />
+                                                                                </Box>
+                                                                                <Box sx={{ display: 'flex' }}>
+                                                                                    <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>매매가:</Typography>
+                                                                                    <Typography variant="body2">
+                                                                                        {isZeroPrice(selectedArticle.price) ? "X" : formatPrice(selectedArticle.price)}
+                                                                                    </Typography>
+                                                                                </Box>
+                                                                            </Box>
+                                                                        </Grid>
+                                                                        <Grid item xs={4}>
+                                                                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                                                                                {selectedArticle.rentPrice > 0 && (
+                                                                                    <Box sx={{ display: 'flex' }}>
+                                                                                        <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>월세:</Typography>
+                                                                                        <Typography variant="body2">{formatPrice(selectedArticle.rentPrice)}</Typography>
+                                                                                    </Box>
+                                                                                )}
+                                                                                <Box sx={{ display: 'flex' }}>
+                                                                                    <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>등록일:</Typography>
+                                                                                    <Typography variant="body2">{formatDate(selectedArticle.confirmedAt)}</Typography>
+                                                                                </Box>
+                                                                            </Box>
+                                                                        </Grid>
                                                                     </Box>
                                                                 </Box>
                                                             </Grid>
-                                                            <Grid item xs={12} md={6}>
+                                                            <Grid item xs={12}>
                                                                 <Box sx={{ mb: 1 }}>
-                                                                    <Typography variant="body2" fontWeight="bold">위치 정보</Typography>
-                                                                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mt: 0.5 }}>
-                                                                        <Box sx={{ display: 'flex' }}>
-                                                                            <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>지역:</Typography>
-                                                                            <Typography variant="body2">{selectedArticle.cortarName || "-"}</Typography>
-                                                                        </Box>
-                                                                        <Box sx={{ display: 'flex' }}>
-                                                                            <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>위도/경도:</Typography>
-                                                                            <Typography variant="body2">
-                                                                                {selectedArticle.latitude && selectedArticle.longitude
-                                                                                    ? `${selectedArticle.latitude}, ${selectedArticle.longitude}`
-                                                                                    : "-"}
-                                                                            </Typography>
-                                                                        </Box>
-                                                                        {selectedArticle.direction && selectedArticle.direction !== "" && (
-                                                                            <Box sx={{ display: 'flex' }}>
-                                                                                <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>방향:</Typography>
-                                                                                <Typography variant="body2">{selectedArticle.direction}</Typography>
+                                                                    <Typography variant="h6" fontWeight="bold">위치 정보</Typography>
+                                                                    <Grid container spacing={2} sx={{ mt: 0.5 }}>
+                                                                        <Grid item xs={4}>
+                                                                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                                                                                <Box sx={{ display: 'flex' }}>
+                                                                                    <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>법정동:</Typography>
+                                                                                    <Typography variant="body2">{selectedArticle.cortarName || "-"}</Typography>
+                                                                                </Box>
                                                                             </Box>
-                                                                        )}
-                                                                        {selectedArticle.subwayInfo && (
-                                                                            <Box sx={{ display: 'flex' }}>
-                                                                                <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>지하철:</Typography>
-                                                                                <Typography variant="body2">{selectedArticle.subwayInfo}</Typography>
+                                                                        </Grid>
+                                                                        <Grid item xs={4}>
+                                                                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                                                                                <Box sx={{ display: 'flex' }}>
+                                                                                    <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>주소:</Typography>
+                                                                                    <Typography variant="body2">
+                                                                                        {selectedArticle.roadAddressName || selectedArticle.lotAddressName || "-"}
+                                                                                    </Typography>
+                                                                                </Box>
                                                                             </Box>
-                                                                        )}
-                                                                    </Box>
+                                                                        </Grid>
+                                                                        <Grid item xs={4}>
+                                                                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                                                                                {selectedArticle.direction && selectedArticle.direction !== "" && (
+                                                                                    <Box sx={{ display: 'flex' }}>
+                                                                                        <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>방향:</Typography>
+                                                                                        <Typography variant="body2">{selectedArticle.direction}</Typography>
+                                                                                    </Box>
+                                                                                )}
+                                                                                {selectedArticle.subwayInfo && (
+                                                                                    <Box sx={{ display: 'flex' }}>
+                                                                                        <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>지하철:</Typography>
+                                                                                        <Typography variant="body2">{selectedArticle.subwayInfo}</Typography>
+                                                                                    </Box>
+                                                                                )}
+                                                                            </Box>
+                                                                        </Grid>
+                                                                    </Grid>
                                                                 </Box>
                                                             </Grid>
-                                                            <Grid item xs={12} md={6}>
+                                                            <Grid item xs={12}>
                                                                 <Box sx={{ mb: 1 }}>
-                                                                    <Typography variant="body2" fontWeight="bold">중개사 정보</Typography>
-                                                                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mt: 0.5 }}>
-                                                                        <Box sx={{ display: 'flex' }}>
-                                                                            <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>중개사:</Typography>
-                                                                            <Typography variant="body2">{selectedArticle.companyName}</Typography>
-                                                                        </Box>
-                                                                        <Box sx={{ display: 'flex' }}>
-                                                                            <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>담당 부동산:</Typography>
-                                                                            <Typography variant="body2">{selectedArticle.agentName || "-"}</Typography>
-                                                                        </Box>
-                                                                    </Box>
+                                                                    <Typography variant="h6" fontWeight="bold">중개사 정보</Typography>
+                                                                    <Grid container spacing={2} sx={{ mt: 0.5 }}>
+                                                                        <Grid item xs={4}>
+                                                                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                                                                                <Box sx={{ display: 'flex' }}>
+                                                                                    <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>중개사:</Typography>
+                                                                                    <Typography variant="body2">{selectedArticle.companyName}</Typography>
+                                                                                </Box>
+                                                                            </Box>
+                                                                        </Grid>
+                                                                        <Grid item xs={4}>
+                                                                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                                                                                <Box sx={{ display: 'flex' }}>
+                                                                                    <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>담당 부동산:</Typography>
+                                                                                    <Typography variant="body2">{selectedArticle.agentName || "-"}</Typography>
+                                                                                </Box>
+                                                                            </Box>
+                                                                        </Grid>
+                                                                        <Grid item xs={4}>
+                                                                            {/* Additional agent information can be added here if needed */}
+                                                                        </Grid>
+                                                                    </Grid>
                                                                 </Box>
                                                             </Grid>
                                                         </Grid>
@@ -710,4 +868,4 @@ const ArticleList = () => {
     )
 }
 
-export default ArticleList 
+export default ArticleList
