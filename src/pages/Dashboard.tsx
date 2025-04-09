@@ -62,6 +62,7 @@ import { TooltipModel } from "@toast-ui/chart/types/components/tooltip"
 import { TooltipTheme } from "@toast-ui/chart/types/theme"
 
 import { toast } from 'react-toastify';
+import Layout from "../components/Layout"
 
 
 // 커스텀 테마 생성
@@ -137,11 +138,10 @@ const Dashboard = () => {
     
     const { logout } = useAuth()
     const navigate = useNavigate()
-    const [sidebarOpen, setSidebarOpen] = useState(true)
-    const [profile, setProfile] = useState<{ name: string; email: string } | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const [profile, setProfile] = useState<{ name: string; email: string } | null>(null);
     const [realEstateTypePeriod, setRealEstateTypePeriod] = useState<string>("daily");
     const [tradeTypePeriod, setTradeTypePeriod] = useState<string>("daily");
     const [realEstateTypeData, setRealEstateTypeData] = useState<RealEstateTypeSummaryResponse[]>([]);
@@ -613,6 +613,8 @@ const Dashboard = () => {
                 data: realEstateChartData,
                 options: {
                     chart: { 
+                        width: 400,
+                        height: 350
                     },
                     series: {
                         dataLabels: {
@@ -635,8 +637,14 @@ const Dashboard = () => {
                         }
                     },
                     tooltip: {
-                        template: (model: TooltipModel) => {
-                            return ``;
+                        formatter: (value: any) => {
+                            if (value.label === '기타') {
+                                const otherTypesInfo = otherTypes
+                                    .map(type => `${type.type}: ${type.ratio.toFixed(1)}%`)
+                                    .join('<br/>');
+                                return `기타 (${value.data.toFixed(1)}%)<br/><br/>${otherTypesInfo}`;
+                            }
+                            return `${value.label}: ${value.data.toFixed(1)}%`;
                         }
                     },
                     exportMenu: {
@@ -681,8 +689,8 @@ const Dashboard = () => {
                 data: tradeTypeChartData,
                 options: {
                     chart: { 
-                        // width: 400, 
-                        // height: 350 
+                        width: 400,
+                        height: 350
                     },
                     series: {
                         dataLabels: {
@@ -702,9 +710,7 @@ const Dashboard = () => {
                         }
                     },
                     tooltip: {
-                        template: (model: TooltipModel) => {
-                            return ``;
-                        }
+                        formatter: (value: any) => `${value.label}: ${value.data.toFixed(1)}%`
                     },
                     exportMenu: {
                         visible: false
@@ -724,856 +730,385 @@ const Dashboard = () => {
     }, [tradeTypeData]);
 
     return (
-        <ThemeProvider theme={theme}>
-            <Box sx={{ display: 'flex', bgcolor: '#f8f9fa', minHeight: "100vh" }}>
-                {/* Sidebar */}
-                <Box
-                    sx={{
-                        width: 240,
-                        minWidth: sidebarOpen ? 240 : 0,
-                        bgcolor: '#111',
-                        color: 'white',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        transition: 'all 0.3s ease',
-                        position: 'fixed',
-                        height: '100vh',
-                        transform: sidebarOpen ? 'none' : 'translateX(-240px)',
-                        zIndex: 1200,
-                    }}
-                >
-                    {/* Toggle Button */}
-                    <IconButton
-                        onClick={() => setSidebarOpen(!sidebarOpen)}
-                        sx={{
-                            position: 'absolute',
-                            right: -20,
-                            top: 20,
-                            bgcolor: '#111',
-                            color: 'white',
-                            width: 20,
-                            height: 40,
-                            '&:hover': {
-                                bgcolor: '#333',
-                            },
-                            zIndex: 1200,
-                            borderRadius: '0 8px 8px 0',
-                        }}
-                    >
-                        <ChevronLeft sx={{ transform: sidebarOpen ? 'none' : 'scaleX(-1)' }} />
-                    </IconButton>
-
-                    {/* Logo */}
-                    <Box sx={{ p: 3, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                        <Typography variant="h5" sx={{ 
-                            fontWeight: 700, 
-                            color: 'white',
-                            fontSize: '1.25rem',
-                            whiteSpace: 'nowrap',
-                        }}>
-                            부동산 CRM
-                        </Typography>
-                    </Box>
-
-                    {/* Menu Items */}
-                    <List sx={{ py: 1, whiteSpace: 'nowrap' }}>
-                        <ListItem 
-                            button 
-                            onClick={() => navigate("/dashboard")}
-                            selected 
-                            sx={{ 
-                                py: 1.5,
-                                bgcolor: 'rgba(255,255,255,0.1)',
-                                '&:hover': { bgcolor: 'rgba(255,255,255,0.15)' },
-                            }}
-                        >
-                            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
-                                <DashboardIcon />
-                            </ListItemIcon>
-                            <ListItemText 
-                                primary="대시보드" 
-                                primaryTypographyProps={{
-                                    fontSize: '0.9rem',
-                                }}
-                            />
-                        </ListItem>
-
-                        <ListItem 
-                            button
-                            onClick={handleArticleManagement}
-                            sx={{ 
-                                py: 1.5,
-                                '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' },
-                            }}
-                        >
-                            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
-                                <Business />
-                            </ListItemIcon>
-                            <ListItemText 
-                                primary="매물 관리"
-                                primaryTypographyProps={{
-                                    fontSize: '0.9rem',
-                                }}
-                            />
-                        </ListItem>
-
-                        <ListItem 
-                            button 
-                            onClick={() => navigate("/contract")}
-                            sx={{ 
-                                py: 1.5,
-                                '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' },
-                            }}
-                        >
-                            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
-                                <InsertDriveFile />
-                            </ListItemIcon>
-                            <ListItemText 
-                                primary="계약 관리"
-                                primaryTypographyProps={{
-                                    fontSize: '0.9rem',
-                                }}
-                            />
-                        </ListItem>
-
-                        <ListItem 
-                            button 
-                            onClick={() => navigate("/customer-management")}
-                            sx={{ 
-                                py: 1.5,
-                                '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' },
-                            }}
-                        >
-                            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
-                                <People />
-                            </ListItemIcon>
-                            <ListItemText 
-                                primary="고객 관리"
-                                primaryTypographyProps={{
-                                    fontSize: '0.9rem',
-                                }}
-                            />
-                        </ListItem>
-
-                        <ListItem 
-                            button 
-                            onClick={() => navigate("/consultation")}
-                            sx={{ 
-                                py: 1.5,
-                                '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' },
-                            }}
-                        >
-                            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
-                                <Forum />
-                            </ListItemIcon>
-                            <ListItemText 
-                                primary="상담 관리"
-                                primaryTypographyProps={{
-                                    fontSize: '0.9rem',
-                                }}
-                            />
-                        </ListItem>
-
-                        <ListItem 
-                            button 
-                            onClick={() => navigate("/survey")}
-                            sx={{ 
-                                py: 1.5,
-                                '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' },
-                            }}
-                        >
-                            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
-                                <Assignment />
-                            </ListItemIcon>
-                            <ListItemText 
-                                primary="설문 관리"
-                                primaryTypographyProps={{
-                                    fontSize: '0.9rem',
-                                }}
-                            />
-                        </ListItem>
-
-                        <ListItem 
-                            button 
-                            onClick={() => navigate("/message")}
-                            sx={{ 
-                                py: 1.5,
-                                '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' },
-                            }}
-                        >
-                            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
-                                <Email />
-                            </ListItemIcon>
-                            <ListItemText 
-                                primary="문자 관리"
-                                primaryTypographyProps={{
-                                    fontSize: '0.9rem',
-                                }}
-                            />
-                        </ListItem>
-                    </List>
-
-                    <Box sx={{ mt: 'auto', p: 2, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-                        <ListItem 
-                            button
-                            onClick={() => navigate("/my-page")}
-                            sx={{ 
-                                borderRadius: '8px',
-                                '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' },
-                                opacity: 0.5,
-                            }}
-                        >
-                            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
-                                <Person />
-                            </ListItemIcon>
-                            <ListItemText 
-                                primary="마이페이지"
-                                primaryTypographyProps={{
-                                    fontSize: '0.9rem',
-                                }}
-                            />
-                        </ListItem>
-                    </Box>
-                </Box>
-
-                {/* Main Content */}
-                <Box sx={{ 
-                    flexGrow: 1, 
-                    p: 4,
-                    transition: 'all 0.3s ease',
-                    marginLeft: sidebarOpen ? '240px' : 0,
-                    width: sidebarOpen ? 'calc(100% - 240px)' : '100%',
-                }}>
-                    {/* Header */}
-                    <Box sx={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        mb: 4, 
-                        justifyContent: 'flex-end',
-                    }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                            <IconButton onClick={handleNotificationClick}>
-                                <Badge badgeContent={unreadCount} color="error">
-                                    <Notifications />
-                                </Badge>
-                            </IconButton>
-                            {/* In the Menu component, filter notifications to show only unread ones */}
-                            <Menu
-                                anchorEl={notificationAnchorEl}
-                                open={Boolean(notificationAnchorEl)}
-                                onClose={handleNotificationClose}
-                                anchorOrigin={{
-                                    vertical: "bottom",
-                                    horizontal: "right",
-                                }}
-                                transformOrigin={{
-                                    vertical: "top",
-                                    horizontal: "right",
-                                }}
-                                PaperProps={{
-                                    sx: {
-                                        mt: 1.5,
-                                        width: 360,
-                                        maxHeight: 400,
-                                        overflowY: 'auto',
-                                    }
-                                }}
-                            >
-                                <Box sx={{ p: 2, borderBottom: '1px solid rgba(0,0,0,0.1)' }}>
-                                    <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600 }}>
-                                        알림 ({unreadCount})
-                                    </Typography>
-                                </Box>
-                                {notifications
-                                        .slice() // Create a copy to avoid mutating the original array
-                                        .sort((a, b) => b.id - a.id) // Sort by id in descending order
-                                        .map((notification) => (
-                                            <MenuItem 
-                                                key={`${notification.id}-${notification.isRead}`}
-                                                onClick={() => handleNotificationNavigation(notification)}
-                                                sx={{ 
-                                                    py: 2,
-                                                    px: 2,
-                                                    borderBottom: '1px solid rgba(0,0,0,0.06)',
-                                                    '&:last-child': { borderBottom: 'none' },
-                                                    bgcolor: notification.isRead ? 'action.hover' : 'transparent',
-                                                }}
-                                            >
-                                                <Box sx={{ 
-                                                    width: 4, 
-                                                    height: 40, 
-                                                    borderRadius: '4px',
-                                                    bgcolor: notification.isRead ? 'grey.400' : getNotificationColor(notification.type),
-                                                    mr: 2
-                                                }} />
-                                                <Box>
-                                                    <Typography 
-                                                        variant="body1" 
-                                                        sx={{ 
-                                                            fontWeight: notification.isRead ? 400 : 600,
-                                                            color: notification.isRead ? 'text.disabled' : 'text.primary',
-                                                            mb: 0.5,
-                                                            fontSize: '0.95rem',
-                                                        }}
-                                                    >
-                                                        {notification.content}
-                                                    </Typography>
-                                                    <Typography 
-                                                        component="span"
-                                                        variant="body2"
-                                                        sx={{
-                                                            display: 'inline-flex',
-                                                            alignItems: 'center',
-                                                            bgcolor: notification.isRead ? 'grey.100' : `${getNotificationColor(notification.type)}15`,
-                                                            color: notification.isRead ? 'grey.500' : getNotificationColor(notification.type),
-                                                            py: 0.5,
-                                                            px: 1,
-                                                            borderRadius: '4px',
-                                                            fontSize: '0.8rem',
-                                                            fontWeight: 600,
-                                                        }}
-                                                    >
-                                                        {notification.type}
-                                                    </Typography>
-                                                </Box>
-                                            </MenuItem>
-                                        ))}
-                                <Box sx={{ p: 2, borderTop: '1px solid rgba(0,0,0,0.1)' }}>
-                                    <Button 
-                                        fullWidth
-                                        variant="text"
-                                        onClick={() => {
-                                            handleNotificationClose();
-                                            navigate('/notification-list');
-                                        }}
-                                        sx={{
-                                            color: 'primary.main',
-                                            '&:hover': { bgcolor: 'rgba(25, 118, 210, 0.04)' },
-                                        }}
-                                    >
-                                        전체 알림 보기
-                                    </Button>
-                                </Box>
-                            </Menu>
-                            
-                            {/* Add profile display here */}
-                            {profile && (
-                                <Box sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={handleMenuOpen}>
-                                    <Avatar sx={{ width: 36, height: 36, bgcolor: '#1976d2' }}>
-                                        {profile.name ? profile.name.charAt(0).toUpperCase() : 'U'}
-                                    </Avatar>
-                                    <Box sx={{ ml: 1, display: { xs: 'none', sm: 'block' } }}>
-                                        <Typography variant="body1" sx={{ fontWeight: 600, fontSize: '0.9rem' }}>
-                                            {profile.name}
-                                        </Typography>
-                                        <Typography variant="body2" color="textSecondary" sx={{ fontSize: '0.8rem' }}>
-                                            {profile.email}
-                                        </Typography>
-                                    </Box>
-                                </Box>
-                            )}
-                            
-                            <Menu
-                                anchorEl={anchorEl}
-                                open={Boolean(anchorEl)}
-                                onClose={handleMenuClose}
-                                anchorOrigin={{
-                                    vertical: 'bottom',
-                                    horizontal: 'right',
-                                }}
-                                transformOrigin={{
-                                    vertical: 'top',
-                                    horizontal: 'right',
-                                }}
-                            >
-                                <MenuItem onClick={() => { navigate("/my-page"); handleMenuClose(); }}>
-                                    <ListItemIcon>
-                                        <Person fontSize="small" />
-                                    </ListItemIcon>
-                                    마이페이지
-                                </MenuItem>
-                                <MenuItem onClick={handleLogout}>
-                                    <ListItemIcon>
-                                        <Logout fontSize="small" /> {/* Settings에서 Logout으로 변경 */}
-                                    </ListItemIcon>
-                                    로그아웃
-                                </MenuItem>
-                            </Menu>
-                        </Box>
-                    </Box>
-
-{/* Quick Action Buttons */}
-<Box sx={{ mb: 4 }}>
-                        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                            빠른 이동
-                        </Typography>
-                        <Grid container spacing={2}>
-                            <Grid item xs={12} sm={6} md={2}>
-                                <Button
-                                    variant="contained"
-                                    fullWidth
-                                    onClick={() => navigate("/customer-management/add")}
-                                    sx={{
-                                        py: 2,
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        gap: 1,
-                                        bgcolor: '#4CAF50',
-                                        '&:hover': {
-                                            bgcolor: '#43A047',
-                                        },
-                                    }}
-                                >
-                                    <Person sx={{ fontSize: 32 }} />
-                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                        고객 등록
-                                    </Typography>
-                                </Button>
-                            </Grid>
-                            <Grid item xs={12} sm={6} md={2}>
-                                <Button
-                                    variant="contained"
-                                    fullWidth
-                                    onClick={() => navigate("/survey/create")}
-                                    sx={{
-                                        py: 2,
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        gap: 1,
-                                        bgcolor: '#2196F3',
-                                        '&:hover': {
-                                            bgcolor: '#1E88E5',
-                                        },
-                                    }}
-                                >
-                                    <Assignment sx={{ fontSize: 32 }} />
-                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                        설문 작성
-                                    </Typography>
-                                </Button>
-                            </Grid>
-                            <Grid item xs={12} sm={6} md={2}>
-                                <Button
-                                    variant="contained"
-                                    fullWidth
-                                    onClick={() => navigate("/survey/answers")}
-                                    sx={{
-                                        py: 2,
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        gap: 1,
-                                        bgcolor: '#9C27B0',
-                                        '&:hover': {
-                                            bgcolor: '#8E24AA',
-                                        },
-                                    }}
-                                >
-                                    <Assignment sx={{ fontSize: 32 }} />
-                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                        설문 응답
-                                    </Typography>
-                                </Button>
-                            </Grid>
-                            <Grid item xs={12} sm={6} md={2}>
-                                <Button
-                                    variant="contained"
-                                    fullWidth
-                                    onClick={() => navigate("/contract/create")}
-                                    sx={{
-                                        py: 2,
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        gap: 1,
-                                        bgcolor: '#FF9800',
-                                        '&:hover': {
-                                            bgcolor: '#F57C00',
-                                        },
-                                    }}
-                                >
-                                    <InsertDriveFile sx={{ fontSize: 32 }} />
-                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                        계약 등록
-                                    </Typography>
-                                </Button>
-                            </Grid>
-                            <Grid item xs={12} sm={6} md={2}>
-                                <Button
-                                    variant="contained"
-                                    fullWidth
-                                    onClick={() => navigate("/message/create")}
-                                    sx={{
-                                        py: 2,
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        gap: 1,
-                                        bgcolor: '#FF5722',
-                                        '&:hover': {
-                                            bgcolor: '#F4511E',
-                                        },
-                                    }}
-                                >
-                                    <Email sx={{ fontSize: 32 }} />
-                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                        문자 작성
-                                    </Typography>
-                                </Button>
-                            </Grid>
-                            <Grid item xs={12} sm={6} md={2}>
-                                <Button
-                                    variant="contained"
-                                    fullWidth
-                                    onClick={() => navigate("/message/history")}
-                                    sx={{
-                                        py: 2,
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        gap: 1,
-                                        bgcolor: '#607D8B',
-                                        '&:hover': {
-                                            bgcolor: '#546E7A',
-                                        },
-                                    }}
-                                >
-                                    <Email sx={{ fontSize: 32 }} />
-                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                        보낸 문자
-                                    </Typography>
-                                </Button>
-                            </Grid>
-                        </Grid>
-                    </Box>
-
-                    {/* Stats */}
-                    <Grid container spacing={3} sx={{ mb: 4 }}>
-                        <Grid item xs={12} md={4}>
-                            <Paper sx={{ p: 3 }}>
-                                <Typography color="textSecondary" variant="body2" sx={{ mb: 1 }}>
-                                    금주 신규 고객
-                                </Typography>
-                                {customerSummaryLoading ? (
-                                    <Box sx={{ display: "flex", justifyContent: "center", my: 2 }}>
-                                        <CircularProgress size={24} />
-                                    </Box>
-                                ) : customerSummaryError ? (
-                                    <Typography color="error" variant="body2">
-                                        {customerSummaryError}
-                                    </Typography>
-                                ) : customerSummary ? (
-                                    <>
-                                        <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
-                                            <Typography variant="h4">{customerSummary.count}</Typography>
-                                            <Typography 
-                                                variant="body2" 
-                                                sx={{ 
-                                                    color: customerSummary.rate >= 0 ? '#f44336' : '#2196f3',
-                                                    bgcolor: customerSummary.rate >= 0 ? '#ffebee' : '#e3f2fd',
-                                                    px: 1,
-                                                    py: 0.5,
-                                                    borderRadius: '4px',
-                                                }}
-                                            >
-                                                {customerSummary.rate >= 0 ? '+' : ''}{customerSummary.rate.toFixed(1)}%
-                                            </Typography>
-                                        </Box>
-                                        <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-                                            전주 대비
-                                        </Typography>
-                                    </>
-                                ) : (
-                                    <Typography variant="body2" color="textSecondary">
-                                        데이터를 불러올 수 없습니다.
-                                    </Typography>
-                                )}
-                            </Paper>
-                        </Grid>
-                        <Grid item xs={12} md={4}>
-                            <Paper sx={{ p: 3 }}>
-                                <Typography color="textSecondary" variant="body2" sx={{ mb: 1 }}>
-                                    진행중인 계약
-                                </Typography>
-                                {contractSummaryLoading ? (
-                                    <Box sx={{ display: "flex", justifyContent: "center", my: 2 }}>
-                                        <CircularProgress size={24} />
-                                    </Box>
-                                ) : contractSummaryError ? (
-                                    <Typography color="error" variant="body2">
-                                        {contractSummaryError}
-                                    </Typography>
-                                ) : contractSummary ? (
-                                    <>
-                                        <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
-                                            <Typography variant="h4">{contractSummary.count}</Typography>
-                                            <Typography 
-                                                variant="body2" 
-                                                sx={{ 
-                                                    color: contractSummary.rate >= 0 ? '#f44336' : '#2196f3',
-                                                    bgcolor: contractSummary.rate >= 0 ? '#ffebee' : '#e3f2fd',
-                                                    px: 1,
-                                                    py: 0.5,
-                                                    borderRadius: '4px',
-                                                }}
-                                            >
-                                                {contractSummary.rate >= 0 ? '+' : ''}{contractSummary.rate.toFixed(1)}%
-                                            </Typography>
-                                        </Box>
-                                        <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-                                            전주 대비
-                                        </Typography>
-                                    </>
-                                ) : (
-                                    <Typography variant="body2" color="textSecondary">
-                                        데이터를 불러올 수 없습니다.
-                                    </Typography>
-                                )}
-                            </Paper>
-                        </Grid>
-                        <Grid item xs={12} md={4}>
-                            <Paper sx={{ p: 3 }}>
-                                <Typography color="textSecondary" variant="body2" sx={{ mb: 1 }}>
-                                    오늘 상담
-                                </Typography>
-                                {consultationSummaryLoading ? (
-                                    <Box sx={{ display: "flex", justifyContent: "center", my: 2 }}>
-                                        <CircularProgress size={24} />
-                                    </Box>
-                                ) : consultationSummaryError ? (
-                                    <Typography color="error" variant="body2">
-                                        {consultationSummaryError}
-                                    </Typography>
-                                ) : consultationSummary ? (
-                                    <>
-                                        <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
-                                            <Typography variant="h4">{consultationSummary.todayCount}</Typography>
-                                            <Typography 
-                                                variant="body2" 
-                                                sx={{ 
-                                                    color: '#f44336',
-                                                    bgcolor: '#ffebee',
-                                                    px: 1,
-                                                    py: 0.5,
-                                                    borderRadius: '4px',
-                                                }}
-                                            >
-                                                {consultationSummary.remainingCount}건 남음
-                                            </Typography>
-                                        </Box>
-                                        <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-                                            오늘의 상담 일정
-                                        </Typography>
-                                    </>
-                                ) : (
-                                    <Typography variant="body2" color="textSecondary">
-                                        데이터를 불러올 수 없습니다.
-                                    </Typography>
-                                )}
-                            </Paper>
-                        </Grid>
-                    </Grid>
-
-                    {/* Charts */}
-                    <Grid container spacing={3}>
-                        <Grid item xs={12} md={6}>
-                            <Paper sx={{ p: 3 }}>
-                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                                    <Typography variant="h6">부동산 유형 분포</Typography>
-                                    <ToggleButtonGroup
-                                        value={realEstateTypePeriod}
-                                        exclusive
-                                        onChange={handleRealEstateTypePeriodChange}
-                                        aria-label="부동산 유형 기간 선택"
-                                        size="small"
-                                    >
-                                        <ToggleButton value="daily" aria-label="일간">
-                                            일간
-                                        </ToggleButton>
-                                        <ToggleButton value="weekly" aria-label="주간">
-                                            주간
-                                        </ToggleButton>
-                                        <ToggleButton value="monthly" aria-label="월간">
-                                            월간
-                                        </ToggleButton>
-                                    </ToggleButtonGroup>
-                                </Box>
-                                
-                                {realEstateTypeLoading ? (
-                                    <Box sx={{ display: "flex", justifyContent: "center", my: 5 }}>
-                                        <CircularProgress />
-                                    </Box>
-                                ) : realEstateTypeError ? (
-                                    <Box sx={{ textAlign: "center", py: 3 }}>
-                                        <Typography color="error">{realEstateTypeError}</Typography>
-                                        <Button 
-                                            variant="contained" 
-                                            sx={{ mt: 2 }} 
-                                            onClick={() => handleRealEstateTypePeriodChange(null as any, realEstateTypePeriod)}
-                                        >
-                                            다시 시도
-                                        </Button>
-                                    </Box>
-                                ) : (
-                                    <Box 
-                                        ref={realEstateTypeChartRef} 
-                                        sx={{ 
-                                            width: '100%',
-                                            height: '350px',
-                                            '& canvas': {
-                                                width: '100% !important',
-                                                height: '100% !important'
-                                            }
-                                        }} 
-                                    />
-                                )}
-                            </Paper>
-                        </Grid>
-                        <Grid item xs={12} md={6}>
-                            <Paper sx={{ p: 3 }}>
-                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                                    <Typography variant="h6">거래 유형 분포</Typography>
-                                    <ToggleButtonGroup
-                                        value={tradeTypePeriod}
-                                        exclusive
-                                        onChange={handleTradeTypePeriodChange}
-                                        aria-label="거래 유형 기간 선택"
-                                        size="small"
-                                    >
-                                        <ToggleButton value="daily" aria-label="일간">
-                                            일간
-                                        </ToggleButton>
-                                        <ToggleButton value="weekly" aria-label="주간">
-                                            주간
-                                        </ToggleButton>
-                                        <ToggleButton value="monthly" aria-label="월간">
-                                            월간
-                                        </ToggleButton>
-                                    </ToggleButtonGroup>
-                                </Box>
-                                
-                                {tradeTypeLoading ? (
-                                    <Box sx={{ display: "flex", justifyContent: "center", my: 5 }}>
-                                        <CircularProgress />
-                                    </Box>
-                                ) : tradeTypeError ? (
-                                    <Box sx={{ textAlign: "center", py: 3 }}>
-                                        <Typography color="error">{tradeTypeError}</Typography>
-                                        <Button 
-                                            variant="contained" 
-                                            sx={{ mt: 2 }} 
-                                            onClick={() => handleTradeTypePeriodChange(null as any, tradeTypePeriod)}
-                                        >
-                                            다시 시도
-                                        </Button>
-                                    </Box>
-                                ) : (
-                                    <Box 
-                                        ref={tradeTypeChartRef} 
-                                        sx={{ 
-                                            width: '100%',
-                                            height: '350px',
-                                            '& canvas': {
-                                                width: '100% !important',
-                                                height: '100% !important'
-                                            }
-                                        }} 
-                                    />
-                                )}
-                            </Paper>
-                        </Grid>
-                    </Grid>
-                    {/* In the activity list section */}
-                    <Box sx={{ mt: 3 }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                            <Typography variant="h6" sx={{ fontWeight: 600 }}>최근 활동</Typography>
-                        </Box>
-                        <Paper sx={{ p: 3 }}>
-                            {notificationError ? (
-                                <Typography color="error" sx={{ fontWeight: 500 }}>{notificationError}</Typography>
-                            ) : notifications.length === 0 ? (
-                                <Typography color="textSecondary" sx={{ fontWeight: 500 }}>최근 활동이 없습니다.</Typography>
-                            ) : (
-                                <List sx={{ '& .MuiListItem-root': { px: 2 } }}>
-                                    {notifications
-                                        .slice()
-                                        .sort((a, b) => b.id - a.id)
-                                        .slice(0, 5)
-                                        .map((notification) => (
-                                        <ListItem 
-                                            key={notification.id}
-                                            sx={{ 
-                                                py: 2,
-                                                borderBottom: '1px solid rgba(0,0,0,0.06)',
-                                                '&:last-child': { borderBottom: 'none' },
-                                                borderRadius: '8px',
-                                                '&:hover': {
-                                                    bgcolor: 'rgba(0,0,0,0.02)',
-                                                    cursor: 'pointer'
-                                                },
-                                                transition: 'all 0.2s ease',
-                                            }}
-                                            onClick={() => handleNotificationNavigation(notification)}
-                                        >
-                                            <Box sx={{ 
-                                                width: 4, 
-                                                height: 40, 
-                                                borderRadius: '4px',
-                                                bgcolor: notification.isRead ? 'grey.400' : getNotificationColor(notification.type),
-                                                mr: 2 
-                                            }} />
-                                            <ListItemText 
-                                                primary={
-                                                    <>
-                                                        <Typography 
-                                                            variant="body1" 
-                                                            sx={{ 
-                                                                fontWeight: notification.isRead ? 400 : 600,
-                                                                color: notification.isRead ? 'text.disabled' : 'text.primary',
-                                                                mb: 0.5,
-                                                                fontSize: '0.95rem',
-                                                            }}
-                                                        >
-                                                            {notification.content}
-                                                        </Typography>
-                                                        <Typography 
-                                                            component="span"
-                                                            variant="body2"
-                                                            sx={{
-                                                                display: 'inline-flex',
-                                                                alignItems: 'center',
-                                                                bgcolor: notification.isRead ? 'grey.100' : `${getNotificationColor(notification.type)}15`,
-                                                                color: notification.isRead ? 'grey.500' : getNotificationColor(notification.type),
-                                                                py: 0.5,
-                                                                px: 1,
-                                                                borderRadius: '4px',
-                                                                fontSize: '0.8rem',
-                                                                fontWeight: 600,
-                                                            }}
-                                                        >
-                                                            {notification.type}
-                                                        </Typography>
-                                                    </>
-                                                }
-                                            />
-                                        </ListItem>
-                                    ))}
-                                </List>
-                            )}
-                        </Paper>
-                    </Box>
-                </Box>
-            </Box>
-
-            {/* 에러 메시지 스낵바 */}
-            <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError(null)}>
-                <Alert onClose={() => setError(null)} severity="error" sx={{ width: "100%" }}>
-                    {error}
-                </Alert>
-            </Snackbar>
-
-            <Box sx={{ bgcolor: "#fff", p: 2, textAlign: "center", mt: 4 }}>
-                <Typography variant="caption" color="textSecondary">
-                    © 2024 Customer Management System. All rights reserved.
+        <>
+            {/* Quick Action Buttons */}
+            <Box sx={{ mb: 4 }}>
+                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                    빠른 이동
                 </Typography>
+                <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6} md={2}>
+                        <Button
+                            variant="contained"
+                            fullWidth
+                            onClick={() => navigate("/customer-management/add")}
+                            sx={{
+                                py: 2,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: 1,
+                                bgcolor: '#4CAF50',
+                                '&:hover': {
+                                    bgcolor: '#43A047',
+                                },
+                            }}
+                        >
+                            <Person sx={{ fontSize: 32 }} />
+                            <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                고객 등록
+                            </Typography>
+                        </Button>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={2}>
+                        <Button
+                            variant="contained"
+                            fullWidth
+                            onClick={() => navigate("/survey/create")}
+                            sx={{
+                                py: 2,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: 1,
+                                bgcolor: '#2196F3',
+                                '&:hover': {
+                                    bgcolor: '#1E88E5',
+                                },
+                            }}
+                        >
+                            <Assignment sx={{ fontSize: 32 }} />
+                            <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                설문 작성
+                            </Typography>
+                        </Button>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={2}>
+                        <Button
+                            variant="contained"
+                            fullWidth
+                            onClick={() => navigate("/survey/answers")}
+                            sx={{
+                                py: 2,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: 1,
+                                bgcolor: '#9C27B0',
+                                '&:hover': {
+                                    bgcolor: '#8E24AA',
+                                },
+                            }}
+                        >
+                            <Assignment sx={{ fontSize: 32 }} />
+                            <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                설문 응답
+                            </Typography>
+                        </Button>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={2}>
+                        <Button
+                            variant="contained"
+                            fullWidth
+                            onClick={() => navigate("/contract/create")}
+                            sx={{
+                                py: 2,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: 1,
+                                bgcolor: '#FF9800',
+                                '&:hover': {
+                                    bgcolor: '#F57C00',
+                                },
+                            }}
+                        >
+                            <InsertDriveFile sx={{ fontSize: 32 }} />
+                            <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                계약 등록
+                            </Typography>
+                        </Button>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={2}>
+                        <Button
+                            variant="contained"
+                            fullWidth
+                            onClick={() => navigate("/message/create")}
+                            sx={{
+                                py: 2,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: 1,
+                                bgcolor: '#FF5722',
+                                '&:hover': {
+                                    bgcolor: '#F4511E',
+                                },
+                            }}
+                        >
+                            <Email sx={{ fontSize: 32 }} />
+                            <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                문자 작성
+                            </Typography>
+                        </Button>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={2}>
+                        <Button
+                            variant="contained"
+                            fullWidth
+                            onClick={() => navigate("/message/history")}
+                            sx={{
+                                py: 2,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: 1,
+                                bgcolor: '#607D8B',
+                                '&:hover': {
+                                    bgcolor: '#546E7A',
+                                },
+                            }}
+                        >
+                            <Email sx={{ fontSize: 32 }} />
+                            <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                보낸 문자
+                            </Typography>
+                        </Button>
+                    </Grid>
+                </Grid>
             </Box>
-        </ThemeProvider>
+
+            {/* Stats */}
+            <Grid container spacing={3} sx={{ mb: 4 }}>
+                <Grid item xs={12} md={4}>
+                    <Paper sx={{ p: 3 }}>
+                        <Typography color="textSecondary" variant="body2" sx={{ mb: 1 }}>
+                            금주 신규 고객
+                        </Typography>
+                        {customerSummaryLoading ? (
+                            <Box sx={{ display: "flex", justifyContent: "center", my: 2 }}>
+                                <CircularProgress size={24} />
+                            </Box>
+                        ) : customerSummaryError ? (
+                            <Typography color="error" variant="body2">
+                                {customerSummaryError}
+                            </Typography>
+                        ) : customerSummary ? (
+                            <>
+                                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+                                    <Typography variant="h4">{customerSummary.count}</Typography>
+                                    <Typography 
+                                        variant="body2" 
+                                        sx={{ 
+                                            color: customerSummary.rate >= 0 ? '#f44336' : '#2196f3',
+                                            bgcolor: customerSummary.rate >= 0 ? '#ffebee' : '#e3f2fd',
+                                            px: 1,
+                                            py: 0.5,
+                                            borderRadius: '4px',
+                                        }}
+                                    >
+                                        {customerSummary.rate >= 0 ? '+' : ''}{customerSummary.rate.toFixed(1)}%
+                                    </Typography>
+                                </Box>
+                                <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                                    전주 대비
+                                </Typography>
+                            </>
+                        ) : (
+                            <Typography variant="body2" color="textSecondary">
+                                데이터를 불러올 수 없습니다.
+                            </Typography>
+                        )}
+                    </Paper>
+                </Grid>
+                <Grid item xs={12} md={4}>
+                    <Paper sx={{ p: 3 }}>
+                        <Typography color="textSecondary" variant="body2" sx={{ mb: 1 }}>
+                            진행중인 계약
+                        </Typography>
+                        {contractSummaryLoading ? (
+                            <Box sx={{ display: "flex", justifyContent: "center", my: 2 }}>
+                                <CircularProgress size={24} />
+                            </Box>
+                        ) : contractSummaryError ? (
+                            <Typography color="error" variant="body2">
+                                {contractSummaryError}
+                            </Typography>
+                        ) : contractSummary ? (
+                            <>
+                                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+                                    <Typography variant="h4">{contractSummary.count}</Typography>
+                                    <Typography 
+                                        variant="body2" 
+                                        sx={{ 
+                                            color: contractSummary.rate >= 0 ? '#f44336' : '#2196f3',
+                                            bgcolor: contractSummary.rate >= 0 ? '#ffebee' : '#e3f2fd',
+                                            px: 1,
+                                            py: 0.5,
+                                            borderRadius: '4px',
+                                        }}
+                                    >
+                                        {contractSummary.rate >= 0 ? '+' : ''}{contractSummary.rate.toFixed(1)}%
+                                    </Typography>
+                                </Box>
+                                <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                                    전주 대비
+                                </Typography>
+                            </>
+                        ) : (
+                            <Typography variant="body2" color="textSecondary">
+                                데이터를 불러올 수 없습니다.
+                            </Typography>
+                        )}
+                    </Paper>
+                </Grid>
+                <Grid item xs={12} md={4}>
+                    <Paper sx={{ p: 3 }}>
+                        <Typography color="textSecondary" variant="body2" sx={{ mb: 1 }}>
+                            오늘 상담
+                        </Typography>
+                        {consultationSummaryLoading ? (
+                            <Box sx={{ display: "flex", justifyContent: "center", my: 2 }}>
+                                <CircularProgress size={24} />
+                            </Box>
+                        ) : consultationSummaryError ? (
+                            <Typography color="error" variant="body2">
+                                {consultationSummaryError}
+                            </Typography>
+                        ) : consultationSummary ? (
+                            <>
+                                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+                                    <Typography variant="h4">{consultationSummary.todayCount}</Typography>
+                                    <Typography 
+                                        variant="body2" 
+                                        sx={{ 
+                                            color: '#f44336',
+                                            bgcolor: '#ffebee',
+                                            px: 1,
+                                            py: 0.5,
+                                            borderRadius: '4px',
+                                        }}
+                                    >
+                                        {consultationSummary.remainingCount}건 남음
+                                    </Typography>
+                                </Box>
+                                <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                                    오늘의 상담 일정
+                                </Typography>
+                            </>
+                        ) : (
+                            <Typography variant="body2" color="textSecondary">
+                                데이터를 불러올 수 없습니다.
+                            </Typography>
+                        )}
+                    </Paper>
+                </Grid>
+            </Grid>
+
+            {/* Charts */}
+            <Grid container spacing={3}>
+                <Grid item xs={12} md={6}>
+                    <Paper sx={{ p: 3 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                            <Typography variant="h6">부동산 유형 분포</Typography>
+                            <ToggleButtonGroup
+                                value={realEstateTypePeriod}
+                                exclusive
+                                onChange={handleRealEstateTypePeriodChange}
+                                aria-label="부동산 유형 기간 선택"
+                                size="small"
+                            >
+                                <ToggleButton value="daily" aria-label="일간">
+                                    일간
+                                </ToggleButton>
+                                <ToggleButton value="weekly" aria-label="주간">
+                                    주간
+                                </ToggleButton>
+                                <ToggleButton value="monthly" aria-label="월간">
+                                    월간
+                                </ToggleButton>
+                            </ToggleButtonGroup>
+                        </Box>
+                        
+                        {realEstateTypeLoading ? (
+                            <Box sx={{ display: "flex", justifyContent: "center", my: 5 }}>
+                                <CircularProgress />
+                            </Box>
+                        ) : realEstateTypeError ? (
+                            <Box sx={{ textAlign: "center", py: 3 }}>
+                                <Typography color="error">{realEstateTypeError}</Typography>
+                                <Button 
+                                    variant="contained" 
+                                    sx={{ mt: 2 }} 
+                                    onClick={() => handleRealEstateTypePeriodChange(null as any, realEstateTypePeriod)}
+                                >
+                                    다시 시도
+                                </Button>
+                            </Box>
+                        ) : (
+                            <Box 
+                                ref={realEstateTypeChartRef} 
+                                sx={{ 
+                                    width: '100%',
+                                    height: '350px',
+                                    '& canvas': {
+                                        width: '100% !important',
+                                        height: '100% !important'
+                                    }
+                                }} 
+                            />
+                        )}
+                    </Paper>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                    <Paper sx={{ p: 3 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                            <Typography variant="h6">거래 유형 분포</Typography>
+                            <ToggleButtonGroup
+                                value={tradeTypePeriod}
+                                exclusive
+                                onChange={handleTradeTypePeriodChange}
+                                aria-label="거래 유형 기간 선택"
+                                size="small"
+                            >
+                                <ToggleButton value="daily" aria-label="일간">
+                                    일간
+                                </ToggleButton>
+                                <ToggleButton value="weekly" aria-label="주간">
+                                    주간
+                                </ToggleButton>
+                                <ToggleButton value="monthly" aria-label="월간">
+                                    월간
+                                </ToggleButton>
+                            </ToggleButtonGroup>
+                        </Box>
+                        
+                        {tradeTypeLoading ? (
+                            <Box sx={{ display: "flex", justifyContent: "center", my: 5 }}>
+                                <CircularProgress />
+                            </Box>
+                        ) : tradeTypeError ? (
+                            <Box sx={{ textAlign: "center", py: 3 }}>
+                                <Typography color="error">{tradeTypeError}</Typography>
+                                <Button 
+                                    variant="contained" 
+                                    sx={{ mt: 2 }} 
+                                    onClick={() => handleTradeTypePeriodChange(null as any, tradeTypePeriod)}
+                                >
+                                    다시 시도
+                                </Button>
+                            </Box>
+                        ) : (
+                            <Box 
+                                ref={tradeTypeChartRef} 
+                                sx={{ 
+                                    width: '100%',
+                                    height: '350px',
+                                    '& canvas': {
+                                        width: '100% !important',
+                                        height: '100% !important'
+                                    }
+                                }} 
+                            />
+                        )}
+                    </Paper>
+                </Grid>
+            </Grid>
+        </>
     )
 }
 

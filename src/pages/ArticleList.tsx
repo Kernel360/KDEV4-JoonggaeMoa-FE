@@ -628,7 +628,7 @@ const ArticleList = () => {
                                     <TableCell>매물명</TableCell>
                                     <TableCell>매물 유형</TableCell>
                                     <TableCell>거래 유형</TableCell>
-                                    <TableCell>매매가</TableCell>
+                                    <TableCell>가격</TableCell>
                                     <TableCell>동네</TableCell>
                                     <TableCell>등록일</TableCell>
                                     <TableCell>담당 부동산</TableCell>
@@ -667,7 +667,9 @@ const ArticleList = () => {
                                                 />
                                             </TableCell>
                                             <TableCell>
-                                                {isZeroPrice(article.price) ? "X" : formatPrice(article.price)}
+                                                {isZeroPrice(article.price) 
+                                                    ? "X" 
+                                                    : formatPrice(article.price)}
                                             </TableCell>
                                             <TableCell>
                                                 {article.cortarName || "-"}
@@ -690,27 +692,51 @@ const ArticleList = () => {
                                                         <Grid container spacing={2}>
                                                             <Grid item xs={12}>
                                                                 <Box sx={{ mb: 1 }}>
-                                                                    <Typography variant="h6" fontWeight="bold">기본 정보</Typography>
-                                                                    <Grid container spacing={2} sx={{ mt: 0.5 }}>
-                                                                        <Grid item xs={4}>
-                                                                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                                                                                <Box sx={{ display: 'flex' }}>
-                                                                                    <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>매물명:</Typography>
-                                                                                    <Typography variant="body2">{selectedArticle.name}</Typography>
-                                                                                </Box>
-                                                                                <Box sx={{ display: 'flex' }}>
-                                                                                    <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>매물 유형:</Typography>
-                                                                                    <Chip
-                                                                                        label={selectedArticle.realEstateType}
-                                                                                        size="small"
-                                                                                        sx={{
-                                                                                            bgcolor: getTypeColor(selectedArticle.realEstateType),
-                                                                                            color: "white",
-                                                                                        }}
-                                                                                    />
-                                                                                </Box>
+                                                                    <Typography variant="body2" fontWeight="bold">기본 정보</Typography>
+                                                                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mt: 0.5 }}>
+                                                                        <Box sx={{ display: 'flex' }}>
+                                                                            <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>매물명:</Typography>
+                                                                            <Typography variant="body2">{selectedArticle.name}</Typography>
+                                                                        </Box>
+                                                                        <Box sx={{ display: 'flex' }}>
+                                                                            <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>매물 유형:</Typography>
+                                                                            <Chip
+                                                                                label={selectedArticle.realEstateType}
+                                                                                size="small"
+                                                                                sx={{
+                                                                                    bgcolor: getTypeColor(selectedArticle.realEstateType),
+                                                                                    color: "white",
+                                                                                }}
+                                                                            />
+                                                                        </Box>
+                                                                        <Box sx={{ display: 'flex' }}>
+                                                                            <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>거래 유형:</Typography>
+                                                                            <Chip
+                                                                                label={selectedArticle.tradeType}
+                                                                                size="small"
+                                                                                sx={{
+                                                                                    bgcolor: getTradeTypeColor(selectedArticle.tradeType),
+                                                                                    color: "white",
+                                                                                }}
+                                                                            />
+                                                                        </Box>
+                                                                        <Box sx={{ display: 'flex' }}>
+                                                                            <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>
+                                                                                {selectedArticle.tradeType === "매매" || selectedArticle.tradeType === "전세" ? "매매가" : "보증금"}:
+                                                                            </Typography>
+                                                                            <Typography variant="body2">
+                                                                                {isZeroPrice(selectedArticle.price) 
+                                                                                    ? "X" 
+                                                                                    : formatPrice(selectedArticle.price)}
+                                                                            </Typography>
+                                                                        </Box>
+                                                                        {selectedArticle.rentPrice > 0 && (
+                                                                            <Box sx={{ display: 'flex' }}>
+                                                                                <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>월세:</Typography>
+                                                                                <Typography variant="body2">{formatPrice(selectedArticle.rentPrice)}</Typography>
                                                                             </Box>
-                                                                        </Grid>
+                                                                        )}
+                                                                        
                                                                         <Grid item xs={4}>
                                                                             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                                                                                 <Box sx={{ display: 'flex' }}>
@@ -746,7 +772,7 @@ const ArticleList = () => {
                                                                                 </Box>
                                                                             </Box>
                                                                         </Grid>
-                                                                    </Grid>
+                                                                    </Box>
                                                                 </Box>
                                                             </Grid>
                                                             <Grid item xs={12}>
