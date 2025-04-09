@@ -108,7 +108,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 }
             };
         }
-    }, [isAuthenticated]);  // Add location.pathname to dependencies
+    }, [isAuthenticated, location.pathname]);  // Add location.pathname to dependencies
 
     return <AuthContext.Provider value={{ isAuthenticated, login, logout, agentId, loading }}>{children}</AuthContext.Provider>
 }
