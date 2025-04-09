@@ -299,9 +299,6 @@ const ContractList = () => {
                                     <TableCell sx={{ fontWeight: 500 }}>계약일</TableCell>
                                     <TableCell sx={{ fontWeight: 500 }}>만료일</TableCell>
                                     <TableCell sx={{ fontWeight: 500 }}>상태</TableCell>
-                                    <TableCell sx={{ fontWeight: 500 }} align="right">
-                                        작업
-                                    </TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -330,14 +327,6 @@ const ContractList = () => {
                                                                 color: statusConfig[status as keyof typeof statusConfig].textColor,
                                                             }}
                                                         />
-                                                    </TableCell>
-                                                    <TableCell align="right">
-                                                        <IconButton size="small" onClick={(e) => handleEditContract(e, contract.id)} sx={{ mr: 1 }}>
-                                                            <Edit fontSize="small" />
-                                                        </IconButton>
-                                                        <IconButton size="small" color="error" onClick={(e) => handleDeleteClick(e, contract.id)}>
-                                                            <Delete fontSize="small" />
-                                                        </IconButton>
                                                     </TableCell>
                                                 </TableRow>
                                             )

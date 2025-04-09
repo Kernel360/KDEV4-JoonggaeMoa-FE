@@ -344,7 +344,7 @@ const ArticleList = () => {
         <Box sx={{ p: 3 }}>
             <AppBar position="static" color="default" elevation={0} sx={{ mb: 3 }}>
                 <Toolbar sx={{ 
-                    minWidth: '1000px', // Set minimum width for the toolbar
+                    minWidth: '800px', // Set minimum width for the toolbar
                     overflowX: 'auto', // Enable horizontal scrolling
                     '&::-webkit-scrollbar': {
                         height: '8px',
@@ -364,7 +364,7 @@ const ArticleList = () => {
                     <IconButton edge="start" color="inherit" onClick={handleBack} sx={{ mr: 2, flexShrink: 0 }}>
                         <ArrowBack />
                     </IconButton>
-                    <Typography variant="h6" sx={{ flexGrow: 1, flexShrink: 0, mr: 2}}>
+                    <Typography variant="h6" sx={{ flexGrow: 1, flexShrink: 0 }}>
                         매물 관리
                     </Typography>
                     <Box sx={{ 
@@ -523,7 +523,7 @@ const ArticleList = () => {
                                     <TableCell>매물명</TableCell>
                                     <TableCell>매물 유형</TableCell>
                                     <TableCell>거래 유형</TableCell>
-                                    <TableCell>매매가</TableCell>
+                                    <TableCell>가격</TableCell>
                                     <TableCell>동네</TableCell>
                                     <TableCell>등록일</TableCell>
                                     <TableCell>담당 부동산</TableCell>
@@ -562,7 +562,9 @@ const ArticleList = () => {
                                                 />
                                             </TableCell>
                                             <TableCell>
-                                                {isZeroPrice(article.price) ? "X" : formatPrice(article.price)}
+                                                {isZeroPrice(article.price) 
+                                                    ? "X" 
+                                                    : formatPrice(article.price)}
                                             </TableCell>
                                             <TableCell>
                                                 {article.cortarName || "-"}
@@ -614,9 +616,13 @@ const ArticleList = () => {
                                                                             />
                                                                         </Box>
                                                                         <Box sx={{ display: 'flex' }}>
-                                                                            <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>매매가:</Typography>
+                                                                            <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>
+                                                                                {selectedArticle.tradeType === "매매" || selectedArticle.tradeType === "전세" ? "매매가" : "보증금"}:
+                                                                            </Typography>
                                                                             <Typography variant="body2">
-                                                                                {isZeroPrice(selectedArticle.price) ? "X" : formatPrice(selectedArticle.price)}
+                                                                                {isZeroPrice(selectedArticle.price) 
+                                                                                    ? "X" 
+                                                                                    : formatPrice(selectedArticle.price)}
                                                                             </Typography>
                                                                         </Box>
                                                                         {selectedArticle.rentPrice > 0 && (
