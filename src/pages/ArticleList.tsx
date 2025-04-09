@@ -344,7 +344,7 @@ const ArticleList = () => {
         <Box sx={{ p: 3 }}>
             <AppBar position="static" color="default" elevation={0} sx={{ mb: 3 }}>
                 <Toolbar sx={{ 
-                    minWidth: '800px', // Set minimum width for the toolbar
+                    minWidth: '1000px', // Set minimum width for the toolbar
                     overflowX: 'auto', // Enable horizontal scrolling
                     '&::-webkit-scrollbar': {
                         height: '8px',
@@ -364,7 +364,7 @@ const ArticleList = () => {
                     <IconButton edge="start" color="inherit" onClick={handleBack} sx={{ mr: 2, flexShrink: 0 }}>
                         <ArrowBack />
                     </IconButton>
-                    <Typography variant="h6" sx={{ flexGrow: 1, flexShrink: 0 }}>
+                    <Typography variant="h6" sx={{ flexGrow: 1, flexShrink: 0, mr: 2}}>
                         매물 관리
                     </Typography>
                     <Box sx={{ 

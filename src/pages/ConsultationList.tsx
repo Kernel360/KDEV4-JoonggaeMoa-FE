@@ -469,14 +469,6 @@ const ConsultationList = () => {
     // Update the summary information section in the render
     return (
         <Box sx={{ flexGrow: 1, bgcolor: "#f5f5f5", minHeight: "100vh", overflow: "auto" }}>
-            <AppBar position="static" color="default" elevation={0} sx={{ bgcolor: "white" }}>
-                <Toolbar>
-                    <Typography variant="h6" component="div" sx={{ flexGrow: 1, color: "#888", fontWeight: 300 }}>
-                        상담 관리
-                    </Typography>
-                </Toolbar>
-            </AppBar>
-
             <Container maxWidth="lg" sx={{ mt: 4, mb: 4, mx: "auto", px: { xs: 2, sm: 3, md: 4 } }}>
                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
                     <Box sx={{ display: "flex", alignItems: "center" }}>
