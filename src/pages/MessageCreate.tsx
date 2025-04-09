@@ -95,6 +95,7 @@ const MessageCreate = () => {
     const [content, setContent] = useState("")
     const [templates, setTemplates] = useState<MessageTemplateResponse[]>([])
     const [selectedTemplate, setSelectedTemplate] = useState("")
+    const [previewContent, setPreviewContent] = useState("")
 
     // 전송 시간 관련 상태
     const [scheduledDate, setScheduledDate] = useState("")
@@ -163,7 +164,28 @@ const MessageCreate = () => {
             if (selectedTemplateObj) {
                 setContent(selectedTemplateObj.content)
                 setByteCount(getByteLength(selectedTemplateObj.content))
+                updatePreview(selectedTemplateObj.content)
             }
+        }
+    }
+
+    // 미리보기 업데이트 함수
+    const updatePreview = (content: string) => {
+        // 실제 미리보기에서는 ${이름} 등의 변수를 실제 값으로 대체
+        let preview = content
+        preview = preview.replace(/\${이름}/g, "홍길동")
+        setPreviewContent(preview)
+    }
+
+    // 메시지 내용 변경 시 미리보기 업데이트
+    const handleContentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newContent = e.target.value
+        const newByteCount = getByteLength(newContent)
+
+        if (newByteCount <= 90) {
+            setContent(newContent)
+            setByteCount(newByteCount)
+            updatePreview(newContent)
         }
     }
 
@@ -395,16 +417,8 @@ const MessageCreate = () => {
                                     rows={6}
                                     label="문자 내용"
                                     value={content}
-                                    onChange={(e) => {
-                                        const newContent = e.target.value
-                                        const newByteCount = getByteLength(newContent)
-
-                                        if (newByteCount <= 90) {
-                                            setContent(newContent)
-                                            setByteCount(newByteCount)
-                                        }
-                                    }}
-                                    placeholder="문자 내용을 입력하세요"
+                                    onChange={handleContentChange}
+                                    placeholder="문자 내용을 입력하세요. (고객명은 ${이름}으로 입력하세요.)"
                                     sx={{ mb: 1 }}
                                     error={byteCount > 90}
                                     helperText={byteCount > 90 ? "최대 90바이트까지 입력 가능합니다." : ""}
@@ -415,6 +429,25 @@ const MessageCreate = () => {
                                         {byteCount}/90 바이트
                                     </Typography>
                                 </Box>
+
+                                <Divider sx={{ my: 2 }} />
+
+                                <Typography variant="subtitle2" color="textSecondary" sx={{ mb: 1 }}>
+                                    미리보기
+                                </Typography>
+                                <Paper
+                                    elevation={0}
+                                    sx={{
+                                        p: 2,
+                                        bgcolor: "#f9f9f9",
+                                        borderRadius: 1,
+                                        minHeight: "100px",
+                                        mb: 3,
+                                        whiteSpace: "pre-wrap",
+                                    }}
+                                >
+                                    {previewContent || "미리보기 내용이 여기에 표시됩니다."}
+                                </Paper>
 
                                 <Divider sx={{ my: 2 }} />
 

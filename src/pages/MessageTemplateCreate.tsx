@@ -81,6 +81,12 @@ const MessageTemplateCreate = () => {
     }
 
     const handleAddTemplate = () => {
+        // Check if the maximum number of templates (10) has been reached
+        if (templates.length >= 10) {
+            setError("템플릿은 최대 10개까지만 생성할 수 있습니다.")
+            return
+        }
+        
         setSelectedTemplate(null)
         setTemplateTitle("")
         setTemplateContent("")
@@ -88,9 +94,9 @@ const MessageTemplateCreate = () => {
     }
 
     const updatePreview = (content: string) => {
-        // 실제 미리보기에서는 #{이름} 등의 변수를 실제 값으로 대체
+        // 실제 미리보기에서는 ${이름} 등의 변수를 실제 값으로 대체
         let preview = content
-        preview = preview.replace(/#{이름}/g, "홍길동")
+        preview = preview.replace(/\${이름}/g, "홍길동")
         setPreviewContent(preview)
     }
 
@@ -108,6 +114,12 @@ const MessageTemplateCreate = () => {
 
         if (!templateContent.trim()) {
             setError("템플릿 내용을 입력해주세요.")
+            return
+        }
+
+        // Check if the maximum number of templates (10) has been reached when creating a new template
+        if (!selectedTemplate && templates.length >= 10) {
+            setError("템플릿은 최대 10개까지만 생성할 수 있습니다.")
             return
         }
 
@@ -217,9 +229,14 @@ const MessageTemplateCreate = () => {
                                 <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
                                     템플릿 목록
                                 </Typography>
-                                <Button startIcon={<Add />} size="small" onClick={handleAddTemplate} sx={{ color: "#1976d2" }}>
-                                    추가
-                                </Button>
+                                <Box sx={{ display: "flex", alignItems: "center" }}>
+                                    <Typography variant="caption" color="textSecondary" sx={{ mr: 1 }}>
+                                        {templates.length}/10
+                                    </Typography>
+                                    <Button startIcon={<Add />} size="small" onClick={handleAddTemplate} sx={{ color: "#1976d2" }}>
+                                        추가
+                                    </Button>
+                                </Box>
                             </Box>
 
                             <TextField
@@ -323,7 +340,7 @@ const MessageTemplateCreate = () => {
                                 rows={8}
                                 value={templateContent}
                                 onChange={handleContentChange}
-                                placeholder="템플릿 내용을 입력하세요. (고객명은 #{이름}으로 입력하세요.)"
+                                placeholder="템플릿 내용을 입력하세요. (고객명은 ${이름}으로 입력하세요.)"
                                 sx={{ mb: 3 }}
                             />
                             <Box sx={{ display: "flex", justifyContent: "flex-end" }}>

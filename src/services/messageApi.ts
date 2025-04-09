@@ -10,6 +10,7 @@ export interface MessageResponse {
     customerPhone: string
     content: string
     createdAt: string
+    sendAt: string
     sendStatus: string
 }
 
@@ -33,6 +34,7 @@ export interface ReservedMessageResponse {
     customerName: string
     customerPhone: string
     content: string
+    createdAt: string
     sendAt: string
     sendStatus: string
 }
