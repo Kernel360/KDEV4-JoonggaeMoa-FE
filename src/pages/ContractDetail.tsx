@@ -177,9 +177,6 @@ const ContractDetail = () => {
                         계약 상세 정보
                     </Typography>
                     <Box sx={{ flexGrow: 1 }} />
-                    <Button startIcon={<Edit />} sx={{ mr: 1, color: "#555" }} onClick={() => navigate(`/contract/edit/${id}`)}>
-                        수정
-                    </Button>
                     <Button startIcon={<Delete />} color="error" onClick={handleDeleteClick}>
                         삭제
                     </Button>
