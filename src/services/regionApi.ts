@@ -1,22 +1,22 @@
-import axios from "axios"
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
+import api from "./api"
+import type { ApiResponse } from "../types/api"
 
 export interface RegionResponse {
     id: number
-    area: string
-    createdAt: string
-    updatedAt: string
+    cortarNo: string
+    centerLat: number
+    centerLon: number
+    cortarName: string
+    cortarType: string
 }
 
 export const regionApi = {
     getAllRegions: async () => {
         try {
-            const response = await axios.get(`${API_BASE_URL}/api/regions`)
-            console.log("Region API response:", response)
+            const response = await api.get<ApiResponse<RegionResponse[]>>("/api/regions")
             return response
         } catch (error) {
-            console.error("Error in regionApi.getAllRegions:", error)
+            console.error("Error fetching regions:", error)
             throw error
         }
     }
