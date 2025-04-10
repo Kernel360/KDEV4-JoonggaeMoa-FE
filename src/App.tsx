@@ -25,7 +25,6 @@ import MessageTemplateCreate from "./pages/MessageTemplateCreate.tsx"
 import ContractList from "./pages/ContractList.tsx"
 import ContractCreate from "./pages/ContractCreate.tsx"
 import ContractDetail from "./pages/ContractDetail.tsx"
-import ContractEdit from "./pages/ContractEdit.tsx"
 import ArticleList from "./pages/ArticleList.tsx"
 import MyPage from "./pages/MyPage"
 // Change from default import to named import
