@@ -121,10 +121,19 @@ const ContractCreate = () => {
             return
         }
 
-        // if (!contractFile) {
-        //     setError("계약서 파일을 업로드해주세요.")
-        //     return
-        // }
+        // Add date validation
+        const contractDate = new Date(createdAt)
+        const expirationDate = new Date(expiredAt)
+        
+        if (expirationDate <= contractDate) {
+            setError("날짜 정보를 올바르게 입력하세요")
+            return
+        }
+
+        if (!contractFile) {
+            setError("계약서 파일을 등록해주세요.")
+            return
+        }
 
         try {
             setLoading(true)
@@ -157,6 +166,25 @@ const ContractCreate = () => {
 
     return (
         <Box sx={{ flexGrow: 1, bgcolor: "#f5f5f5", minHeight: "100vh" }}>
+            {/* Add error alert at the top */}
+            {error && (
+                <Box
+                    sx={{
+                        position: 'fixed',
+                        top: 20,
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        zIndex: 9999,
+                        width: 'auto',
+                        minWidth: 300,
+                    }}
+                >
+                    <Alert severity="error" onClose={() => setError(null)}>
+                        {error}
+                    </Alert>
+                </Box>
+            )}
+
             <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
                 <Box sx={{ display: "flex", alignItems: "center", mb: 4 }}>
                     <IconButton onClick={() => navigate("/contract")} sx={{ mr: 1 }}>
@@ -331,12 +359,7 @@ const ContractCreate = () => {
                 </Paper>
             </Container>
 
-            <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError(null)}>
-                <Alert onClose={() => setError(null)} severity="error" sx={{ width: "100%" }}>
-                    {error}
-                </Alert>
-            </Snackbar>
-
+            {/* Remove the error Snackbar */}
             <Snackbar open={success} autoHideDuration={6000} onClose={() => setSuccess(false)}>
                 <Alert onClose={() => setSuccess(false)} severity="success" sx={{ width: "100%" }}>
                     계약이 성공적으로 등록되었습니다.
