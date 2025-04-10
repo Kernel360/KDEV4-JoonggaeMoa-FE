@@ -25,10 +25,11 @@ import {
     Alert,
     Paper,
     Snackbar,
+    Grid,
 } from "@mui/material"
 // 고객용 API 함수 import로 변경
 import { getSurveyForCustomer, submitSurveyAnswerForCustomer } from "../services/surveyApi"
-import { QuestionType, type QuestionResponse, type SurveyResponse } from "../types/survey"
+import { QuestionType, type QuestionResponse, type SurveyResponse, AnswerRequest } from "../types/survey"
 import { CheckCircle } from "@mui/icons-material"
 
 const SurveySubmit: React.FC = () => {
@@ -48,6 +49,9 @@ const SurveySubmit: React.FC = () => {
     const [email, setEmail] = useState<string>("")
     const [phone, setPhone] = useState<string>("")
     const [consent, setConsent] = useState<boolean>(false)
+    const [applyConsultation, setApplyConsultation] = useState<boolean>(false)
+    const [consultAt, setConsultAt] = useState<string>("")
+    const [submitError, setSubmitError] = useState<string | null>(null)
 
     // 답변 관리
     const [answers, setAnswers] = useState<{ [key: number]: string[] }>({})
@@ -223,6 +227,14 @@ const SurveySubmit: React.FC = () => {
         })
     }
 
+    // 상담 신청 시간 변경 핸들러
+    const handleConsultAtChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const dateTimeValue = e.target.value;
+        // ISO 형식의 날짜를 YYYY-MM-DD HH:mm 형식으로 변환
+        const formattedDateTime = dateTimeValue.replace('T', ' ');
+        setConsultAt(formattedDateTime);
+    };
+
     // 설문 데이터 로드
     useEffect(() => {
         // fetchSurvey 함수 내에서 API 호출 부분 변경
@@ -253,6 +265,7 @@ const SurveySubmit: React.FC = () => {
         }
 
         fetchSurvey()
+        console.log(surveyId)
     }, [surveyId])
 
     // 폼 유효성 검사
@@ -316,32 +329,47 @@ const SurveySubmit: React.FC = () => {
     // 설문 제출 핸들러
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-
-        // 폼 유효성 검사
-        if (!validateForm()) {
-            return
-        }
+        setSubmitError(null)
 
         try {
-            setSubmitting(true)
+            if (!survey) return
 
-            // API 요청 형식에 맞게 데이터 가공
-            const questions = survey!.questionList.map((q) => q.id)
-            const formattedAnswers = survey!.questionList.map((q) => answers[q.id] || [])
+            // Validate form data
+            if (!name || !email || !phone) {
+                setSubmitError('이름, 이메일, 전화번호를 모두 입력해주세요.')
+                return
+            }
 
-            // 요청 데이터 준비
-            const answerRequest = {
+            if (!consent) {
+                setSubmitError('개인정보 수집 및 이용에 동의해주세요.')
+                return
+            }
+
+            // Validate answers
+            const unansweredQuestions = survey.questionList.filter(q => !answers[q.id] || answers[q.id].length === 0)
+            if (unansweredQuestions.length > 0) {
+                setSubmitError('모든 질문에 답변해주세요.')
+                return
+            }
+
+            // Validate consultation request
+            if (applyConsultation && !consultAt) {
+                setSubmitError('상담 희망 일시를 선택해주세요.')
+                return
+            }
+
+            const answerRequest: AnswerRequest = {
                 name,
                 email,
                 phone,
                 consent,
-                questions,
-                answers: formattedAnswers,
+                questions: survey.questionList.map(q => q.id),
+                answers: survey.questionList.map(q => answers[q.id] || []),
+                applyConsultation,
+                consultAt: applyConsultation ? consultAt : undefined
             }
 
-            // 고객용 API 호출로 변경
             const response = await submitSurveyAnswerForCustomer(surveyId!, answerRequest)
-
             if (response.data.success) {
                 setSuccess(true)
                 // 폼 초기화
@@ -349,6 +377,8 @@ const SurveySubmit: React.FC = () => {
                 setEmail("")
                 setPhone("")
                 setConsent(false)
+                setApplyConsultation(false)
+                setConsultAt("")
 
                 // 답변 초기화
                 const initialAnswers: { [key: number]: string[] } = {}
@@ -363,13 +393,11 @@ const SurveySubmit: React.FC = () => {
                 // 페이지 상단으로 스크롤
                 window.scrollTo(0, 0)
             } else {
-                setError("설문 제출에 실패했습니다.")
+                setSubmitError(response.data.message || '답변 제출에 실패했습니다.')
             }
         } catch (err) {
-            console.error("설문 제출 오류:", err)
-            setError("설문 제출 중 오류가 발생했습니다.")
-        } finally {
-            setSubmitting(false)
+            console.error('Submit error:', err)
+            setSubmitError('답변 제출 중 오류가 발생했습니다.')
         }
     }
 
@@ -586,6 +614,40 @@ const SurveySubmit: React.FC = () => {
                     <Card sx={{ mb: 4 }}>
                         <CardContent>
                             <Typography variant="h6" gutterBottom>
+                                상담 신청
+                            </Typography>
+                            <FormControlLabel
+                                control={
+                                    <Checkbox
+                                        checked={applyConsultation}
+                                        onChange={(e) => setApplyConsultation(e.target.checked)}
+                                    />
+                                }
+                                label="상담을 신청합니다"
+                            />
+                            {applyConsultation && (
+                                <Box sx={{ mt: 2 }}>
+                                    <TextField
+                                        fullWidth
+                                        label="상담 희망 일시"
+                                        type="datetime-local"
+                                        value={consultAt}
+                                        onChange={handleConsultAtChange}
+                                        InputLabelProps={{
+                                            shrink: true,
+                                        }}
+                                        required
+                                    />
+                                </Box>
+                            )}
+                        </CardContent>
+                    </Card>
+                )}
+
+                {survey && (
+                    <Card sx={{ mb: 4 }}>
+                        <CardContent>
+                            <Typography variant="h6" gutterBottom>
                                 설문 항목
                             </Typography>
 
@@ -594,6 +656,12 @@ const SurveySubmit: React.FC = () => {
                             {survey.questionList.map(renderQuestion)}
                         </CardContent>
                     </Card>
+                )}
+
+                {submitError !== null && submitError !== '' && (
+                    <Alert severity="error" sx={{ mb: 2 }}>
+                        {submitError}
+                    </Alert>
                 )}
 
                 <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>

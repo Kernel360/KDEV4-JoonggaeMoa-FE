@@ -39,6 +39,7 @@ const SurveyCreate = () => {
         questions?: { [key: number]: string };
         options?: { [key: string]: string[] };
     }>({})
+    const [isSubmitted, setIsSubmitted] = useState(false)
 
     // 설문 기본 정보
     const [title, setTitle] = useState("")
@@ -189,19 +190,35 @@ const SurveyCreate = () => {
         validateField('option', value, questionIndex * 100 + optionIndex)
     }
 
-    // 옵션 추가
+    // 선택지 추가 핸들러
     const handleAddOption = (questionIndex: number) => {
-        const newQuestions = [...questions]
-        newQuestions[questionIndex].options.push("")
-        setQuestions(newQuestions)
-    }
+        const question = questions[questionIndex];
+        if (question.type === 'RADIO' || question.type === 'CHECKBOX') {
+            // 선택지 개수가 5개 이상이면 추가하지 않음
+            if (question.options.length >= 5) {
+                setError("선택지는 최대 5개까지만 추가할 수 있습니다.");
+                return;
+            }
+            
+            const updatedQuestions = [...questions];
+            updatedQuestions[questionIndex].options.push("");
+            setQuestions(updatedQuestions);
+        }
+    };
 
     // 옵션 삭제
     const handleRemoveOption = (questionIndex: number, optionIndex: number) => {
-        const newQuestions = [...questions]
-        newQuestions[questionIndex].options.splice(optionIndex, 1)
-        setQuestions(newQuestions)
-    }
+        const question = questions[questionIndex];
+        // 선택지가 1개 이하면 삭제하지 않음
+        if (question.options.length <= 1) {
+            setError("선택지는 최소 1개는 유지해야 합니다.");
+            return;
+        }
+        
+        const newQuestions = [...questions];
+        newQuestions[questionIndex].options.splice(optionIndex, 1);
+        setQuestions(newQuestions);
+    };
 
     // 중복 옵션 검사 함수
     const hasDuplicateOptions = (options: string[]): boolean => {
@@ -212,9 +229,49 @@ const SurveyCreate = () => {
 
     // 옵션 에러 확인 함수
     const hasOptionError = (questionIndex: number, optionIndex: number): boolean => {
-        return validationErrors.options?.[`${questionIndex}`]?.includes(`옵션 ${optionIndex + 1}`) === true || 
-               validationErrors.options?.[`${questionIndex}`]?.includes("중복된 선택지가 있습니다") === true;
-    }
+        const question = questions[questionIndex];
+        const option = question.options[optionIndex];
+        
+        // 폼이 제출되었거나 사용자가 상호작용한 경우에만 에러를 표시
+        if (!isSubmitted && !option) {
+            return false;
+        }
+        
+        // 빈 선택지 검사
+        if (!option.trim()) {
+            return true;
+        }
+        
+        // 중복 선택지 검사
+        const nonEmptyOptions = question.options.filter(opt => opt.trim() !== "");
+        const uniqueOptions = new Set(nonEmptyOptions);
+        return uniqueOptions.size !== nonEmptyOptions.length && option.trim() !== "";
+    };
+    
+    // 옵션 에러 메시지 함수
+    const getOptionErrorMessage = (questionIndex: number, optionIndex: number): string => {
+        const question = questions[questionIndex];
+        const option = question.options[optionIndex];
+        
+        // 폼이 제출되었거나 사용자가 상호작용한 경우에만 에러 메시지를 표시
+        if (!isSubmitted && !option) {
+            return "";
+        }
+        
+        // 빈 선택지 검사
+        if (!option.trim()) {
+            return "선택지를 입력해주세요";
+        }
+        
+        // 중복 선택지 검사
+        const nonEmptyOptions = question.options.filter(opt => opt.trim() !== "");
+        const uniqueOptions = new Set(nonEmptyOptions);
+        if (uniqueOptions.size !== nonEmptyOptions.length && option.trim() !== "") {
+            return "중복된 선택지입니다";
+        }
+        
+        return "";
+    };
 
     // 유효성 검사 함수
     const validateForm = () => {
@@ -278,9 +335,11 @@ const SurveyCreate = () => {
 
     // 설문 생성 제출
     const handleSubmit = async () => {
+        setIsSubmitted(true);  // 폼 제출 상태를 true로 설정
+        
         // 유효성 검사
         if (!validateForm()) {
-            return
+            return;
         }
 
         try {
@@ -313,6 +372,70 @@ const SurveyCreate = () => {
             setLoading(false)
         }
     }
+
+    // 객관식 질문 렌더링
+    const renderOptions = (question: QuestionCreateRequest, questionIndex: number) => {
+        if (question.type !== 'RADIO' && question.type !== 'CHECKBOX') return null;
+
+        return (
+            <Box sx={{ mt: 2, pl: 2 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                    선택지 ({question.options.length}/5)
+                </Typography>
+                {question.options.map((option, optionIndex) => (
+                    <Box key={optionIndex} sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                        {question.type === 'RADIO' ? (
+                            <Radio size="small" sx={{ mr: 1 }} />
+                        ) : (
+                            <Checkbox size="small" sx={{ mr: 1 }} />
+                        )}
+                        <TextField
+                            fullWidth
+                            size="small"
+                            value={option}
+                            onChange={(e) => handleOptionChange(questionIndex, optionIndex, e.target.value)}
+                            error={hasOptionError(questionIndex, optionIndex) || !!validationErrors.options?.[`${questionIndex}`]?.includes(`선택지 ${optionIndex + 1}를 입력해주세요`)}
+                            helperText={
+                                hasOptionError(questionIndex, optionIndex) 
+                                    ? getOptionErrorMessage(questionIndex, optionIndex) 
+                                    : validationErrors.options?.[`${questionIndex}`]?.includes(`선택지 ${optionIndex + 1}를 입력해주세요`) 
+                                        ? `선택지 ${optionIndex + 1}를 입력해주세요` 
+                                        : ''
+                            }
+                            placeholder={`선택지 ${optionIndex + 1}`}
+                        />
+                        <IconButton
+                            size="small"
+                            onClick={() => handleRemoveOption(questionIndex, optionIndex)}
+                            sx={{ ml: 1 }}
+                            disabled={question.options.length <= 1}
+                        >
+                            <Delete fontSize="small" />
+                        </IconButton>
+                    </Box>
+                ))}
+                {question.options.length < 5 && (
+                    <Button
+                        startIcon={<Add />}
+                        onClick={() => handleAddOption(questionIndex)}
+                        sx={{ mt: 1 }}
+                    >
+                        선택지 추가
+                    </Button>
+                )}
+                {question.options.length >= 5 && (
+                    <Typography variant="body2" color="error" sx={{ mt: 1 }}>
+                        선택지는 최대 5개까지만 추가할 수 있습니다.
+                    </Typography>
+                )}
+                {question.options.length <= 1 && (
+                    <Typography variant="body2" color="error" sx={{ mt: 1 }}>
+                        선택지는 최소 1개는 유지해야 합니다.
+                    </Typography>
+                )}
+            </Box>
+        );
+    };
 
     return (
         <Box sx={{ flexGrow: 1, bgcolor: "#f5f5f5", minHeight: "100vh" }}>
@@ -416,50 +539,7 @@ const SurveyCreate = () => {
                                 </Grid>
 
                                 {/* 옵션 목록 (객관식인 경우) */}
-                                {(question.type === "RADIO" || question.type === "CHECKBOX") && (
-                                    <Box sx={{ mt: 2 }}>
-                                        <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                                            선택지
-                                        </Typography>
-                                        {question.options.map((option, optionIndex) => (
-                                            <Box key={optionIndex} sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-                                                {question.type === "RADIO" ? (
-                                                    <Radio disabled />
-                                                ) : (
-                                                    <Checkbox disabled />
-                                                )}
-                                                <TextField
-                                                    size="small"
-                                                    fullWidth
-                                                    value={option}
-                                                    onChange={(e) => handleOptionChange(index, optionIndex, e.target.value)}
-                                                    error={hasOptionError(index, optionIndex)}
-                                                    helperText={
-                                                        validationErrors.options?.[`${index}`]?.includes(`옵션 ${optionIndex + 1}`)
-                                                            ? "선택지 내용을 입력해주세요"
-                                                            : validationErrors.options?.[`${index}`]?.includes("중복된 선택지가 있습니다")
-                                                            ? "중복된 선택지가 있습니다"
-                                                            : ""
-                                                    }
-                                                />
-                                                <IconButton
-                                                    size="small"
-                                                    onClick={() => handleRemoveOption(index, optionIndex)}
-                                                    disabled={question.options.length <= 2}
-                                                >
-                                                    <Delete />
-                                                </IconButton>
-                                            </Box>
-                                        ))}
-                                        <Button
-                                            startIcon={<Add />}
-                                            onClick={() => handleAddOption(index)}
-                                            sx={{ mt: 1 }}
-                                        >
-                                            선택지 추가
-                                        </Button>
-                                    </Box>
-                                )}
+                                {renderOptions(question, index)}
                             </CardContent>
                         </Card>
                     ))}

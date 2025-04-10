@@ -149,6 +149,7 @@ const SurveyDetail = () => {
        
                try {
                    document.execCommand('copy');
+                   setCopyUrlSuccess(true)
                } catch (error) {
                    console.error(error);
                } finally {

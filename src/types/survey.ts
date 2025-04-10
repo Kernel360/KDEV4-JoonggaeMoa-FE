@@ -90,6 +90,8 @@ export interface AnswerRequest {
     consent: boolean
     questions: number[]
     answers: string[][]
+    applyConsultation?: boolean
+    consultAt?: string
 }
 
 // 설문 답변 응답
