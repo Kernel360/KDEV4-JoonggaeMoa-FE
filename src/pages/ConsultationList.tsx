@@ -362,9 +362,15 @@ const ConsultationList = () => {
         }
     };
     
-    // Update the handleCreateConsultation function
     const handleCreateConsultation = async () => {
-        // ... existing validation code ...
+        // Check if selected date is in the past
+        const selectedDateTime = new Date(`${scheduledDate}T${scheduledTime}`);
+        const now = new Date();
+        
+        if (selectedDateTime < now) {
+            setCreateError("날짜를 제대로 선택해주세요.");
+            return;
+        }
 
         try {
             setCreateLoading(true);
@@ -636,7 +642,7 @@ const ConsultationList = () => {
                     <Grid item xs={12}>
                         <Paper elevation={0} sx={{ p: 3, borderRadius: 2 }}>
                             <Typography variant="h6" sx={{ mb: 2 }}>
-                                {selectedDate.toLocaleDateString()} 상담 목록
+                                {selectedDate.getMonth() + 1}월 {selectedDate.getDate()}일 상담 목록
                             </Typography>
                             <TableContainer>
                                 <Table>
@@ -659,7 +665,16 @@ const ConsultationList = () => {
                                             </TableRow>
                                         ) : dateFilteredConsultations.length > 0 ? (
                                             dateFilteredConsultations.map((consultation) => (
-                                                <TableRow key={consultation.id}>
+                                                <TableRow 
+                                                    key={consultation.id}
+                                                    onClick={() => handleViewConsultation(consultation.id)}
+                                                    sx={{ 
+                                                        cursor: 'pointer',
+                                                        '&:hover': { 
+                                                            backgroundColor: 'rgba(0, 0, 0, 0.04)' 
+                                                        }
+                                                    }}
+                                                >
                                                     <TableCell>{consultation.customerName}</TableCell>
                                                     <TableCell>{consultation.customerPhone}</TableCell>
                                                     <TableCell>
@@ -674,14 +689,6 @@ const ConsultationList = () => {
                                                                 color: statusConfig[consultation.status].textColor,
                                                             }}
                                                         />
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Button
-                                                            size="small"
-                                                            onClick={() => handleViewConsultation(consultation.id)}
-                                                        >
-                                                            상세보기
-                                                        </Button>
                                                     </TableCell>
                                                 </TableRow>
                                             ))

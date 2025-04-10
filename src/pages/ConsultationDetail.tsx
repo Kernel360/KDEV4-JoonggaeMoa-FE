@@ -22,7 +22,7 @@ import {
 import { ArrowBack, Edit } from "@mui/icons-material"
 import { useNavigate, useParams } from "react-router-dom"
 import { consultationApi } from "../services/consultationApi"
-import { ConsultationStatus, ConsultationType } from "../types/consultation"
+import { ConsultationStatus, ConsultationType, ConsultationResponse } from "../types/consultation"
 
 // 상담 상태별 칩 색상 및 텍스트 - 새로운 상태 값에 맞게 업데이트
 const statusConfig = {
@@ -37,22 +37,6 @@ const typeConfig = {
     [ConsultationType.VISIT]: "방문 상담",
     [ConsultationType.CALL]: "전화 상담",
     [ConsultationType.VIDEO]: "화상 상담",
-}
-
-// ConsultationResponse 타입 정의
-interface ConsultationResponse {
-    consultationId: number
-    customerId: number
-    customerName: string
-    customerPhone: string
-    consultationType: ConsultationType
-    date: string
-    memo: string
-    consultationStatus: ConsultationStatus
-    interestProperty: string
-    assetStatus: string
-    result: string
-    nextAction: string
 }
 
 const ConsultationDetail = () => {
@@ -86,37 +70,35 @@ const ConsultationDetail = () => {
             setLoading(true)
             const response = await consultationApi.getConsultationById(consultationId)
 
-            console.log("API 응답 데이터:", response.data)
-
             if (response.data.success && response.data.data) {
                 const item = response.data.data as ConsultationResponse
-                console.log("상담 상세 데이터:", item)
-
-                // 백엔드 응답 구조에 맞게 데이터 매핑
+                
+                // Update mapping to match the imported interface
                 const formattedConsultation = {
-                    id: item.consultationId,
-                    customer: {
+                    id: item.id || item.consultationId,
+                    customer: item.customer || {
                         id: item.customerId,
                         name: item.customerName,
                         phone: item.customerPhone,
-                        email: "",
+                        email: item.customerEmail || "",
                     },
-                    consultationType: item.consultationType || ConsultationType.VISIT,
-                    scheduledAt: item.date,
+                    consultationType: item.consultationType,
+                    purpose: item.purpose || "",
+                    scheduledAt: item.scheduledAt || item.date,
+                    propertyInterest: item.propertyInterest || item.interestProperty || "",
+                    interestLocation: item.interestLocation || "",
+                    contractType: item.contractType || "",
+                    assetStatus: item.assetStatus || "",
                     memo: item.memo || "",
-                    status: item.consultationStatus as ConsultationStatus,
-                    propertyInterest: item.interestProperty || "",
-                    budget: item.assetStatus || "",
+                    status: item.status || item.consultationStatus,
                     result: item.result || "",
                     nextAction: item.nextAction || "",
-                    createdAt: item.date,
-                    updatedAt: item.date,
+                    createdAt: item.createdAt || item.date,
+                    updatedAt: item.updatedAt || item.date,
                 }
 
-                console.log("변환된 상담 데이터:", formattedConsultation)
                 setConsultation(formattedConsultation)
             } else {
-                console.error("API 응답 오류:", response.data.error)
                 setError("상담 정보를 불러오는데 실패했습니다.")
             }
         } catch (err) {
@@ -259,6 +241,7 @@ const ConsultationDetail = () => {
                     </Box>
 
                     <Grid container spacing={3}>
+                        {/* 상태 */}
                         <Grid item xs={12}>
                             <Typography variant="subtitle2" color="textSecondary">
                                 상태
@@ -274,139 +257,126 @@ const ConsultationDetail = () => {
                                     }}
                                     onClick={(e) => handleStatusMenuOpen(e)}
                                 />
-                                {/* 상태 변경 메뉴 */}
                                 <Menu
                                     anchorEl={statusAnchorEl}
                                     open={Boolean(statusAnchorEl)}
                                     onClose={handleStatusMenuClose}
-                                    anchorOrigin={{
-                                        vertical: "bottom",
-                                        horizontal: "right",
-                                    }}
-                                    transformOrigin={{
-                                        vertical: "top",
-                                        horizontal: "right",
-                                    }}
                                 >
-                                    <Typography variant="subtitle2" sx={{ px: 2, py: 1, fontWeight: "bold" }}>
-                                        상담 상태 변경
-                                    </Typography>
-                                    <Divider />
                                     {Object.values(ConsultationStatus).map((status) => (
-                                        <MenuItem key={status} onClick={() => handleStatusChange(status)} disabled={statusLoading}>
-                                            <Chip
-                                                label={statusConfig[status]?.label}
-                                                size="small"
-                                                sx={{
-                                                    bgcolor: statusConfig[status]?.color,
-                                                    color: statusConfig[status]?.textColor,
-                                                    width: "100%",
-                                                    justifyContent: "center",
-                                                }}
-                                            />
+                                        <MenuItem key={status} onClick={() => handleStatusChange(status)}>
+                                            {statusConfig[status].label}
                                         </MenuItem>
                                     ))}
                                 </Menu>
                             </Box>
                         </Grid>
 
-                        <Grid item xs={12} sm={6}>
-                            <Typography variant="subtitle2" color="textSecondary">
-                                고객명
-                            </Typography>
-                            <Typography variant="body1" sx={{ mt: 1, mb: 2, fontWeight: "medium" }}>
-                                {consultation.customer.name}
-                            </Typography>
-                        </Grid>
-
-                        <Grid item xs={12} sm={6}>
-                            <Typography variant="subtitle2" color="textSecondary">
-                                연락처
-                            </Typography>
-                            <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
-                                {consultation.customer.phone}
-                            </Typography>
-                        </Grid>
-
-                        <Grid item xs={12} sm={6}>
-                            <Typography variant="subtitle2" color="textSecondary">
-                                이메일
-                            </Typography>
-                            <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
-                                {consultation.customer.email || "-"}
-                            </Typography>
-                        </Grid>
-
-                        <Grid item xs={12} sm={6}>
-                            <Typography variant="subtitle2" color="textSecondary">
-                                상담 유형
-                            </Typography>
-                            <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
-                                {typeConfig[consultation.consultationType]}
-                            </Typography>
-                        </Grid>
-
-                        {/* Grid item xs={12} sm={6}의 상담 일시 부분을 다음과 같이 수정합니다 */}
-                        <Grid item xs={12} sm={6}>
-                            <Typography variant="subtitle2" color="textSecondary">
-                                상담 일시
-                            </Typography>
-                            <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
-                                {consultation.scheduledAt
-                                    ? (() => {
-                                        try {
-                                            return new Date(consultation.scheduledAt).toLocaleString("ko-KR", {
-                                                year: "numeric",
-                                                month: "2-digit",
-                                                day: "2-digit",
-                                                hour: "2-digit",
-                                                minute: "2-digit",
-                                            })
-                                        } catch (e) {
-                                            console.error("날짜 변환 오류:", e)
-                                            return consultation.scheduledAt
-                                        }
-                                    })()
-                                    : "날짜 정보 없음"}
-                            </Typography>
-                        </Grid>
-
-                        <Grid item xs={12} sm={6}>
-                            <Typography variant="subtitle2" color="textSecondary">
-                                관심 매물
-                            </Typography>
-                            <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
-                                {consultation.propertyInterest || "-"}
-                            </Typography>
-                        </Grid>
-
-                        <Grid item xs={12} sm={6}>
-                            <Typography variant="subtitle2" color="textSecondary">
-                                예산
-                            </Typography>
-                            <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
-                                {consultation.budget || "-"}
-                            </Typography>
-                        </Grid>
-
+                        {/* 고객 정보 섹션 */}
                         <Grid item xs={12}>
-                            <Divider sx={{ my: 2 }} />
-                            <Typography variant="subtitle2" color="textSecondary">
-                                메모
+                            <Typography variant="h6" sx={{ mb: 2, fontWeight: "bold" }}>
+                                고객 정보
                             </Typography>
-                            <Paper
-                                elevation={0}
-                                sx={{
-                                    p: 3,
-                                    mt: 1,
-                                    mb: 3,
-                                    bgcolor: "#f9f9f9",
-                                    minHeight: "80px",
-                                    borderRadius: 1,
-                                }}
-                            >
-                                <Typography variant="body2">{consultation.memo || "메모가 없습니다."}</Typography>
-                            </Paper>
+                            <Grid container spacing={2}>
+                                <Grid item xs={12} sm={6}>
+                                    <Typography variant="subtitle2" color="textSecondary">
+                                        고객명
+                                    </Typography>
+                                    <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
+                                        {consultation.customer.name}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <Typography variant="subtitle2" color="textSecondary">
+                                        연락처
+                                    </Typography>
+                                    <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
+                                        {consultation.customer.phone}
+                                    </Typography>
+                                </Grid>
+                            </Grid>
+                        </Grid>
+
+                        {/* 상담 정보 섹션 */}
+                        <Grid item xs={12}>
+                            <Typography variant="h6" sx={{ mb: 2, fontWeight: "bold" }}>
+                                상담 정보
+                            </Typography>
+                            <Grid container spacing={2}>
+                                <Grid item xs={12} sm={6}>
+                                    <Typography variant="subtitle2" color="textSecondary">
+                                        상담 유형
+                                    </Typography>
+                                    <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
+                                        {typeConfig[consultation.consultationType]}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <Typography variant="subtitle2" color="textSecondary">
+                                        상담 목적
+                                    </Typography>
+                                    <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
+                                        {consultation.purpose || "-"}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <Typography variant="subtitle2" color="textSecondary">
+                                        상담 일시
+                                    </Typography>
+                                    <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
+                                        {new Date(consultation.scheduledAt).toLocaleString("ko-KR")}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <Typography variant="subtitle2" color="textSecondary">
+                                        관심 매물
+                                    </Typography>
+                                    <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
+                                        {consultation.propertyInterest || "-"}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <Typography variant="subtitle2" color="textSecondary">
+                                        관심 지역
+                                    </Typography>
+                                    <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
+                                        {consultation.interestLocation || "-"}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <Typography variant="subtitle2" color="textSecondary">
+                                        계약 유형
+                                    </Typography>
+                                    <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
+                                        {consultation.contractType || "-"}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <Typography variant="subtitle2" color="textSecondary">
+                                        자산 상태
+                                    </Typography>
+                                    <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
+                                        {consultation.assetStatus || "-"}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <Typography variant="subtitle2" color="textSecondary">
+                                        메모
+                                    </Typography>
+                                    <Paper
+                                        elevation={0}
+                                        sx={{
+                                            p: 2,
+                                            mt: 1,
+                                            bgcolor: "#f5f5f5",
+                                            borderRadius: 1
+                                        }}
+                                    >
+                                        <Typography variant="body1">
+                                            {consultation.memo || "-"}
+                                        </Typography>
+                                    </Paper>
+                                </Grid>
+                            </Grid>
                         </Grid>
                     </Grid>
                 </Paper>
@@ -436,4 +406,3 @@ const ConsultationDetail = () => {
 }
 
 export default ConsultationDetail
-
