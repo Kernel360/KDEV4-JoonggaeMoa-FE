@@ -55,7 +55,24 @@ const MyPage = () => {
 
     const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target
-        setEditData((prev) => (prev ? { ...prev, [name]: value } : null))
+        
+        if (name === 'phone') {
+            // Remove all non-digit characters
+            const digits = value.replace(/\D/g, '')
+            
+            // Format the phone number
+            let formattedPhone = digits
+            if (digits.length >= 3) {
+                formattedPhone = digits.slice(0, 3) + '-' + digits.slice(3)
+                if (digits.length >= 7) {
+                    formattedPhone = formattedPhone.slice(0, 8) + '-' + digits.slice(7, 11)
+                }
+            }
+            
+            setEditData((prev) => (prev ? { ...prev, [name]: formattedPhone } : null))
+        } else {
+            setEditData((prev) => (prev ? { ...prev, [name]: value } : null))
+        }
     }
 
     const handleEditSubmit = async (e: React.FormEvent) => {
@@ -158,19 +175,19 @@ const MyPage = () => {
                                         <Typography variant="body2" color="textSecondary" display="block">
                                             사무실명
                                         </Typography>
-                                        <Typography variant="body1">{agentInfo.office}</Typography>
+                                        <Typography variant="body1">{agentInfo.office || '없음'}</Typography>
                                     </Box>
                                     <Box>
                                         <Typography variant="body2" color="textSecondary" display="block">
                                             지역
                                         </Typography>
-                                        <Typography variant="body1">{agentInfo.region}</Typography>
+                                        <Typography variant="body1">{agentInfo.region || '없음'}</Typography>
                                     </Box>
                                     <Box>
                                         <Typography variant="body2" color="textSecondary" display="block">
                                             사업자등록번호
                                         </Typography>
-                                        <Typography variant="body1">{agentInfo.businessNo}</Typography>
+                                        <Typography variant="body1">{agentInfo.businessNo || '없음'}</Typography>
                                     </Box>
                                 </Box>
                             </Paper>
@@ -205,6 +222,7 @@ const MyPage = () => {
                                         />
                                     </Grid>
                                     <Grid item xs={12} sm={6}>
+                                        // In the edit dialog section, update the phone input:
                                         <TextField
                                             fullWidth
                                             label="전화번호"
@@ -213,6 +231,10 @@ const MyPage = () => {
                                             onChange={handleEditChange}
                                             size="small"
                                             required
+                                            inputProps={{
+                                                maxLength: 13,
+                                                placeholder: "010-0000-0000"
+                                            }}
                                         />
                                     </Grid>
                                     <Grid item xs={12}>
@@ -276,4 +298,4 @@ const MyPage = () => {
     )
 }
 
-export default MyPage 
+export default MyPage
