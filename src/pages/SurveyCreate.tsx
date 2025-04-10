@@ -356,9 +356,7 @@ const SurveyCreate = () => {
 
             if (response.data.success) {
                 setSuccess(true)
-                setTimeout(() => {
-                    navigate("/survey")
-                }, 1500)
+                navigate("/survey")
             } else {
                 setError(response.data.error?.message || "설문 생성에 실패했습니다.")
             }

@@ -175,9 +175,7 @@ const MessageDetail = () => {
                     severity: "success",
                 })
                 // 삭제 후 메시지 목록 페이지로 이동
-                setTimeout(() => {
-                    navigate("/message")
-                }, 1000)
+                navigate("/message")
             } else {
                 setSnackbar({
                     open: true,

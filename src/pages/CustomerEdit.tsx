@@ -133,9 +133,7 @@ const CustomerEdit = () => {
 
             if (response.data.success) {
                 setSuccess(true)
-                setTimeout(() => {
-                    navigate(`/customer-management/${id}`)
-                }, 1500)
+                navigate(`/customer-management/${id}`)
             } else {
                 setError(response.data.error?.message || "고객 정보 수정에 실패했습니다.")
             }

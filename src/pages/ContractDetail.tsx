@@ -79,9 +79,7 @@ const ContractDetail = () => {
                 setSuccessMessage("계약이 성공적으로 삭제되었습니다.")
                 setDeleteDialogOpen(false)
 
-                setTimeout(() => {
-                    navigate("/contract")
-                }, 1500)
+                navigate("/contract")
             } else {
                 setError("계약 삭제에 실패했습니다.")
             }

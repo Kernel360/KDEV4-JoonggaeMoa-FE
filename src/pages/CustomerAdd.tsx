@@ -92,9 +92,8 @@ const CustomerAdd = () => {
 
             if (response.data.success) {
                 setSuccess(true)
-                setTimeout(() => {
-                    navigate("/customer-management")
-                }, 1500)
+                navigate("/customer-management")
+
             }
             else{
                 if(response.data.error?.code=="4092"){
