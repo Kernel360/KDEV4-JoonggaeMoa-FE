@@ -20,7 +20,7 @@ export const createContract = async (
 }
 
 // 계약 삭제
-export const deleteContract = async (contractId: number): Promise<AxiosResponse<ApiResponse<void>>> => {
+export const deleteContract = async (contractId: string): Promise<AxiosResponse<ApiResponse<void>>> => {
     return api.delete(`/api/contracts/${contractId}`)
 }
 
@@ -30,7 +30,7 @@ export const getAllContracts = async (): Promise<AxiosResponse<ApiResponse<Contr
 }
 
 // 계약 상세 조회
-export const getContractById = async (contractId: number): Promise<AxiosResponse<ApiResponse<ContractResponse>>> => {
+export const getContractById = async (contractId: string): Promise<AxiosResponse<ApiResponse<ContractResponse>>> => {
     return api.get(`/api/contracts/${contractId}`)
 }
 

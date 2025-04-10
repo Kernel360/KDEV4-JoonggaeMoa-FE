@@ -45,7 +45,7 @@ const ContractList = () => {
     const [searchTerm, setSearchTerm] = useState("")
     const [statusFilter, setStatusFilter] = useState("all")
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-    const [contractToDelete, setContractToDelete] = useState<number | null>(null)
+    const [contractToDelete, setContractToDelete] = useState<string | null>(null)
     const [deleteLoading, setDeleteLoading] = useState(false)
     const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
@@ -120,7 +120,7 @@ const ContractList = () => {
         }
     }
 
-    const handleDeleteClick = (event: React.MouseEvent, contractId: number) => {
+    const handleDeleteClick = (event: React.MouseEvent, contractId: string) => {
         event.stopPropagation()
         setContractToDelete(contractId)
         setDeleteDialogOpen(true)
@@ -150,14 +150,10 @@ const ContractList = () => {
         }
     }
 
-    const handleViewContract = (contractId: number) => {
+    const handleViewContract = (contractId: string) => {
         navigate(`/contract/${contractId}`)
     }
 
-    const handleEditContract = (event: React.MouseEvent, contractId: number) => {
-        event.stopPropagation()
-        navigate(`/contract/edit/${contractId}`)
-    }
 
     // 계약 상태 계산 (만료일 기준)
     const getContractStatus = (expiredAt: string) => {
@@ -313,7 +309,7 @@ const ContractList = () => {
                                                     onClick={() => handleViewContract(contract.id)}
                                                     sx={{ cursor: "pointer" }}
                                                 >
-                                                    <TableCell>{contract.id}</TableCell>
+                                                    <TableCell>{contract.id.slice(0,8)} {contract.id.length > 8 && '...'}</TableCell>
                                                     <TableCell>{contract.landlordName}</TableCell>
                                                     <TableCell>{contract.tenantName}</TableCell>
                                                     <TableCell>{formatDate(contract.createdAt)}</TableCell>

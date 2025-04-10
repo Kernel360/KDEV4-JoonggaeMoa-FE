@@ -16,7 +16,7 @@ export interface UpdateContractRequest {
 
 // 계약 응답 타입
 export interface ContractResponse {
-  id: number;
+  id: string;
   landlordId: number
   tenantId: number
   landlordName: string;
