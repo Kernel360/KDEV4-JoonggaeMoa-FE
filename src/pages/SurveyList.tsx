@@ -43,7 +43,7 @@ const SurveyList = () => {
     const [deleteLoading, setDeleteLoading] = useState(false)
     const [successMessage, setSuccessMessage] = useState<string | null>(null)
     const [searchTerm, setSearchTerm] = useState("")
-    const [copyUrlSuccess, setCopyUrlSuccess] = useState<string | null>(null)
+    const [copyUrlSuccess, setCopyUrlSuccess] = useState(false)
     
     // Add these new states and refs
     const [page, setPage] = useState(0)
@@ -153,17 +153,44 @@ const SurveyList = () => {
         event.stopPropagation()
         const surveyUrl = `${window.location.origin}/surveys/submit/${surveyId}`
 
-        navigator.clipboard
+        if(navigator.clipboard && window.isSecureContext){
+            navigator.clipboard
             .writeText(surveyUrl)
             .then(() => {
-                setCopyUrlSuccess("설문 URL이 클립보드에 복사되었습니다.")
-                setTimeout(() => setCopyUrlSuccess(null), 3000)
+                setCopyUrlSuccess(true)
+                setTimeout(() => setCopyUrlSuccess(false), 3000)
             })
             .catch((err) => {
                 console.error("URL 복사 실패:", err)
                 setError("URL을 클립보드에 복사하는데 실패했습니다.")
             })
+
+            return;
+        }
+
+        copy(surveyUrl)
     }
+
+    const copy =  (textToCopy : string) => {
+        const textArea = document.createElement("textarea");
+               textArea.value = textToCopy;
+                   
+               // Move textarea out of the viewport so it's not visible
+               textArea.style.position = "absolute";
+               textArea.style.left = "-999999px";
+                   
+               document.body.prepend(textArea);
+               textArea.select();
+       
+               try {
+                   document.execCommand('copy');
+                   setCopyUrlSuccess(true)
+               } catch (error) {
+                   console.error(error);
+               } finally {
+                   textArea.remove();
+               }
+       }
 
     const handleCreateSurvey = () => {
         navigate("/survey/create")
@@ -359,9 +386,9 @@ const SurveyList = () => {
             </Snackbar>
 
             {/* Add a new Snackbar for the copy URL success message */}
-            <Snackbar open={!!copyUrlSuccess} autoHideDuration={3000} onClose={() => setCopyUrlSuccess(null)}>
-                <Alert onClose={() => setCopyUrlSuccess(null)} severity="success" sx={{ width: "100%" }}>
-                    {copyUrlSuccess}
+            <Snackbar open={!!copyUrlSuccess} autoHideDuration={3000} onClose={() => setCopyUrlSuccess(false)}>
+                <Alert onClose={() => setCopyUrlSuccess(false)} severity="success" sx={{ width: "100%" }}>
+                    설문 URL이 클립보드에 복사되었습니다.
                 </Alert>
             </Snackbar>
 
