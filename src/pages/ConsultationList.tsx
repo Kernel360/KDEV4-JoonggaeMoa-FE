@@ -362,9 +362,15 @@ const ConsultationList = () => {
         }
     };
     
-    // Update the handleCreateConsultation function
     const handleCreateConsultation = async () => {
-        // ... existing validation code ...
+        // Check if selected date is in the past
+        const selectedDateTime = new Date(`${scheduledDate}T${scheduledTime}`);
+        const now = new Date();
+        
+        if (selectedDateTime < now) {
+            setCreateError("날짜를 제대로 선택해주세요.");
+            return;
+        }
 
         try {
             setCreateLoading(true);
