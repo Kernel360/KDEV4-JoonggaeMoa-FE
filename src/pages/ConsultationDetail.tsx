@@ -99,14 +99,17 @@ const ConsultationDetail = () => {
                         id: item.customerId,
                         name: item.customerName,
                         phone: item.customerPhone,
-                        email: "",
+                        email: item.customerEmail || "",
                     },
                     consultationType: item.consultationType || ConsultationType.VISIT,
+                    purpose: item.purpose || "",
                     scheduledAt: item.date,
+                    interestProperty: item.interestProperty || "",
+                    interestLocation: item.interestLocation || "",
+                    contractType: item.contractType || "",
+                    assetStatus: item.assetStatus || "",
                     memo: item.memo || "",
-                    status: item.consultationStatus as ConsultationStatus,
-                    propertyInterest: item.interestProperty || "",
-                    budget: item.assetStatus || "",
+                    status: item.consultationStatus,
                     result: item.result || "",
                     nextAction: item.nextAction || "",
                     createdAt: item.date,
@@ -259,6 +262,7 @@ const ConsultationDetail = () => {
                     </Box>
 
                     <Grid container spacing={3}>
+                        {/* 상태 */}
                         <Grid item xs={12}>
                             <Typography variant="subtitle2" color="textSecondary">
                                 상태
@@ -310,6 +314,7 @@ const ConsultationDetail = () => {
                             </Box>
                         </Grid>
 
+                        {/* 고객명, 연락처 */}
                         <Grid item xs={12} sm={6}>
                             <Typography variant="subtitle2" color="textSecondary">
                                 고객명
@@ -328,15 +333,7 @@ const ConsultationDetail = () => {
                             </Typography>
                         </Grid>
 
-                        <Grid item xs={12} sm={6}>
-                            <Typography variant="subtitle2" color="textSecondary">
-                                이메일
-                            </Typography>
-                            <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
-                                {consultation.customer.email || "-"}
-                            </Typography>
-                        </Grid>
-
+                        {/* 상담 유형, 상담 목적 */}
                         <Grid item xs={12} sm={6}>
                             <Typography variant="subtitle2" color="textSecondary">
                                 상담 유형
@@ -346,49 +343,85 @@ const ConsultationDetail = () => {
                             </Typography>
                         </Grid>
 
-                        {/* Grid item xs={12} sm={6}의 상담 일시 부분을 다음과 같이 수정합니다 */}
                         <Grid item xs={12} sm={6}>
                             <Typography variant="subtitle2" color="textSecondary">
-                                상담 일시
+                                상담 목적
                             </Typography>
                             <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
-                                {consultation.scheduledAt
-                                    ? (() => {
-                                        try {
-                                            return new Date(consultation.scheduledAt).toLocaleString("ko-KR", {
-                                                year: "numeric",
-                                                month: "2-digit",
-                                                day: "2-digit",
-                                                hour: "2-digit",
-                                                minute: "2-digit",
-                                            })
-                                        } catch (e) {
-                                            console.error("날짜 변환 오류:", e)
-                                            return consultation.scheduledAt
-                                        }
-                                    })()
-                                    : "날짜 정보 없음"}
+                                {consultation.purpose || "-"}
                             </Typography>
                         </Grid>
 
+                        {/* 상담 날짜, 상담 시간 */}
+                        <Grid item xs={12} sm={6}>
+                            <Typography variant="subtitle2" color="textSecondary">
+                                상담 날짜
+                            </Typography>
+                            <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
+                                {consultation.scheduledAt
+                                    ? new Date(consultation.scheduledAt).toLocaleDateString("ko-KR", {
+                                          year: "numeric",
+                                          month: "2-digit",
+                                          day: "2-digit",
+                                          weekday: "long"
+                                      })
+                                    : "-"}
+                            </Typography>
+                        </Grid>
+
+                        <Grid item xs={12} sm={6}>
+                            <Typography variant="subtitle2" color="textSecondary">
+                                상담 시간
+                            </Typography>
+                            <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
+                                {consultation.scheduledAt
+                                    ? new Date(consultation.scheduledAt).toLocaleTimeString("ko-KR", {
+                                          hour: "2-digit",
+                                          minute: "2-digit",
+                                      })
+                                    : "-"}
+                            </Typography>
+                        </Grid>
+
+                        {/* 관심 매물, 관심 지역 */}
                         <Grid item xs={12} sm={6}>
                             <Typography variant="subtitle2" color="textSecondary">
                                 관심 매물
                             </Typography>
                             <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
-                                {consultation.propertyInterest || "-"}
+                                {consultation.interestProperty || "-"}
                             </Typography>
                         </Grid>
 
                         <Grid item xs={12} sm={6}>
                             <Typography variant="subtitle2" color="textSecondary">
-                                예산
+                                관심 지역
                             </Typography>
                             <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
-                                {consultation.budget || "-"}
+                                {consultation.interestLocation || "-"}
                             </Typography>
                         </Grid>
 
+                        {/* 계약 유형, 자산 상태 */}
+                        <Grid item xs={12} sm={6}>
+                            <Typography variant="subtitle2" color="textSecondary">
+                                계약 유형
+                            </Typography>
+                            <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
+                                {consultation.contractType || "-"}
+                            </Typography>
+                        </Grid>
+
+                        <Grid item xs={12} sm={6}>
+                            <Typography variant="subtitle2" color="textSecondary">
+                                자산 상태
+                            </Typography>
+                            <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
+                                {consultation.assetStatus || "-"}
+                            </Typography>
+                        </Grid>
+
+                        {/* 메모 */}
                         <Grid item xs={12}>
                             <Divider sx={{ my: 2 }} />
                             <Typography variant="subtitle2" color="textSecondary">

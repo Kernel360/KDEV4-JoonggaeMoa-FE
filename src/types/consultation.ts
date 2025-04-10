@@ -53,34 +53,31 @@ export interface CustomerInfo {
 }
 
 export interface ConsultationResponse {
-    customerEmail: string
     id: number
-    consultationId?: number  // 백엔드 응답용
+    consultationId?: number  // backend response field
     customerId: number
     customerName: string
     customerPhone: string
+    customerEmail: string
     customer: {
         id: number
         name: string
         phone: string
-        email?: string
+        email: string
     }
-    content: string
     consultationType: ConsultationType
     date: string
     scheduledAt: string
-    purpose?: string
-    interestProperty?: string
-    interestLocation?: string
-    contractType?: string
-    assetStatus?: string
-    memo?: string
+    purpose: string
+    interestProperty: string
+    interestLocation: string
+    contractType: string
+    assetStatus: string
+    memo: string
     consultationStatus: ConsultationStatus
-    status?: ConsultationStatus  // 프론트엔드용
-    result?: string
-    nextAction?: string
-    propertyInterest?: string
-    budget?: string
+    status?: ConsultationStatus  // frontend field
+    result: string
+    nextAction: string
     createdAt: string
     updatedAt: string
 }
