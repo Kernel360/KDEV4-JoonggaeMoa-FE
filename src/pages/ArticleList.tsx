@@ -28,6 +28,7 @@ import {
 import React, { useEffect, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { articleApi } from "../services/articleApi"
+import { regionApi } from "../services/regionApi"
 import type { ArticleResponse } from "../types/article"
 
 const ArticleList = () => {
@@ -49,7 +50,9 @@ const ArticleList = () => {
     const KAKAO_APP_KEY = import.meta.env.VITE_KAKAO_APP_KEY;
     const [map, setMap] = useState<any>(null);
     const [markers, setMarkers] = useState<any[]>([]);
-    // const mapInstance = useRef<any>(null);
+    const [neighborhoods, setNeighborhoods] = useState<string[]>([])
+    const [selectedNeighborhood, setSelectedNeighborhood] = useState<string>("")
+    const [locationSearch, setLocationSearch] = useState("")
 
     // useEffect(() => {
     //     if (!KAKAO_APP_KEY) {
@@ -207,21 +210,22 @@ const ArticleList = () => {
             
             // Add realEstateType filters if any are selected
             if (typeFilter.length > 0) {
-                // For multiple values, we need to add them as separate parameters
-                // We'll use a different approach to ensure they're sent as repeated parameters
                 params.realEstateType = typeFilter
             }
             
             // Add tradeType filters if any are selected
             if (tradeTypeFilter.length > 0) {
-                // For multiple values, we need to add them as separate parameters
-                // We'll use a different approach to ensure they're sent as repeated parameters
                 params.tradeType = tradeTypeFilter
             }
             
             // Add search term if provided
             if (searchTerm) {
                 params.name = searchTerm
+            }
+            
+            // Add location search if provided
+            if (locationSearch) {
+                params.town = locationSearch
             }
             
             // Add minPrice and maxPrice if provided
@@ -390,10 +394,10 @@ const ArticleList = () => {
         // Otherwise format it
         const date = new Date(dateString)
         return date.toLocaleDateString("ko-KR", {
-            year: '2-digit',
-            month: '2-digit',
-            day: '2-digit'
-        }).replace(/\./g, '.');
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        }).replace(/년 /g, '년 ').replace(/월 /g, '월 ').replace(/일$/, '일');
     }
 
     // Check if price is zero
@@ -439,12 +443,84 @@ const ArticleList = () => {
         fetchArticles(0);
     }
 
+    const handleLocationSearch = () => {
+        setPage(0)
+        fetchArticles(0)
+    }
+
+    useEffect(() => {
+        // Fetch neighborhoods from regions API
+        const fetchNeighborhoods = async () => {
+            try {
+                const response = await regionApi.getAllRegions()
+                
+                if (response.data.success && response.data.data) {
+                    const areas = response.data.data
+                        .map((region: any) => region.cortarName)
+                        .filter((area: string | undefined) => area && area.trim() !== "")
+                    setNeighborhoods(areas)
+                }
+            } catch (err) {
+                console.error("Error fetching neighborhoods:", err)
+            }
+        }
+        fetchNeighborhoods()
+    }, [])
+
+    const getTypeEmoji = (type: string) => {
+        switch (type) {
+            case "아파트":
+                return "🏢"
+            case "오피스텔":
+                return "🏬"
+            case "빌라":
+                return "🏠"
+            case "아파트분양권":
+                return "📝"
+            case "오피스텔분양권":
+                return "📝"
+            case "재건축":
+                return "🏗️"
+            case "전원주택":
+                return "🏡"
+            case "단독/다가구":
+                return "🏘️"
+            case "상가주택":
+                return "🏪"
+            case "한옥주택":
+                return "🏯"
+            case "재개발":
+                return "🏗️"
+            case "원룸":
+                return "🏠"
+            case "고시원":
+                return "🏢"
+            case "상가":
+                return "🏪"
+            case "사무실":
+                return "🏢"
+            case "공장/창고":
+                return "🏭"
+            case "건물":
+                return "🏢"
+            case "토지":
+                return "🌳"
+            case "지식산업센터":
+                return "🏢"
+            default:
+                return "🏠"
+        }
+    }
+
     return (
         <Box sx={{ p: 3 }}>
-            <AppBar position="static" color="default" elevation={0} sx={{ mb: 3 }}>
+            <AppBar position="sticky" color="default" elevation={0} sx={{ mb: 3 }}>
                 <Toolbar sx={{ 
-                    minWidth: '800px', // Set minimum width for the toolbar
-                    overflowX: 'auto', // Enable horizontal scrolling
+                    minWidth: '800px',
+                    overflowX: 'auto',
+                    flexDirection: 'column',
+                    alignItems: 'flex-start',
+                    py: 2,
                     '&::-webkit-scrollbar': {
                         height: '8px',
                     },
@@ -460,125 +536,165 @@ const ArticleList = () => {
                         },
                     },
                 }}>
-                    <IconButton edge="start" color="inherit" onClick={handleBack} sx={{ mr: 2, flexShrink: 0 }}>
-                        <ArrowBack />
-                    </IconButton>
-                    <Typography variant="h6" sx={{ flexGrow: 1, flexShrink: 0 }}>
-                        매물 관리
-                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', mb: 2 }}>
+                        <IconButton edge="start" color="inherit" onClick={handleBack} sx={{ mr: 2, flexShrink: 0 }}>
+                            <ArrowBack />
+                        </IconButton>
+                        <Typography variant="h4" sx={{ flexGrow: 1, flexShrink: 0, fontWeight: 'bold' }}>
+                            매물 관리
+                        </Typography>
+                    </Box>
                     <Box sx={{ 
                         display: "flex", 
                         gap: 2, 
                         alignItems: "center",
-                        flexWrap: 'nowrap', // Prevent wrapping
-                        minWidth: '600px', // Set minimum width for the filters
+                        flexWrap: 'nowrap',
+                        width: '100%',
                     }}>
-                        <TextField
-                            size="small"
-                            placeholder="매물명 검색"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                            InputProps={{
-                                startAdornment: (
-                                    <InputAdornment position="start">
-                                        <Search />
-                                    </InputAdornment>
-                                ),
-                                endAdornment: (
-                                    <InputAdornment position="end">
-                                        <IconButton size="small" onClick={handleSearch}>
-                                            <Search />
-                                        </IconButton>
-                                    </InputAdornment>
-                                ),
-                            }}
-                            sx={{ flexShrink: 0 }}
-                        />
-                        <FormControl size="small" sx={{ minWidth: 120, flexShrink: 0 }}>
-                            <InputLabel>매물 유형</InputLabel>
-                            <Select
-                                multiple
-                                value={typeFilter}
-                                label="매물 유형"
-                                onChange={handleTypeFilterChange}
-                                renderValue={(selected) => (
-                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                        {selected.map((value) => (
-                                            <Chip key={value} label={value} size="small" />
-                                        ))}
-                                    </Box>
-                                )}
-                            >
-                                <MenuItem value="아파트">아파트</MenuItem>
-                                <MenuItem value="오피스텔">오피스텔</MenuItem>
-                                <MenuItem value="빌라">빌라</MenuItem>
-                                <MenuItem value="아파트분양권">아파트분양권</MenuItem>
-                                <MenuItem value="오피스텔분양권">오피스텔분양권</MenuItem>
-                                <MenuItem value="재건축">재건축</MenuItem>
-                                <MenuItem value="전원주택">전원주택</MenuItem>
-                                <MenuItem value="단독/다가구">단독/다가구</MenuItem>
-                                <MenuItem value="상가주택">상가주택</MenuItem>
-                                <MenuItem value="한옥주택">한옥주택</MenuItem>
-                                <MenuItem value="재개발">재개발</MenuItem>
-                                <MenuItem value="원룸">원룸</MenuItem>
-                                <MenuItem value="고시원">고시원</MenuItem>
-                                <MenuItem value="상가">상가</MenuItem>
-                                <MenuItem value="사무실">사무실</MenuItem>
-                                <MenuItem value="공장/창고">공장/창고</MenuItem>
-                                <MenuItem value="건물">건물</MenuItem>
-                                <MenuItem value="토지">토지</MenuItem>
-                                <MenuItem value="지식산업센터">지식산업센터</MenuItem>
-                            </Select>
-                        </FormControl>
-                        <FormControl size="small" sx={{ minWidth: 120, flexShrink: 0 }}>
-                            <InputLabel>거래 유형</InputLabel>
-                            <Select
-                                multiple
-                                value={tradeTypeFilter}
-                                label="거래 유형"
-                                onChange={handleTradeTypeFilterChange}
-                                renderValue={(selected) => (
-                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                        {selected.map((value) => (
-                                            <Chip key={value} label={value} size="small" />
-                                        ))}
-                                    </Box>
-                                )}
-                            >
-                                <MenuItem value="매매">매매</MenuItem>
-                                <MenuItem value="전세">전세</MenuItem>
-                                <MenuItem value="월세">월세</MenuItem>
-                                <MenuItem value="단기임대">단기임대</MenuItem>
-                            </Select>
-                        </FormControl>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
+                        <Box sx={{ display: 'flex', gap: 2, width: '100%' }}>
                             <TextField
-                                size="small"
-                                placeholder="최소 가격"
-                                value={minPrice}
-                                onChange={handleMinPriceChange}
-                                onKeyPress={(e) => e.key === 'Enter' && handlePriceFilter()}
+                                size="medium"
+                                label="매물명 검색"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                                 InputProps={{
-                                    endAdornment: <InputAdornment position="end">만원</InputAdornment>,
+                                    endAdornment: (
+                                        <InputAdornment position="end">
+                                            <IconButton onClick={handleSearch}>
+                                                <Search />
+                                            </IconButton>
+                                        </InputAdornment>
+                                    ),
                                 }}
-                                sx={{ width: 120 }}
+                                sx={{ width: '300px' }}
                             />
-                            <Typography>~</Typography>
-                            <TextField
-                                size="small"
-                                placeholder="최대 가격"
-                                value={maxPrice}
-                                onChange={handleMaxPriceChange}
-                                onKeyPress={(e) => e.key === 'Enter' && handlePriceFilter()}
-                                InputProps={{
-                                    endAdornment: <InputAdornment position="end">만원</InputAdornment>,
-                                }}
-                                sx={{ width: 120 }}
-                            />
-                            <IconButton size="small" onClick={handlePriceFilter}>
-                                <Search />
-                            </IconButton>
+                            {/* Neighborhood selection temporarily disabled for future enhancement
+                            <FormControl size="medium" sx={{ width: '300px' }}>
+                                <InputLabel>동 선택</InputLabel>
+                                <Select
+                                    value={selectedNeighborhood}
+                                    label="동 선택"
+                                    onChange={(e) => {
+                                        setSelectedNeighborhood(e.target.value)
+                                        setLocationSearch(e.target.value)
+                                        handleLocationSearch()
+                                    }}
+                                    MenuProps={{
+                                        PaperProps: {
+                                            sx: {
+                                                maxHeight: 300,
+                                                maxWidth: '60%',
+                                                '& .MuiMenuItem-root': {
+                                                    width: '33.33%',
+                                                    display: 'inline-block',
+                                                    padding: '8px 16px',
+                                                    textAlign: 'center',
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    boxSizing: 'border-box'
+                                                }
+                                            }
+                                        }
+                                    }}
+                                >
+                                    <MenuItem value="">
+                                        <em>전체</em>
+                                    </MenuItem>
+                                    {neighborhoods.map((neighborhood) => (
+                                        <MenuItem key={neighborhood} value={neighborhood}>
+                                            {neighborhood}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                            */}
+                            <FormControl size="medium" sx={{ minWidth: 200, flexShrink: 0 }}>
+                                <InputLabel>매물 유형</InputLabel>
+                                <Select
+                                    multiple
+                                    value={typeFilter}
+                                    label="매물 유형"
+                                    onChange={handleTypeFilterChange}
+                                    renderValue={(selected) => (
+                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                            {selected.map((value) => (
+                                                <Chip key={value} label={value} size="small" />
+                                            ))}
+                                        </Box>
+                                    )}
+                                >
+                                    <MenuItem value="아파트">아파트</MenuItem>
+                                    <MenuItem value="오피스텔">오피스텔</MenuItem>
+                                    <MenuItem value="빌라">빌라</MenuItem>
+                                    <MenuItem value="아파트분양권">아파트분양권</MenuItem>
+                                    <MenuItem value="오피스텔분양권">오피스텔분양권</MenuItem>
+                                    <MenuItem value="재건축">재건축</MenuItem>
+                                    <MenuItem value="전원주택">전원주택</MenuItem>
+                                    <MenuItem value="단독/다가구">단독/다가구</MenuItem>
+                                    <MenuItem value="상가주택">상가주택</MenuItem>
+                                    <MenuItem value="한옥주택">한옥주택</MenuItem>
+                                    <MenuItem value="재개발">재개발</MenuItem>
+                                    <MenuItem value="원룸">원룸</MenuItem>
+                                    <MenuItem value="고시원">고시원</MenuItem>
+                                    <MenuItem value="상가">상가</MenuItem>
+                                    <MenuItem value="사무실">사무실</MenuItem>
+                                    <MenuItem value="공장/창고">공장/창고</MenuItem>
+                                    <MenuItem value="건물">건물</MenuItem>
+                                    <MenuItem value="토지">토지</MenuItem>
+                                    <MenuItem value="지식산업센터">지식산업센터</MenuItem>
+                                </Select>
+                            </FormControl>
+                            <FormControl size="medium" sx={{ minWidth: 200, flexShrink: 0 }}>
+                                <InputLabel>거래 유형</InputLabel>
+                                <Select
+                                    multiple
+                                    value={tradeTypeFilter}
+                                    label="거래 유형"
+                                    onChange={handleTradeTypeFilterChange}
+                                    renderValue={(selected) => (
+                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                            {selected.map((value) => (
+                                                <Chip key={value} label={value} size="small" />
+                                            ))}
+                                        </Box>
+                                    )}
+                                >
+                                    <MenuItem value="매매">매매</MenuItem>
+                                    <MenuItem value="전세">전세</MenuItem>
+                                    <MenuItem value="월세">월세</MenuItem>
+                                    <MenuItem value="단기임대">단기임대</MenuItem>
+                                </Select>
+                            </FormControl>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
+                                <TextField
+                                    size="medium"
+                                    placeholder="최소 가격"
+                                    value={minPrice}
+                                    onChange={handleMinPriceChange}
+                                    onKeyPress={(e) => e.key === 'Enter' && handlePriceFilter()}
+                                    InputProps={{
+                                        endAdornment: <InputAdornment position="end">만원</InputAdornment>,
+                                    }}
+                                    sx={{ width: 150 }}
+                                />
+                                <Typography>~</Typography>
+                                <TextField
+                                    size="medium"
+                                    placeholder="최대 가격"
+                                    value={maxPrice}
+                                    onChange={handleMaxPriceChange}
+                                    onKeyPress={(e) => e.key === 'Enter' && handlePriceFilter()}
+                                    InputProps={{
+                                        endAdornment: <InputAdornment position="end">만원</InputAdornment>,
+                                    }}
+                                    sx={{ width: 150 }}
+                                />
+                                <IconButton size="medium" onClick={handlePriceFilter}>
+                                    <Search />
+                                </IconButton>
+                            </Box>
                         </Box>
                     </Box>
                 </Toolbar>
@@ -625,13 +741,10 @@ const ArticleList = () => {
                         <Table>
                             <TableHead>
                                 <TableRow>
-                                    <TableCell>매물명</TableCell>
-                                    <TableCell>매물 유형</TableCell>
-                                    <TableCell>거래 유형</TableCell>
-                                    <TableCell>가격</TableCell>
-                                    <TableCell>동네</TableCell>
-                                    <TableCell>등록일</TableCell>
-                                    <TableCell>담당 부동산</TableCell>
+                                    <TableCell width="40%">매물 정보</TableCell>
+                                    <TableCell width="20%">가격</TableCell>
+                                    <TableCell width="20%">위치</TableCell>
+                                    <TableCell width="20%">정보 제공</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -645,204 +758,247 @@ const ArticleList = () => {
                                                 bgcolor: selectedArticle?.id === article.id ? 'rgba(0, 0, 0, 0.04)' : 'inherit'
                                             }}
                                         >
-                                            <TableCell>{article.name}</TableCell>
                                             <TableCell>
-                                                <Chip
-                                                    label={article.realEstateType}
-                                                    size="small"
-                                                    sx={{
-                                                        bgcolor: getTypeColor(article.realEstateType),
-                                                        color: "white",
-                                                    }}
-                                                />
+                                                <Box sx={{ display: 'flex', gap: 2 }}>
+                                                    <Box 
+                                                        sx={{ 
+                                                            width: 100, 
+                                                            height: 100, 
+                                                            bgcolor: 'grey.200',
+                                                            borderRadius: 1,
+                                                            overflow: 'hidden'
+                                                        }}
+                                                    >
+                                                        {article.imageUrl ? (
+                                                            <img 
+                                                                src={`https://landthumb-phinf.pstatic.net/${encodeURI(article.imageUrl)}`} 
+                                                                alt={article.name}
+                                                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                                onError={(e) => {
+                                                                    const target = e.target as HTMLImageElement;
+                                                                    target.src = '';
+                                                                    target.style.display = 'none';
+                                                                }}
+                                                            />
+                                                        ) : (
+                                                            <Box 
+                                                                sx={{ 
+                                                                    width: '100%', 
+                                                                    height: '100%', 
+                                                                    display: 'flex', 
+                                                                    alignItems: 'center', 
+                                                                    justifyContent: 'center',
+                                                                    bgcolor: getTypeColor(article.realEstateType),
+                                                                    color: 'white'
+                                                                }}
+                                                            >
+                                                                <Typography variant="h4" sx={{ fontSize: '3rem', lineHeight: 1 }}>
+                                                                    {getTypeEmoji(article.realEstateType)}
+                                                                </Typography>
+                                                            </Box>
+                                                        )}
+                                                    </Box>
+                                                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                                        <Typography variant="subtitle1" fontWeight="bold">
+                                                            {article.buildingName || article.name}
+                                                        </Typography>
+                                                        <Box sx={{ display: 'flex', gap: 1 }}>
+                                                            <Chip
+                                                                label={article.realEstateType}
+                                                                size="small"
+                                                                sx={{
+                                                                    bgcolor: getTypeColor(article.realEstateType),
+                                                                    color: "white",
+                                                                }}
+                                                            />
+                                                            <Chip
+                                                                label={article.tradeType}
+                                                                size="small"
+                                                                sx={{
+                                                                    bgcolor: getTradeTypeColor(article.tradeType),
+                                                                    color: "white",
+                                                                }}
+                                                            />
+                                                        </Box>
+                                                        <Typography variant="body2" color="text.secondary">
+                                                            {article.direction && `${article.direction}`}
+                                                            {article.subwayInfo && ` · ${article.subwayInfo}`}
+                                                        </Typography>
+                                                    </Box>
+                                                </Box>
                                             </TableCell>
                                             <TableCell>
-                                                <Chip
-                                                    label={article.tradeType}
-                                                    size="small"
-                                                    sx={{
-                                                        bgcolor: getTradeTypeColor(article.tradeType),
-                                                        color: "white",
-                                                    }}
-                                                />
+                                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                                                    <Typography variant="subtitle1" fontWeight="bold">
+                                                        {article.tradeType === "매매" ? "매매가" : "보증금"} {isZeroPrice(article.price) ? "X" : formatPrice(article.price)}
+                                                    </Typography>
+                                                    {(article.tradeType === "전세" || article.tradeType === "월세" || article.tradeType === "단기임대") && article.rentPrice > 0 && (
+                                                        <Typography variant="body2" color="text.secondary">
+                                                            월세 {formatPrice(article.rentPrice)}
+                                                        </Typography>
+                                                    )}
+                                                </Box>
                                             </TableCell>
                                             <TableCell>
-                                                {isZeroPrice(article.price) 
-                                                    ? "X" 
-                                                    : formatPrice(article.price)}
+                                                <Typography variant="subtitle1" fontWeight="bold">
+                                                    {article.cortarName || "-"}
+                                                </Typography>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    {article.roadAddressName || article.lotAddressName || "-"}
+                                                </Typography>
                                             </TableCell>
                                             <TableCell>
-                                                {article.cortarName || "-"}
+                                                <Typography variant="body2">
+                                                    {article.companyName ? `${article.companyName} 제공` : "-"}
+                                                </Typography>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    {article.agentName || "-"}
+                                                </Typography>
                                             </TableCell>
-                                            <TableCell>
-                                                {formatDate(article.confirmedAt)}
-                                            </TableCell>
-                                            <TableCell>{article.agentName || "-"}</TableCell>
                                         </TableRow>
                                         {selectedArticle?.id === article.id && (
                                             <TableRow>
-                                                <TableCell colSpan={7} sx={{ p: 0 }}>
+                                                <TableCell colSpan={4} sx={{ p: 0 }}>
                                                     <Paper sx={{ m: 1, p: 2 }}>
                                                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                                                            <Typography variant="h5" fontWeight="bold">매물 상세 정보</Typography>
+                                                            <Typography variant="h4" fontWeight="bold">
+                                                                {selectedArticle.buildingName || selectedArticle.name}
+                                                            </Typography>
                                                             <IconButton size="small" onClick={() => setSelectedArticle(null)}>
                                                                 <Close />
                                                             </IconButton>
                                                         </Box>
-                                                        <Grid container spacing={2}>
-                                                            <Grid item xs={12}>
-                                                                <Box sx={{ mb: 1 }}>
-                                                                    <Typography variant="body2" fontWeight="bold">기본 정보</Typography>
-                                                                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mt: 0.5 }}>
-                                                                        <Box sx={{ display: 'flex' }}>
-                                                                            <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>매물명:</Typography>
-                                                                            <Typography variant="body2">{selectedArticle.name}</Typography>
-                                                                        </Box>
-                                                                        <Box sx={{ display: 'flex' }}>
-                                                                            <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>매물 유형:</Typography>
-                                                                            <Chip
-                                                                                label={selectedArticle.realEstateType}
-                                                                                size="small"
-                                                                                sx={{
-                                                                                    bgcolor: getTypeColor(selectedArticle.realEstateType),
-                                                                                    color: "white",
-                                                                                }}
-                                                                            />
-                                                                        </Box>
-                                                                        <Box sx={{ display: 'flex' }}>
-                                                                            <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>거래 유형:</Typography>
-                                                                            <Chip
-                                                                                label={selectedArticle.tradeType}
-                                                                                size="small"
-                                                                                sx={{
-                                                                                    bgcolor: getTradeTypeColor(selectedArticle.tradeType),
-                                                                                    color: "white",
-                                                                                }}
-                                                                            />
-                                                                        </Box>
-                                                                        <Box sx={{ display: 'flex' }}>
-                                                                            <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>
-                                                                                {selectedArticle.tradeType === "매매" || selectedArticle.tradeType === "전세" ? "매매가" : "보증금"}:
-                                                                            </Typography>
-                                                                            <Typography variant="body2">
-                                                                                {isZeroPrice(selectedArticle.price) 
-                                                                                    ? "X" 
-                                                                                    : formatPrice(selectedArticle.price)}
-                                                                            </Typography>
-                                                                        </Box>
-                                                                        {selectedArticle.rentPrice > 0 && (
-                                                                            <Box sx={{ display: 'flex' }}>
-                                                                                <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>월세:</Typography>
-                                                                                <Typography variant="body2">{formatPrice(selectedArticle.rentPrice)}</Typography>
-                                                                            </Box>
-                                                                        )}
-                                                                        
-                                                                        <Grid item xs={4}>
-                                                                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                                                                                <Box sx={{ display: 'flex' }}>
-                                                                                    <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>거래 유형:</Typography>
-                                                                                    <Chip
-                                                                                        label={selectedArticle.tradeType}
-                                                                                        size="small"
-                                                                                        sx={{
-                                                                                            bgcolor: getTradeTypeColor(selectedArticle.tradeType),
-                                                                                            color: "white",
-                                                                                        }}
-                                                                                    />
-                                                                                </Box>
-                                                                                <Box sx={{ display: 'flex' }}>
-                                                                                    <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>매매가:</Typography>
-                                                                                    <Typography variant="body2">
-                                                                                        {isZeroPrice(selectedArticle.price) ? "X" : formatPrice(selectedArticle.price)}
-                                                                                    </Typography>
-                                                                                </Box>
-                                                                            </Box>
-                                                                        </Grid>
-                                                                        <Grid item xs={4}>
-                                                                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                                                                                {selectedArticle.rentPrice > 0 && (
-                                                                                    <Box sx={{ display: 'flex' }}>
-                                                                                        <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>월세:</Typography>
-                                                                                        <Typography variant="body2">{formatPrice(selectedArticle.rentPrice)}</Typography>
-                                                                                    </Box>
-                                                                                )}
-                                                                                <Box sx={{ display: 'flex' }}>
-                                                                                    <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>등록일:</Typography>
-                                                                                    <Typography variant="body2">{formatDate(selectedArticle.confirmedAt)}</Typography>
-                                                                                </Box>
-                                                                            </Box>
-                                                                        </Grid>
+                                                        <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+                                                            <Box sx={{ width: '40%' }}>
+                                                                {selectedArticle.imageUrl ? (
+                                                                    <img 
+                                                                        src={`https://landthumb-phinf.pstatic.net/${encodeURI(selectedArticle.imageUrl)}`} 
+                                                                        alt={selectedArticle.name}
+                                                                        style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', borderRadius: '8px' }}
+                                                                        onError={(e) => {
+                                                                            const target = e.target as HTMLImageElement;
+                                                                            target.src = '';
+                                                                            target.style.display = 'none';
+                                                                        }}
+                                                                    />
+                                                                ) : (
+                                                                    <Box 
+                                                                        sx={{ 
+                                                                            width: '100%',
+                                                                            aspectRatio: '1/1',
+                                                                            display: 'flex', 
+                                                                            flexDirection: 'column',
+                                                                            alignItems: 'center', 
+                                                                            justifyContent: 'center',
+                                                                            bgcolor: getTypeColor(selectedArticle.realEstateType),
+                                                                            color: 'white',
+                                                                            borderRadius: '8px',
+                                                                            gap: 1
+                                                                        }}
+                                                                    >
+                                                                        <Typography variant="h1" sx={{ fontSize: '12rem', lineHeight: 1 }}>
+                                                                            {getTypeEmoji(selectedArticle.realEstateType)}
+                                                                        </Typography>
+                                                                        <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
+                                                                            {selectedArticle.realEstateType}
+                                                                        </Typography>
                                                                     </Box>
-                                                                </Box>
+                                                                )}
+                                                            </Box>
+                                                            <Grid container spacing={2} sx={{ width: '60%' }}>
+                                                                <Grid item xs={6}>
+                                                                    <Box sx={{ mb: 2 }}>
+                                                                        <Typography variant="h6" fontWeight="bold" sx={{ mb: 1 }}>기본 정보</Typography>
+                                                                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                                                            <Box sx={{ display: 'flex' }}>
+                                                                                <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>매물 유형:</Typography>
+                                                                                <Chip
+                                                                                    label={selectedArticle.realEstateType}
+                                                                                    size="small"
+                                                                                    sx={{
+                                                                                        bgcolor: getTypeColor(selectedArticle.realEstateType),
+                                                                                        color: "white",
+                                                                                    }}
+                                                                                />
+                                                                            </Box>
+                                                                            <Box sx={{ display: 'flex' }}>
+                                                                                <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>거래 유형:</Typography>
+                                                                                <Chip
+                                                                                    label={selectedArticle.tradeType}
+                                                                                    size="small"
+                                                                                    sx={{
+                                                                                        bgcolor: getTradeTypeColor(selectedArticle.tradeType),
+                                                                                        color: "white",
+                                                                                    }}
+                                                                                />
+                                                                            </Box>
+                                                                            <Box sx={{ display: 'flex' }}>
+                                                                                <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>
+                                                                                    {selectedArticle.tradeType === "매매" ? "매매가" : "보증금"}:
+                                                                                </Typography>
+                                                                                <Typography variant="body2">
+                                                                                    {isZeroPrice(selectedArticle.price) 
+                                                                                        ? "X" 
+                                                                                        : formatPrice(selectedArticle.price)}
+                                                                                </Typography>
+                                                                            </Box>
+                                                                            {selectedArticle.rentPrice > 0 && (
+                                                                                <Box sx={{ display: 'flex' }}>
+                                                                                    <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>월세:</Typography>
+                                                                                    <Typography variant="body2">{formatPrice(selectedArticle.rentPrice)}</Typography>
+                                                                                </Box>
+                                                                            )}
+                                                                            <Box sx={{ display: 'flex' }}>
+                                                                                <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>등록일:</Typography>
+                                                                                <Typography variant="body2">{formatDate(selectedArticle.confirmedAt)}</Typography>
+                                                                            </Box>
+                                                                        </Box>
+                                                                    </Box>
+                                                                </Grid>
+                                                                <Grid item xs={6}>
+                                                                    <Box sx={{ mb: 2 }}>
+                                                                        <Typography variant="h6" fontWeight="bold" sx={{ mb: 1 }}>위치 정보</Typography>
+                                                                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                                                            <Box sx={{ display: 'flex' }}>
+                                                                                <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>법정동:</Typography>
+                                                                                <Typography variant="body2">{selectedArticle.cortarName || "-"}</Typography>
+                                                                            </Box>
+                                                                            <Box sx={{ display: 'flex' }}>
+                                                                                <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>주소:</Typography>
+                                                                                <Typography variant="body2">
+                                                                                    {selectedArticle.roadAddressName || selectedArticle.lotAddressName || "-"}
+                                                                                </Typography>
+                                                                            </Box>
+                                                                            {selectedArticle.direction && selectedArticle.direction !== "" && (
+                                                                                <Box sx={{ display: 'flex' }}>
+                                                                                    <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>방향:</Typography>
+                                                                                    <Typography variant="body2">{selectedArticle.direction}</Typography>
+                                                                                </Box>
+                                                                            )}
+                                                                            {selectedArticle.subwayInfo && (
+                                                                                <Box sx={{ display: 'flex' }}>
+                                                                                    <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>지하철:</Typography>
+                                                                                    <Typography variant="body2">{selectedArticle.subwayInfo}</Typography>
+                                                                                </Box>
+                                                                            )}
+                                                                        </Box>
+                                                                    </Box>
+                                                                    <Box>
+                                                                        <Typography variant="h6" fontWeight="bold" sx={{ mb: 1 }}>중개사 정보</Typography>
+                                                                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                                                            <Box sx={{ display: 'flex' }}>
+                                                                                <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>정보 제공:</Typography>
+                                                                                <Typography variant="body2">{selectedArticle.companyName ? `${selectedArticle.companyName} 제공` : "-"}</Typography>
+                                                                            </Box>
+                                                                            <Box sx={{ display: 'flex' }}>
+                                                                                <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>담당:</Typography>
+                                                                                <Typography variant="body2">{selectedArticle.agentName || "-"}</Typography>
+                                                                            </Box>
+                                                                        </Box>
+                                                                    </Box>
+                                                                </Grid>
                                                             </Grid>
-                                                            <Grid item xs={12}>
-                                                                <Box sx={{ mb: 1 }}>
-                                                                    <Typography variant="h6" fontWeight="bold">위치 정보</Typography>
-                                                                    <Grid container spacing={2} sx={{ mt: 0.5 }}>
-                                                                        <Grid item xs={4}>
-                                                                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                                                                                <Box sx={{ display: 'flex' }}>
-                                                                                    <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>법정동:</Typography>
-                                                                                    <Typography variant="body2">{selectedArticle.cortarName || "-"}</Typography>
-                                                                                </Box>
-                                                                            </Box>
-                                                                        </Grid>
-                                                                        <Grid item xs={4}>
-                                                                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                                                                                <Box sx={{ display: 'flex' }}>
-                                                                                    <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>주소:</Typography>
-                                                                                    <Typography variant="body2">
-                                                                                        {selectedArticle.roadAddressName || selectedArticle.lotAddressName || "-"}
-                                                                                    </Typography>
-                                                                                </Box>
-                                                                            </Box>
-                                                                        </Grid>
-                                                                        <Grid item xs={4}>
-                                                                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                                                                                {selectedArticle.direction && selectedArticle.direction !== "" && (
-                                                                                    <Box sx={{ display: 'flex' }}>
-                                                                                        <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>방향:</Typography>
-                                                                                        <Typography variant="body2">{selectedArticle.direction}</Typography>
-                                                                                    </Box>
-                                                                                )}
-                                                                                {selectedArticle.subwayInfo && (
-                                                                                    <Box sx={{ display: 'flex' }}>
-                                                                                        <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>지하철:</Typography>
-                                                                                        <Typography variant="body2">{selectedArticle.subwayInfo}</Typography>
-                                                                                    </Box>
-                                                                                )}
-                                                                            </Box>
-                                                                        </Grid>
-                                                                    </Grid>
-                                                                </Box>
-                                                            </Grid>
-                                                            <Grid item xs={12}>
-                                                                <Box sx={{ mb: 1 }}>
-                                                                    <Typography variant="h6" fontWeight="bold">중개사 정보</Typography>
-                                                                    <Grid container spacing={2} sx={{ mt: 0.5 }}>
-                                                                        <Grid item xs={4}>
-                                                                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                                                                                <Box sx={{ display: 'flex' }}>
-                                                                                    <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>중개사:</Typography>
-                                                                                    <Typography variant="body2">{selectedArticle.companyName}</Typography>
-                                                                                </Box>
-                                                                            </Box>
-                                                                        </Grid>
-                                                                        <Grid item xs={4}>
-                                                                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                                                                                <Box sx={{ display: 'flex' }}>
-                                                                                    <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>담당 부동산:</Typography>
-                                                                                    <Typography variant="body2">{selectedArticle.agentName || "-"}</Typography>
-                                                                                </Box>
-                                                                            </Box>
-                                                                        </Grid>
-                                                                        <Grid item xs={4}>
-                                                                            {/* Additional agent information can be added here if needed */}
-                                                                        </Grid>
-                                                                    </Grid>
-                                                                </Box>
-                                                            </Grid>
-                                                        </Grid>
+                                                        </Box>
                                                     </Paper>
                                                 </TableCell>
                                             </TableRow>

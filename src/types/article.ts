@@ -4,6 +4,7 @@ export interface ArticleResponse {
     cortarNo: string;
     articleNo: string;
     name: string;
+    buildingName?: string;
     realEstateType: string;
     tradeType: string;
     price: string;
