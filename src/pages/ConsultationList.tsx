@@ -659,7 +659,16 @@ const ConsultationList = () => {
                                             </TableRow>
                                         ) : dateFilteredConsultations.length > 0 ? (
                                             dateFilteredConsultations.map((consultation) => (
-                                                <TableRow key={consultation.id}>
+                                                <TableRow 
+                                                    key={consultation.id}
+                                                    onClick={() => handleViewConsultation(consultation.id)}
+                                                    sx={{ 
+                                                        cursor: 'pointer',
+                                                        '&:hover': { 
+                                                            backgroundColor: 'rgba(0, 0, 0, 0.04)' 
+                                                        }
+                                                    }}
+                                                >
                                                     <TableCell>{consultation.customerName}</TableCell>
                                                     <TableCell>{consultation.customerPhone}</TableCell>
                                                     <TableCell>
@@ -674,14 +683,6 @@ const ConsultationList = () => {
                                                                 color: statusConfig[consultation.status].textColor,
                                                             }}
                                                         />
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Button
-                                                            size="small"
-                                                            onClick={() => handleViewConsultation(consultation.id)}
-                                                        >
-                                                            상세보기
-                                                        </Button>
                                                     </TableCell>
                                                 </TableRow>
                                             ))
