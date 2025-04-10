@@ -101,8 +101,13 @@ const CustomerEdit = () => {
     }
 
     const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+
         const { name, checked } = e.target
-        setFormData((prev) => ({ ...prev, [name]: checked }))
+        // Ensure boolean value is set
+        setFormData((prev) => ({ 
+            ...prev, 
+            [name]: checked || false 
+        }))
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
