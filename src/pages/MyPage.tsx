@@ -175,19 +175,19 @@ const MyPage = () => {
                                         <Typography variant="body2" color="textSecondary" display="block">
                                             사무실명
                                         </Typography>
-                                        <Typography variant="body1">{agentInfo.office}</Typography>
+                                        <Typography variant="body1">{agentInfo.office || '없음'}</Typography>
                                     </Box>
                                     <Box>
                                         <Typography variant="body2" color="textSecondary" display="block">
                                             지역
                                         </Typography>
-                                        <Typography variant="body1">{agentInfo.region}</Typography>
+                                        <Typography variant="body1">{agentInfo.region || '없음'}</Typography>
                                     </Box>
                                     <Box>
                                         <Typography variant="body2" color="textSecondary" display="block">
                                             사업자등록번호
                                         </Typography>
-                                        <Typography variant="body1">{agentInfo.businessNo}</Typography>
+                                        <Typography variant="body1">{agentInfo.businessNo || '없음'}</Typography>
                                     </Box>
                                 </Box>
                             </Paper>
@@ -222,6 +222,7 @@ const MyPage = () => {
                                         />
                                     </Grid>
                                     <Grid item xs={12} sm={6}>
+                                        // In the edit dialog section, update the phone input:
                                         <TextField
                                             fullWidth
                                             label="전화번호"
