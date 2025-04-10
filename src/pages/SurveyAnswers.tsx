@@ -436,7 +436,7 @@ const SurveyAnswers = () => {
                                             </Typography>
                                             <List dense>
                                                 <ListItem>
-                                                    <ListItemText primary="등록일" secondary={new Date(selectedAnswer.createdAt).toLocaleDateString()} />
+                                                    <ListItemText primary="등록일" secondary={selectedAnswer.createdAt} />
                                                 </ListItem>
                                                 <ListItem>
                                                     <ListItemText
