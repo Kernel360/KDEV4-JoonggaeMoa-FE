@@ -636,7 +636,7 @@ const ConsultationList = () => {
                     <Grid item xs={12}>
                         <Paper elevation={0} sx={{ p: 3, borderRadius: 2 }}>
                             <Typography variant="h6" sx={{ mb: 2 }}>
-                                {selectedDate.toLocaleDateString()} 상담 목록
+                                {selectedDate.getMonth() + 1}월 {selectedDate.getDate()}일 상담 목록
                             </Typography>
                             <TableContainer>
                                 <Table>
