@@ -552,23 +552,6 @@ const ArticleList = () => {
                         width: '100%',
                     }}>
                         <Box sx={{ display: 'flex', gap: 2, width: '100%' }}>
-                            <TextField
-                                size="medium"
-                                label="매물명 검색"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                                InputProps={{
-                                    endAdornment: (
-                                        <InputAdornment position="end">
-                                            <IconButton onClick={handleSearch}>
-                                                <Search />
-                                            </IconButton>
-                                        </InputAdornment>
-                                    ),
-                                }}
-                                sx={{ width: '300px' }}
-                            />
                             {/* Neighborhood selection temporarily disabled for future enhancement
                             <FormControl size="medium" sx={{ width: '300px' }}>
                                 <InputLabel>동 선택</InputLabel>
