@@ -80,7 +80,24 @@ const CustomerEdit = () => {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target
-        setFormData((prev) => ({ ...prev, [name]: value }))
+        
+        if (name === 'phone') {
+            // Remove all non-numeric characters
+            const numericValue = value.replace(/\D/g, '')
+            
+            // Format the phone number
+            let formattedValue = numericValue
+            if (numericValue.length >= 3) {
+                formattedValue = numericValue.slice(0, 3) + '-' + numericValue.slice(3)
+                if (numericValue.length >= 7) {
+                    formattedValue = formattedValue.slice(0, 8) + '-' + numericValue.slice(7, 11)
+                }
+            }
+            
+            setFormData((prev) => ({ ...prev, [name]: formattedValue }))
+        } else {
+            setFormData((prev) => ({ ...prev, [name]: value }))
+        }
     }
 
     const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -179,6 +196,9 @@ const CustomerEdit = () => {
                                     value={formData.phone}
                                     onChange={handleChange}
                                     placeholder="010-0000-0000"
+                                    inputProps={{
+                                        maxLength: 13
+                                    }}
                                 />
                             </Grid>
                             <Grid item xs={12} sm={6}>
