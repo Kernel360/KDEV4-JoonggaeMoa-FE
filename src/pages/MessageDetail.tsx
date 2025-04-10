@@ -212,6 +212,7 @@ const MessageDetail = () => {
                 day: "2-digit",
                 hour: "2-digit",
                 minute: "2-digit",
+                hour12: true
             })
         } catch (e) {
             return dateString
@@ -271,16 +272,16 @@ const MessageDetail = () => {
 
                         <Grid item xs={12} sm={6}>
                             <Typography variant="subtitle2" color="textSecondary">
-                                발송 시간
+                                작성 시간
                             </Typography>
                             <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
-                                {formatDate(message.sendAt)}
+                                20{message.createdAt}
                             </Typography>
                         </Grid>
 
                         <Grid item xs={12} sm={6}>
                             <Typography variant="subtitle2" color="textSecondary">
-                                예약 시간
+                                발송 시간
                             </Typography>
                             <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
                                 {message.sendAt ? formatDate(message.sendAt) : "-"}

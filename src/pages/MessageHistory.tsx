@@ -114,18 +114,27 @@ const MessageHistory = () => {
     }
 
     const formatDate = (dateString: string) => {
-        try {
-            const date = new Date(dateString)
-            return date.toLocaleDateString("ko-KR", {
-                year: "numeric",
-                month: "2-digit",
-                day: "2-digit",
-                hour: "2-digit",
-                minute: "2-digit",
-            })
-        } catch (e) {
-            return dateString
-        }
+        const date = new Date(dateString)
+        return date.toLocaleString('ko-KR', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        })
+    }
+
+    const formatSendAt = (dateString: string) => {
+        const date = new Date(dateString)
+        return date.toLocaleString('ko-KR', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        })
     }
 
     const filteredMessages = searchTerm
@@ -140,7 +149,8 @@ const MessageHistory = () => {
 
     // Handle message row click to navigate to detail page
     const handleMessageClick = (messageId: number) => {
-        navigate(`/message/${messageId}`)
+        // Remove navigation to detail page
+        // navigate(`/message/${messageId}`)
     }
 
     return (
@@ -181,11 +191,12 @@ const MessageHistory = () => {
                         <Table>
                             <TableHead>
                                 <TableRow sx={{ bgcolor: "#f9f9f9" }}>
-                                    <TableCell>발송 시간</TableCell>
                                     <TableCell>고객명</TableCell>
-                                    <TableCell>전화번호</TableCell>
+                                    <TableCell>연락처</TableCell>
                                     <TableCell>내용</TableCell>
-                                    <TableCell>상태</TableCell>
+                                    <TableCell>작성 시간</TableCell>
+                                    <TableCell>발송 시간</TableCell>
+                                    <TableCell>발송 상태</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -193,15 +204,14 @@ const MessageHistory = () => {
                                     filteredMessages.map((message, index) => (
                                         <TableRow
                                             key={message.id}
-                                            hover
                                             onClick={() => handleMessageClick(message.id)}
-                                            sx={{ cursor: "pointer" }}
                                             ref={!searchTerm && index === filteredMessages.length - 1 ? lastMessageElementRef : null}
                                         >
-                                            <TableCell>{formatDate(message.createdAt)}</TableCell>
                                             <TableCell>{message.customerName}</TableCell>
                                             <TableCell>{message.customerPhone || "-"}</TableCell>
                                             <TableCell>{message.content}</TableCell>
+                                            <TableCell>20{message.createdAt}</TableCell>
+                                            <TableCell>{formatSendAt(message.sendAt)}</TableCell>
                                             <TableCell>
                                                 <Chip
                                                     label={statusConfig[message.sendStatus]?.label || "알 수 없음"}

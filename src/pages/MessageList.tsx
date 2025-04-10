@@ -92,6 +92,24 @@ const MessageList = () => {
                 day: "2-digit",
                 hour: "2-digit",
                 minute: "2-digit",
+                hour12: true
+            })
+        } catch (e) {
+            return dateString
+        }
+    }
+
+    // 발송 시간 형식화 함수
+    const formatSendAt = (dateString: string) => {
+        try {
+            const date = new Date(dateString)
+            return date.toLocaleDateString("ko-KR", {
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true
             })
         } catch (e) {
             return dateString
@@ -218,6 +236,7 @@ const MessageList = () => {
                         <Table>
                             <TableHead>
                                 <TableRow sx={{ bgcolor: "#f9f9f9" }}>
+                                    <TableCell sx={{ fontWeight: 500 }}>작성 시간</TableCell>
                                     <TableCell sx={{ fontWeight: 500 }}>예약 시간</TableCell>
                                     <TableCell sx={{ fontWeight: 500 }}>고객명</TableCell>
                                     <TableCell sx={{ fontWeight: 500 }}>전화번호</TableCell>
@@ -234,7 +253,8 @@ const MessageList = () => {
                                             sx={{ cursor: "pointer" }}
                                             ref={filteredMessages.length === index + 1 && !searchTerm ? lastMessageElementRef : null}
                                         >
-                                            <TableCell>{formatDate(message.sendAt)}</TableCell>
+                                            <TableCell>20{message.createdAt}</TableCell>
+                                            <TableCell>{formatSendAt(message.sendAt)}</TableCell>
                                             <TableCell>{message.customerName}</TableCell>
                                             <TableCell>{message.customerPhone || "-"}</TableCell>
                                             <TableCell
