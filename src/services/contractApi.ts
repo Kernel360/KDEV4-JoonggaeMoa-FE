@@ -20,25 +20,8 @@ export const createContract = async (
 }
 
 // 계약 삭제
-export const deleteContract = async (contractId: number): Promise<AxiosResponse<ApiResponse<void>>> => {
+export const deleteContract = async (contractId: string): Promise<AxiosResponse<ApiResponse<void>>> => {
     return api.delete(`/api/contracts/${contractId}`)
-}
-
-// 계약 수정
-export const updateContract = async (
-    contractId: number,
-    contractData: UpdateContractRequest,
-    file: File,
-): Promise<AxiosResponse<ApiResponse<void>>> => {
-    const formData = new FormData()
-    formData.append("contractData", new Blob([JSON.stringify(contractData)], { type: "application/json" }))
-    formData.append("file", file)
-
-    return api.patch(`/api/contracts/${contractId}`, formData, {
-        headers: {
-            "Content-Type": "multipart/form-data",
-        },
-    })
 }
 
 // 모든 계약 조회
@@ -47,7 +30,7 @@ export const getAllContracts = async (): Promise<AxiosResponse<ApiResponse<Contr
 }
 
 // 계약 상세 조회
-export const getContractById = async (contractId: number): Promise<AxiosResponse<ApiResponse<ContractResponse>>> => {
+export const getContractById = async (contractId: string): Promise<AxiosResponse<ApiResponse<ContractResponse>>> => {
     return api.get(`/api/contracts/${contractId}`)
 }
 
@@ -55,7 +38,6 @@ export const getContractById = async (contractId: number): Promise<AxiosResponse
 export const contractApi = {
     createContract,
     deleteContract,
-    updateContract,
     getAllContracts: (page: number = 0, size: number = 10) => {
         return api.get('/api/contracts', {
             params: {

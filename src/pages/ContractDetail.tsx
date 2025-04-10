@@ -41,11 +41,11 @@ const ContractDetail = () => {
 
     useEffect(() => {
         if (id) {
-            fetchContractDetails(Number.parseInt(id))
+            fetchContractDetails(id)
         }
     }, [id])
 
-    const fetchContractDetails = async (contractId: number) => {
+    const fetchContractDetails = async (contractId: string) => {
         try {
             setLoading(true)
             const response = await contractApi.getContractById(contractId)
@@ -53,7 +53,6 @@ const ContractDetail = () => {
             if (response.data.success && response.data.data) {
                 const contractData = response.data.data
                 setContract(contractData)
-
             } else {
                 setError("계약 정보를 불러오는데 실패했습니다.")
             }
@@ -74,13 +73,12 @@ const ContractDetail = () => {
 
         try {
             setDeleteLoading(true)
-            const response = await contractApi.deleteContract(Number.parseInt(id))
+            const response = await contractApi.deleteContract(id)
 
             if (response.data.success) {
                 setSuccessMessage("계약이 성공적으로 삭제되었습니다.")
                 setDeleteDialogOpen(false)
 
-                // 삭제 성공 후 목록 페이지로 이동
                 setTimeout(() => {
                     navigate("/contract")
                 }, 1500)
@@ -177,9 +175,6 @@ const ContractDetail = () => {
                         계약 상세 정보
                     </Typography>
                     <Box sx={{ flexGrow: 1 }} />
-                    <Button startIcon={<Edit />} sx={{ mr: 1, color: "#555" }} onClick={() => navigate(`/contract/edit/${id}`)}>
-                        수정
-                    </Button>
                     <Button startIcon={<Delete />} color="error" onClick={handleDeleteClick}>
                         삭제
                     </Button>

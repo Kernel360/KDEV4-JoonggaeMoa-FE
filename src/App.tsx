@@ -314,14 +314,6 @@ function App() {
                                 </ProtectedRoute>
                             }
                         />
-                        <Route
-                            path="/contract/edit/:id"
-                            element={
-                                <ProtectedRoute>
-                                    <ContractEdit />
-                                </ProtectedRoute>
-                            }
-                        />
                         {/* 매물 관리 라우트 */}
                         <Route
                             path="/article"
