@@ -80,12 +80,34 @@ const CustomerEdit = () => {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target
-        setFormData((prev) => ({ ...prev, [name]: value }))
+        
+        if (name === 'phone') {
+            // Remove all non-numeric characters
+            const numericValue = value.replace(/\D/g, '')
+            
+            // Format the phone number
+            let formattedValue = numericValue
+            if (numericValue.length >= 3) {
+                formattedValue = numericValue.slice(0, 3) + '-' + numericValue.slice(3)
+                if (numericValue.length >= 7) {
+                    formattedValue = formattedValue.slice(0, 8) + '-' + numericValue.slice(7, 11)
+                }
+            }
+            
+            setFormData((prev) => ({ ...prev, [name]: formattedValue }))
+        } else {
+            setFormData((prev) => ({ ...prev, [name]: value }))
+        }
     }
 
     const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+
         const { name, checked } = e.target
-        setFormData((prev) => ({ ...prev, [name]: checked }))
+        // Ensure boolean value is set
+        setFormData((prev) => ({ 
+            ...prev, 
+            [name]: checked || false 
+        }))
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -179,6 +201,15 @@ const CustomerEdit = () => {
                                     value={formData.phone}
                                     onChange={handleChange}
                                     placeholder="010-0000-0000"
+                                    inputProps={{
+                                        maxLength: 13
+                                    }}
+                                    error={formData.phone !== "" && !/^010-\d{4}-\d{4}$/.test(formData.phone)}
+                                    helperText={
+                                        formData.phone !== "" && 
+                                        !/^010-\d{4}-\d{4}$/.test(formData.phone) ? 
+                                        "올바른 전화번호 형식(010-XXXX-XXXX)으로 입력해주세요." : ""
+                                    }
                                 />
                             </Grid>
                             <Grid item xs={12} sm={6}>
@@ -190,6 +221,11 @@ const CustomerEdit = () => {
                                     type="email"
                                     value={formData.email}
                                     onChange={handleChange}
+                                    error={formData.email !== "" && !formData.email.includes('@')}
+                                    helperText={
+                                        formData.email !== "" && !formData.email.includes('@') ?
+                                        "이메일 주소에 '@'를 포함해주세요." : ""
+                                    }
                                 />
                             </Grid>
                             <Grid item xs={12} sm={6}>

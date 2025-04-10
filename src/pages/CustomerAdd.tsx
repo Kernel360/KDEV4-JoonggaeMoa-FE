@@ -95,12 +95,18 @@ const CustomerAdd = () => {
                 setTimeout(() => {
                     navigate("/customer-management")
                 }, 1500)
-            } else {
-                setError(response.data.error?.message || "고객 등록에 실패했습니다.")
+            }
+            else{
+                if(response.data.error?.code=="4092"){
+                    setError("이미 등록된 전화번호입니다.") 
+                } else if(response.data.error?.code=="4093"){
+                    setError("이미 등록된 이메일입니다.") 
+                } else {
+                    setError("고객 등록에 실패했습니다.")
+                 }
             }
         } catch (err: any) {
             console.error("Error creating customer:", err)
-            setError(err.response?.data?.error?.message || "고객 등록에 실패했습니다.")
         } finally {
             setLoading(false)
         }
