@@ -199,6 +199,12 @@ const CustomerEdit = () => {
                                     inputProps={{
                                         maxLength: 13
                                     }}
+                                    error={formData.phone !== "" && !/^010-\d{4}-\d{4}$/.test(formData.phone)}
+                                    helperText={
+                                        formData.phone !== "" && 
+                                        !/^010-\d{4}-\d{4}$/.test(formData.phone) ? 
+                                        "올바른 전화번호 형식(010-XXXX-XXXX)으로 입력해주세요." : ""
+                                    }
                                 />
                             </Grid>
                             <Grid item xs={12} sm={6}>
@@ -210,6 +216,11 @@ const CustomerEdit = () => {
                                     type="email"
                                     value={formData.email}
                                     onChange={handleChange}
+                                    error={formData.email !== "" && !formData.email.includes('@')}
+                                    helperText={
+                                        formData.email !== "" && !formData.email.includes('@') ?
+                                        "이메일 주소에 '@'를 포함해주세요." : ""
+                                    }
                                 />
                             </Grid>
                             <Grid item xs={12} sm={6}>
