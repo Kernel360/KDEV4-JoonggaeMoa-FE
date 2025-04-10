@@ -395,9 +395,7 @@ const SurveyEdit = () => {
 
             if (response.data.success) {
                 setSuccess(true)
-                setTimeout(() => {
-                    navigate(`/survey/${id}`)
-                }, 1500)
+                navigate(`/survey/${id}`)
             } else {
                 setError(response.data.error?.message || "설문 수정에 실패했습니다.")
             }

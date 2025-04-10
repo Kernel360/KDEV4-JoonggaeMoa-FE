@@ -84,9 +84,7 @@ const CustomerDetail = () => {
                 handleDeleteClose()
 
                 // Redirect after successful deletion
-                setTimeout(() => {
-                    navigate("/customer-management")
-                }, 1500)
+                navigate("/customer-management")
             } else {
                 setDeleteError(response.data.error?.message || "고객 삭제에 실패했습니다.")
             }

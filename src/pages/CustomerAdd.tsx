@@ -92,9 +92,7 @@ const CustomerAdd = () => {
 
             if (response.data.success) {
                 setSuccess(true)
-                setTimeout(() => {
-                    navigate("/customer-management")
-                }, 1500)
+                navigate("/customer-management")
             } else {
                 setError(response.data.error?.message || "고객 등록에 실패했습니다.")
             }

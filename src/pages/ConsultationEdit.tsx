@@ -208,9 +208,7 @@ const ConsultationEdit = () => {
 
             if (response.data.success) {
                 setSuccess(true)
-                setTimeout(() => {
-                    navigate(`/consultation/${id}`)
-                }, 1500)
+                navigate(`/consultation/${id}`)
             } else {
                 setError(response.data.error?.message || "상담 정보 수정에 실패했습니다.")
             }
@@ -239,7 +237,7 @@ const ConsultationEdit = () => {
                             <ArrowBack />
                         </IconButton>
                         <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                            상담 정보 수정
+                            상담 정보 수정ssssssssssssssss
                         </Typography>
                     </Box>
 

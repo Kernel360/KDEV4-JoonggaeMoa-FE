@@ -60,9 +60,7 @@ const CustomerImport = () => {
                 setUploadSuccess(true)
 
                 // Redirect after successful upload
-                setTimeout(() => {
-                    navigate("/customer-management")
-                }, 2000)
+                navigate("/customer-management")
             } else {
                 setError(response.data.error?.message || "파일 업로드에 실패했습니다.")
             }

@@ -254,9 +254,7 @@ const MessageCreate = () => {
 
             if (response.data.success) {
                 setSuccess(true)
-                setTimeout(() => {
-                    navigate("/message")
-                }, 1500)
+                navigate("/message")
             } else {
                 setError(response.data.error?.message || "문자 전송에 실패했습니다.")
             }

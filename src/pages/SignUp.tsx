@@ -174,9 +174,7 @@ const SignUp = () => {
             severity: 'success'
           });
           
-          setTimeout(() => {
-            navigate('/login');
-          }, 1500);
+          navigate('/login');
         } else {
           setSnackbar({
             open: true,

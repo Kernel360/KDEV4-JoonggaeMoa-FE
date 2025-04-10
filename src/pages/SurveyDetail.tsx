@@ -97,9 +97,7 @@ const SurveyDetail = () => {
                 handleDeleteClose()
 
                 // 삭제 성공 후 목록 페이지로 이동
-                setTimeout(() => {
-                    navigate("/survey")
-                }, 1500)
+                navigate("/survey")
             } else {
                 setDeleteError(response.data.error?.message || "설문 삭제에 실패했습니다.")
             }

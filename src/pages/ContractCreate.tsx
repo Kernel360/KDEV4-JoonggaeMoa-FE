@@ -150,9 +150,7 @@ const ContractCreate = () => {
 
             if (response.data.success) {
                 setSuccess(true)
-                setTimeout(() => {
-                    navigate("/contract")
-                }, 1500)
+                navigate("/contract")
             } else {
                 setError(response.data.error?.message || "계약 등록에 실패했습니다.")
             }
