@@ -176,11 +176,38 @@ const SignUp = () => {
           
           navigate('/login');
         } else {
-          setSnackbar({
-            open: true,
-            message: response.data.error.message || '회원가입 중 오류가 발생했습니다.',
-            severity: 'error'
-          });
+          if(response.data.error.code === '4091'){
+            setSnackbar({
+              open: true,
+              message: '이미 사용 중인 아이디입니다.',
+              severity: 'error'
+            });
+            return;
+          }
+          else if(response.data.error.code === '4092'){
+            setSnackbar({
+              open: true,
+              message: '이미 사용 중인 핸드폰 번호입니다.',
+              severity: 'error'
+            });
+            return;
+          }
+          else if(response.data.error.code === '4093'){
+            setSnackbar({
+              open: true,
+              message: '이미 사용 중인 이메일입니다.',
+              severity: 'error'
+            });
+            return;
+          }
+          else{
+            setSnackbar({
+              open: true,
+              message: response.data.error.message || '회원가입 중 오류가 발생했습니다.',
+              severity: 'error'
+            });
+          }
+          
         }
       } catch (error: any) {
         console.error('Error:', error);
