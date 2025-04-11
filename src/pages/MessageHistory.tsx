@@ -161,7 +161,7 @@ const MessageHistory = () => {
                         <ArrowBack />
                     </IconButton>
                     <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                        지난 문자 조회
+                        전체 문자 조회
                     </Typography>
                 </Box>
                 <Paper elevation={0} sx={{ mb: 3, p: 3, borderRadius: 2 }}>

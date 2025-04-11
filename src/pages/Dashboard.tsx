@@ -862,7 +862,7 @@ const Dashboard = () => {
                         >
                             <Email sx={{ fontSize: 32 }} />
                             <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                보낸 문자
+                                전체 문자
                             </Typography>
                         </Button>
                     </Grid>
