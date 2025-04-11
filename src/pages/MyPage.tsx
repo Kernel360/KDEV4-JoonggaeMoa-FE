@@ -222,7 +222,6 @@ const MyPage = () => {
                                         />
                                     </Grid>
                                     <Grid item xs={12} sm={6}>
-                                        // In the edit dialog section, update the phone input:
                                         <TextField
                                             fullWidth
                                             label="전화번호"
