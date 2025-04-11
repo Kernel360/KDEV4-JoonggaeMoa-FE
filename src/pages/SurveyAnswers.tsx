@@ -458,7 +458,7 @@ const SurveyAnswers = () => {
                                         <Card key={index} variant="outlined" sx={{ mb: 2 }}>
                                             <CardContent>
                                                 <Typography variant="subtitle2" sx={{ fontWeight: "bold", mb: 1 }}>
-                                                    {index + 1}. {item.question}
+                                                    {index + 1}. {selectedAnswer.survey.questionList.find(q => q.id === parseInt(item.question))?.content || item.question}
                                                 </Typography>
                                                 <Divider sx={{ my: 1 }} />
                                                 {item.answer.length > 0 ? (
