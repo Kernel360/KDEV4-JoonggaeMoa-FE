@@ -179,7 +179,7 @@ const MessageList = () => {
                             onClick={() => navigate("/message/history")}
                             startIcon={<History />}
                         >
-                            지난 문자 조회
+                            전체 문자 조회
                         </Button>
                         <Button
                             variant="outlined"

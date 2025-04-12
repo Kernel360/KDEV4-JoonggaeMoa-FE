@@ -44,12 +44,13 @@ const MessageHistory = () => {
                 if (reset) {
                     setLoading(true)
                     setLastMessageId(undefined)
+                    setPage(0) // Reset page when refreshing
                 } else {
                     setLoadingMore(true)
                 }
 
                 const response = await messageApi.getMessages({
-                    page: reset ? 0 : page,
+                    page: reset ? 0 : page + 1, // Increment page number for next fetch
                     size: 10,
                 })
 
@@ -63,7 +64,7 @@ const MessageHistory = () => {
 
                     // Update pagination info
                     setHasMore(!response.data.data.last)
-                    setPage(response.data.data.number)
+                    setPage(reset ? 0 : page + 1) // Update page number after successful fetch
                 } else {
                     setError("메시지 목록을 불러오는데 실패했습니다.")
                 }
@@ -161,7 +162,7 @@ const MessageHistory = () => {
                         <ArrowBack />
                     </IconButton>
                     <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                        지난 문자 조회
+                        전체 문자 조회
                     </Typography>
                 </Box>
                 <Paper elevation={0} sx={{ mb: 3, p: 3, borderRadius: 2 }}>

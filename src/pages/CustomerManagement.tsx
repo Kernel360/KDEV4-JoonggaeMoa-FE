@@ -248,7 +248,6 @@ const CustomerManagement: React.FC = () => {
 
                         <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
                             <Typography variant="body2" color="textSecondary">
-                                전체 {totalPageCount * rowsPerPage}건 중 {customers.length}건 표시
                             </Typography>
                         </Box>
                     </>
