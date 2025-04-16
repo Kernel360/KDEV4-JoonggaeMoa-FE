@@ -6,7 +6,7 @@ declare interface Window {
       Marker: new (options: any) => any;
       load: (callback: () => void) => void;
       event: {
-        addListener: (target: any, eventName: string, callback: () => void) => void;
+        addListener: (target: any, eventName: string, callback: (...args: any[]) => void) => void;
       };
       LatLngBounds: new () => any;
     };

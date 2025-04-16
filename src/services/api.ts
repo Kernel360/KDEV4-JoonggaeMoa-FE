@@ -60,6 +60,9 @@ api.interceptors.response.use(
                     {
                         baseURL: VITE_API_BASE_URL,
                         withCredentials: true, // Important for sending cookies
+                        headers: {
+                            'Cookie-SameSite': 'Lax', // Use Lax instead of None when possible
+                        }
                     },
                 )
 
