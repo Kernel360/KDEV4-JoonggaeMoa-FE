@@ -20,8 +20,10 @@ export interface ReservedMessage {
     id: number
     customerId: number
     customerName: string
+    customerPhone: string
     content: string
     createdAt: string
+    sendAt: string
     sendStatus: MessageStatus
 }
 
@@ -55,5 +57,16 @@ export interface MessageListResponse {
     totalElements: number
     size: number
     number: number
+}
+
+export interface MessageResponse {
+    id: number
+    customerId: number
+    customerName: string
+    customerPhone: string
+    content: string
+    createdAt: string
+    sendAt: string
+    sendStatus: string
 }
 

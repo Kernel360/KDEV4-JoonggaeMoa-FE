@@ -179,6 +179,23 @@ const SurveyDetail = () => {
         }
     }
 
+    // 날짜 포맷팅 함수
+    const formatDate = (dateString: string | undefined) => {
+        if (!dateString) return "-"
+        try {
+            const date = new Date(dateString)
+            const year = date.getFullYear()
+            const month = String(date.getMonth() + 1).padStart(2, "0")
+            const day = String(date.getDate()).padStart(2, "0")
+            const hours = String(date.getHours()).padStart(2, "0")
+            const minutes = String(date.getMinutes()).padStart(2, "0")
+            return `${year}-${month}-${day} ${hours}:${minutes}`
+        } catch (error) {
+            console.error("Error formatting date:", error)
+            return dateString
+        }
+    }
+
     if (loading) {
         return (
             <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
@@ -245,7 +262,7 @@ const SurveyDetail = () => {
                                 등록일
                             </Typography>
                             <Typography variant="body1" sx={{ mt: 1, mb: 3 }}>
-                                {survey.createdAt}
+                                {formatDate(survey.createdAt)}
                             </Typography>
                         </Grid>
 

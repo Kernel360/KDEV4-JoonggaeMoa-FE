@@ -64,7 +64,7 @@ export interface SurveyResponse {
     title: string
     description: string
     questionList: QuestionResponse[]
-    createdAt: string
+    createdAt: string // Format: "2025-04-16 20:02:46.337844"
 }
 
 // 고객 정보
@@ -99,6 +99,6 @@ export interface AnswerResponse {
     customer: CustomerResponse
     survey: SurveyResponse
     answer: QuestionAnswerResponse[]
-    createdAt?: string // 등록 날짜 필드 추가
+    createdAt?: string // Format: "2025-04-16 20:02:46.337844"
 }
 

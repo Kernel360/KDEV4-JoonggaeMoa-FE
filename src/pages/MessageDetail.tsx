@@ -273,7 +273,7 @@ const MessageDetail = () => {
                                 작성 시간
                             </Typography>
                             <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
-                                20{message.createdAt}
+                                {formatDate(message.createdAt)}
                             </Typography>
                         </Grid>
 

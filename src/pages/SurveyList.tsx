@@ -214,6 +214,23 @@ const SurveyList = () => {
         ? surveys.filter((survey) => survey.title.toLowerCase().includes(searchTerm.toLowerCase()))
         : []
 
+    // 날짜 포맷팅 함수
+    const formatDate = (dateString: string | undefined) => {
+        if (!dateString) return "-"
+        try {
+            const date = new Date(dateString)
+            const year = date.getFullYear()
+            const month = String(date.getMonth() + 1).padStart(2, "0")
+            const day = String(date.getDate()).padStart(2, "0")
+            const hours = String(date.getHours()).padStart(2, "0")
+            const minutes = String(date.getMinutes()).padStart(2, "0")
+            return `${year}-${month}-${day} ${hours}:${minutes}`
+        } catch (error) {
+            console.error("Error formatting date:", error)
+            return dateString
+        }
+    }
+
     return (
         <Box sx={{ flexGrow: 1, bgcolor: "#f5f5f5", minHeight: "100vh" }}>
             <Container
@@ -322,7 +339,7 @@ const SurveyList = () => {
                                                 {survey.description}
                                             </TableCell>
                                             <TableCell>{survey.questionList.length}</TableCell>
-                                            <TableCell>{survey.createdAt}</TableCell>
+                                            <TableCell>{formatDate(survey.createdAt)}</TableCell>
                                             <TableCell align="right">
                                                 <IconButton
                                                     size="small"

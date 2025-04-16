@@ -211,7 +211,7 @@ const MessageHistory = () => {
                                             <TableCell>{message.customerName}</TableCell>
                                             <TableCell>{message.customerPhone || "-"}</TableCell>
                                             <TableCell>{message.content}</TableCell>
-                                            <TableCell>20{message.createdAt}</TableCell>
+                                            <TableCell>{formatDate(message.createdAt)}</TableCell>
                                             <TableCell>{formatSendAt(message.sendAt)}</TableCell>
                                             <TableCell>
                                                 <Chip
