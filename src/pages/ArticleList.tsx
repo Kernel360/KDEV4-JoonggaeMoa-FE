@@ -1,35 +1,177 @@
 "use client"
 
-import { ArrowBack, Close, Search } from "@mui/icons-material"
 import {
-    Alert,
     AppBar,
     Box,
+    Button,
     Chip,
-    CircularProgress,
+    Drawer,
     FormControl,
-    Grid,
     IconButton,
-    InputAdornment,
     InputLabel,
+    List,
     MenuItem,
     Paper,
     Select,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    TextField,
     Toolbar,
     Typography
 } from "@mui/material"
 import React, { useEffect, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
+import ArticleDetail from "../components/ArticleDetail"
+import MapView from '../components/map/MapView'
 import { articleApi } from "../services/articleApi"
 import { regionApi } from "../services/regionApi"
 import type { ArticleResponse } from "../types/article"
+import FilterListIcon from '@mui/icons-material/FilterList';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ViewListIcon from '@mui/icons-material/ViewList';
+import ViewMapIcon from '@mui/icons-material/Map';
+import RegionSelector from '../components/region/RegionSelector'
+import { Region, SelectedRegions } from '../utils/regions/regionUtils'
+
+interface ArticleDetailProps {
+    article: ArticleResponse;
+    onClose: () => void;
+    getTypeColor: (type: string) => string;
+    getTypeEmoji: (type: string) => string;
+    getTradeTypeColor: (type: string) => string;
+    isZeroPrice: (price: number | string | null) => boolean;
+    formatPrice: (price: number | string | null) => string;
+    formatDate: (dateString: string) => string;
+}
+
+const ArticleItem = ({ 
+    article, 
+    isSelected, 
+    onClick,
+    getTypeColor,
+    getTypeEmoji,
+    getTradeTypeColor,
+    isZeroPrice,
+    formatPrice
+}: { 
+    article: ArticleResponse; 
+    isSelected: boolean; 
+    onClick: () => void;
+    getTypeColor: (type: string) => string;
+    getTypeEmoji: (type: string) => string;
+    getTradeTypeColor: (type: string) => string;
+    isZeroPrice: (price: number | string | null) => boolean;
+    formatPrice: (price: number | string | null) => string;
+}) => {
+    return (
+        <Paper 
+            elevation={0}
+            sx={{ 
+                m: 2, 
+                p: 2,
+                cursor: "pointer",
+                bgcolor: isSelected ? 'rgba(0, 0, 0, 0.04)' : 'inherit',
+                '&:hover': {
+                    bgcolor: 'rgba(0, 0, 0, 0.04)'
+                }
+            }}
+            onClick={onClick}
+        >
+            <Box sx={{ display: 'flex', gap: 2 }}>
+                <Box 
+                    sx={{ 
+                        width: 100, 
+                        height: 100, 
+                        bgcolor: getTypeColor(article.realEstateType),
+                        borderRadius: 1,
+                        overflow: 'hidden',
+                        flexShrink: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                    }}
+                >
+                    <Typography 
+                        variant="h4" 
+                        sx={{ 
+                            fontSize: '3rem', 
+                            lineHeight: 1, 
+                            color: 'white'
+                        }}
+                    >
+                        {getTypeEmoji(article.realEstateType)}
+                    </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, flex: 1, minWidth: 0 }}>
+                    <Typography 
+                        variant="subtitle1" 
+                        fontWeight="bold"
+                        sx={{
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                        }}
+                    >
+                        {article.cortarName ? `${article.cortarName} ${article.buildingName || article.name}` : article.buildingName || article.name}
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                        <Chip
+                            label={article.realEstateType}
+                            size="small"
+                            sx={{
+                                bgcolor: getTypeColor(article.realEstateType),
+                                color: "white",
+                            }}
+                        />
+                        <Chip
+                            label={article.tradeType}
+                            size="small"
+                            sx={{
+                                bgcolor: getTradeTypeColor(article.tradeType),
+                                color: "white",
+                            }}
+                        />
+                    </Box>
+                    <Typography 
+                        variant="body2" 
+                        color="text.secondary"
+                        sx={{
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                        }}
+                    >
+                        {article.direction && `${article.direction}`}
+                        {article.subwayInfo && ` · ${article.subwayInfo}`}
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                        <Typography 
+                            variant="subtitle1" 
+                            fontWeight="bold"
+                            sx={{
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap'
+                            }}
+                        >
+                            {article.tradeType === "매매" ? "매매가" : "보증금"} {isZeroPrice(article.price) ? "X" : formatPrice(article.price)}
+                        </Typography>
+                        {(article.tradeType === "전세" || article.tradeType === "월세" || article.tradeType === "단기임대") && article.rentPrice > 0 && (
+                            <Typography 
+                                variant="body2" 
+                                color="text.secondary"
+                                sx={{
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap'
+                                }}
+                            >
+                                월세 {formatPrice(article.rentPrice)}
+                            </Typography>
+                        )}
+                    </Box>
+                </Box>
+            </Box>
+        </Paper>
+    );
+};
 
 const ArticleList = () => {
     const navigate = useNavigate()
@@ -46,123 +188,20 @@ const ArticleList = () => {
     const [hasMore, setHasMore] = useState(true)
     const [isLoadingMore, setIsLoadingMore] = useState(false)
     const observerTarget = useRef<HTMLDivElement>(null)
-    const mapRef = useRef<HTMLDivElement>(null)
-    const KAKAO_APP_KEY = import.meta.env.VITE_KAKAO_APP_KEY;
-    const [map, setMap] = useState<any>(null);
-    const [markers, setMarkers] = useState<any[]>([]);
-    const [neighborhoods, setNeighborhoods] = useState<string[]>([])
-    const [selectedNeighborhood, setSelectedNeighborhood] = useState<string>("")
+    const [regions, setRegions] = useState<Region[]>([])
+    const [selectedCity, setSelectedCity] = useState<string>("")
+    const [selectedDistrict, setSelectedDistrict] = useState<string>("")
+    const [selectedNeighborhood, setSelectedNeighborhood] = useState<string[]>([])
     const [locationSearch, setLocationSearch] = useState("")
-
-    // useEffect(() => {
-    //     if (!KAKAO_APP_KEY) {
-    //         console.error('Kakao API key is not defined');
-    //         return;
-    //     }
-
-    //     const script = document.createElement('script');
-    //     script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_APP_KEY}&autoload=false`;
-    //     script.async = true;
-        
-    //     script.onload = () => {
-    //         window.kakao.maps.load(() => {
-    //             if (mapRef.current) {
-    //                 const container = mapRef.current;
-    //                 const options = {
-    //                     center: new window.kakao.maps.LatLng(37.5665, 126.9780),
-    //                     level: 9
-    //                 };
-    //                 const newMap = new window.kakao.maps.Map(container, options);
-    //                 mapInstance.current = newMap;
-    //                 setMap(newMap);
-    //             } else {
-    //                 console.error('Map container not found');
-    //             }
-    //         });
-    //     };
-
-    //     script.onerror = (error) => {
-    //         console.error('Failed to load Kakao Map SDK:', error);
-    //     };
-
-    //     document.head.appendChild(script);
-
-    //     return () => {
-    //         document.head.removeChild(script);
-    //     };
-    // }, []);
-
-    // // 매물 데이터가 변경될 때 마커 업데이트
-    // useEffect(() => {
-    //     if (mapInstance.current && articles.length > 0) {
-    //         // 기존 마커 제거
-    //         markers.forEach(marker => marker.setMap(null));
-    //         setMarkers([]);
-
-    //         // 새로운 마커 생성
-    //         const newMarkers = articles.map(article => {
-    //             if (article.latitude && article.longitude) {
-    //                 const markerPosition = new window.kakao.maps.LatLng(
-    //                     article.latitude,
-    //                     article.longitude
-    //                 );
-    //                 const marker = new window.kakao.maps.Marker({
-    //                     position: markerPosition,
-    //                     map: mapInstance.current
-    //                 });
-
-    //                 // 마커에 클릭 이벤트 추가
-    //                 window.kakao.maps.event.addListener(marker, 'click', () => {
-    //                     handleArticleClick(article);
-    //                 });
-
-    //                 return marker;
-    //             }
-    //             return null;
-    //         }).filter(marker => marker !== null);
-
-    //         setMarkers(newMarkers);
-
-    //         // 모든 마커가 보이도록 지도 범위 조정
-    //         if (newMarkers.length > 0) {
-    //             const bounds = new window.kakao.maps.LatLngBounds();
-    //             newMarkers.forEach(marker => {
-    //                 bounds.extend(marker.getPosition());
-    //             });
-    //             mapInstance.current.setBounds(bounds);
-    //         }
-    //     }
-    // }, [articles]);
-
-    // // 선택된 매물이 변경될 때 마커 업데이트
-    // useEffect(() => {
-    //     if (mapInstance.current) {
-    //         // 기존 마커 제거
-    //         markers.forEach(marker => marker.setMap(null));
-    //         setMarkers([]);
-
-    //         // 선택된 매물이 있으면 해당 위치에 마커 생성
-    //         if (selectedArticle && selectedArticle.latitude && selectedArticle.longitude) {
-    //             const markerPosition = new window.kakao.maps.LatLng(
-    //                 selectedArticle.latitude,
-    //                 selectedArticle.longitude
-    //             );
-    //             const marker = new window.kakao.maps.Marker({
-    //                 position: markerPosition,
-    //                 map: mapInstance.current
-    //             });
-    //             setMarkers([marker]);
-
-    //             // 지도를 마커 위치로 이동
-    //             mapInstance.current.setCenter(markerPosition);
-    //             mapInstance.current.setLevel(3); // Zoom in to level 3
-    //         }
-    //     }
-    // }, [selectedArticle]);
+    const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false)
+    const [drawerWidth] = useState(350)
+    const [showMap, setShowMap] = useState(true)
+    const [showList, setShowList] = useState(true)
+    const [detailVisible, setDetailVisible] = useState(false)
 
     useEffect(() => {
         fetchArticles()
-    }, [typeFilter, tradeTypeFilter])
+    }, [typeFilter, tradeTypeFilter, selectedNeighborhood])
 
     // Add intersection observer effect
     useEffect(() => {
@@ -196,65 +235,149 @@ const ArticleList = () => {
     const fetchArticles = async (pageNum: number = 0) => {
         try {
             if (pageNum === 0) {
-                setLoading(true)
+                setLoading(true);
             } else {
-                setIsLoadingMore(true)
+                setIsLoadingMore(true);
             }
             
-            // Create a properly formatted params object with correct typing
             const params: any = {
                 page: pageNum,
                 size: 20,
                 sort: "id,desc"
+            };
+            
+            // 이미 로드된 매물 ID를 제외하고 요청 (페이지 > 0인 경우)
+            if (pageNum > 0 && articles.length > 0) {
+                // 이미 로드된 매물 ID 목록을 백엔드에 전달하여 중복 방지
+                const loadedIds = articles.map(article => article.id);
+                if (loadedIds.length > 0) {
+                    // exclude 파라미터를 추가하여 백엔드에서 해당 ID들을 제외
+                    params.excludeIds = loadedIds;
+                }
             }
             
-            // Add realEstateType filters if any are selected
             if (typeFilter.length > 0) {
-                params.realEstateType = typeFilter
+                params.realEstateType = typeFilter;
             }
             
-            // Add tradeType filters if any are selected
             if (tradeTypeFilter.length > 0) {
-                params.tradeType = tradeTypeFilter
+                params.tradeType = tradeTypeFilter;
             }
             
-            // Add search term if provided
             if (searchTerm) {
-                params.name = searchTerm
+                params.name = searchTerm;
             }
             
-            // Add location search if provided
-            if (locationSearch) {
-                params.town = locationSearch
+            // 지역 필터링 (cortarNo 기반)
+            if (selectedCity) {
+                let targetCortarNo: string | undefined;
+                
+                // 1. 동 수준 필터링
+                if (selectedNeighborhood.length > 0) {
+                    // 특정 동 선택 - 해당 동의 cortarNo 사용
+                    const dongRegion = regions.find(r => 
+                        r.cortarName === selectedNeighborhood[0] &&
+                        r.cortarNo
+                    );
+                    
+                    if (dongRegion && dongRegion.cortarNo) {
+                        targetCortarNo = dongRegion.cortarNo;
+                        console.log(`Using neighborhood level cortarNo: ${targetCortarNo}`);
+                    }
+                } 
+                // 2. 구/군 수준 필터링 
+                else if (selectedDistrict) {
+                    // 구/군 선택 - 해당 구/군의 cortarNo 사용
+                    const districtRegion = regions.find(r => 
+                        r.cortarName === selectedDistrict &&
+                        r.cortarNo
+                    );
+                    
+                    if (districtRegion && districtRegion.cortarNo) {
+                        targetCortarNo = districtRegion.cortarNo;
+                        console.log(`Using district level cortarNo: ${targetCortarNo}`);
+                    }
+                } 
+                // 3. 시/도 수준 필터링
+                else {
+                    // 시/도 선택 - 해당 시/도의 cortarNo 사용
+                    const cityRegion = regions.find(r => 
+                        r.cortarName === selectedCity &&
+                        r.cortarNo
+                    );
+                    
+                    if (cityRegion && cityRegion.cortarNo) {
+                        targetCortarNo = cityRegion.cortarNo;
+                        console.log(`Using city level cortarNo: ${targetCortarNo}`);
+                    }
+                }
+                
+                // 찾은 cortarNo로 필터링
+                if (targetCortarNo) {
+                    params.cortarNo = targetCortarNo;
+                } 
+                // cortarNo가 없으면 이름으로 필터링 (대안)
+                else if (selectedNeighborhood.length > 0) {
+                    params.cortarName = selectedNeighborhood[0];
+                    console.log(`Falling back to cortarName filtering: ${selectedNeighborhood[0]}`);
+                } else if (selectedDistrict) {
+                    params.cortarName = selectedDistrict;
+                    console.log(`Falling back to cortarName filtering: ${selectedDistrict}`);
+                } else if (selectedCity) {
+                    params.cortarName = selectedCity;
+                    console.log(`Falling back to cortarName filtering: ${selectedCity}`);
+                }
             }
             
-            // Add minPrice and maxPrice if provided
             if (minPrice) {
-                params.minPrice = convertKoreanPriceToNumber(minPrice)
+                params.minPrice = convertKoreanPriceToNumber(minPrice);
             }
             
             if (maxPrice) {
-                params.maxPrice = convertKoreanPriceToNumber(maxPrice)
+                params.maxPrice = convertKoreanPriceToNumber(maxPrice);
             }
             
-            const response = await articleApi.getAllArticles(params)
+            const response = await articleApi.getAllArticles(params);
+            console.log('API Response:', response.data);
+            
             if (response.data.success && response.data.data) {
-                const newArticles = response.data.data.content || []
+                const newArticles = response.data.data.content || [];
+                console.log('Fetched articles:', newArticles);
+                
                 if (pageNum === 0) {
-                    setArticles(newArticles)
+                    setArticles(newArticles);
                 } else {
-                    setArticles(prev => [...prev, ...newArticles])
+                    // 혹시 모를 중복을 한 번 더 클라이언트에서 필터링
+                    setArticles(prev => {
+                        // 현재 목록에 있는 매물의 ID 세트 생성
+                        const existingIds = new Set(prev.map(article => article.id));
+                        
+                        // 새로 가져온 매물 중 기존 목록에 없는 것만 필터링
+                        const uniqueNewArticles = newArticles.filter(
+                            article => !existingIds.has(article.id)
+                        );
+                        
+                        if (newArticles.length !== uniqueNewArticles.length) {
+                            console.log(`Filtered out ${newArticles.length - uniqueNewArticles.length} duplicate articles`);
+                        }
+                        
+                        // 중복이 제거된 새 매물만 기존 목록에 추가
+                        return [...prev, ...uniqueNewArticles];
+                    });
                 }
-                setHasMore(!response.data.data.last)
+                
+                // 새로 가져온 항목이 없거나 마지막 페이지면 더 이상 로드하지 않음
+                const noMoreData = newArticles.length === 0 || response.data.data.last;
+                setHasMore(!noMoreData);
             } else {
-                setError("매물 목록을 불러오는데 실패했습니다.")
+                setError("매물 목록을 불러오는데 실패했습니다.");
             }
         } catch (err) {
-            console.error("Error fetching articles:", err)
-            setError("매물 목록을 불러오는데 실패했습니다.")
+            console.error("Error fetching articles:", err);
+            setError("매물 목록을 불러오는데 실패했습니다.");
         } finally {
-            setLoading(false)
-            setIsLoadingMore(false)
+            setLoading(false);
+            setIsLoadingMore(false);
         }
     }
 
@@ -283,8 +406,9 @@ const ArticleList = () => {
             return man
         }
         
-        // If it's just a number
-        return parseInt(cleanStr) || 0
+        // If it's just a number, assume it's in "만원" unit
+        const num = parseInt(cleanStr) || 0
+        return num
     }
 
     const getTypeColor = (type: string) => {
@@ -350,9 +474,17 @@ const ArticleList = () => {
     const handleArticleClick = (article: ArticleResponse) => {
         // Toggle selection - if already selected, deselect it
         if (selectedArticle?.id === article.id) {
-            setSelectedArticle(null);
+            setDetailVisible(false)
+            // Wait for animation to complete before removing the article
+            setTimeout(() => {
+                setSelectedArticle(null)
+            }, 300)
         } else {
-            setSelectedArticle(article);
+            setSelectedArticle(article)
+            // Show detail panel with a slight delay for smooth animation
+            setTimeout(() => {
+                setDetailVisible(true)
+            }, 50)
         }
     }
 
@@ -419,14 +551,46 @@ const ArticleList = () => {
     }
 
     const handleTypeFilterChange = (e: any) => {
-        const value = e.target.value;
+        const value = e.target.value as string[];
         setTypeFilter(value);
         setPage(0);
     }
 
     const handleTradeTypeFilterChange = (e: any) => {
-        const value = e.target.value;
+        const value = e.target.value as string[];
         setTradeTypeFilter(value);
+        setPage(0);
+    }
+
+    const handleCityChange = (value: string) => {
+        console.log('ArticleList - City changing to:', value);
+        setSelectedCity(value);
+        
+        // Reset district and neighborhood when city changes
+        if (selectedDistrict) {
+            console.log('Resetting district because city changed');
+            setSelectedDistrict('');
+        }
+        
+        if (selectedNeighborhood.length > 0) {
+            console.log('Resetting neighborhood because city changed');
+            setSelectedNeighborhood([]);
+        }
+    }
+
+    const handleDistrictChange = (value: string) => {
+        console.log('ArticleList - District changing to:', value);
+        setSelectedDistrict(value);
+        
+        // Reset neighborhood when district changes
+        if (selectedNeighborhood.length > 0) {
+            console.log('Resetting neighborhood because district changed');
+            setSelectedNeighborhood([]);
+        }
+    }
+
+    const handleNeighborhoodChange = (value: string[]) => {
+        setSelectedNeighborhood(value);
         setPage(0);
     }
 
@@ -449,22 +613,55 @@ const ArticleList = () => {
     }
 
     useEffect(() => {
-        // Fetch neighborhoods from regions API
-        const fetchNeighborhoods = async () => {
+        // Fetch regions from regions API
+        const fetchRegions = async () => {
             try {
+                console.log('Fetching regions...');
                 const response = await regionApi.getAllRegions()
+                console.log('Regions API response:', response.data);
                 
                 if (response.data.success && response.data.data) {
-                    const areas = response.data.data
-                        .map((region: any) => region.cortarName)
-                        .filter((area: string | undefined) => area && area.trim() !== "")
-                    setNeighborhoods(areas)
+                    const regionData = response.data.data;
+                    console.log('Got region data length:', regionData.length);
+                    
+                    // Log a few sample region objects
+                    if (regionData.length > 0) {
+                        console.log('Sample region data:');
+                        for (let i = 0; i < Math.min(3, regionData.length); i++) {
+                            console.log(`Region ${i}:`, JSON.stringify(regionData[i], null, 2));
+                        }
+                    }
+                    
+                    // Check region structure
+                    if (regionData.length > 0) {
+                        console.log('Region object structure:', Object.keys(regionData[0]));
+                        
+                        // Check if areaFull property exists and has values
+                        const withAreaFull = regionData.filter(r => r.areaFull).length;
+                        console.log(`Regions with areaFull: ${withAreaFull}/${regionData.length}`);
+                        
+                        // Check if cortarType property exists and has values
+                        const withCortarType = regionData.filter(r => r.cortarType).length;
+                        console.log(`Regions with cortarType: ${withCortarType}/${regionData.length}`);
+                    }
+                    
+                    // 디버깅: 데이터의 cortarType 값의 분포를 확인
+                    const typeDistribution: { [key: string]: number } = {};
+                    regionData.forEach((region: Region) => {
+                        const type = region.cortarType || 'null';
+                        typeDistribution[type] = (typeDistribution[type] || 0) + 1;
+                    });
+                    console.log('Region cortarType distribution:', typeDistribution);
+                    
+                    setRegions(regionData);
+                } else {
+                    console.error('Failed to get region data:', response.data);
                 }
             } catch (err) {
-                console.error("Error fetching neighborhoods:", err)
+                console.error("Error fetching regions:", err)
             }
         }
-        fetchNeighborhoods()
+        fetchRegions()
     }, [])
 
     const getTypeEmoji = (type: string) => {
@@ -474,535 +671,361 @@ const ArticleList = () => {
             case "오피스텔":
                 return "🏬"
             case "빌라":
+            case "원룸":
+            default:
                 return "🏠"
             case "아파트분양권":
-                return "📝"
-            case "오피스텔분양권":
+            case "오피스텔분양권": 
                 return "📝"
             case "재건축":
+            case "재개발":
                 return "🏗️"
             case "전원주택":
+            case "한옥주택":
                 return "🏡"
             case "단독/다가구":
                 return "🏘️"
             case "상가주택":
-                return "🏪"
-            case "한옥주택":
-                return "🏯"
-            case "재개발":
-                return "🏗️"
-            case "원룸":
-                return "🏠"
-            case "고시원":
-                return "🏢"
             case "상가":
                 return "🏪"
+            case "고시원":
             case "사무실":
+            case "건물":
+            case "지식산업센터":
                 return "🏢"
             case "공장/창고":
                 return "🏭"
-            case "건물":
-                return "🏢"
             case "토지":
                 return "🌳"
-            case "지식산업센터":
-                return "🏢"
-            default:
-                return "🏠"
         }
     }
 
+    // 시/도 목록을 필터링합니다.
+    const filterCities = (regions: Region[]): string[] => {
+        if (!regions || regions.length === 0) return [];
+        
+        console.log('Filtering cities using cortarNo pattern');
+        
+        // cortarNo 시도 패턴: 앞 2자리가 같고 나머지가 0으로 채워진 형태 (예: 1100000000)
+        // 또는 앞 2자리만 추출하여 시도 코드 사용
+        const citySet = new Set<string>();
+        
+        regions.forEach(region => {
+            if (region.cortarNo && region.cortarNo.length === 10) {
+                // 시도 코드만 추출 (앞 2자리)
+                const cityCode = region.cortarNo.substring(0, 2);
+                
+                // 같은 시도 코드를 가진 region 중 한개만 추가
+                const cityRegion = regions.find(r => 
+                    r.cortarNo && r.cortarNo.startsWith(cityCode) && 
+                    r.cortarName && !r.areaFull?.includes(' ')
+                );
+                
+                if (cityRegion && cityRegion.cortarName) {
+                    citySet.add(cityRegion.cortarName);
+                } else if (region.areaFull) {
+                    // 대안: areaFull에서 첫 부분 사용
+                    const parts = region.areaFull.split(' ');
+                    if (parts.length > 0) {
+                        citySet.add(parts[0]);
+                    }
+                }
+            }
+        });
+        
+        const result = Array.from(citySet);
+        console.log('Cities found:', result);
+        return result;
+    };
+
+    // 구/군 목록을 필터링합니다.
+    const filterDistricts = (regions: Region[], selectedCity: string): string[] => {
+        if (!regions || regions.length === 0 || !selectedCity) return [];
+        
+        console.log('Filtering districts for city:', selectedCity);
+        
+        // 선택된 시의 cortarNo 패턴 찾기
+        const cityRegion = regions.find(r => 
+            r.cortarName === selectedCity || 
+            (r.areaFull && r.areaFull.startsWith(selectedCity) && !r.areaFull.includes(' '))
+        );
+        
+        if (!cityRegion || !cityRegion.cortarNo) {
+            console.log('City region not found, falling back to text-based filtering');
+            // 시 지역을 찾지 못하면 텍스트 기반 필터링으로 폴백
+            const districtSet = new Set<string>();
+            regions.forEach(region => {
+                if (region.areaFull) {
+                    const parts = region.areaFull.split(' ');
+                    if (parts.length >= 2 && parts[0] === selectedCity) {
+                        const district = parts[1];
+                        if (district.endsWith('구') || district.endsWith('시') || district.endsWith('군')) {
+                            districtSet.add(district);
+                        }
+                    }
+                }
+            });
+            return Array.from(districtSet);
+        }
+        
+        // 시도 코드 (앞 2자리)
+        const cityCode = cityRegion.cortarNo.substring(0, 2);
+        console.log('City code:', cityCode);
+        
+        // 구/군 패턴: 시도 코드 + 구군 코드 (3자리) + 나머지 0
+        // 예: 서울시(11) + 강남구(680) + 000000 = 1168000000
+        const districtSet = new Set<string>();
+        
+        // 시도 코드로 시작하고 5자리 이후가 000000인 지역 찾기
+        const districtRegions = regions.filter(r => 
+            r.cortarNo && 
+            r.cortarNo.startsWith(cityCode) && 
+            r.cortarNo.substring(5).endsWith('00000') &&
+            r.cortarNo.substring(5, 8) !== '000' // 구/군 코드가 000이 아닌 경우
+        );
+        
+        console.log('District regions found:', districtRegions.length);
+        
+        districtRegions.forEach(region => {
+            if (region.cortarName) {
+                districtSet.add(region.cortarName);
+            } else if (region.areaFull) {
+                const parts = region.areaFull.split(' ');
+                if (parts.length >= 2 && parts[0] === selectedCity) {
+                    districtSet.add(parts[1]);
+                }
+            }
+        });
+        
+        // 결과가 없으면 대안 방법 사용
+        if (districtSet.size === 0) {
+            console.log('Using fallback method for districts');
+            regions.forEach(region => {
+                if (region.areaFull) {
+                    const parts = region.areaFull.split(' ');
+                    if (parts.length >= 2 && parts[0] === selectedCity) {
+                        const district = parts[1];
+                        if (district.endsWith('구') || district.endsWith('시') || district.endsWith('군')) {
+                            districtSet.add(district);
+                        }
+                    }
+                }
+            });
+        }
+        
+        const result = Array.from(districtSet);
+        console.log('Districts found:', result);
+        return result;
+    };
+
     return (
-        <Box sx={{ p: 3 }}>
-            <AppBar position="sticky" color="default" elevation={0} sx={{ mb: 3 }}>
-                <Toolbar sx={{ 
-                    minWidth: '800px',
-                    overflowX: 'auto',
-                    flexDirection: 'column',
-                    alignItems: 'flex-start',
-                    py: 2,
-                    '&::-webkit-scrollbar': {
-                        height: '8px',
-                    },
-                    '&::-webkit-scrollbar-track': {
-                        backgroundColor: 'rgba(0, 0, 0, 0.05)',
-                        borderRadius: '4px',
-                    },
-                    '&::-webkit-scrollbar-thumb': {
-                        backgroundColor: 'rgba(0, 0, 0, 0.2)',
-                        borderRadius: '4px',
-                        '&:hover': {
-                            backgroundColor: 'rgba(0, 0, 0, 0.3)',
-                        },
-                    },
-                }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', mb: 2 }}>
-                        <IconButton edge="start" color="inherit" onClick={handleBack} sx={{ mr: 2, flexShrink: 0 }}>
-                            <ArrowBack />
-                        </IconButton>
-                        <Typography variant="h4" sx={{ flexGrow: 1, flexShrink: 0, fontWeight: 'bold' }}>
-                            매물 관리
-                        </Typography>
-                    </Box>
-                    <Box sx={{ 
-                        display: "flex", 
-                        gap: 2, 
-                        alignItems: "center",
-                        flexWrap: 'nowrap',
-                        width: '100%',
-                    }}>
-                        <Box sx={{ display: 'flex', gap: 2, width: '100%' }}>
-                            {/* Neighborhood selection temporarily disabled for future enhancement
-                            <FormControl size="medium" sx={{ width: '300px' }}>
-                                <InputLabel>동 선택</InputLabel>
-                                <Select
-                                    value={selectedNeighborhood}
-                                    label="동 선택"
-                                    onChange={(e) => {
-                                        setSelectedNeighborhood(e.target.value)
-                                        setLocationSearch(e.target.value)
-                                        handleLocationSearch()
-                                    }}
-                                    MenuProps={{
-                                        PaperProps: {
-                                            sx: {
-                                                maxHeight: 300,
-                                                maxWidth: '60%',
-                                                '& .MuiMenuItem-root': {
-                                                    width: '33.33%',
-                                                    display: 'inline-block',
-                                                    padding: '8px 16px',
-                                                    textAlign: 'center',
-                                                    whiteSpace: 'nowrap',
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis',
-                                                    boxSizing: 'border-box'
-                                                }
-                                            }
-                                        }
-                                    }}
-                                >
-                                    <MenuItem value="">
-                                        <em>전체</em>
-                                    </MenuItem>
-                                    {neighborhoods.map((neighborhood) => (
-                                        <MenuItem key={neighborhood} value={neighborhood}>
-                                            {neighborhood}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                            */}
-                            <FormControl size="medium" sx={{ minWidth: 200, flexShrink: 0 }}>
-                                <InputLabel>매물 유형</InputLabel>
-                                <Select
-                                    multiple
-                                    value={typeFilter}
-                                    label="매물 유형"
-                                    onChange={handleTypeFilterChange}
-                                    renderValue={(selected) => (
-                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                            {selected.map((value) => (
-                                                <Chip key={value} label={value} size="small" />
-                                            ))}
-                                        </Box>
-                                    )}
-                                >
-                                    <MenuItem value="아파트">아파트</MenuItem>
-                                    <MenuItem value="오피스텔">오피스텔</MenuItem>
-                                    <MenuItem value="빌라">빌라</MenuItem>
-                                    <MenuItem value="아파트분양권">아파트분양권</MenuItem>
-                                    <MenuItem value="오피스텔분양권">오피스텔분양권</MenuItem>
-                                    <MenuItem value="재건축">재건축</MenuItem>
-                                    <MenuItem value="전원주택">전원주택</MenuItem>
-                                    <MenuItem value="단독/다가구">단독/다가구</MenuItem>
-                                    <MenuItem value="상가주택">상가주택</MenuItem>
-                                    <MenuItem value="한옥주택">한옥주택</MenuItem>
-                                    <MenuItem value="재개발">재개발</MenuItem>
-                                    <MenuItem value="원룸">원룸</MenuItem>
-                                    <MenuItem value="고시원">고시원</MenuItem>
-                                    <MenuItem value="상가">상가</MenuItem>
-                                    <MenuItem value="사무실">사무실</MenuItem>
-                                    <MenuItem value="공장/창고">공장/창고</MenuItem>
-                                    <MenuItem value="건물">건물</MenuItem>
-                                    <MenuItem value="토지">토지</MenuItem>
-                                    <MenuItem value="지식산업센터">지식산업센터</MenuItem>
-                                </Select>
-                            </FormControl>
-                            <FormControl size="medium" sx={{ minWidth: 200, flexShrink: 0 }}>
-                                <InputLabel>거래 유형</InputLabel>
-                                <Select
-                                    multiple
-                                    value={tradeTypeFilter}
-                                    label="거래 유형"
-                                    onChange={handleTradeTypeFilterChange}
-                                    renderValue={(selected) => (
-                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                            {selected.map((value) => (
-                                                <Chip key={value} label={value} size="small" />
-                                            ))}
-                                        </Box>
-                                    )}
-                                >
-                                    <MenuItem value="매매">매매</MenuItem>
-                                    <MenuItem value="전세">전세</MenuItem>
-                                    <MenuItem value="월세">월세</MenuItem>
-                                    <MenuItem value="단기임대">단기임대</MenuItem>
-                                </Select>
-                            </FormControl>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
-                                <TextField
-                                    size="medium"
-                                    placeholder="최소 가격"
-                                    value={minPrice}
-                                    onChange={handleMinPriceChange}
-                                    onKeyPress={(e) => e.key === 'Enter' && handlePriceFilter()}
-                                    InputProps={{
-                                        endAdornment: <InputAdornment position="end">만원</InputAdornment>,
-                                    }}
-                                    sx={{ width: 150 }}
-                                />
-                                <Typography>~</Typography>
-                                <TextField
-                                    size="medium"
-                                    placeholder="최대 가격"
-                                    value={maxPrice}
-                                    onChange={handleMaxPriceChange}
-                                    onKeyPress={(e) => e.key === 'Enter' && handlePriceFilter()}
-                                    InputProps={{
-                                        endAdornment: <InputAdornment position="end">만원</InputAdornment>,
-                                    }}
-                                    sx={{ width: 150 }}
-                                />
-                                <IconButton size="medium" onClick={handlePriceFilter}>
-                                    <Search />
-                                </IconButton>
-                            </Box>
-                        </Box>
-                    </Box>
+        <Box sx={{ width: '100%', height: '82vh', display: 'flex', flexDirection: 'column' }}>
+            <AppBar position="static" color="default" elevation={1}>
+                <Toolbar>
+                    <IconButton edge="start" color="inherit" onClick={handleBack}>
+                        <ArrowBackIcon />
+                    </IconButton>
+                    <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+                        부동산 매물
+                    </Typography>
+                    <IconButton color="inherit" onClick={() => setShowList(!showList)}>
+                        {showList ? <ViewListIcon /> : <ViewMapIcon />}
+                    </IconButton>
+                    <IconButton color="inherit" onClick={() => setIsFilterDrawerOpen(true)}>
+                        <FilterListIcon />
+                    </IconButton>
                 </Toolbar>
             </AppBar>
-{/* 
-            {!loading && !error && articles.length > 0 && (
-            <Box sx={{ mb: 3 }}>
-                <div id="map" ref={mapRef} style={{ width: '100%', height: '400px' }}></div>
+            
+            <Box sx={{ position: 'relative', flex: 1, overflow: 'hidden' }}>
+                {/* Map component */}
+                {showMap && (
+                    <Box
+                        sx={{
+                            width: "100%",
+                            height: "100%",
+                            position: "absolute",
+                        }}
+                    >
+                        <MapView
+                            articles={articles}
+                            selectedArticle={selectedArticle}
+                            onArticleClick={handleArticleClick}
+                            getTypeColor={getTypeColor}
+                            getTypeEmoji={getTypeEmoji}
+                            getTradeTypeColor={getTradeTypeColor}
+                            formatPrice={formatPrice}
+                            selectedRegions={{
+                                city: selectedCity,
+                                district: selectedDistrict,
+                                neighborhoods: selectedNeighborhood
+                            }}
+                            allRegions={regions}
+                        />
+                    </Box>
+                )}
+                
+                {/* Articles list */}
+                <Box 
+                    sx={{ 
+                        width: `${drawerWidth}px`,
+                        height: "100%",
+                        overflowY: 'auto',
+                        borderLeft: '1px solid rgba(0, 0, 0, 0.12)',
+                        borderRight: '1px solid rgba(0, 0, 0, 0.12)',
+                        position: 'absolute',
+                        left: showList ? 0 : -drawerWidth,
+                        zIndex: 1,
+                        bgcolor: 'background.paper',
+                        boxShadow: '4px 0px 10px rgba(0, 0, 0, 0.1)',
+                        transition: 'left 0.3s ease-in-out',
+                        opacity: 0.9
+                    }}
+                >
+                    <List>
+                        {articles.map((article, index) => (
+                            <ArticleItem 
+                                key={`article-${article.id}-${index}`} 
+                                article={article} 
+                                isSelected={selectedArticle?.id === article.id}
+                                onClick={() => handleArticleClick(article)}
+                                getTypeColor={getTypeColor}
+                                getTypeEmoji={getTypeEmoji}
+                                getTradeTypeColor={getTradeTypeColor}
+                                isZeroPrice={isZeroPrice}
+                                formatPrice={formatPrice}
+                            />
+                        ))}
+                        {(hasMore && !loading) && (
+                            <div ref={observerTarget} style={{ height: '20px' }} />
+                        )}
+                    </List>
+                </Box>
+
+                {/* Article Detail */}
+                <Box
+                    sx={{
+                        position: 'absolute',
+                        top: 0,
+                        right: 0,
+                        bottom: 0,
+                        left: showList ? `${drawerWidth}px` : 0,
+                        width: showList ? `calc(100% - ${drawerWidth}px)` : '100%',
+                        bgcolor: 'background.paper',
+                        zIndex: 2,
+                        overflowY: 'auto',
+                        transition: 'transform 0.3s ease-in-out, width 0.3s ease-in-out, left 0.3s ease-in-out',
+                        transform: detailVisible ? 'translateX(0)' : 'translateX(-100%)',
+                        boxShadow: '4px 0px 10px rgba(0, 0, 0, 0.1)',
+                        opacity: 0.97,
+                        visibility: selectedArticle ? 'visible' : 'hidden'
+                    }}
+                >
+                    {selectedArticle && (
+                        <ArticleDetail
+                            article={selectedArticle}
+                            onClose={() => {
+                                setDetailVisible(false)
+                                setTimeout(() => {
+                                    setSelectedArticle(null)
+                                }, 300)
+                            }}
+                        />
+                    )}
+                </Box>
             </Box>
-            )}
- */}
-            {loading ? (
-                <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
-                    <CircularProgress />
-                </Box>
-            ) : error ? (
-                <Alert severity="error" sx={{ mb: 2 }}>
-                    {error}
-                </Alert>
-            ) : articles.length === 0 ? (
-                <Alert severity="info" sx={{ mb: 2 }}>
-                    매물이 없습니다.
-                </Alert>
-            ) : (
-                <Box sx={{ 
-                    minWidth: '800px', // Set the same minimum width as the toolbar
-                    overflowX: 'auto', // Enable horizontal scrolling
-                    '&::-webkit-scrollbar': {
-                        height: '8px',
+            
+            {/* 필터 드로어 */}
+            <Drawer
+                anchor="right"
+                open={isFilterDrawerOpen}
+                onClose={() => setIsFilterDrawerOpen(false)}
+                sx={{
+                    width: drawerWidth,
+                    flexShrink: 0,
+                    '& .MuiDrawer-paper': {
+                        width: drawerWidth,
+                        padding: 2
                     },
-                    '&::-webkit-scrollbar-track': {
-                        backgroundColor: 'rgba(0, 0, 0, 0.05)',
-                        borderRadius: '4px',
-                    },
-                    '&::-webkit-scrollbar-thumb': {
-                        backgroundColor: 'rgba(0, 0, 0, 0.2)',
-                        borderRadius: '4px',
-                        '&:hover': {
-                            backgroundColor: 'rgba(0, 0, 0, 0.3)',
-                        },
-                    },
-                }}>
-                    <TableContainer component={Paper}>
-                        <Table>
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell width="40%">매물 정보</TableCell>
-                                    <TableCell width="20%">가격</TableCell>
-                                    <TableCell width="20%">위치</TableCell>
-                                    <TableCell width="20%">정보 제공</TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {articles.map((article, index) => (
-                                    <React.Fragment key={`${article.id}-${index}`}>
-                                        <TableRow
-                                            hover
-                                            onClick={() => handleArticleClick(article)}
-                                            sx={{ 
-                                                cursor: "pointer",
-                                                bgcolor: selectedArticle?.id === article.id ? 'rgba(0, 0, 0, 0.04)' : 'inherit'
-                                            }}
-                                        >
-                                            <TableCell>
-                                                <Box sx={{ display: 'flex', gap: 2 }}>
-                                                    <Box 
-                                                        sx={{ 
-                                                            width: 100, 
-                                                            height: 100, 
-                                                            bgcolor: 'grey.200',
-                                                            borderRadius: 1,
-                                                            overflow: 'hidden'
-                                                        }}
-                                                    >
-                                                        {article.imageUrl ? (
-                                                            <img 
-                                                                src={`https://landthumb-phinf.pstatic.net/${encodeURI(article.imageUrl)}`} 
-                                                                alt={article.name}
-                                                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                                                onError={(e) => {
-                                                                    const target = e.target as HTMLImageElement;
-                                                                    target.src = '';
-                                                                    target.style.display = 'none';
-                                                                }}
-                                                            />
-                                                        ) : (
-                                                            <Box 
-                                                                sx={{ 
-                                                                    width: '100%', 
-                                                                    height: '100%', 
-                                                                    display: 'flex', 
-                                                                    alignItems: 'center', 
-                                                                    justifyContent: 'center',
-                                                                    bgcolor: getTypeColor(article.realEstateType),
-                                                                    color: 'white'
-                                                                }}
-                                                            >
-                                                                <Typography variant="h4" sx={{ fontSize: '3rem', lineHeight: 1 }}>
-                                                                    {getTypeEmoji(article.realEstateType)}
-                                                                </Typography>
-                                                            </Box>
-                                                        )}
-                                                    </Box>
-                                                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                                        <Typography variant="subtitle1" fontWeight="bold">
-                                                            {article.buildingName || article.name}
-                                                        </Typography>
-                                                        <Box sx={{ display: 'flex', gap: 1 }}>
-                                                            <Chip
-                                                                label={article.realEstateType}
-                                                                size="small"
-                                                                sx={{
-                                                                    bgcolor: getTypeColor(article.realEstateType),
-                                                                    color: "white",
-                                                                }}
-                                                            />
-                                                            <Chip
-                                                                label={article.tradeType}
-                                                                size="small"
-                                                                sx={{
-                                                                    bgcolor: getTradeTypeColor(article.tradeType),
-                                                                    color: "white",
-                                                                }}
-                                                            />
-                                                        </Box>
-                                                        <Typography variant="body2" color="text.secondary">
-                                                            {article.direction && `${article.direction}`}
-                                                            {article.subwayInfo && ` · ${article.subwayInfo}`}
-                                                        </Typography>
-                                                    </Box>
-                                                </Box>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                                                    <Typography variant="subtitle1" fontWeight="bold">
-                                                        {article.tradeType === "매매" ? "매매가" : "보증금"} {isZeroPrice(article.price) ? "X" : formatPrice(article.price)}
-                                                    </Typography>
-                                                    {(article.tradeType === "전세" || article.tradeType === "월세" || article.tradeType === "단기임대") && article.rentPrice > 0 && (
-                                                        <Typography variant="body2" color="text.secondary">
-                                                            월세 {formatPrice(article.rentPrice)}
-                                                        </Typography>
-                                                    )}
-                                                </Box>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Typography variant="subtitle1" fontWeight="bold">
-                                                    {article.cortarName || "-"}
-                                                </Typography>
-                                                <Typography variant="body2" color="text.secondary">
-                                                    {article.roadAddressName || article.lotAddressName || "-"}
-                                                </Typography>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Typography variant="body2">
-                                                    {article.companyName ? `${article.companyName} 제공` : "-"}
-                                                </Typography>
-                                                <Typography variant="body2" color="text.secondary">
-                                                    {article.agentName || "-"}
-                                                </Typography>
-                                            </TableCell>
-                                        </TableRow>
-                                        {selectedArticle?.id === article.id && (
-                                            <TableRow>
-                                                <TableCell colSpan={4} sx={{ p: 0 }}>
-                                                    <Paper sx={{ m: 1, p: 2 }}>
-                                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                                                            <Typography variant="h4" fontWeight="bold">
-                                                                {selectedArticle.buildingName || selectedArticle.name}
-                                                            </Typography>
-                                                            <IconButton size="small" onClick={() => setSelectedArticle(null)}>
-                                                                <Close />
-                                                            </IconButton>
-                                                        </Box>
-                                                        <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-                                                            <Box sx={{ width: '40%' }}>
-                                                                {selectedArticle.imageUrl ? (
-                                                                    <img 
-                                                                        src={`https://landthumb-phinf.pstatic.net/${encodeURI(selectedArticle.imageUrl)}`} 
-                                                                        alt={selectedArticle.name}
-                                                                        style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', borderRadius: '8px' }}
-                                                                        onError={(e) => {
-                                                                            const target = e.target as HTMLImageElement;
-                                                                            target.src = '';
-                                                                            target.style.display = 'none';
-                                                                        }}
-                                                                    />
-                                                                ) : (
-                                                                    <Box 
-                                                                        sx={{ 
-                                                                            width: '100%',
-                                                                            aspectRatio: '1/1',
-                                                                            display: 'flex', 
-                                                                            flexDirection: 'column',
-                                                                            alignItems: 'center', 
-                                                                            justifyContent: 'center',
-                                                                            bgcolor: getTypeColor(selectedArticle.realEstateType),
-                                                                            color: 'white',
-                                                                            borderRadius: '8px',
-                                                                            gap: 1
-                                                                        }}
-                                                                    >
-                                                                        <Typography variant="h1" sx={{ fontSize: '12rem', lineHeight: 1 }}>
-                                                                            {getTypeEmoji(selectedArticle.realEstateType)}
-                                                                        </Typography>
-                                                                        <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
-                                                                            {selectedArticle.realEstateType}
-                                                                        </Typography>
-                                                                    </Box>
-                                                                )}
-                                                            </Box>
-                                                            <Grid container spacing={2} sx={{ width: '60%' }}>
-                                                                <Grid item xs={6}>
-                                                                    <Box sx={{ mb: 2 }}>
-                                                                        <Typography variant="h6" fontWeight="bold" sx={{ mb: 1 }}>기본 정보</Typography>
-                                                                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                                                            <Box sx={{ display: 'flex' }}>
-                                                                                <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>매물 유형:</Typography>
-                                                                                <Chip
-                                                                                    label={selectedArticle.realEstateType}
-                                                                                    size="small"
-                                                                                    sx={{
-                                                                                        bgcolor: getTypeColor(selectedArticle.realEstateType),
-                                                                                        color: "white",
-                                                                                    }}
-                                                                                />
-                                                                            </Box>
-                                                                            <Box sx={{ display: 'flex' }}>
-                                                                                <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>거래 유형:</Typography>
-                                                                                <Chip
-                                                                                    label={selectedArticle.tradeType}
-                                                                                    size="small"
-                                                                                    sx={{
-                                                                                        bgcolor: getTradeTypeColor(selectedArticle.tradeType),
-                                                                                        color: "white",
-                                                                                    }}
-                                                                                />
-                                                                            </Box>
-                                                                            <Box sx={{ display: 'flex' }}>
-                                                                                <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>
-                                                                                    {selectedArticle.tradeType === "매매" ? "매매가" : "보증금"}:
-                                                                                </Typography>
-                                                                                <Typography variant="body2">
-                                                                                    {isZeroPrice(selectedArticle.price) 
-                                                                                        ? "X" 
-                                                                                        : formatPrice(selectedArticle.price)}
-                                                                                </Typography>
-                                                                            </Box>
-                                                                            {selectedArticle.rentPrice > 0 && (
-                                                                                <Box sx={{ display: 'flex' }}>
-                                                                                    <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>월세:</Typography>
-                                                                                    <Typography variant="body2">{formatPrice(selectedArticle.rentPrice)}</Typography>
-                                                                                </Box>
-                                                                            )}
-                                                                            <Box sx={{ display: 'flex' }}>
-                                                                                <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>등록일:</Typography>
-                                                                                <Typography variant="body2">{formatDate(selectedArticle.confirmedAt)}</Typography>
-                                                                            </Box>
-                                                                        </Box>
-                                                                    </Box>
-                                                                </Grid>
-                                                                <Grid item xs={6}>
-                                                                    <Box sx={{ mb: 2 }}>
-                                                                        <Typography variant="h6" fontWeight="bold" sx={{ mb: 1 }}>위치 정보</Typography>
-                                                                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                                                            <Box sx={{ display: 'flex' }}>
-                                                                                <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>법정동:</Typography>
-                                                                                <Typography variant="body2">{selectedArticle.cortarName || "-"}</Typography>
-                                                                            </Box>
-                                                                            <Box sx={{ display: 'flex' }}>
-                                                                                <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>주소:</Typography>
-                                                                                <Typography variant="body2">
-                                                                                    {selectedArticle.roadAddressName || selectedArticle.lotAddressName || "-"}
-                                                                                </Typography>
-                                                                            </Box>
-                                                                            {selectedArticle.direction && selectedArticle.direction !== "" && (
-                                                                                <Box sx={{ display: 'flex' }}>
-                                                                                    <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>방향:</Typography>
-                                                                                    <Typography variant="body2">{selectedArticle.direction}</Typography>
-                                                                                </Box>
-                                                                            )}
-                                                                            {selectedArticle.subwayInfo && (
-                                                                                <Box sx={{ display: 'flex' }}>
-                                                                                    <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>지하철:</Typography>
-                                                                                    <Typography variant="body2">{selectedArticle.subwayInfo}</Typography>
-                                                                                </Box>
-                                                                            )}
-                                                                        </Box>
-                                                                    </Box>
-                                                                    <Box>
-                                                                        <Typography variant="h6" fontWeight="bold" sx={{ mb: 1 }}>중개사 정보</Typography>
-                                                                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                                                            <Box sx={{ display: 'flex' }}>
-                                                                                <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>정보 제공:</Typography>
-                                                                                <Typography variant="body2">{selectedArticle.companyName ? `${selectedArticle.companyName} 제공` : "-"}</Typography>
-                                                                            </Box>
-                                                                            <Box sx={{ display: 'flex' }}>
-                                                                                <Typography variant="body2" sx={{ width: '100px', fontWeight: 'bold' }}>담당:</Typography>
-                                                                                <Typography variant="body2">{selectedArticle.agentName || "-"}</Typography>
-                                                                            </Box>
-                                                                        </Box>
-                                                                    </Box>
-                                                                </Grid>
-                                                            </Grid>
-                                                        </Box>
-                                                    </Paper>
-                                                </TableCell>
-                                            </TableRow>
-                                        )}
-                                    </React.Fragment>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
+                }}
+            >
+                <Box sx={{ p: 2 }}>
+                    <Typography variant="h6" gutterBottom>
+                        필터
+                    </Typography>
+                    
+                    <RegionSelector 
+                        regions={regions}
+                        selectedCity={selectedCity}
+                        selectedDistrict={selectedDistrict}
+                        selectedNeighborhood={selectedNeighborhood}
+                        onCityChange={handleCityChange}
+                        onDistrictChange={handleDistrictChange}
+                        onNeighborhoodChange={handleNeighborhoodChange}
+                    />
+                    
+                    <FormControl fullWidth margin="normal">
+                        <InputLabel id="property-type-label">매물 유형</InputLabel>
+                        <Select
+                            labelId="property-type-label"
+                            id="property-type-select"
+                            multiple
+                            value={typeFilter}
+                            onChange={handleTypeFilterChange}
+                            renderValue={(selected) => (
+                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                    {selected.map((value) => (
+                                        <Chip key={value} label={value} />
+                                    ))}
+                                </Box>
+                            )}
+                        >
+                            {["아파트", "오피스텔", "빌라", "아파트분양권", "오피스텔분양권", "재건축", "전원주택", "단독/다가구", "상가주택", "한옥주택", "재개발", "원룸", "고시원", "상가", "사무실", "공장/창고", "건물", "토지", "지식산업센터"].map(type => (
+                                <MenuItem key={type} value={type}>
+                                    {type}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                    
+                    <FormControl fullWidth margin="normal">
+                        <InputLabel id="trade-type-label">거래 유형</InputLabel>
+                        <Select
+                            labelId="trade-type-label"
+                            id="trade-type-select"
+                            multiple
+                            value={tradeTypeFilter}
+                            onChange={handleTradeTypeFilterChange}
+                            renderValue={(selected) => (
+                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                    {selected.map((value) => (
+                                        <Chip key={value} label={value} />
+                                    ))}
+                                </Box>
+                            )}
+                        >
+                            {["매매", "전세", "월세", "단기임대"].map(type => (
+                                <MenuItem key={type} value={type}>
+                                    {type}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                    
+                    <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
+                        <Button 
+                            variant="contained" 
+                            color="primary" 
+                            onClick={() => {
+                                setIsFilterDrawerOpen(false);
+                                fetchArticles(0);
+                            }}
+                        >
+                            필터 적용
+                        </Button>
+                    </Box>
                 </Box>
-            )}
-
-            {/* Infinite scroll observer */}
-            <Box ref={observerTarget} sx={{ height: 20, my: 2 }} />
-
-            {/* Loading indicator for infinite scroll */}
-            {isLoadingMore && (
-                <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
-                    <CircularProgress size={24} />
-                </Box>
-            )}
+            </Drawer>
         </Box>
     )
 }

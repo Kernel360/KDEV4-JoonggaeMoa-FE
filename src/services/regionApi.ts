@@ -8,6 +8,7 @@ export interface RegionResponse {
     centerLon: number
     cortarName: string
     cortarType: string
+    areaFull?: string
 }
 
 export const regionApi = {

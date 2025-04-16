@@ -44,6 +44,9 @@ function Login() {
             // 인터셉터의 영향을 받지 않도록 합니다.
             const response = await axios.post(`${API_BASE_URL}/api/agents/login`, loginData, {
                 withCredentials: true, // 쿠키를 받기 위해 필수
+                headers: {
+                    'Cookie-SameSite': 'Lax', // SameSite 설정을 Lax로 지정
+                }
             })
 
             // Check if login was successful (status 2xx)
