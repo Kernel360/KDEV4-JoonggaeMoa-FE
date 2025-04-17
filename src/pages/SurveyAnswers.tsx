@@ -208,6 +208,23 @@ const SurveyAnswers = () => {
         navigate(`/customer-management/${customerId}`)
     }
 
+    // 날짜 포맷팅 함수
+    const formatDate = (dateString: string | undefined) => {
+        if (!dateString) return "-"
+        try {
+            const date = new Date(dateString)
+            const year = date.getFullYear()
+            const month = String(date.getMonth() + 1).padStart(2, "0")
+            const day = String(date.getDate()).padStart(2, "0")
+            const hours = String(date.getHours()).padStart(2, "0")
+            const minutes = String(date.getMinutes()).padStart(2, "0")
+            return `${year}-${month}-${day} ${hours}:${minutes}`
+        } catch (error) {
+            console.error("Error formatting date:", error)
+            return dateString
+        }
+    }
+
     return (
         <Box sx={{ flexGrow: 1, bgcolor: "#f5f5f5", minHeight: "100vh" }}>
             <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
@@ -290,7 +307,7 @@ const SurveyAnswers = () => {
                                                     <TableCell>{answer.customer.email}</TableCell>
                                                     <TableCell>{answer.survey.title}</TableCell>
                                                     <TableCell>{answer.answer.length}</TableCell>
-                                                    <TableCell>{answer.createdAt}</TableCell>
+                                                    <TableCell>{formatDate(answer.createdAt)}</TableCell>
                                                 </TableRow>
                                             ))}
                                         </TableBody>
@@ -346,7 +363,7 @@ const SurveyAnswers = () => {
                                                                 <TableCell>{answer.customer.name}</TableCell>
                                                                 <TableCell>{answer.customer.phone}</TableCell>
                                                                 <TableCell>{answer.customer.email}</TableCell>
-                                                                <TableCell>{answer.createdAt}</TableCell>
+                                                                <TableCell>{formatDate(answer.createdAt)}</TableCell>
                                                             </TableRow>
                                                         ))}
                                                     </TableBody>
@@ -436,7 +453,7 @@ const SurveyAnswers = () => {
                                             </Typography>
                                             <List dense>
                                                 <ListItem>
-                                                    <ListItemText primary="등록일" secondary={selectedAnswer.createdAt} />
+                                                    <ListItemText primary="등록일" secondary={formatDate(selectedAnswer.createdAt)} />
                                                 </ListItem>
                                                 <ListItem>
                                                     <ListItemText
