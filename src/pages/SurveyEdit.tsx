@@ -39,6 +39,7 @@ const SurveyEdit = () => {
     const [success, setSuccess] = useState(false)
     const [validationErrors, setValidationErrors] = useState<{
         title?: string;
+        description?: string;
         questions?: { [key: number]: string };
         options?: { [key: string]: string[] };
     }>({})
@@ -271,11 +272,6 @@ const SurveyEdit = () => {
         const question = questions[questionIndex];
         const option = question.options[optionIndex];
         
-        // 사용자가 아직 상호작용하지 않은 경우 에러를 표시하지 않음
-        if (!option) {
-            return false;
-        }
-        
         // 빈 선택지 검사
         if (!option.trim()) {
             return true;
@@ -292,14 +288,9 @@ const SurveyEdit = () => {
         const question = questions[questionIndex];
         const option = question.options[optionIndex];
         
-        // 사용자가 아직 상호작용하지 않은 경우 에러 메시지를 표시하지 않음
-        if (!option) {
-            return "";
-        }
-        
         // 빈 선택지 검사
         if (!option.trim()) {
-            return "선택지를 입력해주세요";
+            return "선택지 내용을 입력해주세요";
         }
         
         // 중복 선택지 검사
@@ -316,6 +307,7 @@ const SurveyEdit = () => {
     const validateForm = () => {
         const errors: {
             title?: string;
+            description?: string;
             questions?: { [key: number]: string };
             options?: { [key: string]: string[] };
         } = {}
@@ -324,6 +316,12 @@ const SurveyEdit = () => {
         // 제목 검사
         if (!title.trim()) {
             errors.title = "설문 제목을 입력해주세요."
+            hasErrors = true
+        }
+
+        // 설명 검사
+        if (!description.trim()) {
+            errors.description = "설문 설명을 입력해주세요."
             hasErrors = true
         }
 
@@ -507,6 +505,9 @@ const SurveyEdit = () => {
                                 rows={3}
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
+                                error={!!validationErrors.description}
+                                helperText={validationErrors.description}
+                                required
                             />
                         </Grid>
                     </Grid>
