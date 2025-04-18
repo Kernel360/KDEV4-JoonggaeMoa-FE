@@ -39,6 +39,7 @@ const SurveyEdit = () => {
     const [success, setSuccess] = useState(false)
     const [validationErrors, setValidationErrors] = useState<{
         title?: string;
+        description?: string;
         questions?: { [key: number]: string };
         options?: { [key: string]: string[] };
     }>({})
@@ -306,6 +307,7 @@ const SurveyEdit = () => {
     const validateForm = () => {
         const errors: {
             title?: string;
+            description?: string;
             questions?: { [key: number]: string };
             options?: { [key: string]: string[] };
         } = {}
@@ -314,6 +316,12 @@ const SurveyEdit = () => {
         // 제목 검사
         if (!title.trim()) {
             errors.title = "설문 제목을 입력해주세요."
+            hasErrors = true
+        }
+
+        // 설명 검사
+        if (!description.trim()) {
+            errors.description = "설문 설명을 입력해주세요."
             hasErrors = true
         }
 
@@ -497,6 +505,9 @@ const SurveyEdit = () => {
                                 rows={3}
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
+                                error={!!validationErrors.description}
+                                helperText={validationErrors.description}
+                                required
                             />
                         </Grid>
                     </Grid>
