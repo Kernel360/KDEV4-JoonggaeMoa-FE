@@ -271,11 +271,6 @@ const SurveyEdit = () => {
         const question = questions[questionIndex];
         const option = question.options[optionIndex];
         
-        // 사용자가 아직 상호작용하지 않은 경우 에러를 표시하지 않음
-        if (!option) {
-            return false;
-        }
-        
         // 빈 선택지 검사
         if (!option.trim()) {
             return true;
@@ -292,14 +287,9 @@ const SurveyEdit = () => {
         const question = questions[questionIndex];
         const option = question.options[optionIndex];
         
-        // 사용자가 아직 상호작용하지 않은 경우 에러 메시지를 표시하지 않음
-        if (!option) {
-            return "";
-        }
-        
         // 빈 선택지 검사
         if (!option.trim()) {
-            return "선택지를 입력해주세요";
+            return "선택지 내용을 입력해주세요";
         }
         
         // 중복 선택지 검사
