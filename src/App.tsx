@@ -34,6 +34,7 @@ import "./App.css"
 import NotificationList from "./pages/NotificationList.tsx" 
 import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer } from 'react-toastify';
+import { NotificationProvider } from "./context/NotificationContext"
 
 // Create a theme instance
 const theme = createTheme({
@@ -84,268 +85,270 @@ function App() {
             <CssBaseline />
             <Router>
                 <AuthProvider>
-                    <Routes>
-                        <Route
-                            path="/"
-                            element={
-                                <Box
-                                    sx={{
-                                        width: "100vw",
-                                        height: "100vh",
-                                        display: "flex",
-                                        justifyContent: "center",
-                                        alignItems: "center",
-                                        backgroundColor: "#f5f5f5",
-                                    }}
-                                >
-                                    <Login />
-                                </Box>
-                            }
+                    <NotificationProvider>
+                        <Routes>
+                            <Route
+                                path="/"
+                                element={
+                                    <Box
+                                        sx={{
+                                            width: "100vw",
+                                            height: "100vh",
+                                            display: "flex",
+                                            justifyContent: "center",
+                                            alignItems: "center",
+                                            backgroundColor: "#f5f5f5",
+                                        }}
+                                    >
+                                        <Login />
+                                    </Box>
+                                }
+                            />
+                            <Route
+                                path="/signup"
+                                element={
+                                    <Box
+                                        sx={{
+                                            width: "100vw",
+                                            height: "100vh",
+                                            display: "flex",
+                                            justifyContent: "center",
+                                            alignItems: "center",
+                                            backgroundColor: "#f5f5f5",
+                                        }}
+                                    >
+                                        <SignUp />
+                                    </Box>
+                                }
+                            />
+                            {/* 공개 페이지: 설문 제출 */}
+                            <Route path="/surveys/submit/:surveyId" element={<SurveySubmit />} />
+                            <Route
+                                path="/dashboard"
+                                element={
+                                    <ProtectedRoute>
+                                        <Dashboard />
+                                    </ProtectedRoute>
+                                }
+                            />
+                            <Route 
+                                path="/my-page" 
+                                element={
+                                    <ProtectedRoute>
+                                        <MyPage />
+                                    </ProtectedRoute>
+                                } 
+                            />
+                            {/* 나머지 라우트는 그대로 유지 */}
+                            {/* 고객 관리 라우트 */}
+                            <Route
+                                path="/customer-management"
+                                element={
+                                    <ProtectedRoute>
+                                        <CustomerManagement />
+                                    </ProtectedRoute>
+                                }
+                            />
+                            <Route
+                                path="/customer-management/add"
+                                element={
+                                    <ProtectedRoute>
+                                        <CustomerAdd />
+                                    </ProtectedRoute>
+                                }
+                            />
+                            <Route
+                                path="/customer-management/import"
+                                element={
+                                    <ProtectedRoute>
+                                        <CustomerImport />
+                                    </ProtectedRoute>
+                                }
+                            />
+                            <Route
+                                path="/customer-management/:id"
+                                element={
+                                    <ProtectedRoute>
+                                        <CustomerDetail />
+                                    </ProtectedRoute>
+                                }
+                            />
+                            <Route
+                                path="/customer-management/edit/:id"
+                                element={
+                                    <ProtectedRoute>
+                                        <CustomerEdit />
+                                    </ProtectedRoute>
+                                }
+                            />
+                            {/* 설문 관리 라우트 */}
+                            <Route
+                                path="/survey"
+                                element={
+                                    <ProtectedRoute>
+                                        <SurveyList />
+                                    </ProtectedRoute>
+                                }
+                            />
+                            <Route
+                                path="/survey/create"
+                                element={
+                                    <ProtectedRoute>
+                                        <SurveyCreate />
+                                    </ProtectedRoute>
+                                }
+                            />
+                            <Route
+                                path="/survey/:id"
+                                element={
+                                    <ProtectedRoute>
+                                        <SurveyDetail />
+                                    </ProtectedRoute>
+                                }
+                            />
+                            <Route
+                                path="/survey/edit/:id"
+                                element={
+                                    <ProtectedRoute>
+                                        <SurveyEdit />
+                                    </ProtectedRoute>
+                                }
+                            />
+                            {/* 설문 응답 관리 라우트 추가 */}
+                            <Route
+                                path="/survey/answers"
+                                element={
+                                    <ProtectedRoute>
+                                        <SurveyAnswers />
+                                    </ProtectedRoute>
+                                }
+                            />
+                            {/* 상담 관리 라우트 */}
+                            <Route
+                                path="/consultation"
+                                element={
+                                    <ProtectedRoute>
+                                        <ConsultationList />
+                                    </ProtectedRoute>
+                                }
+                            />
+                            <Route
+                                path="/consultation/:id"
+                                element={
+                                    <ProtectedRoute>
+                                        <ConsultationDetail />
+                                    </ProtectedRoute>
+                                }
+                            />
+                            <Route
+                                path="/consultation/edit/:id"
+                                element={
+                                    <ProtectedRoute>
+                                        <ConsultationEdit />
+                                    </ProtectedRoute>
+                                }
+                            />
+                            {/* 메시지 관리 라우트 */}
+                            <Route
+                                path="/message"
+                                element={
+                                    <ProtectedRoute>
+                                        <MessageList />
+                                    </ProtectedRoute>
+                                }
+                            />
+                            <Route
+                                path="/message/history"
+                                element={
+                                    <ProtectedRoute>
+                                        <MessageHistory />
+                                    </ProtectedRoute>
+                                }
+                            />
+                            <Route
+                                path="/message/create"
+                                element={
+                                    <ProtectedRoute>
+                                        <MessageCreate />
+                                    </ProtectedRoute>
+                                }
+                            />
+                            {/* 메시지 상세 페이지 라우트 추가 */}
+                            <Route
+                                path="/message/:id"
+                                element={
+                                    <ProtectedRoute>
+                                        <MessageDetail />
+                                    </ProtectedRoute>
+                                }
+                            />
+                            <Route
+                                path="/message/templates"
+                                element={
+                                    <ProtectedRoute>
+                                        <MessageTemplateCreate />
+                                    </ProtectedRoute>
+                                }
+                            />
+                            {/* 계약 관리 라우트 */}
+                            <Route
+                                path="/contract"
+                                element={
+                                    <ProtectedRoute>
+                                        <ContractList />
+                                    </ProtectedRoute>
+                                }
+                            />
+                            <Route
+                                path="/contract/create"
+                                element={
+                                    <ProtectedRoute>
+                                        <ContractCreate />
+                                    </ProtectedRoute>
+                                }
+                            />
+                            <Route
+                                path="/contract/:id"
+                                element={
+                                    <ProtectedRoute>
+                                        <ContractDetail />
+                                    </ProtectedRoute>
+                                }
+                            />
+                            {/* 매물 관리 라우트 */}
+                            <Route
+                                path="/article"
+                                element={
+                                    <ProtectedRoute>
+                                        <ArticleList />
+                                    </ProtectedRoute>
+                                }
+                            />
+                            <Route
+                                path="/notification-list"
+                                element={
+                                    <ProtectedRoute>
+                                        <NotificationList />
+                                    </ProtectedRoute>
+                                }
+                            />
+                            <Route path="*" element={<Navigate to="/" />} />
+                        </Routes>
+                        <ToastContainer
+                            position="top-right"
+                            autoClose={5000}
+                            hideProgressBar={false}
+                            newestOnTop
+                            closeOnClick
+                            rtl={false}
+                            pauseOnFocusLoss
+                            draggable
+                            pauseOnHover
+                            theme="light"
                         />
-                        <Route
-                            path="/signup"
-                            element={
-                                <Box
-                                    sx={{
-                                        width: "100vw",
-                                        height: "100vh",
-                                        display: "flex",
-                                        justifyContent: "center",
-                                        alignItems: "center",
-                                        backgroundColor: "#f5f5f5",
-                                    }}
-                                >
-                                    <SignUp />
-                                </Box>
-                            }
-                        />
-                        {/* 공개 페이지: 설문 제출 */}
-                        <Route path="/surveys/submit/:surveyId" element={<SurveySubmit />} />
-                        <Route
-                            path="/dashboard"
-                            element={
-                                <ProtectedRoute>
-                                    <Dashboard />
-                                </ProtectedRoute>
-                            }
-                        />
-                        <Route 
-                            path="/my-page" 
-                            element={
-                                <ProtectedRoute>
-                                    <MyPage />
-                                </ProtectedRoute>
-                            } 
-                        />
-                        {/* 나머지 라우트는 그대로 유지 */}
-                        {/* 고객 관리 라우트 */}
-                        <Route
-                            path="/customer-management"
-                            element={
-                                <ProtectedRoute>
-                                    <CustomerManagement />
-                                </ProtectedRoute>
-                            }
-                        />
-                        <Route
-                            path="/customer-management/add"
-                            element={
-                                <ProtectedRoute>
-                                    <CustomerAdd />
-                                </ProtectedRoute>
-                            }
-                        />
-                        <Route
-                            path="/customer-management/import"
-                            element={
-                                <ProtectedRoute>
-                                    <CustomerImport />
-                                </ProtectedRoute>
-                            }
-                        />
-                        <Route
-                            path="/customer-management/:id"
-                            element={
-                                <ProtectedRoute>
-                                    <CustomerDetail />
-                                </ProtectedRoute>
-                            }
-                        />
-                        <Route
-                            path="/customer-management/edit/:id"
-                            element={
-                                <ProtectedRoute>
-                                    <CustomerEdit />
-                                </ProtectedRoute>
-                            }
-                        />
-                        {/* 설문 관리 라우트 */}
-                        <Route
-                            path="/survey"
-                            element={
-                                <ProtectedRoute>
-                                    <SurveyList />
-                                </ProtectedRoute>
-                            }
-                        />
-                        <Route
-                            path="/survey/create"
-                            element={
-                                <ProtectedRoute>
-                                    <SurveyCreate />
-                                </ProtectedRoute>
-                            }
-                        />
-                        <Route
-                            path="/survey/:id"
-                            element={
-                                <ProtectedRoute>
-                                    <SurveyDetail />
-                                </ProtectedRoute>
-                            }
-                        />
-                        <Route
-                            path="/survey/edit/:id"
-                            element={
-                                <ProtectedRoute>
-                                    <SurveyEdit />
-                                </ProtectedRoute>
-                            }
-                        />
-                        {/* 설문 응답 관리 라우트 추가 */}
-                        <Route
-                            path="/survey/answers"
-                            element={
-                                <ProtectedRoute>
-                                    <SurveyAnswers />
-                                </ProtectedRoute>
-                            }
-                        />
-                        {/* 상담 관리 라우트 */}
-                        <Route
-                            path="/consultation"
-                            element={
-                                <ProtectedRoute>
-                                    <ConsultationList />
-                                </ProtectedRoute>
-                            }
-                        />
-                        <Route
-                            path="/consultation/:id"
-                            element={
-                                <ProtectedRoute>
-                                    <ConsultationDetail />
-                                </ProtectedRoute>
-                            }
-                        />
-                        <Route
-                            path="/consultation/edit/:id"
-                            element={
-                                <ProtectedRoute>
-                                    <ConsultationEdit />
-                                </ProtectedRoute>
-                            }
-                        />
-                        {/* 메시지 관리 라우트 */}
-                        <Route
-                            path="/message"
-                            element={
-                                <ProtectedRoute>
-                                    <MessageList />
-                                </ProtectedRoute>
-                            }
-                        />
-                        <Route
-                            path="/message/history"
-                            element={
-                                <ProtectedRoute>
-                                    <MessageHistory />
-                                </ProtectedRoute>
-                            }
-                        />
-                        <Route
-                            path="/message/create"
-                            element={
-                                <ProtectedRoute>
-                                    <MessageCreate />
-                                </ProtectedRoute>
-                            }
-                        />
-                        {/* 메시지 상세 페이지 라우트 추가 */}
-                        <Route
-                            path="/message/:id"
-                            element={
-                                <ProtectedRoute>
-                                    <MessageDetail />
-                                </ProtectedRoute>
-                            }
-                        />
-                        <Route
-                            path="/message/templates"
-                            element={
-                                <ProtectedRoute>
-                                    <MessageTemplateCreate />
-                                </ProtectedRoute>
-                            }
-                        />
-                        {/* 계약 관리 라우트 */}
-                        <Route
-                            path="/contract"
-                            element={
-                                <ProtectedRoute>
-                                    <ContractList />
-                                </ProtectedRoute>
-                            }
-                        />
-                        <Route
-                            path="/contract/create"
-                            element={
-                                <ProtectedRoute>
-                                    <ContractCreate />
-                                </ProtectedRoute>
-                            }
-                        />
-                        <Route
-                            path="/contract/:id"
-                            element={
-                                <ProtectedRoute>
-                                    <ContractDetail />
-                                </ProtectedRoute>
-                            }
-                        />
-                        {/* 매물 관리 라우트 */}
-                        <Route
-                            path="/article"
-                            element={
-                                <ProtectedRoute>
-                                    <ArticleList />
-                                </ProtectedRoute>
-                            }
-                        />
-                        <Route
-                            path="/notification-list"
-                            element={
-                                <ProtectedRoute>
-                                    <NotificationList />
-                                </ProtectedRoute>
-                            }
-                        />
-                        <Route path="*" element={<Navigate to="/" />} />
-                    </Routes>
+                    </NotificationProvider>
                 </AuthProvider>
             </Router>
-            <ToastContainer
-                position="top-right"
-                autoClose={5000}
-                hideProgressBar={false}
-                newestOnTop
-                closeOnClick
-                rtl={false}
-                pauseOnFocusLoss
-                draggable
-                pauseOnHover
-                theme="light"
-            />
         </ThemeProvider>
     )
 }
