@@ -111,11 +111,12 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
-    const [notifications, setNotifications] = useState<Notification[]>([]);
+    // Remove the local notifications state
+    // const [notifications, setNotifications] = useState<Notification[]>([]);
     const [notificationError, setNotificationError] = useState<string | null>(null);
     const [notificationAnchorEl, setNotificationAnchorEl] = useState<null | HTMLElement>(null);
-    const { unreadCount } = useNotification();
-    const { markAsRead } = useNotification();
+    // Get notifications from context
+    const { notifications, unreadCount, markAsRead } = useNotification();
     
     const { logout } = useAuth();
     const { closeSSEConnection } = useNotification();  // Add this line
@@ -202,11 +203,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             });
             
             // Update local state to mark notification as read
-            setNotifications(prev => 
-                prev.map(n => 
-                    n.id === notification.id ? { ...n, isRead: true } : n
-                )
-            );
+            // setNotifications(prev => 
+            //     prev.map(n => 
+            //         n.id === notification.id ? { ...n, isRead: true } : n
+            //     )
+            // );
             
             // Update unread count
             markAsRead(notification.id);
@@ -560,8 +561,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                     </Typography>
                                 </Box>
                                 {notifications
-                                        .slice() // Create a copy to avoid mutating the original array
-                                        .sort((a, b) => b.id - a.id) // Sort by id in descending order
+                                        .slice()
+                                        .sort((a, b) => b.id - a.id) 
+                                        .slice(0, 10) 
                                         .map((notification) => (
                                             <MenuItem 
                                                 key={`${notification.id}-${notification.isRead}`}
