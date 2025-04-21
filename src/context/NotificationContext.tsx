@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import api from '../services/api';
 import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
 
 interface Notification {
     id: number;
@@ -38,6 +39,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [eventSource, setEventSource] = useState<EventSource | null>(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchNotifications = async () => {
@@ -75,7 +77,38 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
                     closeOnClick: true,
                     pauseOnHover: true,
                     draggable: true,
-                    theme: "light"
+                    theme: "light",
+                    onClick: async () => {
+                        try {
+                            if (!notification.isRead) {
+                                await markAsRead(notification.id);
+                            }
+
+                            toast.dismiss();
+                
+                            switch (notification.type) {
+                                case 'SURVEY':
+                                    navigate('/survey');
+                                    break;
+                                case 'ARTICLE':
+                                    navigate('/article-management');
+                                    break;
+                                case 'CONSULTATION':
+                                    navigate('/consultation');
+                                    break;
+                                case 'MESSAGE':
+                                    navigate('/message');
+                                    break;
+                                case 'CONTRACT':
+                                    navigate('/contract');
+                                    break;
+                                default:
+                                    break;
+                            }
+                        } catch (error) {
+                            console.error("Error handling notification:", error);
+                        }
+                    }
                 });
             }
         }
