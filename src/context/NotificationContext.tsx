@@ -60,12 +60,14 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     }, []);
 
     const addNotification = (notification: Notification) => {
-        setNotifications(prev => {
-            const newNotifications = [notification, ...prev].sort((a, b) => b.id - a.id);
-            return newNotifications;
-        });
-        if (!notification.isRead) {
-            setUnreadCount(prev => prev + 1);
+        if (notification.type !== 'CONNECTION') {
+            setNotifications(prev => {
+                const newNotifications = [notification, ...prev].sort((a, b) => b.id - a.id);
+                return newNotifications;
+            });
+            if (!notification.isRead) {
+                setUnreadCount(prev => prev + 1);
+            }
         }
     };
 

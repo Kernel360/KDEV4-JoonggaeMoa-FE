@@ -114,7 +114,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [notificationError, setNotificationError] = useState<string | null>(null);
     const [notificationAnchorEl, setNotificationAnchorEl] = useState<null | HTMLElement>(null);
-    const [unreadCount, setUnreadCount] = useState(0);
+    const { unreadCount } = useNotification();
+    const { markAsRead } = useNotification();
     
     const { logout } = useAuth();
     const { closeSSEConnection } = useNotification();  // Add this line
@@ -208,7 +209,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             );
             
             // Update unread count
-            setUnreadCount(prev => Math.max(0, prev - 1));
+            markAsRead(notification.id);
             
             handleNotificationClose();
             
@@ -282,103 +283,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             return;
         }    
 
-        const setupEventSource = () => {
-            if (eventSource) {
-                eventSource.close();
-            }
-            console.log("Setting up EventSource with agentId:", agentId);
-            
-        //     eventSource = new EventSource(`${api.defaults.baseURL}/api/notification/subscribe?agentId=${agentId}`);
-
-        //     eventSource.onopen = () => {
-        //         console.log("SSE connection opened");
-        //     };
-            
-        //     eventSource.addEventListener("notification", (event)  => {
-        //         console.log("Received notification:", event.data);
-        //         const rawNotification = JSON.parse(event.data);
-        //         const newNotification = {
-        //             ...rawNotification,
-        //             isRead: rawNotification.read
-        //         };
-                
-        //         setNotifications(prev => {
-        //             return [newNotification, ...prev].sort((a, b) => b.id - a.id);
-        //         });
-
-        //         setUnreadCount(count => count + 1);
-                
-        //         // Only show toast for non-CONNECTION type notifications
-        //         if (newNotification.type !== 'CONNECTION') {
-        //             toast.info(
-        //                 <div 
-        //                     style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
-        //                     onClick={() => handleNotificationNavigation(newNotification)}
-        //                 >
-        //                     <div
-        //                         style={{
-        //                             width: 4,
-        //                             height: 40,
-        //                             borderRadius: 4,
-        //                             backgroundColor: getNotificationColor(newNotification.type),
-        //                             marginRight: 12
-        //                         }}
-        //                     />
-        //                     <div>
-        //                         <div style={{ fontWeight: 600, marginBottom: 4 }}>{newNotification.content}</div>
-        //                         <span
-        //                             style={{
-        //                                 backgroundColor: `${getNotificationColor(newNotification.type)}15`,
-        //                                 color: getNotificationColor(newNotification.type),
-        //                                 padding: '4px 8px',
-        //                                 borderRadius: 4,
-        //                                 fontSize: '0.8rem',
-        //                                 fontWeight: 600
-        //                             }}
-        //                         >
-        //                             {newNotification.type}
-        //                         </span>
-        //                     </div>
-        //                 </div>
-        //             );
-        //         }
-        //     });
-
-        //     eventSource.onerror = (err) => {
-        //         console.error("SSE error:", err);
-        //         eventSource?.close();
-        //         setTimeout(setupEventSource, 30000);
-        //     };
-        // };
-
-        // 초기 알림 데이터 로드
-        const fetchNotifications = async () => {
-            try {
-                const response = await api.get("/api/notification");
-                if (response.data.success) {
-                    const allNotifications = response.data.data.map(notification => ({
-                        ...notification,
-                        isRead: notification.read
-                    }));
-                    
-                    setNotifications(allNotifications);
-                    const unreadCount = allNotifications.filter(n => !n.isRead).length;
-                    setUnreadCount(unreadCount);
-                }
-            } catch (err) {
-                console.error("Error fetching notifications:", err);
-                setNotificationError("알림을 불러오는데 실패했습니다");
-            }
-        };
-
-        fetchNotifications();
-        //setupEventSource();
-
-        return () => {
-            // if (eventSource) {
-            //     eventSource.close();
-         }
-        };
     }, []);
 
     return (

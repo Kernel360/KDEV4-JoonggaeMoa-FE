@@ -11,6 +11,8 @@ import {
 } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { useNotification } from '../context/NotificationContext';
+
 import api from '../services/api';
 
 interface Notification {
@@ -38,44 +40,36 @@ const getNotificationColor = (type: string) => {
 };
 
 const NotificationList = () => {
-    const [notifications, setNotifications] = useState<Notification[]>([]);
+    const { notifications, markAsRead } = useNotification();
     const navigate = useNavigate();
 
-    // Add handleNotificationNavigation function
     const handleNotificationNavigation = async (notification: Notification) => {
-        const token = localStorage.getItem('accessToken');
-            if (!token) {
-                navigate('/');
-                return;
+        try {
+            if (!notification.isRead) {
+                await markAsRead(notification.id);
             }
-    
-            await api.patch("/api/notification/read", null, {
-                params: {
-                    notificationId: notification.id,
-                },
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            });
-        
-        switch (notification.type) {
-            case 'SURVEY':
-                navigate('/survey');
-                break;
-            case 'ARTICLE':
-                navigate('/article-management');
-                break;
-            case 'CONSULTATION':
-                navigate('/consultation');
-                break;
-            case 'MESSAGE':
-                navigate('/message');
-                break;
-            case 'CONTRACT':
-                navigate('/contract');
-                break;
-            default:
-                break;
+            
+            switch (notification.type) {
+                case 'SURVEY':
+                    navigate('/survey');
+                    break;
+                case 'ARTICLE':
+                    navigate('/article-management');
+                    break;
+                case 'CONSULTATION':
+                    navigate('/consultation');
+                    break;
+                case 'MESSAGE':
+                    navigate('/message');
+                    break;
+                case 'CONTRACT':
+                    navigate('/contract');
+                    break;
+                default:
+                    break;
+            }
+        } catch (error) {
+            console.error("Error handling notification:", error);
         }
     };
 
@@ -88,7 +82,8 @@ const NotificationList = () => {
                         ...notification,
                         isRead: notification.read
                     }));
-                    setNotifications(mappedNotifications);
+                    // Remove this line as we're using context now
+                    // fetchNotifications(mappedNotifications);
                 }
             } catch (error) {
                 console.error("Error fetching notifications:", error);
@@ -118,8 +113,9 @@ const NotificationList = () => {
             <Paper>
                 <List>
                     {notifications
+                        .filter(notification => notification.type !== 'CONNECTION')
                         .slice()
-                        .sort((a, b) => b.id - a.id) // Sort by id in descending order
+                        .sort((a, b) => b.id - a.id)
                         .map((notification) => (
                         <ListItem
                             key={notification.id}
