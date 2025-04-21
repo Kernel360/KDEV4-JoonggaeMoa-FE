@@ -588,35 +588,52 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                                     bgcolor: notification.isRead ? 'grey.400' : getNotificationColor(notification.type),
                                                     mr: 2
                                                 }} />
-                                                <Box>
+                                                <Box sx={{ width: '100%' }}>
                                                     <Typography 
                                                         variant="body1" 
                                                         sx={{ 
                                                             fontWeight: notification.isRead ? 400 : 600,
                                                             color: notification.isRead ? 'text.disabled' : 'text.primary',
-                                                            mb: 0.5,
                                                             fontSize: '0.95rem',
+                                                            mb: 0.5
                                                         }}
                                                     >
                                                         {notification.content}
                                                     </Typography>
-                                                    <Typography 
-                                                        component="span"
-                                                        variant="body2"
-                                                        sx={{
-                                                            display: 'inline-flex',
-                                                            alignItems: 'center',
-                                                            bgcolor: notification.isRead ? 'grey.100' : `${getNotificationColor(notification.type)}15`,
-                                                            color: notification.isRead ? 'grey.500' : getNotificationColor(notification.type),
-                                                            py: 0.5,
-                                                            px: 1,
-                                                            borderRadius: '4px',
-                                                            fontSize: '0.8rem',
-                                                            fontWeight: 600,
-                                                        }}
-                                                    >
-                                                        {notification.type}
-                                                    </Typography>
+                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                        <Typography 
+                                                            component="span"
+                                                            variant="body2"
+                                                            sx={{
+                                                                display: 'inline-flex',
+                                                                alignItems: 'center',
+                                                                bgcolor: notification.isRead ? 'grey.100' : `${getNotificationColor(notification.type)}15`,
+                                                                color: notification.isRead ? 'grey.500' : getNotificationColor(notification.type),
+                                                                py: 0.5,
+                                                                px: 1,
+                                                                borderRadius: '4px',
+                                                                fontSize: '0.8rem',
+                                                                fontWeight: 600,
+                                                            }}
+                                                        >
+                                                            {notification.type}
+                                                        </Typography>
+                                                        <Typography 
+                                                            variant="caption" 
+                                                            sx={{ 
+                                                                color: 'text.secondary',
+                                                                fontSize: '0.75rem'
+                                                            }}
+                                                        >
+                                                            {new Date(notification.createdAt).toLocaleString('ko-KR', {
+                                                                year: 'numeric',
+                                                                month: '2-digit',
+                                                                day: '2-digit',
+                                                                hour: '2-digit',
+                                                                minute: '2-digit'
+                                                            })}
+                                                        </Typography>
+                                                    </Box>
                                                 </Box>
                                             </MenuItem>
                                         ))}
