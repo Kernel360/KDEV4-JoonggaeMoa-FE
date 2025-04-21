@@ -127,7 +127,7 @@ const ConsultationList = () => {
 
     // 현재 월 상태
     const [currentDate, setCurrentDate] = useState(new Date())
-    const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+    const [selectedDate, setSelectedDate] = useState<Date | null>(new Date()) // 오늘 날짜로 초기화
 
     // 상태 변경 관련 상태
     const [statusAnchorEl, setStatusAnchorEl] = useState<null | HTMLElement>(null)
@@ -147,7 +147,10 @@ const ConsultationList = () => {
     const [createSuccess, setCreateSuccess] = useState(false)
     const [createError, setCreateError] = useState<string | null>(null)
 
-
+    // 상태별 상담 목록 관련 상태
+    const [statusFilteredConsultations, setStatusFilteredConsultations] = useState<ConsultationResponse[]>([])
+    const [selectedStatus, setSelectedStatus] = useState<ConsultationStatus | null>(null)
+    const [statusListLoading, setStatusListLoading] = useState(false)
 
     // 날짜 별 고객 목록 가져오기
     const fetchCustomers = async () => {
@@ -166,8 +169,6 @@ const ConsultationList = () => {
         } finally {
             setCustomersLoading(false)
         }
-
-
     }
 
     // 이전 달로 이동
@@ -222,38 +223,50 @@ const ConsultationList = () => {
         return weeks
     }
 
+    // 상태별 상담 목록 가져오기
+    const fetchConsultationsByStatus = async (status: ConsultationStatus) => {
+        try {
+            setStatusListLoading(true);
+            setSelectedStatus(status);
+            setSelectedDate(null); // 날짜 선택 해제
+            
+            const monthString = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+            const response = await consultationApi.getConsultationsByStatus(monthString, status);
+            
+            if (response.data.success && response.data.data) {
+                setStatusFilteredConsultations(response.data.data);
+            } else {
+                setStatusFilteredConsultations([]);
+            }
+        } catch (err) {
+            console.error("Error fetching consultations by status:", err);
+            setStatusFilteredConsultations([]);
+        } finally {
+            setStatusListLoading(false);
+        }
+    };
 
     // 날짜를 선택했을 때 처리
     const handleDateClick = async (date: Date) => {
         setSelectedDate(date);
+        setSelectedStatus(null); // 상태 선택 해제
         try {
             setLoading(true);
             setError(null);
             const formattedDate = `${formatDateToYYYYMMDD(date)}T00:00`;
             const response = await consultationApi.getConsultationsByDate(formattedDate);
             
-            if (response && response.data) {
-                const consultations = response.data;
+            if (response.data.success && response.data.data) {
+                const consultations = response.data.data;
                 const formattedConsultations = consultations.map((item) => ({
-                    id: item.consultationId,
+                    consultationId: item.consultationId,
                     customerId: item.customerId,
                     customerName: item.customerName,
                     customerPhone: item.customerPhone,
-                    // Use date field if scheduledAt is not available
-                    scheduledAt: item.scheduledAt || item.date,
-                    consultationType: item.consultationType || ConsultationType.VISIT,
-                    status: item.consultationStatus || item.status || ConsultationStatus.WAITING,
-                    content: item.content || "",
-                    date: item.date || item.scheduledAt,
-                    customer: {
-                        id: item.customerId,
-                        name: item.customerName,
-                        phone: item.customerPhone,
-                        email: item.customerEmail || "",
-                    },
+                    date: item.date || "",
                     purpose: item.purpose || "",
-                    result: item.result || "",
-                    nextAction: item.nextAction || "",
+                    memo: item.memo || "",
+                    consultationStatus: item.consultationStatus || ConsultationStatus.WAITING
                 })) as ConsultationResponse[];
                 
                 console.log('API Response:', consultations); // Add this for debugging
@@ -272,8 +285,8 @@ const ConsultationList = () => {
     };
 
     // 상담 상세 페이지로 이동
-    const handleViewConsultation = (consultationId: number) => {
-        navigate(`/consultation/${consultationId}`)
+    const handleViewConsultation = (consultationId: number, customerId: number) => {
+        navigate(`/consultation/${customerId}?consultationId=${consultationId}`)
     }
 
     // 상태 변경 메뉴 열기
@@ -303,7 +316,7 @@ const ConsultationList = () => {
                 // 상태 변경 성공 시 목록 업데이트
                 setConsultations(
                     consultations.map((consultation) =>
-                        consultation.id === selectedConsultation ? { ...consultation, status: newStatus } : consultation,
+                        consultation.consultationId === selectedConsultation ? { ...consultation, consultationStatus: newStatus } : consultation,
                     ),
                 )
                 setStatusSuccess(true)
@@ -351,10 +364,10 @@ const ConsultationList = () => {
     
             // If a date is selected, refresh the consultations for that date
             if (selectedDate) {
-                const formattedDate = `${selectedDate.getFullYear()}${String(selectedDate.getMonth() + 1).padStart(2, '0')}${String(selectedDate.getDate()).padStart(2, '0')}`;
+                const formattedDate = `${formatDateToYYYYMMDD(selectedDate)}T00:00`;
                 const dateResponse = await consultationApi.getConsultationsByDate(formattedDate);
-                if (dateResponse.success) {
-                    setDateFilteredConsultations(dateResponse.data);
+                if (dateResponse.data.success && dateResponse.data.data) {
+                    setDateFilteredConsultations(dateResponse.data.data);
                 }
             }
         } catch (error) {
@@ -402,16 +415,10 @@ const ConsultationList = () => {
 
     // 검색어로 필터링 - customer 객체가 존재하는지 확인하는 안전 검사 추가
     const filteredConsultations = consultations.filter((consultation) => {
-        // customer 객체가 없는 경우 필터링에서 제외
-        if (!consultation.customer) {
-            return false
-        }
-
         // 검색어 필터링
         const searchMatch =
-            consultation.customer.name.includes(searchTerm) ||
-            consultation.customer.phone.includes(searchTerm) ||
-            (consultation.customer.email && consultation.customer.email.includes(searchTerm))
+            consultation.customerName.includes(searchTerm) ||
+            consultation.customerPhone.includes(searchTerm)
 
         return searchMatch
     })
@@ -425,8 +432,8 @@ const ConsultationList = () => {
 
     
 
-    const scheduledCount = consultations.filter((c) => c.status === ConsultationStatus.CONFIRMED).length
-    const completedCount = consultations.filter((c) => c.status === ConsultationStatus.COMPLETED).length
+    const scheduledCount = consultations.filter((c) => c.consultationStatus === ConsultationStatus.CONFIRMED).length
+    const completedCount = consultations.filter((c) => c.consultationStatus === ConsultationStatus.COMPLETED).length
 
     // 날짜 형식화 함수 - 화면 표시용
     const formatDateTime = (dateString: string): string => {
@@ -458,9 +465,9 @@ const ConsultationList = () => {
         const fetchMonthInfo = async () => {
             try {
                 const monthString = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
-                const response = await consultationApi.getConsultationMonthInfo(monthString);
-                if (response.data.success) {
-                    setMonthInfo(response.data.data);
+                const monthResponse = await consultationApi.getConsultationMonthInfo(monthString);
+                if (monthResponse.data.success) {
+                    setMonthInfo(monthResponse.data.data);
                 }
             } catch (error) {
                 console.error('Failed to fetch month information:', error);
@@ -470,7 +477,17 @@ const ConsultationList = () => {
         fetchMonthInfo();
     }, [currentDate]);
 
- 
+    // Add effect to fetch today's consultations when component mounts
+    useEffect(() => {
+        if (selectedDate) {
+            handleDateClick(selectedDate);
+        }
+    }, []); // Empty dependency array means this runs once when component mounts
+
+    // 상태 요약 카드 클릭 핸들러
+    const handleStatusCardClick = (status: ConsultationStatus) => {
+        fetchConsultationsByStatus(status);
+    };
 
     // Update the summary information section in the render
     return (
@@ -503,7 +520,21 @@ const ConsultationList = () => {
                     <Grid item xs={12} sm={4}>
                         <Paper
                             elevation={0}
-                            sx={{ p: 3, borderRadius: 2, display: "flex", flexDirection: "column", alignItems: "center" }}
+                            sx={{ 
+                                p: 3, 
+                                borderRadius: 2, 
+                                display: "flex", 
+                                flexDirection: "column", 
+                                alignItems: "center",
+                                cursor: "pointer",
+                                transition: "all 0.2s",
+                                "&:hover": {
+                                    bgcolor: "rgba(33, 150, 243, 0.08)",
+                                    transform: "translateY(-2px)",
+                                    boxShadow: "0 4px 8px rgba(0,0,0,0.1)"
+                                }
+                            }}
+                            onClick={() => handleStatusCardClick(ConsultationStatus.WAITING)}
                         >
                             <Typography variant="subtitle2" color="textSecondary" gutterBottom>
                                 상담 대기
@@ -516,7 +547,21 @@ const ConsultationList = () => {
                     <Grid item xs={12} sm={4}>
                         <Paper
                             elevation={0}
-                            sx={{ p: 3, borderRadius: 2, display: "flex", flexDirection: "column", alignItems: "center" }}
+                            sx={{ 
+                                p: 3, 
+                                borderRadius: 2, 
+                                display: "flex", 
+                                flexDirection: "column", 
+                                alignItems: "center",
+                                cursor: "pointer",
+                                transition: "all 0.2s",
+                                "&:hover": {
+                                    bgcolor: "rgba(255, 152, 0, 0.08)",
+                                    transform: "translateY(-2px)",
+                                    boxShadow: "0 4px 8px rgba(0,0,0,0.1)"
+                                }
+                            }}
+                            onClick={() => handleStatusCardClick(ConsultationStatus.CONFIRMED)}
                         >
                             <Typography variant="subtitle2" color="textSecondary" gutterBottom>
                                 상담 확정
@@ -529,7 +574,21 @@ const ConsultationList = () => {
                     <Grid item xs={12} sm={4}>
                         <Paper
                             elevation={0}
-                            sx={{ p: 3, borderRadius: 2, display: "flex", flexDirection: "column", alignItems: "center" }}
+                            sx={{ 
+                                p: 3, 
+                                borderRadius: 2, 
+                                display: "flex", 
+                                flexDirection: "column", 
+                                alignItems: "center",
+                                cursor: "pointer",
+                                transition: "all 0.2s",
+                                "&:hover": {
+                                    bgcolor: "rgba(76, 175, 80, 0.08)",
+                                    transform: "translateY(-2px)",
+                                    boxShadow: "0 4px 8px rgba(0,0,0,0.1)"
+                                }
+                            }}
+                            onClick={() => handleStatusCardClick(ConsultationStatus.COMPLETED)}
                         >
                             <Typography variant="subtitle2" color="textSecondary" gutterBottom>
                                 완료된 상담
@@ -541,108 +600,110 @@ const ConsultationList = () => {
                     </Grid>
                 </Grid>
                 {/* 캘린더 뷰 */}
-                <Grid item xs={12}>
-                            <Paper elevation={0} sx={{ p: 3, borderRadius: 2 }}>
-                                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-                                    <Typography variant="h6">
-                                        <CalendarMonth sx={{ verticalAlign: "middle", mr: 1 }} />
-                                        상담 일정
-                                    </Typography>
-                                    <Box>
-                                        <IconButton onClick={goToPreviousMonth}>
-                                            <ChevronLeft />
-                                        </IconButton>
-                                        <Typography variant="subtitle1" component="span" sx={{ mx: 2 }}>
-                                            {currentDate.getFullYear()}년 {currentDate.getMonth() + 1}월
-                                        </Typography>
-                                        <IconButton onClick={goToNextMonth}>
-                                            <ChevronRight />
-                                        </IconButton>
-                                    </Box>
-                                </Box>
-
-                                <Divider sx={{ mb: 2 }} />
-
-                                <Table>
-                                    <TableHead>
-                                        <TableRow>
-                                            <TableCell align="center">일</TableCell>
-                                            <TableCell align="center">월</TableCell>
-                                            <TableCell align="center">화</TableCell>
-                                            <TableCell align="center">수</TableCell>
-                                            <TableCell align="center">목</TableCell>
-                                            <TableCell align="center">금</TableCell>
-                                            <TableCell align="center">토</TableCell>
-                                        </TableRow>
-                                    </TableHead>
-                                    <TableBody>
-                                        {calendarData.map((week, weekIndex) => (
-                                            <TableRow key={`week-${weekIndex}`}>
-                                                {week.map((day, dayIndex) => (
-                                                    <TableCell
-                                                        key={`day-${weekIndex}-${dayIndex}`}
-                                                        align="center"
-                                                        sx={{
-                                                            height: "80px",
-                                                            width: "14.28%",
-                                                            position: "relative",
-                                                            cursor: day ? "pointer" : "default",
-                                                            bgcolor: selectedDate && day && selectedDate.toDateString() === day.toDateString()
-                                                                ? "#f5f5f5"
-                                                                : "inherit",
-                                                            color: day
-                                                                ? dayIndex === 0
-                                                                    ? "error.main"
-                                                                    : dayIndex === 6
-                                                                        ? "primary.main"
-                                                                        : "inherit"
-                                                                : "#aaa",
-                                                        }}
-                                                        onClick={() => day && handleDateClick(day)}
-                                                    >
-                                                        {day && (
-                                                            <Box sx={{ 
-                                                                display: 'flex', 
-                                                                flexDirection: 'column', 
-                                                                alignItems: 'center',
-                                                                height: '100%',
-                                                                pt: 1 
-                                                            }}>
-                                                                <Typography variant="body2" sx={{ mb: 1 }}>{day.getDate()}</Typography>
-                                                                {/* Inside the TableCell component in the calendar */}
-                                                                {monthInfo.daysCount[day.getDate() - 1] > 0 && (
-                                                                    <Chip
-                                                                        size="small"
-                                                                        label={`${monthInfo.daysCount[day.getDate() - 1]}건`}
-                                                                        sx={{
-                                                                            bgcolor: "#e3f2fd",
-                                                                            color: "#1976d2",
-                                                                            fontSize: "0.7rem",
-                                                                            height: "20px",
-                                                                            mt: 'auto',
-                                                                            mb: 1
-                                                                        }}
-                                                                    />
-                                                                )}
-                                                            </Box>
-                                                        )}
-                                                    </TableCell>
-                                                ))}
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </Paper>
-                        </Grid>
-            </Container>
-
-            {/* Add consultation list table below calendar */}
-            {selectedDate && (
-                <Container maxWidth="lg" sx={{ mt: 4, mb: 4, mx: "auto", px: { xs: 2, sm: 3, md: 4 } }}>
-                    <Grid item xs={12}>
+                <Grid container spacing={3}>
+                    <Grid item xs={12} md={6}>
                         <Paper elevation={0} sx={{ p: 3, borderRadius: 2 }}>
+                            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+                                <Typography variant="h6">
+                                    <CalendarMonth sx={{ verticalAlign: "middle", mr: 1 }} />
+                                    상담 일정
+                                </Typography>
+                                <Box>
+                                    <IconButton onClick={goToPreviousMonth}>
+                                        <ChevronLeft />
+                                    </IconButton>
+                                    <Typography variant="subtitle1" component="span" sx={{ mx: 2 }}>
+                                        {currentDate.getFullYear()}년 {currentDate.getMonth() + 1}월
+                                    </Typography>
+                                    <IconButton onClick={goToNextMonth}>
+                                        <ChevronRight />
+                                    </IconButton>
+                                </Box>
+                            </Box>
+
+                            <Divider sx={{ mb: 2 }} />
+
+                            <Table>
+                                <TableHead>
+                                    <TableRow>
+                                        <TableCell align="center">일</TableCell>
+                                        <TableCell align="center">월</TableCell>
+                                        <TableCell align="center">화</TableCell>
+                                        <TableCell align="center">수</TableCell>
+                                        <TableCell align="center">목</TableCell>
+                                        <TableCell align="center">금</TableCell>
+                                        <TableCell align="center">토</TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {calendarData.map((week, weekIndex) => (
+                                        <TableRow key={`week-${weekIndex}`}>
+                                            {week.map((day, dayIndex) => (
+                                                <TableCell
+                                                    key={`day-${weekIndex}-${dayIndex}`}
+                                                    align="center"
+                                                    sx={{
+                                                        height: "60px",
+                                                        width: "14.28%",
+                                                        position: "relative",
+                                                        cursor: day ? "pointer" : "default",
+                                                        bgcolor: selectedDate && day && selectedDate.toDateString() === day.toDateString()
+                                                            ? "#f5f5f5"
+                                                            : "inherit",
+                                                        color: day
+                                                            ? dayIndex === 0
+                                                                ? "error.main"
+                                                                : dayIndex === 6
+                                                                    ? "primary.main"
+                                                                    : "inherit"
+                                                            : "#aaa",
+                                                    }}
+                                                    onClick={() => day && handleDateClick(day)}
+                                                >
+                                                    {day && (
+                                                        <Box sx={{ 
+                                                            display: 'flex', 
+                                                            flexDirection: 'column', 
+                                                            alignItems: 'center',
+                                                            height: '100%',
+                                                            pt: 1 
+                                                        }}>
+                                                            <Typography variant="body2" sx={{ mb: 1 }}>{day.getDate()}</Typography>
+                                                            {/* Inside the TableCell component in the calendar */}
+                                                            {monthInfo.daysCount[day.getDate() - 1] > 0 && (
+                                                                <Chip
+                                                                    size="small"
+                                                                    label={`${monthInfo.daysCount[day.getDate() - 1]}건`}
+                                                                    sx={{
+                                                                        bgcolor: "#e3f2fd",
+                                                                        color: "#1976d2",
+                                                                        fontSize: "0.7rem",
+                                                                        height: "20px",
+                                                                        mt: 'auto',
+                                                                        mb: 1
+                                                                    }}
+                                                                />
+                                                            )}
+                                                        </Box>
+                                                    )}
+                                                </TableCell>
+                                            ))}
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </Paper>
+                    </Grid>
+
+                    {/* 상담 목록 테이블 - 캘린더 오른쪽에 배치 */}
+                    <Grid item xs={12} md={6}>
+                        <Paper elevation={0} sx={{ p: 3, borderRadius: 2, height: '100%' }}>
                             <Typography variant="h6" sx={{ mb: 2 }}>
-                                {selectedDate.getMonth() + 1}월 {selectedDate.getDate()}일 상담 목록
+                                {selectedStatus 
+                                    ? `${statusConfig[selectedStatus].label} 상담 목록` 
+                                    : selectedDate 
+                                        ? `${selectedDate.getMonth() + 1}월 ${selectedDate.getDate()}일 상담 목록` 
+                                        : '상담 목록'}
                             </Typography>
                             <TableContainer>
                                 <Table>
@@ -651,23 +712,57 @@ const ConsultationList = () => {
                                             <TableCell>고객명</TableCell>
                                             <TableCell>연락처</TableCell>
                                             <TableCell>상담 시간</TableCell>
-                                            <TableCell>상담 유형</TableCell>
                                             <TableCell>상태</TableCell>
-                                            <TableCell></TableCell>
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
-                                        {loading ? (
+                                        {loading || statusListLoading ? (
                                             <TableRow>
-                                                <TableCell colSpan={6} align="center">
+                                                <TableCell colSpan={4} align="center">
                                                     <CircularProgress size={24} />
                                                 </TableCell>
                                             </TableRow>
+                                        ) : selectedStatus ? (
+                                            statusFilteredConsultations.length > 0 ? (
+                                                statusFilteredConsultations.map((consultation) => (
+                                                    <TableRow 
+                                                        key={consultation.consultationId}
+                                                        onClick={() => handleViewConsultation(consultation.consultationId, consultation.customerId)}
+                                                        sx={{ 
+                                                            cursor: 'pointer',
+                                                            '&:hover': { 
+                                                                backgroundColor: 'rgba(0, 0, 0, 0.04)' 
+                                                            }
+                                                        }}
+                                                    >
+                                                        <TableCell>{consultation.customerName}</TableCell>
+                                                        <TableCell>{consultation.customerPhone}</TableCell>
+                                                        <TableCell>
+                                                            {consultation.date ? formatDateTime(consultation.date) : '-'}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <Chip
+                                                                label={statusConfig[consultation.consultationStatus].label}
+                                                                sx={{
+                                                                    bgcolor: statusConfig[consultation.consultationStatus].color,
+                                                                    color: statusConfig[consultation.consultationStatus].textColor,
+                                                                }}
+                                                            />
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))
+                                            ) : (
+                                                <TableRow>
+                                                    <TableCell colSpan={4} align="center">
+                                                        {`${statusConfig[selectedStatus].label} 상담이 없습니다.`}
+                                                    </TableCell>
+                                                </TableRow>
+                                            )
                                         ) : dateFilteredConsultations.length > 0 ? (
                                             dateFilteredConsultations.map((consultation) => (
                                                 <TableRow 
-                                                    key={consultation.id}
-                                                    onClick={() => handleViewConsultation(consultation.id)}
+                                                    key={consultation.consultationId}
+                                                    onClick={() => handleViewConsultation(consultation.consultationId, consultation.customerId)}
                                                     sx={{ 
                                                         cursor: 'pointer',
                                                         '&:hover': { 
@@ -678,15 +773,14 @@ const ConsultationList = () => {
                                                     <TableCell>{consultation.customerName}</TableCell>
                                                     <TableCell>{consultation.customerPhone}</TableCell>
                                                     <TableCell>
-                                                        {consultation.scheduledAt ? formatDateTime(consultation.scheduledAt) : '-'}
+                                                        {consultation.date ? formatDateTime(consultation.date) : '-'}
                                                     </TableCell>
-                                                    <TableCell>{typeConfig[consultation.consultationType]}</TableCell>
                                                     <TableCell>
                                                         <Chip
-                                                            label={statusConfig[consultation.status].label}
+                                                            label={statusConfig[consultation.consultationStatus].label}
                                                             sx={{
-                                                                bgcolor: statusConfig[consultation.status].color,
-                                                                color: statusConfig[consultation.status].textColor,
+                                                                bgcolor: statusConfig[consultation.consultationStatus].color,
+                                                                color: statusConfig[consultation.consultationStatus].textColor,
                                                             }}
                                                         />
                                                     </TableCell>
@@ -694,8 +788,8 @@ const ConsultationList = () => {
                                             ))
                                         ) : (
                                             <TableRow>
-                                                <TableCell colSpan={6} align="center">
-                                                    예약된 상담이 없습니다.
+                                                <TableCell colSpan={4} align="center">
+                                                    {selectedDate ? '예약된 상담이 없습니다.' : '날짜를 선택하세요.'}
                                                 </TableCell>
                                             </TableRow>
                                         )}
@@ -704,8 +798,8 @@ const ConsultationList = () => {
                             </TableContainer>
                         </Paper>
                     </Grid>
-                </Container>
-            )}
+                </Grid>
+            </Container>
 
             {/* 상태 변경 메뉴 */}
             <Menu

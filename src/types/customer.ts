@@ -26,5 +26,8 @@ export interface CustomerResponse {
     consent: boolean
     createdAt: string
     updatedAt: string
+    interestArea?: string
+    interestProperty?: string
+    assetStatus?: string
 }
 

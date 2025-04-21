@@ -231,7 +231,7 @@ function App() {
                             }
                         />
                         <Route
-                            path="/consultation/:id"
+                            path="/consultation/:customerId"
                             element={
                                 <ProtectedRoute>
                                     <ConsultationDetail />

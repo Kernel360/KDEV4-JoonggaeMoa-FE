@@ -1,9 +1,10 @@
 import api from "./api"
 import type { AxiosResponse } from "axios"
-import type { ConsultationResultRequest, ConsultationResponse, ConsultationMonthInfo } from "../types/consultation"
+import type { ConsultationResultRequest, ConsultationResponse, ConsultationMonthInfo, ConsultationHistoryDto } from "../types/consultation"
 import type { ApiResponse } from "../types/api"
+import axios from "axios"
+import { ConsultationStatus } from "../types/consultation"
 
-// 상담 생성 - 백엔드 API 구조에 맞게 수정 (필수 필드만 받도록)
 export const createConsultation = async (consultationData: {
     customerId: number
     date: string
@@ -63,19 +64,13 @@ export const updateConsultationResult = async (
     return api.patch(`/api/consultations/${consultationId}/result`, resultData)
 }
 
-// 상담 상세 조회
-export const getConsultationById = async (
-    consultationId: number,
-): Promise<AxiosResponse<ApiResponse<ConsultationResponse>>> => {
-    console.log(`API 호출: /api/consultations/${consultationId}`) // 로그 추가
-    try {
-        const response = await api.get(`/api/consultations/${consultationId}`)
-        console.log("상담 상세 API 응답:", response.data)
-        return response
-    } catch (error) {
-        console.error("상담 상세 API 오류:", error)
-        throw error
-    }
+// 고객 ID로 상담 내역 조회
+export const getConsultationHistoryByCustomerId = async (
+    customerId: number,
+    page: number = 0,
+    size: number = 5
+): Promise<AxiosResponse<ApiResponse<ConsultationHistoryDto>>> => {
+    return await api.get(`/api/consultations/customers/${customerId}?page=${page}&size=${size}&sort=date,desc`)
 }
 
 // 오늘 예정된 상담 조회
@@ -84,28 +79,8 @@ export const getTodayConsultations = async (): Promise<AxiosResponse<ApiResponse
 }
 
 // 날짜별 상담 조회
-export const getConsultationsByDate = async (date: string): Promise<ApiResponse<ConsultationResponse[]>> => {
-    try {
-        const response = await api.get<ApiResponse<ConsultationResponse[]>>(`/api/consultations/date?date=${date}`);
-        return response.data;
-    } catch (error: any) {
-        console.error("날짜별 상담 조회 오류:", error);
-        return {
-            success: false,
-            data: [],
-            error: {
-                code: 'FETCH_CONSULTATIONS_BY_DATE_FAILED',
-                message: error.message || '날짜별 상담 조회 실패',
-            },
-        };
-    }
-}
-
-// 고객별 상담 조회
-export const getConsultationsByCustomer = async (
-    customerId: number,
-): Promise<AxiosResponse<ApiResponse<ConsultationResponse[]>>> => {
-    return api.get(`/api/customers/${customerId}/consultations`)
+export const getConsultationsByDate = async (date: string): Promise<AxiosResponse<ApiResponse<ConsultationResponse[]>>> => {
+    return await api.get(`/api/consultations/date?date=${date}`);
 }
 
 // 상담 삭제
@@ -113,10 +88,20 @@ const deleteConsultation = (consultationId: number) => {
     return api.delete(`/api/consultations/${consultationId}`)
 }
 
+// 상담 ID로 상담 정보 조회
+export const getConsultationById = async (consultationId: number): Promise<AxiosResponse<ApiResponse<ConsultationResponse>>> => {
+    return api.get(`/api/consultations/${consultationId}`)
+}
+
 // 월별 상담 정보 조회
 export const getConsultationMonthInfo = async (month: string): Promise<AxiosResponse<ApiResponse<ConsultationMonthInfo>>> => {
     return api.get(`/api/consultations/month-inform?month=${month}`);
 };
+
+// 상태별 상담 목록 가져오기
+export const getConsultationsByStatus = async (month: string, status: ConsultationStatus) : Promise<AxiosResponse<ApiResponse<ConsultationResponse[]>>> => {
+    return api.get(`/api/consultations/status?month=${month}&status=${status}`)
+}
 
 export const consultationApi = {
     createConsultation,
@@ -124,10 +109,11 @@ export const consultationApi = {
     updateConsultationInfo,
     updateConsultationStatus,
     updateConsultationResult,
-    getConsultationById,
+    getConsultationHistoryByCustomerId,
     getTodayConsultations,
     getConsultationsByDate,
-    getConsultationsByCustomer,
     deleteConsultation,
-    getConsultationMonthInfo
+    getConsultationMonthInfo,
+    getConsultationById,
+    getConsultationsByStatus
 };
