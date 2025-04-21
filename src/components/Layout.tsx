@@ -561,12 +561,17 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                     </Typography>
                                 </Box>
                                 {notifications
-                                        .slice()
-                                        .sort((a, b) => b.id - a.id) 
-                                        .slice(0, 10) 
-                                        .map((notification) => (
-                                            <MenuItem 
-                                                key={`${notification.id}-${notification.isRead}`}
+                                    .slice()
+                                    .sort((a, b) => {
+                                        if (a.isRead === b.isRead) {
+                                            return b.id - a.id; // 같은 읽음 상태면 최신순
+                                        }
+                                        return a.isRead ? 1 : -1; // 안 읽은게 위로
+                                    })
+                                    .slice(0, 10)
+                                    .map((notification) => (
+                                        <MenuItem 
+                                            key={`${notification.id}-${notification.isRead}`}
                                                 onClick={() => handleNotificationNavigation(notification)}
                                                 sx={{ 
                                                     py: 2,
