@@ -39,6 +39,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import { toast } from 'react-toastify';
+import { useNotification } from "../context/NotificationContext";
 
 // 커스텀 테마 생성
 const theme = createTheme({
@@ -116,6 +117,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     const [unreadCount, setUnreadCount] = useState(0);
     
     const { logout } = useAuth();
+    const { closeSSEConnection } = useNotification();  // Add this line
     const navigate = useNavigate();
     const location = useLocation();
     const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -174,6 +176,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     };
 
     const handleLogout = () => {
+        closeSSEConnection();
         logout();
         navigate("/");
         handleMenuClose();
