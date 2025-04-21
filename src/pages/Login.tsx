@@ -17,12 +17,14 @@ import {
 } from "@mui/material"
 import { useAuth } from "../context/AuthContext.tsx"
 import axios from "axios"
+import { useNotification } from "../context/NotificationContext.tsx"
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 function Login() {
     const navigate = useNavigate()
     const { login } = useAuth()
+    const { setupSSEConnection } = useNotification()
     const [username, setUsername] = useState("")
     const [password, setPassword] = useState("")
     const [loading, setLoading] = useState(false)
@@ -59,6 +61,8 @@ function Login() {
                 if (accessToken && agentId) {
                     // Store token, agentId and update auth state
                     login(accessToken, agentId)
+                    // connect to SSE using context
+                    setupSSEConnection(agentId)
                     navigate("/dashboard")
                 } else {
                     throw new Error("No access token or agentId received")

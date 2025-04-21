@@ -39,6 +39,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import { toast } from 'react-toastify';
+import { useNotification } from "../context/NotificationContext";
 
 // 커스텀 테마 생성
 const theme = createTheme({
@@ -110,12 +111,15 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
-    const [notifications, setNotifications] = useState<Notification[]>([]);
+    // Remove the local notifications state
+    // const [notifications, setNotifications] = useState<Notification[]>([]);
     const [notificationError, setNotificationError] = useState<string | null>(null);
     const [notificationAnchorEl, setNotificationAnchorEl] = useState<null | HTMLElement>(null);
-    const [unreadCount, setUnreadCount] = useState(0);
+    // Get notifications from context
+    const { notifications, unreadCount, markAsRead } = useNotification();
     
     const { logout } = useAuth();
+    const { closeSSEConnection } = useNotification();  // Add this line
     const navigate = useNavigate();
     const location = useLocation();
     const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -174,6 +178,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     };
 
     const handleLogout = () => {
+        closeSSEConnection();
         logout();
         navigate("/");
         handleMenuClose();
@@ -187,25 +192,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 navigate('/');
                 return;
             }
+            
+            if(notification.isRead === false) {
+                markAsRead(notification.id);
+            }
     
-            await api.patch("/api/notification/read", null, {
-                params: {
-                    notificationId: notification.id,
-                },
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            });
-            
-            // Update local state to mark notification as read
-            setNotifications(prev => 
-                prev.map(n => 
-                    n.id === notification.id ? { ...n, isRead: true } : n
-                )
-            );
-            
-            // Update unread count
-            setUnreadCount(prev => Math.max(0, prev - 1));
             
             handleNotificationClose();
             
@@ -279,103 +270,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             return;
         }    
 
-        const setupEventSource = () => {
-            if (eventSource) {
-                eventSource.close();
-            }
-            console.log("Setting up EventSource with agentId:", agentId);
-            
-        //     eventSource = new EventSource(`${api.defaults.baseURL}/api/notification/subscribe?agentId=${agentId}`);
-
-        //     eventSource.onopen = () => {
-        //         console.log("SSE connection opened");
-        //     };
-            
-        //     eventSource.addEventListener("notification", (event)  => {
-        //         console.log("Received notification:", event.data);
-        //         const rawNotification = JSON.parse(event.data);
-        //         const newNotification = {
-        //             ...rawNotification,
-        //             isRead: rawNotification.read
-        //         };
-                
-        //         setNotifications(prev => {
-        //             return [newNotification, ...prev].sort((a, b) => b.id - a.id);
-        //         });
-
-        //         setUnreadCount(count => count + 1);
-                
-        //         // Only show toast for non-CONNECTION type notifications
-        //         if (newNotification.type !== 'CONNECTION') {
-        //             toast.info(
-        //                 <div 
-        //                     style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
-        //                     onClick={() => handleNotificationNavigation(newNotification)}
-        //                 >
-        //                     <div
-        //                         style={{
-        //                             width: 4,
-        //                             height: 40,
-        //                             borderRadius: 4,
-        //                             backgroundColor: getNotificationColor(newNotification.type),
-        //                             marginRight: 12
-        //                         }}
-        //                     />
-        //                     <div>
-        //                         <div style={{ fontWeight: 600, marginBottom: 4 }}>{newNotification.content}</div>
-        //                         <span
-        //                             style={{
-        //                                 backgroundColor: `${getNotificationColor(newNotification.type)}15`,
-        //                                 color: getNotificationColor(newNotification.type),
-        //                                 padding: '4px 8px',
-        //                                 borderRadius: 4,
-        //                                 fontSize: '0.8rem',
-        //                                 fontWeight: 600
-        //                             }}
-        //                         >
-        //                             {newNotification.type}
-        //                         </span>
-        //                     </div>
-        //                 </div>
-        //             );
-        //         }
-        //     });
-
-        //     eventSource.onerror = (err) => {
-        //         console.error("SSE error:", err);
-        //         eventSource?.close();
-        //         setTimeout(setupEventSource, 30000);
-        //     };
-        // };
-
-        // 초기 알림 데이터 로드
-        const fetchNotifications = async () => {
-            try {
-                const response = await api.get("/api/notification");
-                if (response.data.success) {
-                    const allNotifications = response.data.data.map(notification => ({
-                        ...notification,
-                        isRead: notification.read
-                    }));
-                    
-                    setNotifications(allNotifications);
-                    const unreadCount = allNotifications.filter(n => !n.isRead).length;
-                    setUnreadCount(unreadCount);
-                }
-            } catch (err) {
-                console.error("Error fetching notifications:", err);
-                setNotificationError("알림을 불러오는데 실패했습니다");
-            }
-        };
-
-        fetchNotifications();
-        //setupEventSource();
-
-        return () => {
-            // if (eventSource) {
-            //     eventSource.close();
-         }
-        };
     }, []);
 
     return (
@@ -653,11 +547,17 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                     </Typography>
                                 </Box>
                                 {notifications
-                                        .slice() // Create a copy to avoid mutating the original array
-                                        .sort((a, b) => b.id - a.id) // Sort by id in descending order
-                                        .map((notification) => (
-                                            <MenuItem 
-                                                key={`${notification.id}-${notification.isRead}`}
+                                    .slice()
+                                    .sort((a, b) => {
+                                        if (a.isRead === b.isRead) {
+                                            return b.id - a.id; // 같은 읽음 상태면 최신순
+                                        }
+                                        return a.isRead ? 1 : -1; // 안 읽은게 위로
+                                    })
+                                    .slice(0, 10)
+                                    .map((notification) => (
+                                        <MenuItem 
+                                            key={`${notification.id}-${notification.isRead}`}
                                                 onClick={() => handleNotificationNavigation(notification)}
                                                 sx={{ 
                                                     py: 2,
@@ -674,35 +574,52 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                                     bgcolor: notification.isRead ? 'grey.400' : getNotificationColor(notification.type),
                                                     mr: 2
                                                 }} />
-                                                <Box>
+                                                <Box sx={{ width: '100%' }}>
                                                     <Typography 
                                                         variant="body1" 
                                                         sx={{ 
                                                             fontWeight: notification.isRead ? 400 : 600,
                                                             color: notification.isRead ? 'text.disabled' : 'text.primary',
-                                                            mb: 0.5,
                                                             fontSize: '0.95rem',
+                                                            mb: 0.5
                                                         }}
                                                     >
                                                         {notification.content}
                                                     </Typography>
-                                                    <Typography 
-                                                        component="span"
-                                                        variant="body2"
-                                                        sx={{
-                                                            display: 'inline-flex',
-                                                            alignItems: 'center',
-                                                            bgcolor: notification.isRead ? 'grey.100' : `${getNotificationColor(notification.type)}15`,
-                                                            color: notification.isRead ? 'grey.500' : getNotificationColor(notification.type),
-                                                            py: 0.5,
-                                                            px: 1,
-                                                            borderRadius: '4px',
-                                                            fontSize: '0.8rem',
-                                                            fontWeight: 600,
-                                                        }}
-                                                    >
-                                                        {notification.type}
-                                                    </Typography>
+                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                        <Typography 
+                                                            component="span"
+                                                            variant="body2"
+                                                            sx={{
+                                                                display: 'inline-flex',
+                                                                alignItems: 'center',
+                                                                bgcolor: notification.isRead ? 'grey.100' : `${getNotificationColor(notification.type)}15`,
+                                                                color: notification.isRead ? 'grey.500' : getNotificationColor(notification.type),
+                                                                py: 0.5,
+                                                                px: 1,
+                                                                borderRadius: '4px',
+                                                                fontSize: '0.8rem',
+                                                                fontWeight: 600,
+                                                            }}
+                                                        >
+                                                            {notification.type}
+                                                        </Typography>
+                                                        <Typography 
+                                                            variant="caption" 
+                                                            sx={{ 
+                                                                color: 'text.secondary',
+                                                                fontSize: '0.75rem'
+                                                            }}
+                                                        >
+                                                            {new Date(notification.createdAt).toLocaleString('ko-KR', {
+                                                                year: 'numeric',
+                                                                month: '2-digit',
+                                                                day: '2-digit',
+                                                                hour: '2-digit',
+                                                                minute: '2-digit'
+                                                            })}
+                                                        </Typography>
+                                                    </Box>
                                                 </Box>
                                             </MenuItem>
                                         ))}
