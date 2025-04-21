@@ -48,10 +48,20 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
                         isRead: notification.read
                     }));
                     
-                    setNotifications(allNotifications);
+                    // Sort notifications: unread first, then by id (newest first), limit to 10
+                    const sortedNotifications = allNotifications
+                        .sort((a, b) => {
+                            if (a.isRead === b.isRead) {
+                                return b.id - a.id; // If read status is same, sort by id (newest first)
+                            }
+                            return a.isRead ? 1 : -1; // Unread notifications first
+                        })
+                        .slice(0, 10);
+                    
+                    setNotifications(sortedNotifications);
                     const unreadCount = allNotifications.filter((n: Notification) => !n.isRead).length;
                     setUnreadCount(unreadCount);
-                }
+                    }
             } catch (err) {
                 console.error("Error fetching notifications:", err);
             }
@@ -63,22 +73,29 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     const addNotification = (notification: Notification) => {
         if (notification.type !== 'CONNECTION') {
             setNotifications(prev => {
-                const newNotifications = [notification, ...prev].sort((a, b) => b.id - a.id);
+                const newNotifications = [...prev, notification]
+                    .sort((a, b) => {
+                        if (a.isRead === b.isRead) {
+                            return b.id - a.id; // 같은 읽음 상태면 최신순
+                        }
+                        return a.isRead ? 1 : -1; // 안 읽은게 위로
+                    })
+                    .slice(0, 10);
                 return newNotifications;
             });
             if (!notification.isRead) {
                 setUnreadCount(prev => prev + 1);
-                // Add console.log to debug
-                console.log('Showing toast for notification:', notification);
-                toast.info(notification.content, {
-                    position: "top-right",
-                    autoClose: 5000,
-                    hideProgressBar: false,
-                    closeOnClick: true,
-                    pauseOnHover: true,
-                    draggable: true,
-                    theme: "light"
-                });
+                if (notification.type !== 'CONNECTION') {
+                    toast.info(notification.content, {
+                        position: "top-right",
+                        autoClose: 5000,
+                        hideProgressBar: false,
+                        closeOnClick: true,
+                        pauseOnHover: true,
+                        draggable: true,
+                        theme: "light"
+                    });
+                }
             }
         }
     };
@@ -94,7 +111,12 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
             setNotifications(prev => 
                 prev.map(n => 
                     n.id === notificationId ? { ...n, isRead: true } : n
-                )
+                ).sort((a, b) => {
+                    if (a.isRead === b.isRead) {
+                        return b.id - a.id; // 같은 읽음 상태면 최신순
+                    }
+                    return a.isRead ? 1 : -1; // 안 읽은게 위로
+                })
             );
             
             setUnreadCount(prev => Math.max(0, prev - 1));
