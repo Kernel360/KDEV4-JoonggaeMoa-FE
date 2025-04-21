@@ -192,28 +192,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 navigate('/');
                 return;
             }
-    
-            await api.patch("/api/notification/read", null, {
-                params: {
-                    notificationId: notification.id,
-                },
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            });
             
-            // Update local state to mark notification as read
-            // setNotifications(prev => 
-            //     prev.map(n => 
-            //         n.id === notification.id ? { ...n, isRead: true } : n
-            //     )
-            // );
-            
-            // Update unread count
             if(notification.isRead === false) {
                 markAsRead(notification.id);
             }
-           
+    
             
             handleNotificationClose();
             
