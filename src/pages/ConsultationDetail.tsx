@@ -53,7 +53,7 @@ const statusConfig = {
 }
 
 const ConsultationDetail = () => {
-    const { customerId } = useParams<{ customerId: string }>()
+    const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
     const location = useLocation()
     const [loading, setLoading] = useState(true)
@@ -84,7 +84,7 @@ const ConsultationDetail = () => {
     const [initialConsultationLoaded, setInitialConsultationLoaded] = useState(false)
 
     useEffect(() => {
-        if (customerId) {
+        if (id) {
             fetchConsultationHistory()
             
             // Check if there's a consultationId in the URL query parameters
@@ -100,17 +100,7 @@ const ConsultationDetail = () => {
                 }
             }
         }
-    }, [customerId, location.search, initialConsultationLoaded])
-
-    // Separate effect to handle pagination without affecting the selected consultation
-    useEffect(() => {
-        if (customerId && !currentlyEditingConsultationId) {
-            // Only fetch if we're not already fetching in handlePageChange
-            if (!loading) {
-                fetchConsultationHistory()
-            }
-        }
-    }, [customerId, currentPage])
+    }, [id, location.search, initialConsultationLoaded])
 
     // Effect to load the initial consultation when the consultationHistory is available
     useEffect(() => {
@@ -126,27 +116,44 @@ const ConsultationDetail = () => {
         }
     }, [initialConsultationId, consultationHistory, initialConsultationLoaded])
 
+    // Separate effect to handle pagination without affecting the selected consultation
+    useEffect(() => {
+        if (id && !currentlyEditingConsultationId) {
+            // Only fetch if we're not already fetching in handlePageChange
+            if (!loading) {
+                fetchConsultationHistory()
+            }
+        }
+    }, [id, currentPage])
+
     const fetchConsultationHistory = async () => {
         try {
             setLoading(true)
-            const response = await consultationApi.getConsultationHistoryByCustomerId(Number(customerId), currentPage, pageSize)
+            setError(null)
+            
+            if (!id) {
+                setError("고객 ID가 필요합니다.")
+                return
+            }
+
+            const response = await consultationApi.getConsultationHistoryByCustomerId(
+                Number(id),
+                currentPage,
+                pageSize
+            )
+
             if (response.data?.data) {
-                // Store the currently editing consultation ID
-                const editingId = currentlyEditingConsultationId
-                
-                // Update the consultation history
                 setConsultationHistory(response.data.data)
                 
-                // If we're editing a consultation that's not on the current page,
-                // we need to fetch it separately to ensure it's still available
-                if (editingId && !response.data.data.consultations.content.some(c => c.consultationId === editingId)) {
-                    fetchConsultationById(editingId)
+                // Only fetch consultation by ID if we're not already loading it
+                if (currentlyEditingConsultationId && !isLoadingConsultation) {
+                    await fetchConsultationById(currentlyEditingConsultationId)
                 }
             } else {
                 setError("상담 내역을 불러오는데 실패했습니다.")
             }
-        } catch (err) {
-            console.error("Error fetching consultation history:", err)
+        } catch (error) {
+            console.error("Error fetching consultation history:", error)
             setError("상담 내역을 불러오는데 실패했습니다.")
         } finally {
             setLoading(false)
@@ -154,9 +161,15 @@ const ConsultationDetail = () => {
     }
 
     const fetchConsultationById = async (consultationId: number) => {
+        // Skip if we're already loading this consultation
+        if (isLoadingConsultation) {
+            return
+        }
+
         try {
             setIsLoadingConsultation(true)
             const response = await consultationApi.getConsultationById(consultationId)
+            
             if (response.data?.data) {
                 const consultation = response.data.data
                 
@@ -178,22 +191,29 @@ const ConsultationDetail = () => {
                     console.log("Initial consultation already loaded, skipping reload")
                 } else {
                     // If we're not already editing this consultation, start editing it
-                    handleStartEdit(consultation)
+                    setSelectedConsultation(consultation)
+                    setEditFormData({
+                        consultationId: consultation.consultationId,
+                        date: consultation.date,
+                        consultationStatus: consultation.consultationStatus,
+                        purpose: consultation.purpose,
+                        memo: consultation.memo,
+                    })
+                    setOriginalConsultationData({
+                        consultationId: consultation.consultationId,
+                        date: consultation.date,
+                        consultationStatus: consultation.consultationStatus,
+                        purpose: consultation.purpose,
+                        memo: consultation.memo,
+                    })
+                    setCurrentlyEditingConsultationId(consultationId)
+                    // Set isNewConsultation to false since we're editing an existing consultation
+                    setIsNewConsultation(false)
                 }
-            } else {
-                setSnackbar({
-                    open: true,
-                    message: "상담 정보를 불러오는데 실패했습니다.",
-                    severity: "error"
-                })
             }
-        } catch (err) {
-            console.error("Error fetching consultation by ID:", err)
-            setSnackbar({
-                open: true,
-                message: "상담 정보를 불러오는데 실패했습니다.",
-                severity: "error"
-            })
+        } catch (error) {
+            console.error("Error fetching consultation by ID:", error)
+            setError("상담 정보를 불러오는데 실패했습니다.")
         } finally {
             setIsLoadingConsultation(false)
         }
@@ -214,7 +234,7 @@ const ConsultationDetail = () => {
         } else {
             setIsNewConsultation(true)
             setEditFormData({
-                customerId: Number(customerId),
+                customerId: Number(id),
                 date: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
                 consultationStatus: ConsultationStatus.WAITING,
             })
@@ -227,7 +247,7 @@ const ConsultationDetail = () => {
         if (confirmed) {
             setIsNewConsultation(true)
             setEditFormData({
-                customerId: Number(customerId),
+                customerId: Number(id),
                 date: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
                 consultationStatus: ConsultationStatus.WAITING,
             })
@@ -275,7 +295,7 @@ const ConsultationDetail = () => {
         try {
             if (isNewConsultation) {
                 const createData: ConsultationCreateRequest = {
-                    customerId: Number(customerId),
+                    customerId: Number(id),
                     date: format(new Date(editFormData.date || ""), "yyyy-MM-dd HH:mm"),
                     purpose: editFormData.purpose,
                     memo: editFormData.memo,
@@ -324,9 +344,26 @@ const ConsultationDetail = () => {
         const fetchNewPageHistory = async () => {
             try {
                 setLoading(true)
-                const response = await consultationApi.getConsultationHistoryByCustomerId(Number(customerId), newPage, pageSize)
+                console.log(`Fetching page ${newPage} for customer ${id}`)
+                
+                if (!id) {
+                    console.error("Customer ID is missing")
+                    return
+                }
+                
+                const response = await consultationApi.getConsultationHistoryByCustomerId(
+                    Number(id), 
+                    newPage, 
+                    pageSize
+                )
+                
+                console.log("Response received:", response)
+                
                 if (response.data?.data) {
                     setConsultationHistory(response.data.data)
+                    console.log("Consultation history updated")
+                } else {
+                    console.error("No data in response")
                 }
             } catch (err) {
                 console.error("Error fetching consultation history:", err)
