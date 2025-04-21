@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import api from '../services/api';
+import { toast } from 'react-toastify';
 
 interface Notification {
     id: number;
@@ -67,6 +68,17 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
             });
             if (!notification.isRead) {
                 setUnreadCount(prev => prev + 1);
+                // Add console.log to debug
+                console.log('Showing toast for notification:', notification);
+                toast.info(notification.content, {
+                    position: "top-right",
+                    autoClose: 5000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                    theme: "light"
+                });
             }
         }
     };
@@ -104,18 +116,22 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
         setEventSource(eventSource);
 
         if(eventSource!=null){
-
-
             eventSource.addEventListener("notification", (event: MessageEvent) => {
-                console.log("Received notification:", event.data);
-                const rawNotification = JSON.parse(event.data);
-                const newNotification = {
-                    ...rawNotification,
-                    isRead: rawNotification.read
-                };
-                addNotification(newNotification);
+                console.log("Raw event data:", event);
+                console.log("Parsed notification data:", event.data);
+                try {
+                    const rawNotification = JSON.parse(event.data);
+                    console.log("Parsed notification object:", rawNotification);
+                    const newNotification = {
+                        ...rawNotification,
+                        isRead: rawNotification.read
+                    };
+                    console.log("New notification to be added:", newNotification);
+                    addNotification(newNotification);
+                } catch (error) {
+                    console.error("Error processing notification:", error);
+                }
             });
-
             eventSource.onerror = (err) => {
                 console.error("SSE error:", err);
                 eventSource.close();
