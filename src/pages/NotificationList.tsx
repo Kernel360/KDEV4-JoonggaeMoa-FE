@@ -1,11 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import {
     Box,
     Typography,
     Paper,
     List,
     ListItem,
-    ListItemText,
     Container,
     IconButton,
 } from '@mui/material';
@@ -13,14 +12,12 @@ import { ArrowBack } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
 
-import api from '../services/api';
-
 interface Notification {
     id: number;
     type: string;
     content: string;
     isRead: boolean;
-    createdAt: string;  // 시간 필드 추가
+    createdAt: string;
 }
 
 const getNotificationColor = (type: string) => {
@@ -40,7 +37,7 @@ const getNotificationColor = (type: string) => {
     }
 };
 
-const NotificationList = () => {
+const NotificationList: React.FC = () => {
     const { notifications, markAsRead } = useNotification();
     const navigate = useNavigate();
 
@@ -49,7 +46,7 @@ const NotificationList = () => {
             if (!notification.isRead) {
                 await markAsRead(notification.id);
             }
-            
+
             switch (notification.type) {
                 case 'SURVEY':
                     navigate('/survey');
@@ -74,33 +71,6 @@ const NotificationList = () => {
         }
     };
 
-    useEffect(() => {
-        const fetchNotifications = async () => {
-            try {
-                const response = await api.get("/api/notification");
-                if (response.data.success) {
-                    const mappedNotifications = response.data.data.map((notification: any) => ({
-                        ...notification,
-                        isRead: notification.read
-                    }));
-                    // Remove this line as we're using context now
-                    // fetchNotifications(mappedNotifications);
-                }
-            } catch (error) {
-                console.error("Error fetching notifications:", error);
-            }
-        };
-
-        // Initial fetch
-        fetchNotifications();
-
-        // Set up polling interval (every 30 seconds)
-        const intervalId = setInterval(fetchNotifications, 30000);
-
-        // Cleanup interval on component unmount
-        return () => clearInterval(intervalId);
-    }, []);
-
     return (
         <Container maxWidth="md" sx={{ py: 4 }}>
             <Box sx={{ mb: 4, display: 'flex', alignItems: 'center' }}>
@@ -118,75 +88,75 @@ const NotificationList = () => {
                         .slice()
                         .sort((a, b) => b.id - a.id)
                         .map((notification) => (
-                        <ListItem
-                            key={notification.id}
-                            sx={{
-                                py: 2,
-                                borderBottom: '1px solid rgba(0,0,0,0.06)',
-                                '&:last-child': { borderBottom: 'none' },
-                                bgcolor: notification.isRead ? 'action.hover' : 'transparent',
-                                cursor: 'pointer',
-                                '&:hover': {
-                                    bgcolor: notification.isRead ? 'action.selected' : 'action.hover',
-                                },
-                            }}
-                            onClick={() => handleNotificationNavigation(notification)}
-                        >
-                            <Box sx={{
-                                width: 4,
-                                height: 40,
-                                borderRadius: '4px',
-                                bgcolor: notification.isRead ? 'grey.400' : getNotificationColor(notification.type),
-                                mr: 2
-                            }} />
-                            <Box sx={{ width: '100%' }}>
-                                <Typography
-                                    variant="body1"
-                                    sx={{
-                                        fontWeight: notification.isRead ? 400 : 600,
-                                        color: notification.isRead ? 'text.disabled' : 'text.primary',
-                                        mb: 0.5
-                                    }}
-                                >
-                                    {notification.content}
-                                </Typography>
-                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <ListItem
+                                key={notification.id}
+                                sx={{
+                                    py: 2,
+                                    borderBottom: '1px solid rgba(0,0,0,0.06)',
+                                    '&:last-child': { borderBottom: 'none' },
+                                    bgcolor: notification.isRead ? 'action.hover' : 'transparent',
+                                    cursor: 'pointer',
+                                    '&:hover': {
+                                        bgcolor: notification.isRead ? 'action.selected' : 'action.hover',
+                                    },
+                                }}
+                                onClick={() => handleNotificationNavigation(notification)}
+                            >
+                                <Box sx={{
+                                    width: 4,
+                                    height: 40,
+                                    borderRadius: '4px',
+                                    bgcolor: notification.isRead ? 'grey.400' : getNotificationColor(notification.type),
+                                    mr: 2
+                                }} />
+                                <Box sx={{ width: '100%' }}>
                                     <Typography
-                                        component="span"
-                                        variant="body2"
+                                        variant="body1"
                                         sx={{
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            bgcolor: notification.isRead ? 'grey.100' : `${getNotificationColor(notification.type)}15`,
-                                            color: notification.isRead ? 'grey.500' : getNotificationColor(notification.type),
-                                            py: 0.5,
-                                            px: 1,
-                                            borderRadius: '4px',
-                                            fontSize: '0.75rem',
-                                            fontWeight: 500,
+                                            fontWeight: notification.isRead ? 400 : 600,
+                                            color: notification.isRead ? 'text.disabled' : 'text.primary',
+                                            mb: 0.5
                                         }}
                                     >
-                                        {notification.type}
+                                        {notification.content}
                                     </Typography>
-                                    <Typography 
-                                        variant="caption" 
-                                        sx={{ 
-                                            color: 'text.secondary',
-                                            fontSize: '0.75rem'
-                                        }}
-                                    >
-                                        {new Date(notification.createdAt).toLocaleString('ko-KR', {
-                                            year: 'numeric',
-                                            month: '2-digit',
-                                            day: '2-digit',
-                                            hour: '2-digit',
-                                            minute: '2-digit'
-                                        })}
-                                    </Typography>
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <Typography
+                                            component="span"
+                                            variant="body2"
+                                            sx={{
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                bgcolor: notification.isRead ? 'grey.100' : `${getNotificationColor(notification.type)}15`,
+                                                color: notification.isRead ? 'grey.500' : getNotificationColor(notification.type),
+                                                py: 0.5,
+                                                px: 1,
+                                                borderRadius: '4px',
+                                                fontSize: '0.75rem',
+                                                fontWeight: 500,
+                                            }}
+                                        >
+                                            {notification.type}
+                                        </Typography>
+                                        <Typography 
+                                            variant="caption" 
+                                            sx={{ 
+                                                color: 'text.secondary',
+                                                fontSize: '0.75rem'
+                                            }}
+                                        >
+                                            {new Date(notification.createdAt).toLocaleString('ko-KR', {
+                                                year: 'numeric',
+                                                month: '2-digit',
+                                                day: '2-digit',
+                                                hour: '2-digit',
+                                                minute: '2-digit'
+                                            })}
+                                        </Typography>
+                                    </Box>
                                 </Box>
-                            </Box>
-                        </ListItem>
-                    ))}
+                            </ListItem>
+                        ))}
                 </List>
             </Paper>
         </Container>

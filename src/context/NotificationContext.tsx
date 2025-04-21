@@ -7,7 +7,7 @@ interface Notification {
     type: string;
     content: string;
     isRead: boolean;
-    createdAt: string;  
+    createdAt: string;
 }
 
 interface NotificationContextType {
@@ -16,7 +16,7 @@ interface NotificationContextType {
     addNotification: (notification: Notification) => void;
     markAsRead: (notificationId: number) => Promise<void>;
     setupSSEConnection: (agentId: number) => void;
-    closeSSEConnection: () => void; 
+    closeSSEConnection: () => void;
 }
 
 const NotificationContext = createContext<NotificationContextType>({
@@ -25,7 +25,7 @@ const NotificationContext = createContext<NotificationContextType>({
     addNotification: () => {},
     markAsRead: async () => {},
     setupSSEConnection: () => {},
-    closeSSEConnection: () => {}, 
+    closeSSEConnection: () => {},
 });
 
 export const useNotification = () => useContext(NotificationContext);
@@ -37,7 +37,7 @@ interface NotificationProviderProps {
 export const NotificationProvider: React.FC<NotificationProviderProps> = ({ children }) => {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
-    const [eventSource, setEventSource] = useState<EventSource | null>(null);  // 추가
+    const [eventSource, setEventSource] = useState<EventSource | null>(null);
 
     useEffect(() => {
         const fetchNotifications = async () => {
@@ -47,22 +47,12 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
                     const allNotifications = response.data.data.map((notification: any) => ({
                         ...notification,
                         isRead: notification.read,
-                        createdAt: notification.createdAt 
+                        createdAt: notification.createdAt
                     }));
-                    
-                    // Sort notifications by read status and creation time
-                    const sortedNotifications = allNotifications
-                        .sort((a, b) => {
-                            if (a.isRead === b.isRead) {
-                                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-                            }
-                            return a.isRead ? 1 : -1;
-                        })
-                        .slice(0, 10);
-                    
-                    setNotifications(sortedNotifications);
-                    const unreadCount = allNotifications.filter((n: Notification) => !n.isRead).length;
-                    setUnreadCount(unreadCount);
+
+                    setNotifications(allNotifications);
+                    const unread = allNotifications.filter((n: Notification) => !n.isRead).length;
+                    setUnreadCount(unread);
                 }
             } catch (err) {
                 console.error("Error fetching notifications:", err);
@@ -74,30 +64,19 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
     const addNotification = (notification: Notification) => {
         if (notification.type !== 'CONNECTION') {
-            setNotifications(prev => {
-                const newNotifications = [...prev, notification]
-                    .sort((a, b) => {
-                        if (a.isRead === b.isRead) {
-                            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-                        }
-                        return a.isRead ? 1 : -1;
-                    })
-                    .slice(0, 10);
-                return newNotifications;
-            });
+            setNotifications(prev => [...prev, notification]);
+
             if (!notification.isRead) {
                 setUnreadCount(prev => prev + 1);
-                if (notification.type !== 'CONNECTION') {
-                    toast.info(notification.content, {
-                        position: "top-right",
-                        autoClose: 5000,
-                        hideProgressBar: false,
-                        closeOnClick: true,
-                        pauseOnHover: true,
-                        draggable: true,
-                        theme: "light"
-                    });
-                }
+                toast.info(notification.content, {
+                    position: "top-right",
+                    autoClose: 5000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                    theme: "light"
+                });
             }
         }
     };
@@ -105,22 +84,13 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     const markAsRead = async (notificationId: number) => {
         try {
             await api.patch("/api/notification/read", null, {
-                params: {
-                    notificationId,
-                },
+                params: { notificationId },
             });
-            
-            setNotifications(prev => 
-                prev.map(n => 
-                    n.id === notificationId ? { ...n, isRead: true } : n
-                ).sort((a, b) => {
-                    if (a.isRead === b.isRead) {
-                        return b.id - a.id; // 같은 읽음 상태면 최신순
-                    }
-                    return a.isRead ? 1 : -1; // 안 읽은게 위로
-                })
+
+            setNotifications(prev =>
+                prev.map(n => n.id === notificationId ? { ...n, isRead: true } : n)
             );
-            
+
             setUnreadCount(prev => Math.max(0, prev - 1));
         } catch (err) {
             console.error("Error marking notification as read:", err);
@@ -129,44 +99,37 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     };
 
     const setupSSEConnection = (agentId: number) => {
-        const eventSource = new EventSource(`${api.defaults.baseURL}/api/notification/subscribe?agentId=${agentId}`, {
+        const source = new EventSource(`${api.defaults.baseURL}/api/notification/subscribe?agentId=${agentId}`, {
             withCredentials: true
         });
 
-        eventSource.onopen = () => {
+        source.onopen = () => {
             console.log("SSE connection opened");
         };
 
-        setEventSource(eventSource);
+        setEventSource(source);
 
-        if(eventSource!=null){
-            eventSource.addEventListener("notification", (event: MessageEvent) => {
-                console.log("Raw event data:", event);
-                console.log("Parsed notification data:", event.data);
-                try {
-                    const rawNotification = JSON.parse(event.data);
-                    console.log("Parsed notification object:", rawNotification);
-                    const newNotification = {
-                        ...rawNotification,
-                        isRead: rawNotification.read
-                    };
-                    console.log("New notification to be added:", newNotification);
-                    addNotification(newNotification);
-                } catch (error) {
-                    console.error("Error processing notification:", error);
-                }
-            });
-            eventSource.onerror = (err) => {
-                console.error("SSE error:", err);
-                eventSource.close();
-                // Attempt to reconnect after 30 seconds
-                setTimeout(() => setupSSEConnection(agentId), 30000);
-            };
-        }
-        
-        // Cleanup on unmount
+        source.addEventListener("notification", (event: MessageEvent) => {
+            try {
+                const rawNotification = JSON.parse(event.data);
+                const newNotification = {
+                    ...rawNotification,
+                    isRead: rawNotification.read
+                };
+                addNotification(newNotification);
+            } catch (error) {
+                console.error("Error processing notification:", error);
+            }
+        });
+
+        source.onerror = (err) => {
+            console.error("SSE error:", err);
+            source.close();
+            setTimeout(() => setupSSEConnection(agentId), 30000);
+        };
+
         return () => {
-            eventSource.close();
+            source.close();
         };
     };
 
@@ -181,14 +144,14 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     };
 
     return (
-        <NotificationContext.Provider 
-            value={{ 
-                notifications, 
+        <NotificationContext.Provider
+            value={{
+                notifications,
                 unreadCount,
-                addNotification, 
+                addNotification,
                 markAsRead,
                 setupSSEConnection,
-                closeSSEConnection  // 추가
+                closeSSEConnection
             }}
         >
             {children}

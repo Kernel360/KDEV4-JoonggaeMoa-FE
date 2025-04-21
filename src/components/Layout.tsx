@@ -210,7 +210,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             // );
             
             // Update unread count
-            markAsRead(notification.id);
+            if(notification.isRead === false) {
+                markAsRead(notification.id);
+            }
+           
             
             handleNotificationClose();
             
