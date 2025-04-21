@@ -20,6 +20,7 @@ interface Notification {
     type: string;
     content: string;
     isRead: boolean;
+    createdAt: string;  // 시간 필드 추가
 }
 
 const getNotificationColor = (type: string) => {
@@ -138,20 +139,18 @@ const NotificationList = () => {
                                 bgcolor: notification.isRead ? 'grey.400' : getNotificationColor(notification.type),
                                 mr: 2
                             }} />
-                            <ListItemText
-                                primary={
-                                    <Typography
-                                        variant="body1"
-                                        sx={{
-                                            fontWeight: notification.isRead ? 400 : 600,
-                                            color: notification.isRead ? 'text.disabled' : 'text.primary',
-                                            mb: 0.5
-                                        }}
-                                    >
-                                        {notification.content}
-                                    </Typography>
-                                }
-                                secondary={
+                            <Box sx={{ width: '100%' }}>
+                                <Typography
+                                    variant="body1"
+                                    sx={{
+                                        fontWeight: notification.isRead ? 400 : 600,
+                                        color: notification.isRead ? 'text.disabled' : 'text.primary',
+                                        mb: 0.5
+                                    }}
+                                >
+                                    {notification.content}
+                                </Typography>
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <Typography
                                         component="span"
                                         variant="body2"
@@ -169,8 +168,23 @@ const NotificationList = () => {
                                     >
                                         {notification.type}
                                     </Typography>
-                                }
-                            />
+                                    <Typography 
+                                        variant="caption" 
+                                        sx={{ 
+                                            color: 'text.secondary',
+                                            fontSize: '0.75rem'
+                                        }}
+                                    >
+                                        {new Date(notification.createdAt).toLocaleString('ko-KR', {
+                                            year: 'numeric',
+                                            month: '2-digit',
+                                            day: '2-digit',
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        })}
+                                    </Typography>
+                                </Box>
+                            </Box>
                         </ListItem>
                     ))}
                 </List>

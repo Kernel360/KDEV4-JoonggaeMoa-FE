@@ -7,6 +7,7 @@ interface Notification {
     type: string;
     content: string;
     isRead: boolean;
+    createdAt: string;  
 }
 
 interface NotificationContextType {
@@ -45,23 +46,24 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
                 if (response.data.success) {
                     const allNotifications = response.data.data.map((notification: any) => ({
                         ...notification,
-                        isRead: notification.read
+                        isRead: notification.read,
+                        createdAt: notification.createdAt 
                     }));
                     
-                    // Sort notifications: unread first, then by id (newest first), limit to 10
+                    // Sort notifications by read status and creation time
                     const sortedNotifications = allNotifications
                         .sort((a, b) => {
                             if (a.isRead === b.isRead) {
-                                return b.id - a.id; // If read status is same, sort by id (newest first)
+                                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
                             }
-                            return a.isRead ? 1 : -1; // Unread notifications first
+                            return a.isRead ? 1 : -1;
                         })
                         .slice(0, 10);
                     
                     setNotifications(sortedNotifications);
                     const unreadCount = allNotifications.filter((n: Notification) => !n.isRead).length;
                     setUnreadCount(unreadCount);
-                    }
+                }
             } catch (err) {
                 console.error("Error fetching notifications:", err);
             }
@@ -76,9 +78,9 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
                 const newNotifications = [...prev, notification]
                     .sort((a, b) => {
                         if (a.isRead === b.isRead) {
-                            return b.id - a.id; // 같은 읽음 상태면 최신순
+                            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
                         }
-                        return a.isRead ? 1 : -1; // 안 읽은게 위로
+                        return a.isRead ? 1 : -1;
                     })
                     .slice(0, 10);
                 return newNotifications;
