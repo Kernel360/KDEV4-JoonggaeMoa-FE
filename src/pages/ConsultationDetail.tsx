@@ -1,8 +1,6 @@
 "use client"
 
-import type React from "react"
-
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import {
     Box,
     Container,
@@ -12,17 +10,39 @@ import {
     Button,
     IconButton,
     Chip,
-    Divider,
+    TextField,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem,
+    SelectChangeEvent,
     CircularProgress,
     Snackbar,
     Alert,
-    MenuItem,
-    Menu,
+    Link,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogContentText,
+    DialogActions,
 } from "@mui/material"
-import { ArrowBack, Edit } from "@mui/icons-material"
-import { useNavigate, useParams } from "react-router-dom"
+import {
+    ArrowBack,
+    Edit,
+    Save,
+    Add,
+    Phone,
+    Email,
+    Cake,
+    Campaign,
+    Person,
+    ChevronLeft,
+    ChevronRight,
+} from "@mui/icons-material"
+import { useNavigate, useParams, Link as RouterLink, useLocation } from "react-router-dom"
 import { consultationApi } from "../services/consultationApi"
-import { ConsultationStatus, ConsultationType, ConsultationResponse } from "../types/consultation"
+import { ConsultationStatus, ConsultationResponse, ConsultationHistoryDto, ConsultationCreateRequest, ConsultationUpdateRequest } from "../types/consultation"
+import { format } from 'date-fns'
 
 // 상담 상태별 칩 색상 및 텍스트 - 새로운 상태 값에 맞게 업데이트
 const statusConfig = {
@@ -32,159 +52,439 @@ const statusConfig = {
     [ConsultationStatus.CANCELED]: { color: "#ffebee", textColor: "#c62828", label: "예약 취소" },
 }
 
-// 상담 유형별 텍스트
-const typeConfig = {
-    [ConsultationType.VISIT]: "방문 상담",
-    [ConsultationType.CALL]: "전화 상담",
-    [ConsultationType.VIDEO]: "화상 상담",
-}
-
 const ConsultationDetail = () => {
-    const navigate = useNavigate()
     const { id } = useParams<{ id: string }>()
-    const [consultation, setConsultation] = useState<any>(null)
+    const navigate = useNavigate()
+    const location = useLocation()
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
-
-    // 상담 삭제 관련 상태  = useState(false)
-
-    // 상담 삭제 관련 상태
-    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-    const [deleteLoading, setDeleteLoading] = useState(false)
-    const [deleteSuccess, setDeleteSuccess] = useState(false)
-
-    // 상태 변경 관련 상태
-    const [statusAnchorEl, setStatusAnchorEl] = useState<null | HTMLElement>(null)
-    const [statusLoading, setStatusLoading] = useState(false)
-    const [statusSuccess, setStatusSuccess] = useState(false)
+    const [consultationHistory, setConsultationHistory] = useState<ConsultationHistoryDto | null>(null)
+    const [selectedConsultation, setSelectedConsultation] = useState<ConsultationResponse | null>(null)
+    const [isNewConsultation, setIsNewConsultation] = useState(true)
+    const [currentPage, setCurrentPage] = useState(0)
+    const [pageSize] = useState(5)
+    const [editFormData, setEditFormData] = useState<Partial<ConsultationResponse>>({
+        date: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
+        consultationStatus: ConsultationStatus.WAITING,
+    })
+    const [originalConsultationData, setOriginalConsultationData] = useState<Partial<ConsultationResponse> | null>(null)
+    const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: "success" | "error" }>({
+        open: false,
+        message: "",
+        severity: "success",
+    })
+    const [viewMode, setViewMode] = useState<'history' | 'detail'>('history')
+    const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
+    const [consultationToEdit, setConsultationToEdit] = useState<ConsultationResponse | null>(null)
+    const [confirmNewConsultationDialogOpen, setConfirmNewConsultationDialogOpen] = useState(false)
+    const [currentlyEditingConsultationId, setCurrentlyEditingConsultationId] = useState<number | null>(null)
+    const [initialConsultationId, setInitialConsultationId] = useState<number | null>(null)
+    const [isLoadingConsultation, setIsLoadingConsultation] = useState(false)
+    const [openStatusMenuId, setOpenStatusMenuId] = useState<number | null>(null)
+    const [initialConsultationLoaded, setInitialConsultationLoaded] = useState(false)
 
     useEffect(() => {
         if (id) {
-            fetchConsultationDetails(Number.parseInt(id))
+            fetchConsultationHistory()
+            
+            // Check if there's a consultationId in the URL query parameters
+            const searchParams = new URLSearchParams(location.search)
+            const consultationIdParam = searchParams.get('consultationId')
+            
+            if (consultationIdParam && !initialConsultationLoaded) {
+                const consultationId = parseInt(consultationIdParam, 10)
+                if (!isNaN(consultationId)) {
+                    setInitialConsultationId(consultationId)
+                    fetchConsultationById(consultationId)
+                    setInitialConsultationLoaded(true)
+                }
+            }
         }
-    }, [id])
+    }, [id, location.search, initialConsultationLoaded])
 
-    // fetchConsultationDetails 함수를 수정하여 서버 응답 데이터를 적절히 변환합니다
-    const fetchConsultationDetails = async (consultationId: number) => {
+    // Effect to load the initial consultation when the consultationHistory is available
+    useEffect(() => {
+        if (initialConsultationId && consultationHistory && !initialConsultationLoaded) {
+            const consultation = consultationHistory.consultations.content.find(
+                c => c.consultationId === initialConsultationId
+            )
+            
+            if (consultation) {
+                handleStartEdit(consultation)
+                setInitialConsultationLoaded(true)
+            }
+        }
+    }, [initialConsultationId, consultationHistory, initialConsultationLoaded])
+
+    // Separate effect to handle pagination without affecting the selected consultation
+    useEffect(() => {
+        if (id && !currentlyEditingConsultationId) {
+            // Only fetch if we're not already fetching in handlePageChange
+            if (!loading) {
+                fetchConsultationHistory()
+            }
+        }
+    }, [id, currentPage])
+
+    const fetchConsultationHistory = async () => {
         try {
             setLoading(true)
-            const response = await consultationApi.getConsultationById(consultationId)
-
-            if (response.data.success && response.data.data) {
-                const item = response.data.data as ConsultationResponse
-                
-                // Update mapping to match the imported interface
-                const formattedConsultation = {
-                    id: item.id || item.consultationId,
-                    customer: item.customer || {
-                        id: item.customerId,
-                        name: item.customerName,
-                        phone: item.customerPhone,
-                        email: item.customerEmail || "",
-                    },
-                    consultationType: item.consultationType,
-                    purpose: item.purpose || "",
-                    scheduledAt: item.scheduledAt || item.date,
-                    propertyInterest: item.propertyInterest || item.interestProperty || "",
-                    interestLocation: item.interestLocation || "",
-                    contractType: item.contractType || "",
-                    assetStatus: item.assetStatus || "",
-                    memo: item.memo || "",
-                    status: item.status || item.consultationStatus,
-                    result: item.result || "",
-                    nextAction: item.nextAction || "",
-                    createdAt: item.createdAt || item.date,
-                    updatedAt: item.updatedAt || item.date,
-                }
-
-                setConsultation(formattedConsultation)
-            } else {
-                setError("상담 정보를 불러오는데 실패했습니다.")
+            setError(null)
+            
+            if (!id) {
+                setError("고객 ID가 필요합니다.")
+                return
             }
-        } catch (err) {
-            console.error("상담 상세 정보 조회 오류:", err)
-            setError("상담 정보를 불러오는데 실패했습니다.")
+
+            const response = await consultationApi.getConsultationHistoryByCustomerId(
+                Number(id),
+                currentPage,
+                pageSize
+            )
+
+            if (response.data?.data) {
+                setConsultationHistory(response.data.data)
+                
+                // Only fetch consultation by ID if we're not already loading it
+                if (currentlyEditingConsultationId && !isLoadingConsultation) {
+                    await fetchConsultationById(currentlyEditingConsultationId)
+                }
+            } else {
+                setError("상담 내역을 불러오는데 실패했습니다.")
+            }
+        } catch (error) {
+            console.error("Error fetching consultation history:", error)
+            setError("상담 내역을 불러오는데 실패했습니다.")
         } finally {
             setLoading(false)
         }
     }
 
-    // 상담 삭제 다이얼로그 열기
-    const handleDeleteDialogOpen = () => {
-        setDeleteDialogOpen(true)
-    }
-
-    // 상담 삭제 다이얼로그 닫기
-    const handleDeleteDialogClose = () => {
-        setDeleteDialogOpen(false)
-    }
-
-    // 상담 삭제 처리
-    const handleDeleteConfirm = async () => {
-        if (!id) return
+    const fetchConsultationById = async (consultationId: number) => {
+        // Skip if we're already loading this consultation
+        if (isLoadingConsultation) {
+            return
+        }
 
         try {
-            setDeleteLoading(true)
-
-            const response = await consultationApi.deleteConsultation(Number.parseInt(id))
-
-            if (response.data.success) {
-                setDeleteSuccess(true)
-
-                // 삭제 성공 후 목록 페이지로 이동
-                setTimeout(() => {
-                    navigate("/consultation")
-                }, 1500)
-            } else {
-                setError(response.data.error?.message || "상담 삭제에 실패했습니다.")
+            setIsLoadingConsultation(true)
+            const response = await consultationApi.getConsultationById(consultationId)
+            
+            if (response.data?.data) {
+                const consultation = response.data.data
+                
+                // Check if we're already editing this consultation
+                if (currentlyEditingConsultationId === consultationId && originalConsultationData) {
+                    // Always preserve the user's edits
+                    setSelectedConsultation(consultation)
+                    
+                    // Update the original data to match the fetched consultation
+                    setOriginalConsultationData({
+                        consultationId: consultation.consultationId,
+                        date: consultation.date,
+                        consultationStatus: consultation.consultationStatus,
+                        purpose: consultation.purpose,
+                        memo: consultation.memo,
+                    })
+                } else if (consultationId === initialConsultationId && initialConsultationLoaded) {
+                    // If this is the initial consultation and it's already loaded, don't reload it
+                    console.log("Initial consultation already loaded, skipping reload")
+                } else {
+                    // If we're not already editing this consultation, start editing it
+                    setSelectedConsultation(consultation)
+                    setEditFormData({
+                        consultationId: consultation.consultationId,
+                        date: consultation.date,
+                        consultationStatus: consultation.consultationStatus,
+                        purpose: consultation.purpose,
+                        memo: consultation.memo,
+                    })
+                    setOriginalConsultationData({
+                        consultationId: consultation.consultationId,
+                        date: consultation.date,
+                        consultationStatus: consultation.consultationStatus,
+                        purpose: consultation.purpose,
+                        memo: consultation.memo,
+                    })
+                    setCurrentlyEditingConsultationId(consultationId)
+                    // Set isNewConsultation to false since we're editing an existing consultation
+                    setIsNewConsultation(false)
+                }
             }
-        } catch (err: any) {
-            console.error("Error deleting consultation:", err)
-            setError(err.response?.data?.error?.message || "상담 삭제에 실패했습니다.")
+        } catch (error) {
+            console.error("Error fetching consultation by ID:", error)
+            setError("상담 정보를 불러오는데 실패했습니다.")
         } finally {
-            setDeleteLoading(false)
-            handleDeleteDialogClose()
+            setIsLoadingConsultation(false)
         }
     }
 
-    // 상태 변경 메뉴 열기
-    const handleStatusMenuOpen = (event: React.MouseEvent<HTMLDivElement>) => {
-        event.stopPropagation()
-        setStatusAnchorEl(event.currentTarget)
+    const handleConsultationSelect = (consultation: ConsultationResponse) => {
+        setSelectedConsultation(consultation)
+        setViewMode('detail')
     }
 
-    // 상태 변경 메뉴 닫기
-    const handleStatusMenuClose = () => {
-        setStatusAnchorEl(null)
+    const handleBackToHistory = () => {
+        setViewMode('history')
     }
 
-    // 상담 상태 변경 처리
-    const handleStatusChange = async (newStatus: ConsultationStatus) => {
-        if (!id) return
+    const handleNewConsultation = () => {
+        if (editFormData.purpose || editFormData.memo) {
+            setConfirmNewConsultationDialogOpen(true)
+        } else {
+            setIsNewConsultation(true)
+            setEditFormData({
+                customerId: Number(id),
+                date: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
+                consultationStatus: ConsultationStatus.WAITING,
+            })
+            setCurrentlyEditingConsultationId(null)
+        }
+    }
+
+    const handleConfirmNewConsultationDialogClose = (confirmed: boolean) => {
+        setConfirmNewConsultationDialogOpen(false)
+        if (confirmed) {
+            setIsNewConsultation(true)
+            setEditFormData({
+                customerId: Number(id),
+                date: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
+                consultationStatus: ConsultationStatus.WAITING,
+            })
+            setCurrentlyEditingConsultationId(null)
+        }
+    }
+
+    const handleEditChange = (
+        event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent<ConsultationStatus>
+    ) => {
+        const { name, value } = event.target
+        setEditFormData(prev => ({
+            ...prev,
+            [name]: value
+        }))
+    }
+
+    const handleSave = async () => {
+        if (!consultationHistory) return
+
+        if (!editFormData.purpose) {
+            setSnackbar({
+                open: true,
+                message: "상담 목적을 입력해주세요.",
+                severity: "error"
+            })
+            return
+        }
+
+        // Check if the consultation date is in the future for new consultations
+        if (isNewConsultation) {
+            const consultationDate = new Date(editFormData.date || "")
+            const now = new Date()
+            
+            if (consultationDate <= now) {
+                setSnackbar({
+                    open: true,
+                    message: "상담 일시는 미래의 시간이어야 합니다.",
+                    severity: "error"
+                })
+                return
+            }
+        }
 
         try {
-            setStatusLoading(true)
-
-            const response = await consultationApi.updateConsultationStatus(Number.parseInt(id), newStatus)
-
-            if (response.data.success) {
-                setStatusSuccess(true)
-                handleStatusMenuClose()
-
-                // Update only the status while preserving other consultation data
-                setConsultation(prevConsultation => ({
-                    ...prevConsultation,
-                    status: newStatus
-                }))
-            } else {
-                setError(response.data.error?.message || "상담 상태 변경에 실패했습니다.")
+            if (isNewConsultation) {
+                const createData: ConsultationCreateRequest = {
+                    customerId: Number(id),
+                    date: format(new Date(editFormData.date || ""), "yyyy-MM-dd HH:mm"),
+                    purpose: editFormData.purpose,
+                    memo: editFormData.memo,
+                    consultationStatus: editFormData.consultationStatus
+                }
+                await consultationApi.createConsultation(createData)
+                setSnackbar({
+                    open: true,
+                    message: "새로운 상담이 등록되었습니다.",
+                    severity: "success"
+                })
+            } else if (selectedConsultation) {
+                const updateData: ConsultationUpdateRequest = {
+                    purpose: editFormData.purpose,
+                    memo: editFormData.memo,
+                    consultationStatus: editFormData.consultationStatus,
+                    date: selectedConsultation.date // 수정 시에는 날짜를 변경하지 않음
+                }
+                await consultationApi.updateConsultation(selectedConsultation.consultationId, updateData)
+                setSnackbar({
+                    open: true,
+                    message: "상담 정보가 수정되었습니다.",
+                    severity: "success"
+                })
             }
-        } catch (err: any) {
+            await fetchConsultationHistory()
+        } catch (err) {
+            console.error("Error saving consultation:", err)
+            setSnackbar({
+                open: true,
+                message: isNewConsultation ? "상담 등록 중 오류가 발생했습니다." : "상담 수정 중 오류가 발생했습니다.",
+                severity: "error"
+            })
+        }
+    }
+
+    const handlePageChange = (newPage: number) => {
+        // Store the currently editing consultation ID and form data before changing the page
+        const editingId = currentlyEditingConsultationId
+        const currentFormData = { ...editFormData }
+        
+        // Update the current page
+        setCurrentPage(newPage)
+        
+        // Fetch the consultation history for the new page
+        const fetchNewPageHistory = async () => {
+            try {
+                setLoading(true)
+                console.log(`Fetching page ${newPage} for customer ${id}`)
+                
+                if (!id) {
+                    console.error("Customer ID is missing")
+                    return
+                }
+                
+                const response = await consultationApi.getConsultationHistoryByCustomerId(
+                    Number(id), 
+                    newPage, 
+                    pageSize
+                )
+                
+                console.log("Response received:", response)
+                
+                if (response.data?.data) {
+                    setConsultationHistory(response.data.data)
+                    console.log("Consultation history updated")
+                } else {
+                    console.error("No data in response")
+                }
+            } catch (err) {
+                console.error("Error fetching consultation history:", err)
+            } finally {
+                setLoading(false)
+            }
+        }
+        
+        // Fetch the new page history
+        fetchNewPageHistory()
+        
+        // If we're editing a consultation, we need to fetch it again to ensure it's still available
+        if (editingId) {
+            // Fetch the consultation and preserve the user's edits
+            consultationApi.getConsultationById(editingId)
+                .then(response => {
+                    if (response.data?.data) {
+                        // Update the selected consultation
+                        setSelectedConsultation(response.data.data)
+                        
+                        // Always restore the user's edits
+                        setEditFormData(currentFormData)
+                        
+                        // Update the original data to match the fetched consultation
+                        setOriginalConsultationData({
+                            consultationId: response.data.data.consultationId,
+                            date: response.data.data.date,
+                            consultationStatus: response.data.data.consultationStatus,
+                            purpose: response.data.data.purpose,
+                            memo: response.data.data.memo,
+                        })
+                    }
+                })
+                .catch(err => {
+                    console.error("Error fetching consultation by ID:", err)
+                })
+        }
+    }
+
+    const handleStatusChange = async (consultationId: number, newStatus: ConsultationStatus) => {
+        try {
+            await consultationApi.updateConsultationStatus(consultationId, newStatus)
+            
+            // Update the selected consultation if it's the one being edited
+            if (selectedConsultation && selectedConsultation.consultationId === consultationId) {
+                setSelectedConsultation({
+                    ...selectedConsultation,
+                    consultationStatus: newStatus
+                })
+            }
+            
+            // Update the consultation in the history list
+            if (consultationHistory) {
+                const updatedConsultations = consultationHistory.consultations.content.map(consultation => {
+                    if (consultation.consultationId === consultationId) {
+                        return {
+                            ...consultation,
+                            consultationStatus: newStatus
+                        }
+                    }
+                    return consultation
+                })
+                
+                setConsultationHistory({
+                    ...consultationHistory,
+                    consultations: {
+                        ...consultationHistory.consultations,
+                        content: updatedConsultations
+                    }
+                })
+            }
+            
+            setSnackbar({
+                open: true,
+                message: "상담 상태가 변경되었습니다.",
+                severity: "success"
+            })
+        } catch (err) {
             console.error("Error updating consultation status:", err)
-            setError(err.response?.data?.error?.message || "상담 상태 변경에 실패했습니다.")
-        } finally {
-            setStatusLoading(false)
+            setSnackbar({
+                open: true,
+                message: "상담 상태 변경 중 오류가 발생했습니다.",
+                severity: "error"
+            })
         }
+    }
+
+    const handleEditClick = (consultation: ConsultationResponse) => {
+        if (editFormData.purpose || editFormData.memo) {
+            setConsultationToEdit(consultation)
+            setConfirmDialogOpen(true)
+        } else {
+            handleStartEdit(consultation)
+        }
+    }
+
+    const handleStartEdit = (consultation: ConsultationResponse) => {
+        setSelectedConsultation(consultation)
+        setIsNewConsultation(false)
+        
+        // Store the original consultation data
+        const consultationData = {
+            consultationId: consultation.consultationId,
+            date: consultation.date,
+            consultationStatus: consultation.consultationStatus,
+            purpose: consultation.purpose,
+            memo: consultation.memo,
+        }
+        
+        setOriginalConsultationData(consultationData)
+        setEditFormData(consultationData)
+        setViewMode('history')
+        setCurrentlyEditingConsultationId(consultation.consultationId)
+    }
+
+    const handleConfirmDialogClose = (confirmed: boolean) => {
+        setConfirmDialogOpen(false)
+        if (confirmed && consultationToEdit) {
+            handleStartEdit(consultationToEdit)
+        }
+        setConsultationToEdit(null)
     }
 
     if (loading) {
@@ -195,12 +495,12 @@ const ConsultationDetail = () => {
         )
     }
 
-    if (error || !consultation) {
+    if (error || !consultationHistory) {
         return (
-            <Container maxWidth="md">
+            <Container>
                 <Box sx={{ mt: 5, textAlign: "center" }}>
                     <Typography variant="h6" color="error" gutterBottom>
-                        {error || "상담 정보를 찾을 수 없습니다."}
+                        {error || "상담 내역을 찾을 수 없습니다."}
                     </Typography>
                     <Button variant="contained" onClick={() => navigate("/consultation")} sx={{ mt: 2 }}>
                         상담 목록으로 돌아가기
@@ -210,197 +510,566 @@ const ConsultationDetail = () => {
         )
     }
 
-    
     return (
-        <Box sx={{ flexGrow: 1, bgcolor: "#f5f5f5", minHeight: "100vh" }}>
-            <Container
-                maxWidth="md"
-                sx={{
-                    mt: 4,
-                    mb: 4,
-                    mx: "auto",
-                    px: { xs: 2, sm: 3, md: 4 },
-                }}
-            >
-                <Paper elevation={0} sx={{ p: 4, borderRadius: 2 }}>
-                    <Box sx={{ display: "flex", alignItems: "center", mb: 4 }}>
-                        <IconButton onClick={() => navigate("/consultation")} sx={{ mr: 1 }}>
+        <Box sx={{ flexGrow: 1, bgcolor: "#f5f5f5", minHeight: "100vh", py: 3 }}>
+            <Container maxWidth="xl">
+                {/* 헤더 & 고객 정보 카드 */}
+                <Box sx={{ mb: 3 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                        <IconButton onClick={() => navigate("/consultation")} sx={{ mr: 2 }}>
                             <ArrowBack />
                         </IconButton>
-                        <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                            상담 정보
+                        <Typography variant="h5" sx={{ fontWeight: "bold", flexGrow: 1 }}>
+                            고객 상담 관리
                         </Typography>
-                        <Box sx={{ flexGrow: 1 }} />
-                        <Button
-                            startIcon={<Edit />}
-                            sx={{ mr: 1, color: "#555" }}
-                            onClick={() => navigate(`/consultation/edit/${id}`)}
-                        >
-                            수정
-                        </Button>
                     </Box>
 
-                    <Grid container spacing={3}>
-                        {/* 상태 */}
-                        <Grid item xs={12}>
-                            <Typography variant="subtitle2" color="textSecondary">
-                                상태
-                            </Typography>
-                            <Box sx={{ mt: 1, mb: 2 }}>
-                                <Chip
-                                    label={statusConfig[consultation.status].label}
-                                    sx={{
-                                        bgcolor: statusConfig[consultation.status].color,
-                                        color: statusConfig[consultation.status].textColor,
-                                        fontWeight: "bold",
-                                        cursor: "pointer",
-                                    }}
-                                    onClick={(e) => handleStatusMenuOpen(e)}
-                                />
-                                <Menu
-                                    anchorEl={statusAnchorEl}
-                                    open={Boolean(statusAnchorEl)}
-                                    onClose={handleStatusMenuClose}
-                                >
-                                    {Object.values(ConsultationStatus).map((status) => (
-                                        <MenuItem key={status} onClick={() => handleStatusChange(status)}>
-                                            {statusConfig[status].label}
-                                        </MenuItem>
-                                    ))}
-                                </Menu>
-                            </Box>
-                        </Grid>
-
-                        {/* 고객 정보 섹션 */}
-                        <Grid item xs={12}>
-                            <Typography variant="h6" sx={{ mb: 2, fontWeight: "bold" }}>
-                                고객 정보
-                            </Typography>
-                            <Grid container spacing={2}>
-                                <Grid item xs={12} sm={6}>
-                                    <Typography variant="subtitle2" color="textSecondary">
-                                        고객명
-                                    </Typography>
-                                    <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
-                                        {consultation.customer.name}
-                                    </Typography>
-                                </Grid>
-                                <Grid item xs={12} sm={6}>
-                                    <Typography variant="subtitle2" color="textSecondary">
-                                        연락처
-                                    </Typography>
-                                    <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
-                                        {consultation.customer.phone}
-                                    </Typography>
-                                </Grid>
-                            </Grid>
-                        </Grid>
-
-                        {/* 상담 정보 섹션 */}
-                        <Grid item xs={12}>
-                            <Typography variant="h6" sx={{ mb: 2, fontWeight: "bold" }}>
-                                상담 정보
-                            </Typography>
-                            <Grid container spacing={2}>
-                                <Grid item xs={12} sm={6}>
-                                    <Typography variant="subtitle2" color="textSecondary">
-                                        상담 유형
-                                    </Typography>
-                                    <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
-                                        {typeConfig[consultation.consultationType]}
-                                    </Typography>
-                                </Grid>
-                                <Grid item xs={12} sm={6}>
-                                    <Typography variant="subtitle2" color="textSecondary">
-                                        상담 목적
-                                    </Typography>
-                                    <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
-                                        {consultation.purpose || "-"}
-                                    </Typography>
-                                </Grid>
-                                <Grid item xs={12} sm={6}>
-                                    <Typography variant="subtitle2" color="textSecondary">
-                                        상담 일시
-                                    </Typography>
-                                    <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
-                                        {new Date(consultation.scheduledAt).toLocaleString("ko-KR")}
-                                    </Typography>
-                                </Grid>
-                                <Grid item xs={12} sm={6}>
-                                    <Typography variant="subtitle2" color="textSecondary">
-                                        관심 매물
-                                    </Typography>
-                                    <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
-                                        {consultation.propertyInterest || "-"}
-                                    </Typography>
-                                </Grid>
-                                <Grid item xs={12} sm={6}>
-                                    <Typography variant="subtitle2" color="textSecondary">
-                                        관심 지역
-                                    </Typography>
-                                    <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
-                                        {consultation.interestLocation || "-"}
-                                    </Typography>
-                                </Grid>
-                                <Grid item xs={12} sm={6}>
-                                    <Typography variant="subtitle2" color="textSecondary">
-                                        계약 유형
-                                    </Typography>
-                                    <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
-                                        {consultation.contractType || "-"}
-                                    </Typography>
-                                </Grid>
-                                <Grid item xs={12} sm={6}>
-                                    <Typography variant="subtitle2" color="textSecondary">
-                                        자산 상태
-                                    </Typography>
-                                    <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
-                                        {consultation.assetStatus || "-"}
-                                    </Typography>
-                                </Grid>
-                                <Grid item xs={12}>
-                                    <Typography variant="subtitle2" color="textSecondary">
-                                        메모
-                                    </Typography>
-                                    <Paper
-                                        elevation={0}
-                                        sx={{
-                                            p: 2,
-                                            mt: 1,
-                                            bgcolor: "#f5f5f5",
-                                            borderRadius: 1
-                                        }}
-                                    >
-                                        <Typography variant="body1">
-                                            {consultation.memo || "-"}
+                    <Paper elevation={0} sx={{ p: 3, borderRadius: 2 }}>
+                        <Grid container spacing={3}>
+                            <Grid item xs={12} md={8}>
+                                <Paper sx={{ p: 2, height: '100%' }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                        <Typography variant="h6" component="h2" sx={{ flexGrow: 1 }}>
+                                            고객 정보
                                         </Typography>
-                                    </Paper>
-                                </Grid>
+                                        <IconButton
+                                            component={RouterLink}
+                                            to={`/customer-management/${consultationHistory?.customer.id}`}
+                                            color="primary"
+                                            size="small"
+                                        >
+                                            <Person />
+                                        </IconButton>
+                                    </Box>
+                                    <Grid container spacing={2}>
+                                        <Grid item xs={12} sm={6}>
+                                            <Typography variant="body1" gutterBottom>
+                                                이름: {consultationHistory?.customer.name}
+                                            </Typography>
+                                        </Grid>
+                                        <Grid item xs={12} sm={6}>
+                                            <Typography variant="body1" gutterBottom>
+                                                이메일: {consultationHistory?.customer.email}
+                                            </Typography>
+                                        </Grid>
+                                        <Grid item xs={12} sm={6}>
+                                            <Typography variant="body1" gutterBottom>
+                                                전화번호: {consultationHistory?.customer.phone}
+                                            </Typography>
+                                        </Grid>
+                                        {/* <Grid item xs={12} sm={6}>
+                                            <Typography variant="body1" gutterBottom>
+                                                관심 지역: {consultationHistory?.customer.interestArea || "미설정"}
+                                            </Typography>
+                                        </Grid>
+                                        <Grid item xs={12} sm={6}>
+                                            <Typography variant="body1" gutterBottom>
+                                                관심 매물: {consultationHistory?.customer.interestProperty || "미설정"}
+                                            </Typography>
+                                        </Grid>
+                                        <Grid item xs={12} sm={6}>
+                                            <Typography variant="body1" gutterBottom>
+                                                예산: {consultationHistory?.customer.budget || "미설정"}
+                                            </Typography>
+                                        </Grid> */}
+                                    </Grid>
+                                </Paper>
+                            </Grid>
+                            <Grid item xs={12} md={4}>
+                                {/* 최근 상담일 섹션 제거 */}
                             </Grid>
                         </Grid>
+                    </Paper>
+                </Box>
+
+                <Grid container spacing={3}>
+                    {/* 좌측: 상담 히스토리 리스트 또는 상세 정보 */}
+                    <Grid item xs={12} md={6}>
+                        <Paper elevation={0} sx={{ p: 3, borderRadius: 2, height: '100%', display: 'flex', flexDirection: 'column', minHeight: '600px' }}>
+                            {viewMode === 'history' ? (
+                                <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                                    <Typography variant="h6" sx={{ mb: 3, fontWeight: "medium" }}>
+                                        상담 히스토리
+                                    </Typography>
+
+                                    <Box sx={{ 
+                                        flexGrow: 1, 
+                                        overflow: 'auto',
+                                        minHeight: '400px',
+                                        maxHeight: 'calc(100vh - 300px)',
+                                        display: 'flex',
+                                        flexDirection: 'column'
+                                    }}>
+                                        {consultationHistory.consultations.content.length > 0 ? (
+                                            consultationHistory.consultations.content.map((consultation) => (
+                                                <Box
+                                                    key={consultation.consultationId}
+                                                    id={`consultation-${consultation.consultationId}`}
+                                                    onClick={() => handleConsultationSelect(consultation)}
+                                                    sx={{
+                                                        p: 2,
+                                                        mb: 1,
+                                                        border: '1px solid',
+                                                        borderColor: currentlyEditingConsultationId === consultation.consultationId ? 'primary.main' : 'grey.200',
+                                                        borderRadius: 1,
+                                                        cursor: 'pointer',
+                                                        bgcolor: currentlyEditingConsultationId === consultation.consultationId ? 'rgba(25, 118, 210, 0.08)' : 'transparent',
+                                                        '&:hover': {
+                                                            bgcolor: currentlyEditingConsultationId === consultation.consultationId ? 'rgba(25, 118, 210, 0.12)' : 'grey.50'
+                                                        },
+                                                        minHeight: '80px',
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        justifyContent: 'space-between'
+                                                    }}
+                                                >
+                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                                                        <Typography variant="subtitle2" color="text.secondary">
+                                                            {consultation.date}
+                                                        </Typography>
+                                                        <Box sx={{ display: 'flex', gap: 1 }}>
+                                                            <Chip
+                                                                label={statusConfig[consultation.consultationStatus]?.label}
+                                                                size="small"
+                                                                sx={{
+                                                                    bgcolor: statusConfig[consultation.consultationStatus]?.color,
+                                                                    color: statusConfig[consultation.consultationStatus]?.textColor,
+                                                                    cursor: currentlyEditingConsultationId === consultation.consultationId ? 'default' : 'pointer'
+                                                                }}
+                                                                onClick={(e) => {
+                                                                    if (currentlyEditingConsultationId === consultation.consultationId) {
+                                                                        e.stopPropagation();
+                                                                        return;
+                                                                    }
+                                                                    
+                                                                    e.stopPropagation();
+                                                                    
+                                                                    // Close any other open menu
+                                                                    if (openStatusMenuId !== null) {
+                                                                        const existingMenu = document.getElementById(`status-menu-${openStatusMenuId}`);
+                                                                        if (existingMenu) {
+                                                                            document.body.removeChild(existingMenu);
+                                                                        }
+                                                                    }
+                                                                    
+                                                                    // Set this menu as the open one
+                                                                    setOpenStatusMenuId(consultation.consultationId);
+                                                                    
+                                                                    // Create a container for the menu that will be positioned relative to the viewport
+                                                                    const menuContainer = document.createElement('div');
+                                                                    menuContainer.id = `status-menu-${consultation.consultationId}`;
+                                                                    menuContainer.style.position = 'fixed';
+                                                                    menuContainer.style.zIndex = '1000';
+                                                                    
+                                                                    // Get the position of the chip relative to the viewport
+                                                                    const chipRect = e.currentTarget.getBoundingClientRect();
+                                                                    
+                                                                    // Position the menu below the chip
+                                                                    menuContainer.style.top = `${chipRect.bottom}px`;
+                                                                    menuContainer.style.left = `${chipRect.left}px`;
+                                                                    
+                                                                    // Create the menu content
+                                                                    const menu = document.createElement('div');
+                                                                    menu.style.backgroundColor = 'white';
+                                                                    menu.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+                                                                    menu.style.borderRadius = '4px';
+                                                                    menu.style.padding = '4px';
+                                                                    
+                                                                    Object.values(ConsultationStatus).forEach((status) => {
+                                                                        if (status !== consultation.consultationStatus) {
+                                                                            const option = document.createElement('div');
+                                                                            option.style.padding = '8px 16px';
+                                                                            option.style.cursor = 'pointer';
+                                                                            option.style.color = statusConfig[status]?.textColor;
+                                                                            option.style.backgroundColor = statusConfig[status]?.color;
+                                                                            option.style.borderRadius = '4px';
+                                                                            option.style.marginBottom = '4px';
+                                                                            option.textContent = statusConfig[status]?.label;
+                                                                            option.onclick = (e) => {
+                                                                                e.stopPropagation();
+                                                                                handleStatusChange(consultation.consultationId, status);
+                                                                                document.body.removeChild(menuContainer);
+                                                                                setOpenStatusMenuId(null);
+                                                                            };
+                                                                            menu.appendChild(option);
+                                                                        }
+                                                                    });
+                                                                    
+                                                                    menuContainer.appendChild(menu);
+                                                                    document.body.appendChild(menuContainer);
+                                                                    
+                                                                    const closeMenu = (e: MouseEvent) => {
+                                                                        if (!menuContainer.contains(e.target as Node)) {
+                                                                            document.body.removeChild(menuContainer);
+                                                                            document.removeEventListener('click', closeMenu);
+                                                                            setOpenStatusMenuId(null);
+                                                                        }
+                                                                    };
+                                                                    
+                                                                    setTimeout(() => {
+                                                                        document.addEventListener('click', closeMenu);
+                                                                    }, 0);
+                                                                }}
+                                                            />
+                                                        </Box>
+                                                    </Box>
+                                                    <Typography 
+                                                        variant="subtitle1" 
+                                                        sx={{ 
+                                                            fontWeight: "medium",
+                                                            minHeight: '24px',
+                                                            display: 'flex',
+                                                            alignItems: 'center'
+                                                        }} 
+                                                        noWrap
+                                                    >
+                                                        {consultation.purpose || ""}
+                                                    </Typography>
+                                                </Box>
+                                            ))
+                                        ) : (
+                                            <Box sx={{ 
+                                                display: 'flex', 
+                                                justifyContent: 'center', 
+                                                alignItems: 'center', 
+                                                height: '100%',
+                                                color: 'text.secondary'
+                                            }}>
+                                                <Typography variant="body2">상담 내역이 없습니다.</Typography>
+                                            </Box>
+                                        )}
+                                    </Box>
+
+                                    {/* 페이지네이션 컨트롤 */}
+                                    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2, gap: 1, pt: 2, borderTop: '1px solid', borderColor: 'grey.200' }}>
+                                        <Button
+                                            size="small"
+                                            onClick={() => handlePageChange(currentPage - 1)}
+                                            disabled={currentPage === 0}
+                                            startIcon={<ChevronLeft />}
+                                        >
+                                            이전
+                                        </Button>
+                                        <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center' }}>
+                                            {currentPage + 1} / {consultationHistory.consultations.totalPages}
+                                        </Typography>
+                                        <Button
+                                            size="small"
+                                            onClick={() => handlePageChange(currentPage + 1)}
+                                            disabled={currentPage >= consultationHistory.consultations.totalPages - 1}
+                                            endIcon={<ChevronRight />}
+                                        >
+                                            다음
+                                        </Button>
+                                    </Box>
+                                </Box>
+                            ) : (
+                                <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                            <Typography variant="h6" sx={{ fontWeight: "medium", mr: 2 }}>
+                                                상담 상세 정보
+                                            </Typography>
+                                            {selectedConsultation && (
+                                                <Chip
+                                                    label={statusConfig[selectedConsultation.consultationStatus]?.label}
+                                                    size="small"
+                                                    sx={{
+                                                        bgcolor: statusConfig[selectedConsultation.consultationStatus]?.color,
+                                                        color: statusConfig[selectedConsultation.consultationStatus]?.textColor,
+                                                        cursor: 'pointer'
+                                                    }}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        
+                                                        // Close any other open menu
+                                                        if (openStatusMenuId !== null) {
+                                                            const existingMenu = document.getElementById(`status-menu-${openStatusMenuId}`);
+                                                            if (existingMenu) {
+                                                                document.body.removeChild(existingMenu);
+                                                            }
+                                                        }
+                                                        
+                                                        // Set this menu as the open one
+                                                        setOpenStatusMenuId(selectedConsultation.consultationId);
+                                                        
+                                                        // Create a container for the menu that will be positioned relative to the viewport
+                                                        const menuContainer = document.createElement('div');
+                                                        menuContainer.id = `status-menu-${selectedConsultation.consultationId}`;
+                                                        menuContainer.style.position = 'fixed';
+                                                        menuContainer.style.zIndex = '1000';
+                                                        
+                                                        // Get the position of the chip relative to the viewport
+                                                        const chipRect = e.currentTarget.getBoundingClientRect();
+                                                        
+                                                        // Position the menu below the chip
+                                                        menuContainer.style.top = `${chipRect.bottom}px`;
+                                                        menuContainer.style.left = `${chipRect.left}px`;
+                                                        
+                                                        // Create the menu content
+                                                        const menu = document.createElement('div');
+                                                        menu.style.backgroundColor = 'white';
+                                                        menu.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+                                                        menu.style.borderRadius = '4px';
+                                                        menu.style.padding = '4px';
+                                                        
+                                                        Object.values(ConsultationStatus).forEach((status) => {
+                                                            if (status !== selectedConsultation.consultationStatus) {
+                                                                const option = document.createElement('div');
+                                                                option.style.padding = '8px 16px';
+                                                                option.style.cursor = 'pointer';
+                                                                option.style.color = statusConfig[status]?.textColor;
+                                                                option.style.backgroundColor = statusConfig[status]?.color;
+                                                                option.style.borderRadius = '4px';
+                                                                option.style.marginBottom = '4px';
+                                                                option.textContent = statusConfig[status]?.label;
+                                                                option.onclick = (e) => {
+                                                                    e.stopPropagation();
+                                                                    handleStatusChange(selectedConsultation.consultationId, status);
+                                                                    document.body.removeChild(menuContainer);
+                                                                    setOpenStatusMenuId(null);
+                                                                };
+                                                                menu.appendChild(option);
+                                                            }
+                                                        });
+                                                        
+                                                        menuContainer.appendChild(menu);
+                                                        document.body.appendChild(menuContainer);
+                                                        
+                                                        const closeMenu = (e: MouseEvent) => {
+                                                            if (!menuContainer.contains(e.target as Node)) {
+                                                                document.body.removeChild(menuContainer);
+                                                                document.removeEventListener('click', closeMenu);
+                                                                setOpenStatusMenuId(null);
+                                                            }
+                                                        };
+                                                        
+                                                        setTimeout(() => {
+                                                            document.addEventListener('click', closeMenu);
+                                                        }, 0);
+                                                    }}
+                                                />
+                                            )}
+                                        </Box>
+                                        <Box>
+                                            <Button
+                                                variant="contained"
+                                                startIcon={<Edit />}
+                                                onClick={() => handleEditClick(selectedConsultation!)}
+                                                sx={{ mr: 1 }}
+                                            >
+                                                수정
+                                            </Button>
+                                            <Button
+                                                variant="outlined"
+                                                startIcon={<ArrowBack />}
+                                                onClick={handleBackToHistory}
+                                            >
+                                                히스토리로 돌아가기
+                                            </Button>
+                                        </Box>
+                                    </Box>
+                                    
+                                    {selectedConsultation && (
+                                        <Box sx={{ 
+                                            flexGrow: 1, 
+                                            overflow: 'auto',
+                                            display: 'flex',
+                                            flexDirection: 'column'
+                                        }}>
+                                            <Grid container spacing={2} sx={{ height: '100%' }}>
+                                                <Grid item xs={12}>
+                                                    <Grid container spacing={2}>
+                                                        <Grid item xs={12} sm={6}>
+                                                            <Typography variant="subtitle1" gutterBottom>
+                                                                상담 일시
+                                                            </Typography>
+                                                            <Paper variant="outlined" sx={{ p: 2 }}>
+                                                                <Typography variant="body1">
+                                                                    {selectedConsultation.date}
+                                                                </Typography>
+                                                            </Paper>
+                                                        </Grid>
+                                                        <Grid item xs={12} sm={6}>
+                                                            <Typography variant="subtitle1" gutterBottom>
+                                                                상담 목적
+                                                            </Typography>
+                                                            <Paper variant="outlined" sx={{ p: 2 }}>
+                                                                <Typography variant="body1">
+                                                                    {selectedConsultation.purpose || "없음"}
+                                                                </Typography>
+                                                            </Paper>
+                                                        </Grid>
+                                                    </Grid>
+                                                </Grid>
+                                                <Grid item xs={12} sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', mt: 0 }}>
+                                                    <Typography variant="subtitle1" gutterBottom>
+                                                        메모
+                                                    </Typography>
+                                                    <Paper variant="outlined" sx={{ p: 2, flexGrow: 1, display: 'flex', flexDirection: 'column', minHeight: '400px' }}>
+                                                        <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', flexGrow: 1 }}>
+                                                            {selectedConsultation.memo || "메모 없음"}
+                                                        </Typography>
+                                                    </Paper>
+                                                </Grid>
+                                            </Grid>
+                                        </Box>
+                                    )}
+                                </Box>
+                            )}
+                        </Paper>
                     </Grid>
-                </Paper>
+
+                    {/* 우측: 상담 상세 정보 & 수정 폼 */}
+                    <Grid item xs={12} md={6}>
+                        <Paper elevation={0} sx={{ p: 3, borderRadius: 2, height: '100%', display: 'flex', flexDirection: 'column', minHeight: '600px' }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                                <Typography variant="h6" sx={{ fontWeight: "medium" }}>
+                                    {isNewConsultation ? "새 상담 등록" : "상담 수정"}
+                                </Typography>
+                                <Box>
+                                    <Button
+                                        variant="contained"
+                                        startIcon={<Save />}
+                                        onClick={handleSave}
+                                        sx={{ mr: 1 }}
+                                        disabled={isLoadingConsultation}
+                                    >
+                                        저장
+                                    </Button>
+                                    <Button
+                                        variant="outlined"
+                                        startIcon={<Add />}
+                                        onClick={handleNewConsultation}
+                                        disabled={isLoadingConsultation}
+                                    >
+                                        새 상담
+                                    </Button>
+                                </Box>
+                            </Box>
+
+                            {isLoadingConsultation ? (
+                                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                                    <CircularProgress />
+                                </Box>
+                            ) : (
+                                <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                                    <Grid container spacing={2} sx={{ height: '100%' }}>
+                                        <Grid item xs={12}>
+                                            <Grid container spacing={2}>
+                                                <Grid item xs={12} sm={6}>
+                                                    <Typography variant="subtitle1" gutterBottom>
+                                                        상담 일시
+                                                    </Typography>
+                                                    <TextField
+                                                        fullWidth
+                                                        name="date"
+                                                        type="datetime-local"
+                                                        value={editFormData.date || ""}
+                                                        onChange={handleEditChange}
+                                                        InputLabelProps={{ shrink: true }}
+                                                        disabled={!isNewConsultation}
+                                                        variant="outlined"
+                                                    />
+                                                </Grid>
+                                                <Grid item xs={12} sm={6}>
+                                                    <Typography variant="subtitle1" gutterBottom>
+                                                        상담 목적
+                                                    </Typography>
+                                                    <TextField
+                                                        fullWidth
+                                                        name="purpose"
+                                                        value={editFormData.purpose || ""}
+                                                        onChange={handleEditChange}
+                                                        required
+                                                        error={!editFormData.purpose}
+                                                        helperText={!editFormData.purpose ? "상담 목적을 입력해주세요" : ""}
+                                                        variant="outlined"
+                                                    />
+                                                </Grid>
+                                            </Grid>
+                                        </Grid>
+                                        <Grid item xs={12} sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', mt: 0 }}>
+                                            <Typography variant="subtitle1" gutterBottom>
+                                                메모
+                                            </Typography>
+                                            <TextField
+                                                fullWidth
+                                                name="memo"
+                                                value={editFormData.memo || ""}
+                                                onChange={handleEditChange}
+                                                multiline
+                                                rows={20}
+                                                variant="outlined"
+                                                sx={{
+                                                    '& .MuiInputBase-root': {
+                                                        height: '100%',
+                                                        minHeight: '400px',
+                                                    }
+                                                }}
+                                            />
+                                        </Grid>
+                                    </Grid>
+                                </Box>
+                            )}
+                        </Paper>
+                    </Grid>
+                </Grid>
             </Container>
 
-            {/* 상태 변경 성공 메시지 */}
-            <Snackbar open={statusSuccess} autoHideDuration={6000} onClose={() => setStatusSuccess(false)}>
-                <Alert onClose={() => setStatusSuccess(false)} severity="success" sx={{ width: "100%" }}>
-                    상담 상태가 성공적으로 변경되었습니다.
+            {/* 알림 스낵바 */}
+            <Snackbar
+                open={snackbar.open}
+                autoHideDuration={6000}
+                onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+            >
+                <Alert 
+                    onClose={() => setSnackbar(prev => ({ ...prev, open: false }))} 
+                    severity={snackbar.severity}
+                    sx={{ width: "100%" }}
+                >
+                    {snackbar.message}
                 </Alert>
             </Snackbar>
 
-            {/* 에러 메시지 스낵바 */}
-            <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError(null)}>
-                <Alert onClose={() => setError(null)} severity="error" sx={{ width: "100%" }}>
-                    {error}
-                </Alert>
-            </Snackbar>
+            {/* 확인 대화상자 */}
+            <Dialog
+                open={confirmDialogOpen}
+                onClose={() => handleConfirmDialogClose(false)}
+            >
+                <DialogTitle>작성 중인 내용이 있습니다</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        작성 중인 내용이 있습니다. 계속하면 작성 중인 내용이 사라집니다. 계속하시겠습니까?
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => handleConfirmDialogClose(false)}>취소</Button>
+                    <Button onClick={() => handleConfirmDialogClose(true)} color="primary" autoFocus>
+                        계속
+                    </Button>
+                </DialogActions>
+            </Dialog>
 
-            <Box sx={{ bgcolor: "#fff", p: 2, textAlign: "center", mt: 4 }}>
-                <Typography variant="caption" color="textSecondary">
-                    © 2024 Customer Management System. All rights reserved.
-                </Typography>
-            </Box>
+            {/* 새 상담 확인 대화상자 */}
+            <Dialog
+                open={confirmNewConsultationDialogOpen}
+                onClose={() => handleConfirmNewConsultationDialogClose(false)}
+            >
+                <DialogTitle>작성 중인 내용이 있습니다</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        작성 중인 내용이 있습니다. 계속하면 작성 중인 내용이 사라집니다. 계속하시겠습니까?
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => handleConfirmNewConsultationDialogClose(false)}>취소</Button>
+                    <Button onClick={() => handleConfirmNewConsultationDialogClose(true)} color="primary" autoFocus>
+                        계속
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     )
 }

@@ -52,40 +52,50 @@ export interface CustomerInfo {
     email?: string
 }
 
-export interface ConsultationResponse {
-    customerEmail: string
-    id: number
-    consultationId?: number  // 백엔드 응답용
-    customerId: number
-    customerName: string
-    customerPhone: string
-    customer: {
-        id: number
-        name: string
-        phone: string
-        email?: string
-    }
-    content: string
-    consultationType: ConsultationType
-    date: string
-    scheduledAt: string
-    purpose?: string
-    interestProperty?: string
-    interestLocation?: string
-    contractType?: string
-    assetStatus?: string
-    memo?: string
-    consultationStatus: ConsultationStatus
-    status?: ConsultationStatus  // 프론트엔드용
-    result?: string
-    nextAction?: string
-    propertyInterest?: string
-    budget?: string
-    createdAt: string
-    updatedAt: string
+// Page 타입 정의
+export interface Page<T> {
+    content: T[];
+    pageable: {
+        pageNumber: number;
+        pageSize: number;
+        sort: {
+            empty: boolean;
+            sorted: boolean;
+            unsorted: boolean;
+        };
+        offset: number;
+        paged: boolean;
+        unpaged: boolean;
+    };
+    totalElements: number;
+    totalPages: number;
+    last: boolean;
+    size: number;
+    number: number;
+    sort: {
+        empty: boolean;
+        sorted: boolean;
+        unsorted: boolean;
+    };
+    numberOfElements: number;
+    first: boolean;
+    empty: boolean;
 }
 
+// 기존 ConsultationResponse 인터페이스 제거
+// export interface ConsultationResponse { ... }
 
+// 새로운 ConsultationResponse 인터페이스 정의
+export interface ConsultationResponse {
+    consultationId: number;
+    customerId: number;
+    customerName: string;
+    customerPhone: string;
+    date: string;
+    purpose: string;
+    memo: string;
+    consultationStatus: ConsultationStatus;
+}
 
 export interface ConsultationMonthInfo {
     consultationAll: number;
@@ -94,4 +104,21 @@ export interface ConsultationMonthInfo {
     consultationCancelled: number;
     consultationCompleted: number;
     daysCount: number[];
+}
+
+export interface ConsultationHistoryDto {
+    customer: CustomerResponse;
+    consultations: Page<ConsultationResponse>;
+}
+
+export interface CustomerResponse {
+    id: number;
+    name: string;
+    birthday: string;
+    phone: string;
+    email: string;
+    job: string;
+    isVip: boolean;
+    memo: string;
+    consent: boolean;
 }

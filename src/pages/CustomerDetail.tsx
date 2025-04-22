@@ -22,7 +22,7 @@ import {
     Snackbar,
     Alert,
 } from "@mui/material"
-import { ArrowBack, Edit, Delete } from "@mui/icons-material"
+import { ArrowBack, Edit, Delete, Campaign } from "@mui/icons-material"
 import { useNavigate, useParams } from "react-router-dom"
 import { customerApi } from "../services/customerApi"
 import type { CustomerResponse } from "../services/customerApi"
@@ -145,6 +145,13 @@ const CustomerDetail = () => {
                             onClick={() => navigate(`/customer-management/edit/${id}`)}
                         >
                             수정
+                        </Button>
+                        <Button
+                            startIcon={<Campaign />}
+                            sx={{ mr: 1, color: "#555" }}
+                            onClick={() => navigate(`/consultation/${id}`)}
+                        >
+                            상담 내역
                         </Button>
                         <Button startIcon={<Delete />} color="error" onClick={handleDeleteClick}>
                             삭제
