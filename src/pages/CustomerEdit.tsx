@@ -59,7 +59,7 @@ const CustomerEdit = () => {
             const response = await customerApi.getCustomerById(customerId)
 
             if (response.data.success && response.data.data) {
-                const customer = response.data.data
+                const customer = response.data.data.customer
                 setFormData({
                     name: customer.name,
                     birthday: customer.birthday || "",

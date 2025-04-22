@@ -286,7 +286,7 @@ const ConsultationList = () => {
 
     // 상담 상세 페이지로 이동
     const handleViewConsultation = (consultationId: number, customerId: number) => {
-        navigate(`/consultation/${customerId}?consultationId=${consultationId}`)
+        navigate(`/consultation/${consultationId}?customerId=${customerId}`);
     }
 
     // 상태 변경 메뉴 열기

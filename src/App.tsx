@@ -16,7 +16,7 @@ import SurveySubmit from "./pages/SurveySubmit.tsx"
 import SurveyAnswers from "./pages/SurveyAnswers.tsx" 
 import ConsultationList from "./pages/ConsultationList.tsx"
 import ConsultationDetail from "./pages/ConsultationDetail.tsx"
-import ConsultationEdit from "./pages/ConsultationEdit.tsx"
+// import ConsultationEdit from "./pages/ConsultationEdit.tsx"
 import MessageList from "./pages/MessageList.tsx"
 import MessageHistory from "./pages/MessageHistory.tsx"
 import MessageCreate from "./pages/MessageCreate.tsx"
@@ -240,14 +240,14 @@ function App() {
                                     </ProtectedRoute>
                                 }
                             />
-                            <Route
+                            {/* <Route
                                 path="/consultation/edit/:id"
                                 element={
                                     <ProtectedRoute>
                                         <ConsultationEdit />
                                     </ProtectedRoute>
                                 }
-                            />
+                            /> */}
                             {/* 메시지 관리 라우트 */}
                             <Route
                                 path="/message"

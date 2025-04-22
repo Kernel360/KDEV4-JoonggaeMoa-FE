@@ -12,6 +12,7 @@
     "@emotion/react": "^11.11.3",
     "@emotion/styled": "^11.11.0",
     "@mui/icons-material": "^5.15.3",
+    "@mui/lab": "^7.0.0-beta.11",
     "@mui/material": "^5.17.1",
     "@mui/x-date-pickers": "^6.20.2",
     "@shadcn/ui": "^0.0.4",
@@ -28,6 +29,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^8.56.0",
+    "@types/node": "^22.14.1",
     "@types/react": "^18.2.45",
     "@types/react-dom": "^18.2.18",
     "@vitejs/plugin-react": "^4.2.1",

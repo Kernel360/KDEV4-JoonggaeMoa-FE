@@ -22,15 +22,22 @@ import {
     Snackbar,
     Alert,
 } from "@mui/material"
-import { ArrowBack, Edit, Delete, Campaign } from "@mui/icons-material"
+import Timeline from '@mui/lab/Timeline';
+import TimelineItem from '@mui/lab/TimelineItem';
+import TimelineSeparator from '@mui/lab/TimelineSeparator';
+import TimelineConnector from '@mui/lab/TimelineConnector';
+import TimelineContent from '@mui/lab/TimelineContent';
+import TimelineDot from '@mui/lab/TimelineDot';
+import { ArrowBack, Edit, Delete, Campaign, Message, Assignment, Description, Poll } from "@mui/icons-material"
 import { useNavigate, useParams } from "react-router-dom"
 import { customerApi } from "../services/customerApi"
-import type { CustomerResponse } from "../services/customerApi"
+import type { CustomerResponse, History, CustomerHistoryResponse } from "../services/customerApi"
 
 const CustomerDetail = () => {
     const navigate = useNavigate()
     const { id } = useParams<{ id: string }>()
     const [customer, setCustomer] = useState<CustomerResponse | null>(null)
+    const [history, setHistory] = useState<History[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [openDeleteDialog, setOpenDeleteDialog] = useState(false)
@@ -50,7 +57,8 @@ const CustomerDetail = () => {
             const response = await customerApi.getCustomerById(customerId)
 
             if (response.data.success && response.data.data) {
-                setCustomer(response.data.data)
+                setCustomer(response.data.data.customer)
+                setHistory(response.data.data.history)
             } else {
                 setError("고객 정보를 불러오는데 실패했습니다.")
             }
@@ -59,6 +67,64 @@ const CustomerDetail = () => {
             setError("고객 정보를 불러오는데 실패했습니다.")
         } finally {
             setLoading(false)
+        }
+    }
+
+    const getHistoryIcon = (type: History['type']) => {
+        switch (type) {
+            case 'CONSULTATION':
+                return <Description />
+            case 'CONTRACT':
+                return <Assignment />
+            case 'MESSAGE':
+                return <Message />
+            case 'SURVEY':
+                return <Poll />
+            default:
+                return <Description />
+        }
+    }
+
+    const getHistoryColor = (type: History['type']) => {
+        switch (type) {
+            case 'CONSULTATION':
+                return 'primary'
+            case 'CONTRACT':
+                return 'success'
+            case 'MESSAGE':
+                return 'info'
+            case 'SURVEY':
+                return 'warning'
+            default:
+                return 'primary'
+        }
+    }
+
+    const formatHistoryContent = (history: History) => {
+        const getMessageStatus = (status: string) => {
+            switch (status) {
+                case 'PENDING':
+                    return '전송 예약';
+                case 'FAILED':
+                    return '전송 실패';
+                case 'SENT':
+                    return '전송 완료';
+                default:
+                    return status;
+            }
+        };
+
+        switch (history.type) {
+            case 'CONSULTATION':
+                return `상담 목적: ${history.purpose || '없음'}`
+            case 'CONTRACT':
+                return `계약 기간: ${history.startDate} ~ ${history.endDate}`
+            case 'MESSAGE':
+                return `메시지: ${history.content} (상태: ${getMessageStatus(history.sendStatus)})`
+            case 'SURVEY':
+                return '설문 완료'
+            default:
+                return ''
         }
     }
 
@@ -96,6 +162,25 @@ const CustomerDetail = () => {
         }
     }
 
+    const handleHistoryItemClick = (item: History) => {
+        switch (item.type) {
+            case 'CONSULTATION':
+                navigate(`/consultation/${item.id}?customerId=${id}`);
+                break;
+            case 'CONTRACT':
+                navigate(`/contract/${item.id}`);
+                break;
+            case 'SURVEY':
+                navigate(`/survey/answers`);
+                break;
+            case 'MESSAGE':
+                navigate('/message/history');
+                break;
+            default:
+                break;
+        }
+    };
+
     if (loading) {
         return (
             <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
@@ -122,7 +207,7 @@ const CustomerDetail = () => {
     return (
         <Box sx={{ flexGrow: 1, bgcolor: "#f5f5f5", minHeight: "100vh" }}>
             <Container
-                maxWidth="md"
+                maxWidth="lg"
                 sx={{
                     mt: 4,
                     mb: 4,
@@ -130,144 +215,204 @@ const CustomerDetail = () => {
                     px: { xs: 2, sm: 3, md: 4 },
                 }}
             >
-                <Paper elevation={0} sx={{ p: 4, borderRadius: 2 }}>
-                    <Box sx={{ display: "flex", alignItems: "center", mb: 4 }}>
-                        <IconButton onClick={() => navigate("/customer-management")} sx={{ mr: 1 }}>
-                            <ArrowBack />
-                        </IconButton>
-                        <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                            고객 상세 정보
-                        </Typography>
-                        <Box sx={{ flexGrow: 1 }} />
-                        <Button
-                            startIcon={<Edit />}
-                            sx={{ mr: 1, color: "#555" }}
-                            onClick={() => navigate(`/customer-management/edit/${id}`)}
-                        >
-                            수정
-                        </Button>
-                        <Button
-                            startIcon={<Campaign />}
-                            sx={{ mr: 1, color: "#555" }}
-                            onClick={() => navigate(`/consultation/${id}`)}
-                        >
-                            상담 내역
-                        </Button>
-                        <Button startIcon={<Delete />} color="error" onClick={handleDeleteClick}>
-                            삭제
-                        </Button>
-                    </Box>
-
-                    <Grid container spacing={3}>
-                        <Grid item xs={12} sm={6}>
-                            <Typography variant="subtitle2" color="textSecondary">
-                                이름
-                            </Typography>
-                            <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
-                                {customer.name}
-                            </Typography>
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <Typography variant="subtitle2" color="textSecondary">
-                                상태
-                            </Typography>
-                            <Box sx={{ mt: 1, mb: 2 }}>
-                                <Chip
-                                    label={customer.isVip ? "VIP" : "일반"}
-                                    color={customer.isVip ? "success" : "default"}
-                                    size="small"
-                                    sx={{
-                                        bgcolor: customer.isVip ? "#e8f5e9" : "#f5f5f5",
-                                        color: customer.isVip ? "#2e7d32" : "#757575",
-                                        border: "none",
-                                    }}
-                                />
+                <Grid container spacing={3}>
+                    <Grid item xs={12} md={6}>
+                        <Paper elevation={0} sx={{ p: 4, borderRadius: 2 }}>
+                            <Box sx={{ display: "flex", alignItems: "center", mb: 4 }}>
+                                <IconButton onClick={() => navigate("/customer-management")} sx={{ mr: 1 }}>
+                                    <ArrowBack />
+                                </IconButton>
+                                <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                                    고객 상세 정보
+                                </Typography>
+                                <Box sx={{ flexGrow: 1 }} />
+                                <Button
+                                    startIcon={<Edit />}
+                                    sx={{ mr: 1, color: "#555" }}
+                                    onClick={() => navigate(`/customer-management/edit/${id}`)}
+                                >
+                                    수정
+                                </Button>
+                                <Button startIcon={<Delete />} color="error" onClick={handleDeleteClick}>
+                                    삭제
+                                </Button>
                             </Box>
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <Typography variant="subtitle2" color="textSecondary">
-                                연락처
-                            </Typography>
-                            <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
-                                {customer.phone}
-                            </Typography>
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <Typography variant="subtitle2" color="textSecondary">
-                                이메일
-                            </Typography>
-                            <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
-                                {customer.email || "-"}
-                            </Typography>
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <Typography variant="subtitle2" color="textSecondary">
-                                생년월일
-                            </Typography>
-                            <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
-                                {customer.birthday || "-"}
-                            </Typography>
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <Typography variant="subtitle2" color="textSecondary">
-                                직업
-                            </Typography>
-                            <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
-                                {customer.job || "-"}
-                            </Typography>
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <Typography variant="subtitle2" color="textSecondary">
-                                관심 매물
-                            </Typography>
-                            <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
-                                {customer.interestProperty || "-"}
-                            </Typography>
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <Typography variant="subtitle2" color="textSecondary">
-                                관심 지역
-                            </Typography>
-                            <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
-                                {customer.interestLocation || "-"}
-                            </Typography>
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <Typography variant="subtitle2" color="textSecondary">
-                                자산 상태
-                            </Typography>
-                            <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
-                                {customer.assetStatus || "-"}
-                            </Typography>
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                            <Typography variant="subtitle2" color="textSecondary">
-                                마케팅 동의
-                            </Typography>
-                            <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
-                                {customer.consent ? "동의함" : "동의하지 않음"}
-                            </Typography>
-                        </Grid>
-                        <Grid item xs={12}>
-                            <Divider sx={{ my: 2 }} />
-                            <Typography variant="subtitle2" color="textSecondary">
-                                메모
-                            </Typography>
-                            <Paper
-                                elevation={0}
-                                sx={{
-                                    p: 3,
-                                    mt: 1,
-                                    bgcolor: "#f9f9f9",
-                                    minHeight: "100px",
-                                    borderRadius: 1,
-                                }}
-                            >
-                                <Typography variant="body2">{customer.memo || "메모가 없습니다."}</Typography>
-                            </Paper>
-                        </Grid>
+
+                            <Grid container spacing={3}>
+                                <Grid item xs={12} sm={6}>
+                                    <Typography variant="subtitle2" color="textSecondary">
+                                        이름
+                                    </Typography>
+                                    <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
+                                        {customer.name}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <Typography variant="subtitle2" color="textSecondary">
+                                        상태
+                                    </Typography>
+                                    <Box sx={{ mt: 1, mb: 2 }}>
+                                        <Chip
+                                            label={customer.isVip ? "VIP" : "일반"}
+                                            color={customer.isVip ? "success" : "default"}
+                                            size="small"
+                                            sx={{
+                                                bgcolor: customer.isVip ? "#e8f5e9" : "#f5f5f5",
+                                                color: customer.isVip ? "#2e7d32" : "#757575",
+                                                border: "none",
+                                            }}
+                                        />
+                                    </Box>
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <Typography variant="subtitle2" color="textSecondary">
+                                        연락처
+                                    </Typography>
+                                    <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
+                                        {customer.phone}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <Typography variant="subtitle2" color="textSecondary">
+                                        이메일
+                                    </Typography>
+                                    <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
+                                        {customer.email || "-"}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <Typography variant="subtitle2" color="textSecondary">
+                                        생년월일
+                                    </Typography>
+                                    <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
+                                        {customer.birthday || "-"}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <Typography variant="subtitle2" color="textSecondary">
+                                        직업
+                                    </Typography>
+                                    <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
+                                        {customer.job || "-"}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <Typography variant="subtitle2" color="textSecondary">
+                                        관심 매물
+                                    </Typography>
+                                    <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
+                                        {customer.interestProperty || "-"}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <Typography variant="subtitle2" color="textSecondary">
+                                        관심 지역
+                                    </Typography>
+                                    <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
+                                        {customer.interestLocation || "-"}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <Typography variant="subtitle2" color="textSecondary">
+                                        자산 상태
+                                    </Typography>
+                                    <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
+                                        {customer.assetStatus || "-"}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <Typography variant="subtitle2" color="textSecondary">
+                                        마케팅 동의
+                                    </Typography>
+                                    <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
+                                        {customer.consent ? "동의함" : "동의하지 않음"}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <Divider sx={{ my: 2 }} />
+                                    <Typography variant="subtitle2" color="textSecondary">
+                                        메모
+                                    </Typography>
+                                    <Paper
+                                        elevation={0}
+                                        sx={{
+                                            p: 3,
+                                            mt: 1,
+                                            bgcolor: "#f9f9f9",
+                                            minHeight: "100px",
+                                            borderRadius: 1,
+                                        }}
+                                    >
+                                        <Typography variant="body2">{customer.memo || "메모가 없습니다."}</Typography>
+                                    </Paper>
+                                </Grid>
+                            </Grid>
+                        </Paper>
                     </Grid>
-                </Paper>
+                    <Grid item xs={12} md={6}>
+                        <Paper elevation={0} sx={{ p: 4, borderRadius: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                            <Typography variant="h6" sx={{ fontWeight: "bold", mb: 3 }}>
+                                고객 히스토리
+                            </Typography>
+                            {loading ? (
+                                <Box sx={{ display: "flex", justifyContent: "center", p: 3, flexGrow: 1 }}>
+                                    <CircularProgress />
+                                </Box>
+                            ) : (
+                                <Box sx={{ 
+                                    overflowY: 'auto', 
+                                    maxHeight: 'calc(100vh - 250px)', 
+                                    pr: 2,
+                                    flexGrow: 1
+                                }}>
+                                    <Timeline sx={{ 
+                                        p: 0,
+                                        m: 0,
+                                        '& .MuiTimelineItem-root': {
+                                            minHeight: 'auto',
+                                            '&:before': {
+                                                display: 'none'
+                                            }
+                                        },
+                                        '& .MuiTimelineContent-root': {
+                                            padding: '0 0 20px 10px'
+                                        }
+                                    }}>
+                                        {history.map((item) => (
+                                            <TimelineItem key={item.id}>
+                                                <TimelineSeparator>
+                                                    <TimelineDot color={getHistoryColor(item.type)}>
+                                                        {getHistoryIcon(item.type)}
+                                                    </TimelineDot>
+                                                    <TimelineConnector />
+                                                </TimelineSeparator>
+                                                <TimelineContent>
+                                                    <Box 
+                                                        sx={{ 
+                                                            cursor: 'pointer',
+                                                            '&:hover': {
+                                                                bgcolor: 'rgba(33, 150, 243, 0.08)',
+                                                                borderRadius: 1,
+                                                            }
+                                                        }}
+                                                        onClick={() => handleHistoryItemClick(item)}
+                                                    >
+                                                        <Typography variant="subtitle2" color="textSecondary" noWrap>
+                                                            {new Date(item.date).toLocaleString()}
+                                                        </Typography>
+                                                        <Typography variant="body2" noWrap>
+                                                            {formatHistoryContent(item)}
+                                                        </Typography>
+                                                    </Box>
+                                                </TimelineContent>
+                                            </TimelineItem>
+                                        ))}
+                                    </Timeline>
+                                </Box>
+                            )}
+                        </Paper>
+                    </Grid>
+                </Grid>
             </Container>
 
             {/* Delete Confirmation Dialog */}

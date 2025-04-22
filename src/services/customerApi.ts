@@ -43,6 +43,18 @@ export interface UpdateCustomerRequest {
     assetStatus?: string
 }
 
+// 고객 히스토리 타입
+export interface History {
+    id: string;
+    type: 'CONSULTATION' | 'CONTRACT' | 'MESSAGE' | 'SURVEY';
+    date: string;
+    purpose?: string;
+    startDate?: string;
+    endDate?: string;
+    content?: string;
+    sendStatus?: string;
+}
+
 // 고객 응답 타입
 export interface CustomerResponse {
     id: number
@@ -59,6 +71,13 @@ export interface CustomerResponse {
     interestProperty?: string
     interestLocation?: string
     assetStatus?: string
+    history: History[]
+}
+
+// 고객 히스토리 응답 타입
+export interface CustomerHistoryResponse {
+    customer: CustomerResponse;
+    history: History[];
 }
 
 //Page 응답 타입
@@ -117,7 +136,7 @@ export const getCustomers = async (page: number = 0, size: number = 10): Promise
 }
 
 // 고객 상세 조회
-export const getCustomerById = async (customerId: number): Promise<AxiosResponse<ApiResponse<CustomerResponse>>> => {
+export const getCustomerById = async (customerId: number): Promise<AxiosResponse<ApiResponse<CustomerHistoryResponse>>> => {
     return api.get(`/api/customers/${customerId}`)
 }
 

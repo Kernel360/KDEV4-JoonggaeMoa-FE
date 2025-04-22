@@ -11,6 +11,8 @@
     "skipLibCheck": true,
     "noEmit": true, // allowImportingTsExtensions 설정에 따라 .ts 확장자 파일 import 허용
     "allowImportingTsExtensions": true, // .ts 확장자 파일 import 허용
-    "module": "ESNext"
+    "module": "ESNext",
+    "target": "ES2017",
+    "lib": ["ES2017", "DOM", "DOM.Iterable"]
   }
 }
