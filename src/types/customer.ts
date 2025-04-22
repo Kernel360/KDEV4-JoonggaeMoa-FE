@@ -11,6 +11,9 @@ export interface Customer {
     consent: boolean
     createdAt: string
     updatedAt: string
+    interestProperty?: string
+    interestLocation?: string
+    assetStatus?: string
 }
 
 // 고객 응답 타입
@@ -28,6 +31,7 @@ export interface CustomerResponse {
     updatedAt: string
     interestArea?: string
     interestProperty?: string
+    interestLocation?: string
     assetStatus?: string
 }
 

@@ -557,21 +557,26 @@ const ConsultationDetail = () => {
                                                 전화번호: {consultationHistory?.customer.phone}
                                             </Typography>
                                         </Grid>
-                                        {/* <Grid item xs={12} sm={6}>
+                                        <Grid item xs={12} sm={6}>
                                             <Typography variant="body1" gutterBottom>
-                                                관심 지역: {consultationHistory?.customer.interestArea || "미설정"}
+                                                직업: {consultationHistory?.customer.job || "-"}
                                             </Typography>
                                         </Grid>
                                         <Grid item xs={12} sm={6}>
                                             <Typography variant="body1" gutterBottom>
-                                                관심 매물: {consultationHistory?.customer.interestProperty || "미설정"}
+                                                관심 매물: {consultationHistory?.customer.interestProperty || "-"}
                                             </Typography>
                                         </Grid>
                                         <Grid item xs={12} sm={6}>
                                             <Typography variant="body1" gutterBottom>
-                                                예산: {consultationHistory?.customer.budget || "미설정"}
+                                                관심 지역: {consultationHistory?.customer.interestLocation || "-"}
                                             </Typography>
-                                        </Grid> */}
+                                        </Grid>
+                                        <Grid item xs={12} sm={6}>
+                                            <Typography variant="body1" gutterBottom>
+                                                자산 상태: {consultationHistory?.customer.assetStatus || "-"}
+                                            </Typography>
+                                        </Grid>
                                     </Grid>
                                 </Paper>
                             </Grid>

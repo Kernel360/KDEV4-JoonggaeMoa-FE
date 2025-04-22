@@ -121,4 +121,7 @@ export interface CustomerResponse {
     isVip: boolean;
     memo: string;
     consent: boolean;
+    interestProperty?: string;
+    interestLocation?: string;
+    assetStatus?: string;
 }

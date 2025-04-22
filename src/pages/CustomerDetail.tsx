@@ -218,6 +218,30 @@ const CustomerDetail = () => {
                         </Grid>
                         <Grid item xs={12} sm={6}>
                             <Typography variant="subtitle2" color="textSecondary">
+                                관심 매물
+                            </Typography>
+                            <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
+                                {customer.interestProperty || "-"}
+                            </Typography>
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                            <Typography variant="subtitle2" color="textSecondary">
+                                관심 지역
+                            </Typography>
+                            <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
+                                {customer.interestLocation || "-"}
+                            </Typography>
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                            <Typography variant="subtitle2" color="textSecondary">
+                                자산 상태
+                            </Typography>
+                            <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
+                                {customer.assetStatus || "-"}
+                            </Typography>
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                            <Typography variant="subtitle2" color="textSecondary">
                                 마케팅 동의
                             </Typography>
                             <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>

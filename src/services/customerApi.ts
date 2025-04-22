@@ -23,6 +23,9 @@ export interface CreateCustomerRequest {
     isVip: boolean
     memo: string
     consent: boolean
+    interestProperty?: string
+    interestLocation?: string
+    assetStatus?: string
 }
 
 // 고객 수정 요청 타입
@@ -35,6 +38,9 @@ export interface UpdateCustomerRequest {
     isVip: boolean
     memo: string
     consent: boolean
+    interestProperty?: string
+    interestLocation?: string
+    assetStatus?: string
 }
 
 // 고객 응답 타입
@@ -50,6 +56,9 @@ export interface CustomerResponse {
     consent: boolean
     createdAt: string
     updatedAt: string
+    interestProperty?: string
+    interestLocation?: string
+    assetStatus?: string
 }
 
 //Page 응답 타입
