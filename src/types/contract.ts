@@ -4,13 +4,13 @@
 export interface CreateContractRequest {
   landlordId: number;
   tenantId: number;
-  createdAt: string; // LocalDate -> ISO 문자열 형식 (YYYY-MM-DD)
+  startedAt: string; // LocalDate -> ISO 문자열 형식 (YYYY-MM-DD)
   expiredAt: string; // LocalDate -> ISO 문자열 형식 (YYYY-MM-DD)
 }
 
 // 계약 수정 요청 타입
 export interface UpdateContractRequest {
-  createdAt: string; // LocalDate -> ISO 문자열 형식 (YYYY-MM-DD)
+  startedAt: string; // LocalDate -> ISO 문자열 형식 (YYYY-MM-DD)
   expiredAt: string; // LocalDate -> ISO 문자열 형식 (YYYY-MM-DD)
 }
 
@@ -25,7 +25,7 @@ export interface ContractResponse {
   tenantPhone: string;
   landlordEmail: string;
   tenantEmail: string;
-  createdAt: string; // LocalDate -> ISO 문자열 형식 (YYYY-MM-DD)
+  startedAt: string; // LocalDate -> ISO 문자열 형식 (YYYY-MM-DD)
   expiredAt: string; // LocalDate -> ISO 문자열 형식 (YYYY-MM-DD)
   url: string; // 계약서 파일 URL
 }

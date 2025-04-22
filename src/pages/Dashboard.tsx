@@ -58,6 +58,8 @@ import type {
     ContractSummaryResponse,
     ConsultationSummaryResponse
 } from "../types/dashboard"
+import { format, differenceInMonths, isSameMonth, isToday, parseISO, addMonths, differenceInDays } from 'date-fns';
+
 import { TooltipModel } from "@toast-ui/chart/types/components/tooltip"
 import { TooltipTheme } from "@toast-ui/chart/types/theme"
 
@@ -110,6 +112,15 @@ interface Notification {
     type: string;
     content: string;
     isRead: boolean;
+}
+
+interface Contract {
+    id: string;
+    landlordName: string;
+    tenantName: string;
+    createdAt: string;
+    expiredAt: string;
+    url: string;
 }
 
 // Add this helper function before the Dashboard component
@@ -171,6 +182,11 @@ const Dashboard = () => {
     const [customerSummaryError, setCustomerSummaryError] = useState<string | null>(null);
     const [contractSummaryError, setContractSummaryError] = useState<string | null>(null);
     const [consultationSummaryError, setConsultationSummaryError] = useState<string | null>(null);
+
+    //계약
+    const [contracts, setContracts] = useState<Contract[]>([]);
+    const [contractsLoading, setContractsLoading] = useState(false);
+    const [contractsError, setContractsError] = useState<string | null>(null);
 
     // Add these missing notification handler functions
     const handleNotificationClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -287,6 +303,27 @@ const Dashboard = () => {
         }
     };
 
+    const fetchContracts = async () => {
+        try {
+            setContractsLoading(true);
+            setContractsError(null);
+            const response = await api.get("/api/contracts");
+            if (response.data.success) {
+                setContracts(response.data.data.content);
+            }
+        } catch (err) {
+            console.error("Error fetching contracts:", err);
+            setContractsError("계약 정보를 불러오는데 실패했습니다.");
+        } finally {
+            setContractsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchContracts();
+    }, []);
+    
+
     useEffect(() => {
         // 프로필 정보를 가져오는 함수
         const fetchProfile = async () => {
@@ -327,76 +364,6 @@ const Dashboard = () => {
             console.warn("agentId is missing or invalid:", agentId);
             return;
         }    
-
-        // const setupEventSource = () => {
-        //     if (eventSource) {
-        //         return;
-        //     }
-        //     console.log("Setting up EventSource with agentId:", agentId);
-            
-        //     eventSource = new EventSource(`${api.defaults.baseURL}/api/notification/subscribe?agentId=${agentId}`);
-
-        //     eventSource.onopen = () => {
-        //         console.log("SSE connection opened");
-        //     };
-            
-        //     eventSource.addEventListener("notification", (event)  => {
-        //         console.log("Received notification:", event.data);
-        //         const rawNotification = JSON.parse(event.data);
-        //         const newNotification = {
-        //             ...rawNotification,
-        //             isRead: rawNotification.read
-        //         };
-                
-        //         setNotifications(prev => {
-        //             return [newNotification, ...prev].sort((a, b) => b.id - a.id);
-        //         });
-
-        //         setUnreadCount(count => count + 1);
-                
-        //         // Only show toast for non-CONNECTION type notifications
-        //         if (newNotification.type !== 'CONNECTION') {
-        //             toast.info(
-        //                 <div 
-        //                     style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
-        //                     onClick={() => handleNotificationNavigation(newNotification)}
-        //                 >
-        //                     <div
-        //                         style={{
-        //                             width: 4,
-        //                             height: 40,
-        //                             borderRadius: 4,
-        //                             backgroundColor: getNotificationColor(newNotification.type),
-        //                             marginRight: 12
-        //                         }}
-        //                     />
-        //                     <div>
-        //                         <div style={{ fontWeight: 600, marginBottom: 4 }}>{newNotification.content}</div>
-        //                         <span
-        //                             style={{
-        //                                 backgroundColor: `${getNotificationColor(newNotification.type)}15`,
-        //                                 color: getNotificationColor(newNotification.type),
-        //                                 padding: '4px 8px',
-        //                                 borderRadius: 4,
-        //                                 fontSize: '0.8rem',
-        //                                 fontWeight: 600
-        //                             }}
-        //                         >
-        //                             {newNotification.type}
-        //                         </span>
-        //                     </div>
-        //                 </div>
-        //             );
-        //         }
-        //      });
-
-        //     eventSource.onerror = (err) => {
-        //         console.error("SSE error:", err);
-        //         eventSource?.close();
-        //         setTimeout(setupEventSource, 30000);
-        //     };
-        // };
-
         // 초기 알림 데이터 로드
         const fetchNotifications = async () => {
             try {
@@ -418,12 +385,8 @@ const Dashboard = () => {
         };
 
         fetchNotifications();
-        //setupEventSource();
 
         return () => {
-            // if (eventSource) {
-            //     eventSource.close();
-            // }
         };
     }, []);
 
@@ -458,6 +421,8 @@ const Dashboard = () => {
             cleanupCharts();
         };
     }, []); // 의존성 배열 비움 - 컴포넌트 마운트 시 한 번만 실행
+
+    
 
     const fetchRealEstateTypeData = async (period) => {
         try {
@@ -646,6 +611,10 @@ const Dashboard = () => {
                             return `${value.label}: ${value.data.toFixed(1)}%`;
                         }
                     },
+                    legend: {
+                        visible: true,
+                        showCheckbox: false 
+                    },
                     exportMenu: {
                         visible: false
                     }
@@ -709,6 +678,10 @@ const Dashboard = () => {
                     tooltip: {
                         formatter: (value: any) => `${value.label}: ${value.data.toFixed(1)}%`
                     },
+                    legend: {
+                        visible: true,
+                        showCheckbox: false 
+                    },
                     exportMenu: {
                         visible: false
                     }
@@ -726,149 +699,12 @@ const Dashboard = () => {
         };
     }, [tradeTypeData]);
 
+    const handleContractClick = (contractId: string) => {
+    navigate(`/contract/${contractId}`);
+};
+
     return (
         <>
-            {/* Quick Action Buttons */}
-            <Box sx={{ mb: 4 }}>
-                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                    빠른 이동
-                </Typography>
-                <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6} md={2}>
-                        <Button
-                            variant="contained"
-                            fullWidth
-                            onClick={() => navigate("/customer-management/add")}
-                            sx={{
-                                py: 2,
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: 1,
-                                bgcolor: '#4CAF50',
-                                '&:hover': {
-                                    bgcolor: '#43A047',
-                                },
-                            }}
-                        >
-                            <Person sx={{ fontSize: 32 }} />
-                            <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                고객 등록
-                            </Typography>
-                        </Button>
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={2}>
-                        <Button
-                            variant="contained"
-                            fullWidth
-                            onClick={() => navigate("/survey/create")}
-                            sx={{
-                                py: 2,
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: 1,
-                                bgcolor: '#2196F3',
-                                '&:hover': {
-                                    bgcolor: '#1E88E5',
-                                },
-                            }}
-                        >
-                            <Assignment sx={{ fontSize: 32 }} />
-                            <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                설문 작성
-                            </Typography>
-                        </Button>
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={2}>
-                        <Button
-                            variant="contained"
-                            fullWidth
-                            onClick={() => navigate("/survey/answers")}
-                            sx={{
-                                py: 2,
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: 1,
-                                bgcolor: '#9C27B0',
-                                '&:hover': {
-                                    bgcolor: '#8E24AA',
-                                },
-                            }}
-                        >
-                            <Assignment sx={{ fontSize: 32 }} />
-                            <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                설문 응답
-                            </Typography>
-                        </Button>
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={2}>
-                        <Button
-                            variant="contained"
-                            fullWidth
-                            onClick={() => navigate("/contract/create")}
-                            sx={{
-                                py: 2,
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: 1,
-                                bgcolor: '#FF9800',
-                                '&:hover': {
-                                    bgcolor: '#F57C00',
-                                },
-                            }}
-                        >
-                            <InsertDriveFile sx={{ fontSize: 32 }} />
-                            <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                계약 등록
-                            </Typography>
-                        </Button>
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={2}>
-                        <Button
-                            variant="contained"
-                            fullWidth
-                            onClick={() => navigate("/message/create")}
-                            sx={{
-                                py: 2,
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: 1,
-                                bgcolor: '#FF5722',
-                                '&:hover': {
-                                    bgcolor: '#F4511E',
-                                },
-                            }}
-                        >
-                            <Email sx={{ fontSize: 32 }} />
-                            <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                문자 작성
-                            </Typography>
-                        </Button>
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={2}>
-                        <Button
-                            variant="contained"
-                            fullWidth
-                            onClick={() => navigate("/message/history")}
-                            sx={{
-                                py: 2,
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: 1,
-                                bgcolor: '#607D8B',
-                                '&:hover': {
-                                    bgcolor: '#546E7A',
-                                },
-                            }}
-                        >
-                            <Email sx={{ fontSize: 32 }} />
-                            <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                전체 문자
-                            </Typography>
-                        </Button>
-                    </Grid>
-                </Grid>
-            </Box>
-
             {/* Stats */}
             <Grid container spacing={3} sx={{ mb: 4 }}>
                 <Grid item xs={12} md={4}>
@@ -995,6 +831,233 @@ const Dashboard = () => {
                     </Paper>
                 </Grid>
             </Grid>
+
+             {/* 만료 예정 계약 */}
+             <Grid container spacing={3} sx={{ mb: 4 }}>
+                <Grid item xs={12}>
+                    <Paper sx={{ p: 3 }}>
+                    <Typography variant="h6" sx={{ mb: 3 }}>
+                        만료 예정 계약
+                    </Typography>
+
+                    {contractsLoading ? (
+                        <Box sx={{ display: "flex", justifyContent: "center", my: 2 }}>
+                        <CircularProgress size={24} />
+                        </Box>
+                    ) : contractsError ? (
+                        <Typography color="error" variant="body2">
+                        {contractsError}
+                        </Typography>
+                    ) : (
+                        <Grid container spacing={3}>
+                        {/* 오늘 만료 */}
+                        <Grid item xs={12} md={6}>
+                            <Paper sx={{ p: 2, border: '1px solid #ddd', borderRadius: 2,
+                                height: '100%',
+                                display: 'flex',
+                                flexDirection: 'column' }}>
+                            <Typography variant="subtitle1" sx={{ mb: 2, color: 'error.main' }}>
+                                오늘 만료
+                            </Typography>
+                            {contracts.filter(contract => isToday(parseISO(contract.expiredAt))).length === 0 ? (
+                                <Typography variant="body2" color="textSecondary">
+                                오늘 만료되는 계약이 없습니다.
+                                </Typography>
+                            ) : (
+                                contracts
+                                .filter(contract => isToday(parseISO(contract.expiredAt)))
+                                .sort((a, b) => new Date(a.expiredAt).getTime() - new Date(b.expiredAt).getTime())
+                                .map(contract => (
+                                    <Typography key={contract.id} variant="body2" sx={{ mb: 1 }}>
+                                        <Box 
+                                        onClick={() => handleContractClick(contract.id)}
+                                        sx={{ display: "flex",  my: 0.3, cursor: 'pointer', 
+                                            '&:hover': {
+                                              backgroundColor: '#f5f5f5', 
+                                            }, }}>
+                                            {contract.landlordName}님과 {contract.tenantName}님의 계약
+                                        </Box>
+                                    </Typography>
+                                ))
+                            )}
+                            </Paper>
+                        </Grid>
+
+                        {/* 1~2개월 이내 */}
+                        <Grid item xs={12} md={6}>
+                            <Paper sx={{ p: 2, border: '1px solid #ddd', borderRadius: 2,
+                                height: '100%',
+                                display: 'flex',
+                                flexDirection: 'column' }}>
+                            <Typography variant="subtitle1" sx={{ mb: 2, color: 'warning.main' }}>
+                                1~2개월 이내 만료
+                            </Typography>
+
+                            {/* 이번 달 */}
+                            {contracts.filter(contract => {
+                                const expiredDate = parseISO(contract.expiredAt);
+                                return !isToday(expiredDate) && isSameMonth(expiredDate, new Date());
+                            }).length > 0 && (
+                                <>
+                                <Typography variant="subtitle2" color="primary" sx={{ mb: 1 }}>
+                                    이번 달
+                                </Typography>
+                                {contracts
+                                    .filter(contract => {
+                                    const expiredDate = parseISO(contract.expiredAt);
+                                    return !isToday(expiredDate) && isSameMonth(expiredDate, new Date());
+                                    })
+                                    .sort((a, b) => new Date(a.expiredAt).getTime() - new Date(b.expiredAt).getTime())
+                                    .map(contract => (
+                                    <Typography key={contract.id} variant="body2" sx={{ mb: 1 }}>
+                                        <Box 
+                                        onClick={() => handleContractClick(contract.id)}
+                                        sx={{ display: "flex",  my: 0.3, cursor: 'pointer', 
+                                            '&:hover': {
+                                              backgroundColor: '#f5f5f5', 
+                                            }, }}>
+                                            {contract.landlordName}님과 {contract.tenantName}님의 계약 ({format(parseISO(contract.expiredAt), 'M/d')})
+                                        </Box>
+                                    </Typography>
+                                    ))}
+                                </>
+                            )}
+
+                            {/* 다음 달 */}
+                            {contracts.filter(contract => {
+                                const expiredDate = parseISO(contract.expiredAt);
+                                return isSameMonth(expiredDate, addMonths(new Date(), 1));
+                            }).length > 0 && (
+                                <>
+                                <Typography variant="subtitle2" color="primary" sx={{ mt: 2, mb: 1 }}>
+                                    다음 달
+                                </Typography>
+                                {contracts
+                                    .filter(contract => {
+                                    const expiredDate = parseISO(contract.expiredAt);
+                                    return isSameMonth(expiredDate, addMonths(new Date(), 1));
+                                    })
+                                    .sort((a, b) => new Date(a.expiredAt).getTime() - new Date(b.expiredAt).getTime())
+                                    .map(contract => (
+                                    <Typography key={contract.id} variant="body2" sx={{ mb: 1 }}>
+                                    <Box 
+                                        onClick={() => handleContractClick(contract.id)}
+                                        sx={{ display: "flex",  my: 0.3, cursor: 'pointer', 
+                                            '&:hover': {
+                                              backgroundColor: '#f5f5f5', 
+                                            }, }}>
+                                            {contract.landlordName}님과 {contract.tenantName}님의 계약 ({format(parseISO(contract.expiredAt), 'M/d')})
+                                        </Box>
+                                    </Typography>
+                                    ))}
+                                </>
+                            )}
+
+                            {contracts.filter(contract => {
+                                const expiredDate = parseISO(contract.expiredAt);
+                                return !isToday(expiredDate) && (
+                                isSameMonth(expiredDate, new Date()) ||
+                                isSameMonth(expiredDate, addMonths(new Date(), 1))
+                                );
+                            }).length === 0 && (
+                                <Typography variant="body2" color="textSecondary">
+                                1~2개월 이내 만료되는 계약이 없습니다.
+                                </Typography>
+                            )}
+                            </Paper>
+                        </Grid>
+
+                        {/* 3개월 이내 */}
+                        <Grid item xs={12} md={6}>
+                            <Paper sx={{ p: 2, border: '1px solid #ddd', borderRadius: 2,
+                                height: '100%',
+                                display: 'flex',
+                                flexDirection: 'column' }}>
+                            <Typography variant="subtitle1" sx={{ mb: 2, color: 'info.main' }}>
+                                3개월 이내 만료
+                            </Typography>
+                            {contracts.filter(contract => {
+                                const expiredDate = parseISO(contract.expiredAt);
+                                const today = new Date();
+                                const daysDiff = differenceInDays(expiredDate, today);
+                                return daysDiff > 60 && daysDiff <= 90;
+                            }).length === 0 ? (
+                                <Typography variant="body2" color="textSecondary">
+                                3개월 이내 만료되는 계약이 없습니다.
+                                </Typography>
+                            ) : (
+                                contracts
+                                .filter(contract => {
+                                    const expiredDate = parseISO(contract.expiredAt);
+                                    const today = new Date();
+                                    const daysDiff = differenceInDays(expiredDate, today);
+                                    return daysDiff > 60 && daysDiff <= 90;
+                                })
+                                .sort((a, b) => new Date(a.expiredAt).getTime() - new Date(b.expiredAt).getTime())
+                                .map(contract => (
+                                    <Typography key={contract.id} variant="body2" sx={{ mb: 1 }}>
+                                        <Box 
+                                        onClick={() => handleContractClick(contract.id)}
+                                        sx={{ display: "flex",  my: 0.3, cursor: 'pointer', 
+                                            '&:hover': {
+                                              backgroundColor: '#f5f5f5', 
+                                            }, }}>
+                                            {contract.landlordName}님과 {contract.tenantName}님의 계약 ({format(parseISO(contract.expiredAt), 'M/d')})
+                                        </Box>
+                                    </Typography>
+                                ))
+                            )}
+                            </Paper>
+                        </Grid>
+
+                        {/* 4~6개월 이내 */}
+                        <Grid item xs={12} md={6}>
+                            <Paper sx={{ p: 2, border: '1px solid #ddd', borderRadius: 2,
+                                height: '100%',
+                                display: 'flex',
+                                flexDirection: 'column' }}>
+                            <Typography variant="subtitle1" sx={{ mb: 2, color: 'success.main' }}>
+                                4~6개월 이내 만료
+                            </Typography>
+                            {contracts.filter(contract => {
+                                const expiredDate = parseISO(contract.expiredAt);
+                                const today = new Date();
+                                const daysDiff = differenceInDays(expiredDate, today);
+                                return daysDiff > 90 && daysDiff <= 180;
+                            }).length === 0 ? (
+                                <Typography variant="body2" color="textSecondary">
+                                4~6개월 이내 만료되는 계약이 없습니다.
+                                </Typography>
+                            ) : (
+                                contracts
+                                .filter(contract => {
+                                    const expiredDate = parseISO(contract.expiredAt);
+                                    const today = new Date();
+                                    const daysDiff = differenceInDays(expiredDate, today);
+                                    return daysDiff > 90 && daysDiff <= 180;
+                                })
+                                .sort((a, b) => new Date(a.expiredAt).getTime() - new Date(b.expiredAt).getTime())
+                                .map(contract => (
+                                    <Typography key={contract.id} variant="body2" sx={{ mb: 1 }}>
+                                        <Box 
+                                        onClick={() => handleContractClick(contract.id)}
+                                        sx={{ display: "flex",  my: 0.3, cursor: 'pointer', 
+                                            '&:hover': {
+                                              backgroundColor: '#f5f5f5', 
+                                            }, }}>
+                                            {contract.landlordName}님과 {contract.tenantName}님의 계약 ({format(parseISO(contract.expiredAt), 'M/d')})
+                                        </Box>
+                                    </Typography>
+                                ))
+                            )}
+                            </Paper>
+                        </Grid>
+                        </Grid>
+                    )}
+                    </Paper>
+                </Grid>
+                </Grid>
+
 
             {/* Charts */}
             <Grid container spacing={3}>

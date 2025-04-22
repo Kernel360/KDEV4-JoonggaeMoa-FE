@@ -312,7 +312,7 @@ const ContractList = () => {
                                                     <TableCell>{contract.id.slice(0,8)} {contract.id.length > 8 && '...'}</TableCell>
                                                     <TableCell>{contract.landlordName}</TableCell>
                                                     <TableCell>{contract.tenantName}</TableCell>
-                                                    <TableCell>{formatDate(contract.createdAt)}</TableCell>
+                                                    <TableCell>{formatDate(contract.startedAt)}</TableCell>
                                                     <TableCell>{formatDate(contract.expiredAt)}</TableCell>
                                                     <TableCell>
                                                         <Chip
