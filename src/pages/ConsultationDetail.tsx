@@ -53,7 +53,7 @@ const statusConfig = {
 }
 
 const ConsultationDetail = () => {
-    const { id } = useParams<{ id: string }>()
+    const { id: consultationId } = useParams<{ id: string }>()
     const navigate = useNavigate()
     const location = useLocation()
     const [loading, setLoading] = useState(true)
@@ -82,62 +82,44 @@ const ConsultationDetail = () => {
     const [isLoadingConsultation, setIsLoadingConsultation] = useState(false)
     const [openStatusMenuId, setOpenStatusMenuId] = useState<number | null>(null)
     const [initialConsultationLoaded, setInitialConsultationLoaded] = useState(false)
+    const [customerId, setCustomerId] = useState<number | null>(null)
 
     useEffect(() => {
-        if (id) {
+        // Get customerId from query parameters
+        const searchParams = new URLSearchParams(location.search)
+        const customerIdParam = searchParams.get('customerId')
+        
+        if (customerIdParam) {
+            const parsedCustomerId = parseInt(customerIdParam, 10)
+            if (!isNaN(parsedCustomerId)) {
+                setCustomerId(parsedCustomerId)
+            }
+        }
+        
+        if (consultationId) {
+            fetchConsultationById(parseInt(consultationId, 10))
+        }
+    }, [consultationId, location.search])
+
+    // Effect to load consultation history when customerId is available
+    useEffect(() => {
+        if (customerId) {
             fetchConsultationHistory()
-            
-            // Check if there's a consultationId in the URL query parameters
-            const searchParams = new URLSearchParams(location.search)
-            const consultationIdParam = searchParams.get('consultationId')
-            
-            if (consultationIdParam && !initialConsultationLoaded) {
-                const consultationId = parseInt(consultationIdParam, 10)
-                if (!isNaN(consultationId)) {
-                    setInitialConsultationId(consultationId)
-                    fetchConsultationById(consultationId)
-                    setInitialConsultationLoaded(true)
-                }
-            }
         }
-    }, [id, location.search, initialConsultationLoaded])
-
-    // Effect to load the initial consultation when the consultationHistory is available
-    useEffect(() => {
-        if (initialConsultationId && consultationHistory && !initialConsultationLoaded) {
-            const consultation = consultationHistory.consultations.content.find(
-                c => c.consultationId === initialConsultationId
-            )
-            
-            if (consultation) {
-                handleStartEdit(consultation)
-                setInitialConsultationLoaded(true)
-            }
-        }
-    }, [initialConsultationId, consultationHistory, initialConsultationLoaded])
-
-    // Separate effect to handle pagination without affecting the selected consultation
-    useEffect(() => {
-        if (id && !currentlyEditingConsultationId) {
-            // Only fetch if we're not already fetching in handlePageChange
-            if (!loading) {
-                fetchConsultationHistory()
-            }
-        }
-    }, [id, currentPage])
+    }, [customerId, currentPage])
 
     const fetchConsultationHistory = async () => {
         try {
             setLoading(true)
             setError(null)
             
-            if (!id) {
+            if (!customerId) {
                 setError("고객 ID가 필요합니다.")
                 return
             }
 
             const response = await consultationApi.getConsultationHistoryByCustomerId(
-                Number(id),
+                customerId,
                 currentPage,
                 pageSize
             )
@@ -234,7 +216,7 @@ const ConsultationDetail = () => {
         } else {
             setIsNewConsultation(true)
             setEditFormData({
-                customerId: Number(id),
+                customerId: customerId,
                 date: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
                 consultationStatus: ConsultationStatus.WAITING,
             })
@@ -247,7 +229,7 @@ const ConsultationDetail = () => {
         if (confirmed) {
             setIsNewConsultation(true)
             setEditFormData({
-                customerId: Number(id),
+                customerId: customerId,
                 date: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
                 consultationStatus: ConsultationStatus.WAITING,
             })
@@ -295,7 +277,7 @@ const ConsultationDetail = () => {
         try {
             if (isNewConsultation) {
                 const createData: ConsultationCreateRequest = {
-                    customerId: Number(id),
+                    customerId: customerId,
                     date: format(new Date(editFormData.date || ""), "yyyy-MM-dd HH:mm"),
                     purpose: editFormData.purpose,
                     memo: editFormData.memo,
@@ -344,15 +326,15 @@ const ConsultationDetail = () => {
         const fetchNewPageHistory = async () => {
             try {
                 setLoading(true)
-                console.log(`Fetching page ${newPage} for customer ${id}`)
+                console.log(`Fetching page ${newPage} for customer ${customerId}`)
                 
-                if (!id) {
+                if (!customerId) {
                     console.error("Customer ID is missing")
                     return
                 }
                 
                 const response = await consultationApi.getConsultationHistoryByCustomerId(
-                    Number(id), 
+                    customerId, 
                     newPage, 
                     pageSize
                 )
@@ -557,21 +539,26 @@ const ConsultationDetail = () => {
                                                 전화번호: {consultationHistory?.customer.phone}
                                             </Typography>
                                         </Grid>
-                                        {/* <Grid item xs={12} sm={6}>
+                                        <Grid item xs={12} sm={6}>
                                             <Typography variant="body1" gutterBottom>
-                                                관심 지역: {consultationHistory?.customer.interestArea || "미설정"}
+                                                직업: {consultationHistory?.customer.job || "-"}
                                             </Typography>
                                         </Grid>
                                         <Grid item xs={12} sm={6}>
                                             <Typography variant="body1" gutterBottom>
-                                                관심 매물: {consultationHistory?.customer.interestProperty || "미설정"}
+                                                관심 매물: {consultationHistory?.customer.interestProperty || "-"}
                                             </Typography>
                                         </Grid>
                                         <Grid item xs={12} sm={6}>
                                             <Typography variant="body1" gutterBottom>
-                                                예산: {consultationHistory?.customer.budget || "미설정"}
+                                                관심 지역: {consultationHistory?.customer.interestLocation || "-"}
                                             </Typography>
-                                        </Grid> */}
+                                        </Grid>
+                                        <Grid item xs={12} sm={6}>
+                                            <Typography variant="body1" gutterBottom>
+                                                자산 상태: {consultationHistory?.customer.assetStatus || "-"}
+                                            </Typography>
+                                        </Grid>
                                     </Grid>
                                 </Paper>
                             </Grid>

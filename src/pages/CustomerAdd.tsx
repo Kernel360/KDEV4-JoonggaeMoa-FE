@@ -41,6 +41,9 @@ const CustomerAdd = () => {
         isVip: false,
         memo: "",
         consent: false,
+        interestProperty: "",
+        interestLocation: "",
+        assetStatus: "",
     })
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -218,6 +221,33 @@ const CustomerAdd = () => {
                                 <FormControlLabel
                                     control={<Checkbox checked={formData.consent} onChange={handleCheckboxChange} name="consent" />}
                                     label="마케팅 정보 수신에 동의합니다."
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    fullWidth
+                                    label="관심 매물"
+                                    name="interestProperty"
+                                    value={formData.interestProperty}
+                                    onChange={handleChange}
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    fullWidth
+                                    label="관심 지역"
+                                    name="interestLocation"
+                                    value={formData.interestLocation}
+                                    onChange={handleChange}
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    fullWidth
+                                    label="자산 상태"
+                                    name="assetStatus"
+                                    value={formData.assetStatus}
+                                    onChange={handleChange}
                                 />
                             </Grid>
                             <Grid item xs={12} sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
