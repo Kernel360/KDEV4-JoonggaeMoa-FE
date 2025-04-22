@@ -1039,7 +1039,14 @@ const Dashboard = () => {
                                 .sort((a, b) => new Date(a.expiredAt).getTime() - new Date(b.expiredAt).getTime())
                                 .map(contract => (
                                     <Typography key={contract.id} variant="body2" sx={{ mb: 1 }}>
-                                        
+                                        <Box 
+                                        onClick={() => handleContractClick(contract.id)}
+                                        sx={{ display: "flex",  my: 0.3, cursor: 'pointer', 
+                                            '&:hover': {
+                                              backgroundColor: '#f5f5f5', 
+                                            }, }}>
+                                            {contract.landlordName}님과 {contract.tenantName}님의 계약 ({format(parseISO(contract.expiredAt), 'M/d')})
+                                        </Box>
                                     </Typography>
                                 ))
                             )}
