@@ -37,7 +37,7 @@ const ContractCreate = () => {
     const [selectedTenant, setSelectedTenant] = useState<CustomerResponse | null>(null)
 
     // 계약 관련 상태
-    const [createdAt, setCreatedAt] = useState("")
+    const [startedAt, setStartedAt] = useState("")
     const [expiredAt, setExpiredAt] = useState("")
     const [contractFile, setContractFile] = useState<File | null>(null)
 
@@ -46,7 +46,7 @@ const ContractCreate = () => {
 
         // 오늘 날짜로 계약일 초기화
         const today = new Date()
-        setCreatedAt(today.toISOString().split("T")[0])
+        setStartedAt(today.toISOString().split("T")[0])
 
         // 기본 만료일은 1년 후
         const nextYear = new Date()
@@ -111,7 +111,7 @@ const ContractCreate = () => {
             return
         }
 
-        if (!createdAt) {
+        if (!startedAt) {
             setError("계약일을 입력해주세요.")
             return
         }
@@ -122,7 +122,7 @@ const ContractCreate = () => {
         }
 
         // Add date validation
-        const contractDate = new Date(createdAt)
+        const contractDate = new Date(startedAt)
         const expirationDate = new Date(expiredAt)
         
         if (expirationDate <= contractDate) {
@@ -142,7 +142,7 @@ const ContractCreate = () => {
             const contractData = {
                 landlordId: selectedLandlord.id,
                 tenantId: selectedTenant.id,
-                createdAt,
+                startedAt,
                 expiredAt,
             }
 
@@ -206,8 +206,8 @@ const ContractCreate = () => {
                                     label="계약일"
                                     type="date"
                                     required
-                                    value={createdAt}
-                                    onChange={(e) => setCreatedAt(e.target.value)}
+                                    value={startedAt}
+                                    onChange={(e) => setStartedAt(e.target.value)}
                                     InputLabelProps={{
                                         shrink: true,
                                     }}
