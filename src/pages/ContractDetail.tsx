@@ -221,7 +221,7 @@ const ContractDetail = () => {
                                 계약일
                             </Typography>
                             <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
-                                {formatDate(contract.createdAt)}
+                                {formatDate(contract.startedAt)}
                             </Typography>
                         </Grid>
                         <Grid item xs={12} sm={6}>
