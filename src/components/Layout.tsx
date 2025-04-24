@@ -313,14 +313,21 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     </IconButton>
 
                     {/* Logo */}
-                    <Box sx={{ p: 3, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                    <Box sx={{ p: 3, borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <img 
+                            src="/public/배경없는 로고.ico" 
+                            alt="중개모아 로고" 
+                            style={{ width: '60px', height: '60px' }}
+                        />
                         <Typography variant="h5" sx={{ 
-                            fontWeight: 700, 
+                            fontWeight: 800, 
                             color: 'white',
-                            fontSize: '1.25rem',
+                            fontSize: '1.4rem',
                             whiteSpace: 'nowrap',
+                            paddingTop: '10px',
+                            paddingLeft: '15px',
                         }}>
-                            부동산 CRM
+                            중개모아
                         </Typography>
                     </Box>
 
