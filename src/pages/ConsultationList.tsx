@@ -151,6 +151,7 @@ const ConsultationList = () => {
     const [statusFilteredConsultations, setStatusFilteredConsultations] = useState<ConsultationResponse[]>([])
     const [selectedStatus, setSelectedStatus] = useState<ConsultationStatus | null>(null)
     const [statusListLoading, setStatusListLoading] = useState(false)
+    const [openStatusMenuId, setOpenStatusMenuId] = useState<number | null>(null)
 
     // 날짜 별 고객 목록 가져오기
     const fetchCustomers = async () => {
@@ -303,32 +304,106 @@ const ConsultationList = () => {
     }
 
     // 상담 상태 변경
-    const handleStatusChange = async (newStatus: ConsultationStatus) => {
-        if (!selectedConsultation) return
-
+    const handleStatusChange = async (consultationId: number, newStatus: ConsultationStatus) => {
         try {
-            setStatusLoading(true)
-            setStatusError(null)
-
-            const response = await consultationApi.updateConsultationStatus(selectedConsultation, newStatus)
-
-            if (response.data.success) {
-                // 상태 변경 성공 시 목록 업데이트
-                setConsultations(
-                    consultations.map((consultation) =>
-                        consultation.consultationId === selectedConsultation ? { ...consultation, consultationStatus: newStatus } : consultation,
-                    ),
+            setStatusLoading(true);
+            await consultationApi.updateConsultationStatus(consultationId, newStatus);
+            
+            // Update the consultation in the list
+            setDateFilteredConsultations(prevConsultations => 
+                prevConsultations.map(consultation => 
+                    consultation.consultationId === consultationId 
+                        ? { ...consultation, consultationStatus: newStatus } 
+                        : consultation
                 )
-                setStatusSuccess(true)
-            } else {
-                setStatusError(response.data.error?.message || "상담 상태 변경에 실패했습니다.")
+            );
+            
+            // Also update in status filtered consultations if applicable
+            if (selectedStatus) {
+                setStatusFilteredConsultations(prevConsultations => 
+                    prevConsultations.map(consultation => 
+                        consultation.consultationId === consultationId 
+                            ? { ...consultation, consultationStatus: newStatus } 
+                            : consultation
+                    )
+                );
             }
-        } catch (err: any) {
-            console.error("Error updating consultation status:", err)
-            setStatusError(err.response?.data?.error?.message || "상담 상태 변경에 실패했습니다.")
+            
+            // Update the monthInfo state to reflect the status change
+            setMonthInfo(prevInfo => {
+                // Find the consultation to get its previous status
+                const consultation = [...dateFilteredConsultations, ...statusFilteredConsultations]
+                    .find(c => c.consultationId === consultationId);
+                
+                if (!consultation) return prevInfo;
+                
+                const prevStatus = consultation.consultationStatus;
+                
+                // Create a new monthInfo object with updated counts
+                const newInfo = { ...prevInfo };
+                
+                // Decrease count for the previous status
+                if (prevStatus === ConsultationStatus.WAITING) {
+                    newInfo.consultationWaiting = Math.max(0, newInfo.consultationWaiting - 1);
+                } else if (prevStatus === ConsultationStatus.CONFIRMED) {
+                    newInfo.consultationConfirmed = Math.max(0, newInfo.consultationConfirmed - 1);
+                } else if (prevStatus === ConsultationStatus.COMPLETED) {
+                    newInfo.consultationCompleted = Math.max(0, newInfo.consultationCompleted - 1);
+                } else if (prevStatus === ConsultationStatus.CANCELED) {
+                    newInfo.consultationCancelled = Math.max(0, newInfo.consultationCancelled - 1);
+                }
+                
+                // Increase count for the new status
+                if (newStatus === ConsultationStatus.WAITING) {
+                    newInfo.consultationWaiting += 1;
+                } else if (newStatus === ConsultationStatus.CONFIRMED) {
+                    newInfo.consultationConfirmed += 1;
+                } else if (newStatus === ConsultationStatus.COMPLETED) {
+                    newInfo.consultationCompleted += 1;
+                } else if (newStatus === ConsultationStatus.CANCELED) {
+                    newInfo.consultationCancelled += 1;
+                }
+                
+                // Update the daysCount array if the consultation date is in the current month
+                if (consultation.date) {
+                    const consultationDate = parseDate(consultation.date);
+                    if (consultationDate) {
+                        const consultationMonth = consultationDate.getMonth();
+                        const currentMonth = currentDate.getMonth();
+                        
+                        // Only update if the consultation is in the current month
+                        if (consultationMonth === currentMonth) {
+                            const dayIndex = consultationDate.getDate() - 1;
+                            
+                            // Make sure the dayIndex is valid
+                            if (dayIndex >= 0 && dayIndex < newInfo.daysCount.length) {
+                                // If the status is changing to CANCELED, decrease the count for that day
+                                if (newStatus === ConsultationStatus.CANCELED && prevStatus !== ConsultationStatus.CANCELED) {
+                                    newInfo.daysCount[dayIndex] = Math.max(0, newInfo.daysCount[dayIndex] - 1);
+                                } 
+                                // If the status is changing from CANCELED to another status, increase the count for that day
+                                else if (prevStatus === ConsultationStatus.CANCELED && newStatus !== ConsultationStatus.CANCELED) {
+                                    newInfo.daysCount[dayIndex] += 1;
+                                }
+                                // For other status changes, the count remains the same
+                            }
+                        }
+                    }
+                }
+                
+                return newInfo;
+            });
+            
+            // Show success message
+            setStatusSuccess(true);
+            
+            // Close the menu if it's open
+            handleStatusMenuClose();
+        } catch (err) {
+            console.error("Error updating consultation status:", err);
+            setStatusError("상담 상태 변경 중 오류가 발생했습니다.");
         } finally {
-            setStatusLoading(false)
-            handleStatusMenuClose()
+            setStatusLoading(false);
         }
     }
 
@@ -746,6 +821,76 @@ const ConsultationList = () => {
                                                                 sx={{
                                                                     bgcolor: statusConfig[consultation.consultationStatus].color,
                                                                     color: statusConfig[consultation.consultationStatus].textColor,
+                                                                    cursor: 'pointer'
+                                                                }}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    
+                                                                    // Close any other open menu
+                                                                    if (openStatusMenuId !== null) {
+                                                                        const existingMenu = document.getElementById(`status-menu-${openStatusMenuId}`);
+                                                                        if (existingMenu) {
+                                                                            document.body.removeChild(existingMenu);
+                                                                        }
+                                                                    }
+                                                                    
+                                                                    // Set this menu as the open one
+                                                                    setOpenStatusMenuId(consultation.consultationId);
+                                                                    
+                                                                    // Create a container for the menu that will be positioned relative to the viewport
+                                                                    const menuContainer = document.createElement('div');
+                                                                    menuContainer.id = `status-menu-${consultation.consultationId}`;
+                                                                    menuContainer.style.position = 'fixed';
+                                                                    menuContainer.style.zIndex = '1000';
+                                                                    
+                                                                    // Get the position of the chip relative to the viewport
+                                                                    const chipRect = e.currentTarget.getBoundingClientRect();
+                                                                    
+                                                                    // Position the menu below the chip
+                                                                    menuContainer.style.top = `${chipRect.bottom}px`;
+                                                                    menuContainer.style.left = `${chipRect.left}px`;
+                                                                    
+                                                                    // Create the menu content
+                                                                    const menu = document.createElement('div');
+                                                                    menu.style.backgroundColor = 'white';
+                                                                    menu.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+                                                                    menu.style.borderRadius = '4px';
+                                                                    menu.style.padding = '4px';
+                                                                    
+                                                                    Object.values(ConsultationStatus).forEach((status) => {
+                                                                        if (status !== consultation.consultationStatus) {
+                                                                            const option = document.createElement('div');
+                                                                            option.style.padding = '8px 16px';
+                                                                            option.style.cursor = 'pointer';
+                                                                            option.style.color = statusConfig[status]?.textColor;
+                                                                            option.style.backgroundColor = statusConfig[status]?.color;
+                                                                            option.style.borderRadius = '4px';
+                                                                            option.style.marginBottom = '4px';
+                                                                            option.textContent = statusConfig[status]?.label;
+                                                                            option.onclick = (e) => {
+                                                                                e.stopPropagation();
+                                                                                handleStatusChange(consultation.consultationId, status);
+                                                                                document.body.removeChild(menuContainer);
+                                                                                setOpenStatusMenuId(null);
+                                                                            };
+                                                                            menu.appendChild(option);
+                                                                        }
+                                                                    });
+                                                                    
+                                                                    menuContainer.appendChild(menu);
+                                                                    document.body.appendChild(menuContainer);
+                                                                    
+                                                                    const closeMenu = (e: MouseEvent) => {
+                                                                        if (!menuContainer.contains(e.target as Node)) {
+                                                                            document.body.removeChild(menuContainer);
+                                                                            document.removeEventListener('click', closeMenu);
+                                                                            setOpenStatusMenuId(null);
+                                                                        }
+                                                                    };
+                                                                    
+                                                                    setTimeout(() => {
+                                                                        document.addEventListener('click', closeMenu);
+                                                                    }, 0);
                                                                 }}
                                                             />
                                                         </TableCell>
@@ -781,6 +926,76 @@ const ConsultationList = () => {
                                                             sx={{
                                                                 bgcolor: statusConfig[consultation.consultationStatus].color,
                                                                 color: statusConfig[consultation.consultationStatus].textColor,
+                                                                cursor: 'pointer'
+                                                            }}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                
+                                                                // Close any other open menu
+                                                                if (openStatusMenuId !== null) {
+                                                                    const existingMenu = document.getElementById(`status-menu-${openStatusMenuId}`);
+                                                                    if (existingMenu) {
+                                                                        document.body.removeChild(existingMenu);
+                                                                    }
+                                                                }
+                                                                
+                                                                // Set this menu as the open one
+                                                                setOpenStatusMenuId(consultation.consultationId);
+                                                                
+                                                                // Create a container for the menu that will be positioned relative to the viewport
+                                                                const menuContainer = document.createElement('div');
+                                                                menuContainer.id = `status-menu-${consultation.consultationId}`;
+                                                                menuContainer.style.position = 'fixed';
+                                                                menuContainer.style.zIndex = '1000';
+                                                                
+                                                                // Get the position of the chip relative to the viewport
+                                                                const chipRect = e.currentTarget.getBoundingClientRect();
+                                                                
+                                                                // Position the menu below the chip
+                                                                menuContainer.style.top = `${chipRect.bottom}px`;
+                                                                menuContainer.style.left = `${chipRect.left}px`;
+                                                                
+                                                                // Create the menu content
+                                                                const menu = document.createElement('div');
+                                                                menu.style.backgroundColor = 'white';
+                                                                menu.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+                                                                menu.style.borderRadius = '4px';
+                                                                menu.style.padding = '4px';
+                                                                
+                                                                Object.values(ConsultationStatus).forEach((status) => {
+                                                                    if (status !== consultation.consultationStatus) {
+                                                                        const option = document.createElement('div');
+                                                                        option.style.padding = '8px 16px';
+                                                                        option.style.cursor = 'pointer';
+                                                                        option.style.color = statusConfig[status]?.textColor;
+                                                                        option.style.backgroundColor = statusConfig[status]?.color;
+                                                                        option.style.borderRadius = '4px';
+                                                                        option.style.marginBottom = '4px';
+                                                                        option.textContent = statusConfig[status]?.label;
+                                                                        option.onclick = (e) => {
+                                                                            e.stopPropagation();
+                                                                            handleStatusChange(consultation.consultationId, status);
+                                                                            document.body.removeChild(menuContainer);
+                                                                            setOpenStatusMenuId(null);
+                                                                        };
+                                                                        menu.appendChild(option);
+                                                                    }
+                                                                });
+                                                                
+                                                                menuContainer.appendChild(menu);
+                                                                document.body.appendChild(menuContainer);
+                                                                
+                                                                const closeMenu = (e: MouseEvent) => {
+                                                                    if (!menuContainer.contains(e.target as Node)) {
+                                                                        document.body.removeChild(menuContainer);
+                                                                        document.removeEventListener('click', closeMenu);
+                                                                        setOpenStatusMenuId(null);
+                                                                    }
+                                                                };
+                                                                
+                                                                setTimeout(() => {
+                                                                    document.addEventListener('click', closeMenu);
+                                                                }, 0);
                                                             }}
                                                         />
                                                     </TableCell>
@@ -820,7 +1035,7 @@ const ConsultationList = () => {
                 </Typography>
                 <Divider />
                 {Object.values(ConsultationStatus).map((status) => (
-                    <MenuItem key={status} onClick={() => handleStatusChange(status)} disabled={statusLoading}>
+                    <MenuItem key={status} onClick={() => selectedConsultation && handleStatusChange(selectedConsultation, status)} disabled={statusLoading}>
                         <Chip
                             label={statusConfig[status]?.label}
                             size="small"
