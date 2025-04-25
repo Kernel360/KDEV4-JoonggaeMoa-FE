@@ -1,45 +1,82 @@
 // This file defines TypeScript type declarations for the Kakao Maps JavaScript SDK
-// It extends the global Window interface to include the kakao.maps namespace
-declare global {
-    interface Window {
-        kakao: {
-            maps: {
-                // Creates a latitude/longitude coordinate
-                LatLng: new (lat: number, lng: number) => any;
-                
-                // Creates a map instance
-                Map: new (container: HTMLElement, options: any) => any;
-                
-                // Creates a marker that can be placed on the map
-                Marker: new (options: any) => any;
-                
-                // Creates a custom marker image
-                MarkerImage: new (url: string, size: any, options?: any) => any;
-                
-                // Represents dimensions (width/height)
-                Size: new (width: number, height: number) => any;
-                
-                // Represents a point with x/y coordinates
-                Point: new (x: number, y: number) => any;
-                
-                // Creates an info window that can display content above markers
-                InfoWindow: new (options: any) => any;
-                
-                // Represents a rectangular geographical boundary
-                LatLngBounds: new () => any;
-                
-                // Loads the maps API asynchronously
-                load: (callback: () => void) => void;
-                
-                // Event handling utilities
-                event: {
-                    // Adds event listeners to map objects
-                    addListener: (target: any, eventName: string, callback: (...args: any[]) => void) => void;
-                };
-            };
-        };
+
+// Declare global kakao namespace
+declare namespace kakao {
+  namespace maps {
+    class LatLng {
+      constructor(lat: number, lng: number);
+      getLat(): number;
+      getLng(): number;
     }
+
+    class Map {
+      constructor(container: HTMLElement, options: MapOptions);
+      setCenter(latLng: LatLng): void;
+      setLevel(level: number): void;
+      getBounds(): LatLngBounds;
+      setBounds(bounds: LatLngBounds): void;
+    }
+
+    interface MapOptions {
+      center: LatLng;
+      level: number;
+      draggable?: boolean;
+      scrollwheel?: boolean;
+      disableDoubleClickZoom?: boolean;
+      mapTypeControl?: boolean;
+      zoomControl?: boolean;
+    }
+
+    class Marker {
+      constructor(options: MarkerOptions);
+      setMap(map: Map | null): void;
+    }
+
+    interface MarkerOptions {
+      position: LatLng;
+      image?: MarkerImage;
+      title?: string;
+    }
+
+    class MarkerImage {
+      constructor(url: string, size: Size, options: { offset: Point });
+    }
+
+    class Size {
+      constructor(width: number, height: number);
+    }
+
+    class Point {
+      constructor(x: number, y: number);
+    }
+
+    class InfoWindow {
+      constructor(options: any);
+      open(map: Map, marker: Marker): void;
+      close(): void;
+    }
+
+    class MarkerClusterer {
+      constructor(options: any);
+    }
+
+    class event {
+      static addListener(target: any, eventName: string, callback: (...args: any[]) => void): void;
+      static removeListener(target: any, eventName: string, callback: (...args: any[]) => void): void;
+    }
+
+    class LatLngBounds {
+      constructor();
+      extend(latLng: LatLng): void;
+    }
+  }
 }
 
-// Empty export to make this a module
+declare global {
+  interface Window {
+    kakao: typeof kakao;
+  }
+}
+
+// Ensure this file is treated as a module
 export {}; 

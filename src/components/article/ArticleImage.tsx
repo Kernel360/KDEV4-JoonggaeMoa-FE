@@ -1,3 +1,4 @@
+import { withImageSize } from '../../utils/articleUtils';
 import { Box, Typography } from '@mui/material';
 import { getTypeColor, getTypeEmoji } from '../../utils/articleUtils';
 import { useState } from 'react';
@@ -24,7 +25,7 @@ const ArticleImage = ({ imageUrl, articleType, name }: ArticleImageProps) => {
         >
             {!imageError && imageUrl ? (
                 <img 
-                    src={imageUrl} 
+                    src={withImageSize(imageUrl, 1000)} 
                     alt={name} 
                     style={{ 
                         width: '100%', 

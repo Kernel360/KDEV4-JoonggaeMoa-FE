@@ -22,7 +22,7 @@ import ArticleDetail from "../components/ArticleDetail"
 import MapView from '../components/map/MapView'
 import { articleApi } from "../services/articleApi"
 import { regionApi } from "../services/regionApi"
-import type { ArticleResponse } from "../types/article"
+import type { ArticleResponse, ComplexResponse } from "../types/article"
 import FilterListIcon from '@mui/icons-material/FilterList';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ViewListIcon from '@mui/icons-material/ViewList';
@@ -33,6 +33,7 @@ import { formatDate, formatPrice, getTradeTypeColor, getTypeColor, getTypeEmoji,
 
 interface ArticleDetailProps {
     article: ArticleResponse;
+    complex?: ComplexResponse;
     onClose: () => void;
 }
 
@@ -67,7 +68,7 @@ const ArticleItem = ({
                             height: 24,
                             borderRadius: article.tradeType === "매매" ? '50%' : 
                                         article.tradeType === "전세" ? '4px' : '0',
-                            bgcolor: getTypeColor(article.articleType),
+                            bgcolor: getTypeColor(article.buildingType),
                             display: 'flex',
                             justifyContent: 'center',
                             alignItems: 'center',
@@ -82,7 +83,7 @@ const ArticleItem = ({
                                 lineHeight: 1
                             }}
                         >
-                            {getTypeEmoji(article.articleType)}
+                            {getTypeEmoji(article.buildingType)}
                         </Typography>
                     </Box>
                     <Typography 
@@ -95,7 +96,7 @@ const ArticleItem = ({
                             flex: 1
                         }}
                     >
-                        {article.cortarName ? `${article.cortarName} ${article.buildingName || article.articleName}` : article.buildingName || article.articleName}
+                        {article.articleName}
                     </Typography>
                 </Box>
                 
@@ -111,7 +112,10 @@ const ArticleItem = ({
                         whiteSpace: 'normal'
                     }}
                 >
-                    {article.district && `${article.district}`}{article.town && ` ${article.town}`} · {article.articleType}
+                    {article.address1SiDo && `${article.address1SiDo}`}
+                    {article.address2SiGunGu && ` ${article.address2SiGunGu}`}
+                    {article.address3DongEupMyeon && ` ${article.address3DongEupMyeon}`}
+                    {article.floors && ` · ${article.floors}`}
                 </Typography>
                 
                 <Typography 
@@ -126,7 +130,7 @@ const ArticleItem = ({
                         whiteSpace: 'normal'
                     }}
                 >
-                    {article.atclFetrDesc}
+                    {article.articleDesc}
                 </Typography>
                 
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
@@ -171,6 +175,7 @@ const ArticleList = () => {
     const [minPrice, setMinPrice] = useState<string>("")
     const [maxPrice, setMaxPrice] = useState<string>("")
     const [selectedArticle, setSelectedArticle] = useState<ArticleResponse | null>(null)
+    const [selectedComplex, setSelectedComplex] = useState<ComplexResponse | null>(null)
     const [page, setPage] = useState(0)
     const [hasMore, setHasMore] = useState(true)
     const [isLoadingMore, setIsLoadingMore] = useState(false)
@@ -232,7 +237,7 @@ const ArticleList = () => {
             
             const params: any = {
                 page: pageNum,
-                size: 1000,
+                size: 100,
                 sort: "id,desc"
             };
             
@@ -354,22 +359,31 @@ const ArticleList = () => {
         }
     };
 
-    const handleArticleClick = (article: ArticleResponse) => {
-        // Toggle selection - if already selected, deselect it
+    const handleArticleClick = async (article: ArticleResponse) => {
         if (selectedArticle?.id === article.id) {
-            setDetailVisible(false)
-            // Wait for animation to complete before removing the article
+            setDetailVisible(false);
             setTimeout(() => {
-                setSelectedArticle(null)
-            }, 300)
+                setSelectedArticle(null);
+                setSelectedComplex(null);
+            }, 300);
         } else {
-            setSelectedArticle(article)
-            // Show detail panel with a slight delay for smooth animation
+            setSelectedArticle(article);
+            // 단지 정보 가져오기
+            if (article.complexId) {
+                try {
+                    const response = await articleApi.getComplex(article.complexId);
+                    if (response.data.success) {
+                        setSelectedComplex(response.data.data);
+                    }
+                } catch (error) {
+                    console.error('Error fetching complex:', error);
+                }
+            }
             setTimeout(() => {
-                setDetailVisible(true)
-            }, 50)
+                setDetailVisible(true);
+            }, 50);
         }
-    }
+    };
 
     const handleBack = () => {
         navigate(-1);
@@ -647,7 +661,7 @@ const ArticleList = () => {
             
             const params: any = {
                 page: nextPage,
-                size: 1000, // 추가로 1000개 매물 더 로드
+                size: 100,
                 sort: "id,desc"
             };
             
@@ -865,11 +879,13 @@ const ArticleList = () => {
                     {selectedArticle && (
                         <ArticleDetail
                             article={selectedArticle}
+                            complex={selectedComplex}
                             onClose={() => {
-                                setDetailVisible(false)
+                                setDetailVisible(false);
                                 setTimeout(() => {
-                                    setSelectedArticle(null)
-                                }, 300)
+                                    setSelectedArticle(null);
+                                    setSelectedComplex(null);
+                                }, 300);
                             }}
                         />
                     )}
