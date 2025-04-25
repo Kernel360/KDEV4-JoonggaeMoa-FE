@@ -29,36 +29,21 @@ import ViewListIcon from '@mui/icons-material/ViewList';
 import ViewMapIcon from '@mui/icons-material/Map';
 import RegionSelector from '../components/region/RegionSelector'
 import { Region, SelectedRegions } from '../utils/regions/regionUtils'
+import { formatDate, formatPrice, getTradeTypeColor, getTypeColor, getTypeEmoji, isZeroPrice, convertKoreanPriceToNumber } from '../utils/articleUtils'
 
 interface ArticleDetailProps {
     article: ArticleResponse;
     onClose: () => void;
-    getTypeColor: (type: string) => string;
-    getTypeEmoji: (type: string) => string;
-    getTradeTypeColor: (type: string) => string;
-    isZeroPrice: (price: number | string | null) => boolean;
-    formatPrice: (price: number | string | null) => string;
-    formatDate: (dateString: string) => string;
 }
 
 const ArticleItem = ({ 
     article, 
     isSelected, 
-    onClick,
-    getTypeColor,
-    getTypeEmoji,
-    getTradeTypeColor,
-    isZeroPrice,
-    formatPrice
+    onClick
 }: { 
     article: ArticleResponse; 
     isSelected: boolean; 
     onClick: () => void;
-    getTypeColor: (type: string) => string;
-    getTypeEmoji: (type: string) => string;
-    getTradeTypeColor: (type: string) => string;
-    isZeroPrice: (price: number | string | null) => boolean;
-    formatPrice: (price: number | string | null) => string;
 }) => {
     return (
         <Paper 
@@ -74,32 +59,77 @@ const ArticleItem = ({
             }}
             onClick={onClick}
         >
-            <Box sx={{ display: 'flex', gap: 2 }}>
-                <Box 
-                    sx={{ 
-                        width: 100, 
-                        height: 100, 
-                        bgcolor: getTypeColor(article.realEstateType),
-                        borderRadius: 1,
-                        overflow: 'hidden',
-                        flexShrink: 0,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                    }}
-                >
-                    <Typography 
-                        variant="h4" 
-                        sx={{ 
-                            fontSize: '3rem', 
-                            lineHeight: 1, 
-                            color: 'white'
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, flex: 1, minWidth: 0 }}>
+                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                    <Box
+                        sx={{
+                            width: 24,
+                            height: 24,
+                            borderRadius: article.tradeType === "매매" ? '50%' : 
+                                        article.tradeType === "전세" ? '4px' : '0',
+                            bgcolor: getTypeColor(article.articleType),
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            flexShrink: 0
                         }}
                     >
-                        {getTypeEmoji(article.realEstateType)}
+                        <Typography 
+                            variant="caption" 
+                            sx={{ 
+                                color: 'white', 
+                                fontSize: '12px',
+                                lineHeight: 1
+                            }}
+                        >
+                            {getTypeEmoji(article.articleType)}
+                        </Typography>
+                    </Box>
+                    <Typography 
+                        variant="subtitle1" 
+                        fontWeight="bold"
+                        sx={{
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            flex: 1
+                        }}
+                    >
+                        {article.cortarName ? `${article.cortarName} ${article.buildingName || article.articleName}` : article.buildingName || article.articleName}
                     </Typography>
                 </Box>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, flex: 1, minWidth: 0 }}>
+                
+                <Typography 
+                    variant="body2" 
+                    color="text.secondary"
+                    sx={{
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        whiteSpace: 'normal'
+                    }}
+                >
+                    {article.district && `${article.district}`}{article.town && ` ${article.town}`} · {article.articleType}
+                </Typography>
+                
+                <Typography 
+                    variant="body2" 
+                    color="text.secondary"
+                    sx={{
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        whiteSpace: 'normal'
+                    }}
+                >
+                    {article.atclFetrDesc}
+                </Typography>
+                
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                     <Typography 
                         variant="subtitle1" 
                         fontWeight="bold"
@@ -109,64 +139,21 @@ const ArticleItem = ({
                             whiteSpace: 'nowrap'
                         }}
                     >
-                        {article.cortarName ? `${article.cortarName} ${article.buildingName || article.name}` : article.buildingName || article.name}
+                        {article.tradeType === "매매" ? "매매가" : "보증금"} {isZeroPrice(article.priceSale) ? "X" : formatPrice(article.priceSale)}
                     </Typography>
-                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                        <Chip
-                            label={article.realEstateType}
-                            size="small"
-                            sx={{
-                                bgcolor: getTypeColor(article.realEstateType),
-                                color: "white",
-                            }}
-                        />
-                        <Chip
-                            label={article.tradeType}
-                            size="small"
-                            sx={{
-                                bgcolor: getTradeTypeColor(article.tradeType),
-                                color: "white",
-                            }}
-                        />
-                    </Box>
-                    <Typography 
-                        variant="body2" 
-                        color="text.secondary"
-                        sx={{
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap'
-                        }}
-                    >
-                        {article.direction && `${article.direction}`}
-                        {article.subwayInfo && ` · ${article.subwayInfo}`}
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                    {(article.tradeType === "전세" || article.tradeType === "월세" || article.tradeType === "단기임대") && article.priceRent > 0 && (
                         <Typography 
-                            variant="subtitle1" 
-                            fontWeight="bold"
+                            variant="body2" 
+                            color="text.secondary"
                             sx={{
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
                                 whiteSpace: 'nowrap'
                             }}
                         >
-                            {article.tradeType === "매매" ? "매매가" : "보증금"} {isZeroPrice(article.price) ? "X" : formatPrice(article.price)}
+                            월세 {formatPrice(article.priceRent)}
                         </Typography>
-                        {(article.tradeType === "전세" || article.tradeType === "월세" || article.tradeType === "단기임대") && article.rentPrice > 0 && (
-                            <Typography 
-                                variant="body2" 
-                                color="text.secondary"
-                                sx={{
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    whiteSpace: 'nowrap'
-                                }}
-                            >
-                                월세 {formatPrice(article.rentPrice)}
-                            </Typography>
-                        )}
-                    </Box>
+                    )}
                 </Box>
             </Box>
         </Paper>
@@ -187,6 +174,8 @@ const ArticleList = () => {
     const [page, setPage] = useState(0)
     const [hasMore, setHasMore] = useState(true)
     const [isLoadingMore, setIsLoadingMore] = useState(false)
+    const [isFetchingMore, setIsFetchingMore] = useState(false)
+    const [currentPage, setCurrentPage] = useState(0)
     const observerTarget = useRef<HTMLDivElement>(null)
     const [regions, setRegions] = useState<Region[]>([])
     const [selectedCity, setSelectedCity] = useState<string>("")
@@ -236,28 +225,19 @@ const ArticleList = () => {
         try {
             if (pageNum === 0) {
                 setLoading(true);
+                setCurrentPage(0);
             } else {
                 setIsLoadingMore(true);
             }
             
             const params: any = {
                 page: pageNum,
-                size: 20,
+                size: 1000,
                 sort: "id,desc"
             };
             
-            // 이미 로드된 매물 ID를 제외하고 요청 (페이지 > 0인 경우)
-            if (pageNum > 0 && articles.length > 0) {
-                // 이미 로드된 매물 ID 목록을 백엔드에 전달하여 중복 방지
-                const loadedIds = articles.map(article => article.id);
-                if (loadedIds.length > 0) {
-                    // exclude 파라미터를 추가하여 백엔드에서 해당 ID들을 제외
-                    params.excludeIds = loadedIds;
-                }
-            }
-            
             if (typeFilter.length > 0) {
-                params.realEstateType = typeFilter;
+                params.articleType = typeFilter;
             }
             
             if (tradeTypeFilter.length > 0) {
@@ -265,58 +245,58 @@ const ArticleList = () => {
             }
             
             if (searchTerm) {
-                params.name = searchTerm;
+                params.articleName = searchTerm;
             }
             
-            // 지역 필터링 (cortarNo 기반)
+            // 지역 필터링 (dongCode 기반)
             if (selectedCity) {
-                let targetCortarNo: string | undefined;
+                let targetDongCode: string | undefined;
                 
                 // 1. 동 수준 필터링
                 if (selectedNeighborhood.length > 0) {
-                    // 특정 동 선택 - 해당 동의 cortarNo 사용
+                    // 특정 동 선택 - 해당 동의 dongCode 사용
                     const dongRegion = regions.find(r => 
                         r.cortarName === selectedNeighborhood[0] &&
                         r.cortarNo
                     );
                     
                     if (dongRegion && dongRegion.cortarNo) {
-                        targetCortarNo = dongRegion.cortarNo;
-                        console.log(`Using neighborhood level cortarNo: ${targetCortarNo}`);
+                        targetDongCode = dongRegion.cortarNo;
+                        console.log(`Using neighborhood level dongCode: ${targetDongCode}`);
                     }
                 } 
                 // 2. 구/군 수준 필터링 
                 else if (selectedDistrict) {
-                    // 구/군 선택 - 해당 구/군의 cortarNo 사용
+                    // 구/군 선택 - 해당 구/군의 dongCode 사용
                     const districtRegion = regions.find(r => 
                         r.cortarName === selectedDistrict &&
                         r.cortarNo
                     );
                     
                     if (districtRegion && districtRegion.cortarNo) {
-                        targetCortarNo = districtRegion.cortarNo;
-                        console.log(`Using district level cortarNo: ${targetCortarNo}`);
+                        targetDongCode = districtRegion.cortarNo;
+                        console.log(`Using district level dongCode: ${targetDongCode}`);
                     }
                 } 
                 // 3. 시/도 수준 필터링
                 else {
-                    // 시/도 선택 - 해당 시/도의 cortarNo 사용
+                    // 시/도 선택 - 해당 시/도의 dongCode 사용
                     const cityRegion = regions.find(r => 
                         r.cortarName === selectedCity &&
                         r.cortarNo
                     );
                     
                     if (cityRegion && cityRegion.cortarNo) {
-                        targetCortarNo = cityRegion.cortarNo;
-                        console.log(`Using city level cortarNo: ${targetCortarNo}`);
+                        targetDongCode = cityRegion.cortarNo;
+                        console.log(`Using city level dongCode: ${targetDongCode}`);
                     }
                 }
                 
-                // 찾은 cortarNo로 필터링
-                if (targetCortarNo) {
-                    params.cortarNo = targetCortarNo;
+                // 찾은 dongCode로 필터링
+                if (targetDongCode) {
+                    params.dongCode = targetDongCode;
                 } 
-                // cortarNo가 없으면 이름으로 필터링 (대안)
+                // dongCode가 없으면 이름으로 필터링 (대안)
                 else if (selectedNeighborhood.length > 0) {
                     params.cortarName = selectedNeighborhood[0];
                     console.log(`Falling back to cortarName filtering: ${selectedNeighborhood[0]}`);
@@ -330,11 +310,11 @@ const ArticleList = () => {
             }
             
             if (minPrice) {
-                params.minPrice = convertKoreanPriceToNumber(minPrice);
+                params.minPriceSale = convertKoreanPriceToNumber(minPrice);
             }
             
             if (maxPrice) {
-                params.maxPrice = convertKoreanPriceToNumber(maxPrice);
+                params.maxPriceSale = convertKoreanPriceToNumber(maxPrice);
             }
             
             const response = await articleApi.getAllArticles(params);
@@ -342,33 +322,26 @@ const ArticleList = () => {
             
             if (response.data.success && response.data.data) {
                 const newArticles = response.data.data.content || [];
-                console.log('Fetched articles:', newArticles);
+                console.log('Fetched articles:', newArticles.length, '건');
                 
                 if (pageNum === 0) {
                     setArticles(newArticles);
+                    setCurrentPage(0);
                 } else {
-                    // 혹시 모를 중복을 한 번 더 클라이언트에서 필터링
-                    setArticles(prev => {
-                        // 현재 목록에 있는 매물의 ID 세트 생성
-                        const existingIds = new Set(prev.map(article => article.id));
-                        
-                        // 새로 가져온 매물 중 기존 목록에 없는 것만 필터링
-                        const uniqueNewArticles = newArticles.filter(
-                            article => !existingIds.has(article.id)
-                        );
-                        
-                        if (newArticles.length !== uniqueNewArticles.length) {
-                            console.log(`Filtered out ${newArticles.length - uniqueNewArticles.length} duplicate articles`);
-                        }
-                        
-                        // 중복이 제거된 새 매물만 기존 목록에 추가
-                        return [...prev, ...uniqueNewArticles];
-                    });
+                    // 기존 매물에 새로운 매물 추가
+                    setArticles(prev => [...prev, ...newArticles]);
                 }
                 
+                // 마지막 페이지인지 확인
+                const isLastPage = response.data.data.last;
+                
                 // 새로 가져온 항목이 없거나 마지막 페이지면 더 이상 로드하지 않음
-                const noMoreData = newArticles.length === 0 || response.data.data.last;
-                setHasMore(!noMoreData);
+                setHasMore(!isLastPage && newArticles.length > 0);
+                
+                // 성공적으로 페이지를 로드했으면 현재 페이지 업데이트
+                if (newArticles.length > 0) {
+                    setCurrentPage(pageNum);
+                }
             } else {
                 setError("매물 목록을 불러오는데 실패했습니다.");
             }
@@ -379,97 +352,7 @@ const ArticleList = () => {
             setLoading(false);
             setIsLoadingMore(false);
         }
-    }
-
-    // Convert Korean price format to number
-    const convertKoreanPriceToNumber = (priceStr: string): number => {
-        // Remove all spaces and commas
-        const cleanStr = priceStr.replace(/\s+/g, '').replace(/,/g, '')
-        
-        // Check if it contains "억"
-        if (cleanStr.includes('억')) {
-            const parts = cleanStr.split('억')
-            const eok = parseInt(parts[0]) || 0
-            
-            // Check if there's a "만" part
-            if (parts[1] && parts[1].includes('만')) {
-                const man = parseInt(parts[1].replace('만', '')) || 0
-                return eok * 10000 + man
-            }
-            
-            return eok * 10000
-        }
-        
-        // Check if it contains "만"
-        if (cleanStr.includes('만')) {
-            const man = parseInt(cleanStr.replace('만', '')) || 0
-            return man
-        }
-        
-        // If it's just a number, assume it's in "만원" unit
-        const num = parseInt(cleanStr) || 0
-        return num
-    }
-
-    const getTypeColor = (type: string) => {
-        switch (type) {
-            case "아파트":
-                return "#4CAF50" // Green for apartments
-            case "오피스텔":
-                return "#2196F3" // Blue for officetels
-            case "빌라":
-                return "#9C27B0" // Purple for villas
-            case "아파트분양권":
-                return "#FF9800" // Orange for apartment pre-sale rights
-            case "오피스텔분양권":
-                return "#00BCD4" // Cyan for officetel pre-sale rights
-            case "재건축":
-                return "#F44336" // Red for reconstruction
-            case "전원주택":
-                return "#8BC34A" // Light green for country houses
-            case "단독/다가구":
-                return "#673AB7" // Deep purple for single/multi-family houses
-            case "상가주택":
-                return "#E91E63" // Pink for commercial residential
-            case "한옥주택":
-                return "#795548" // Brown for hanok
-            case "재개발":
-                return "#FF5722" // Deep orange for redevelopment
-            case "원룸":
-                return "#03A9F4" // Light blue for one-room
-            case "고시원":
-                return "#9E9E9E" // Grey for goshiwon
-            case "상가":
-                return "#FFC107" // Amber for commercial
-            case "사무실":
-                return "#3F51B5" // Indigo for office
-            case "공장/창고":
-                return "#607D8B" // Blue grey for factory/warehouse
-            case "건물":
-                return "#009688" // Teal for building
-            case "토지":
-                return "#CDDC39" // Lime for land
-            case "지식산업센터":
-                return "#00BCD4" // Cyan for knowledge industry center
-            default:
-                return "#757575" // Gray for others
-        }
-    }
-
-    const getTradeTypeColor = (type: string) => {
-        switch (type) {
-            case "매매":
-                return "#E91E63" // Pink for sales
-            case "전세":
-                return "#2196F3" // Blue for jeonse
-            case "월세":
-                return "#4CAF50" // Green for monthly rent
-            case "단기임대":
-                return "#FF9800" // Orange for short-term rental
-            default:
-                return "#757575" // Gray for others
-        }
-    }
+    };
 
     const handleArticleClick = (article: ArticleResponse) => {
         // Toggle selection - if already selected, deselect it
@@ -486,59 +369,6 @@ const ArticleList = () => {
                 setDetailVisible(true)
             }, 50)
         }
-    }
-
-    // Format price display
-    const formatPrice = (price: number | string | null) => {
-        if (price === null || price === undefined) return "-"
-        
-        // If price is a string, try to convert it to a number
-        if (typeof price === 'string') {
-            const numPrice = parseFloat(price);
-            if (isNaN(numPrice)) return price; // Return original string if not a valid number
-            price = numPrice;
-        }
-        
-        // Format price in Korean style
-        if (price < 10000) {
-            // Less than 1억 (10,000만)
-            return `${price}만원`;
-        } else {
-            // 1억 or more
-            const eok = Math.floor(price / 10000);
-            const man = price % 10000;
-            
-            if (man === 0) {
-                return `${eok}억원`;
-            } else {
-                return `${eok}억 ${man}만원`;
-            }
-        }
-    }
-
-    // Format date
-    const formatDate = (dateString: string) => {
-        if (!dateString) return "-"
-        // Keep the original format if it's already in the desired format
-        if (dateString.match(/^\d{2}\.\d{2}\.\d{2}\.$/)) {
-            return dateString;
-        }
-        // Otherwise format it
-        const date = new Date(dateString)
-        return date.toLocaleDateString("ko-KR", {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        }).replace(/년 /g, '년 ').replace(/월 /g, '월 ').replace(/일$/, '일');
-    }
-
-    // Check if price is zero
-    const isZeroPrice = (price: number | string | null): boolean => {
-        if (price === null || price === undefined) return false;
-        if (typeof price === 'string') {
-            return price === "0" || price === "0.0" || price === "0.00";
-        }
-        return price === 0;
     }
 
     const handleBack = () => {
@@ -664,49 +494,13 @@ const ArticleList = () => {
         fetchRegions()
     }, [])
 
-    const getTypeEmoji = (type: string) => {
-        switch (type) {
-            case "아파트":
-                return "🏢"
-            case "오피스텔":
-                return "🏬"
-            case "빌라":
-            case "원룸":
-            default:
-                return "🏠"
-            case "아파트분양권":
-            case "오피스텔분양권": 
-                return "📝"
-            case "재건축":
-            case "재개발":
-                return "🏗️"
-            case "전원주택":
-            case "한옥주택":
-                return "🏡"
-            case "단독/다가구":
-                return "🏘️"
-            case "상가주택":
-            case "상가":
-                return "🏪"
-            case "고시원":
-            case "사무실":
-            case "건물":
-            case "지식산업센터":
-                return "🏢"
-            case "공장/창고":
-                return "🏭"
-            case "토지":
-                return "🌳"
-        }
-    }
-
     // 시/도 목록을 필터링합니다.
     const filterCities = (regions: Region[]): string[] => {
         if (!regions || regions.length === 0) return [];
         
-        console.log('Filtering cities using cortarNo pattern');
+        console.log('Filtering cities using dongCode pattern');
         
-        // cortarNo 시도 패턴: 앞 2자리가 같고 나머지가 0으로 채워진 형태 (예: 1100000000)
+        // dongCode 시도 패턴: 앞 2자리가 같고 나머지가 0으로 채워진 형태 (예: 1100000000)
         // 또는 앞 2자리만 추출하여 시도 코드 사용
         const citySet = new Set<string>();
         
@@ -744,7 +538,7 @@ const ArticleList = () => {
         
         console.log('Filtering districts for city:', selectedCity);
         
-        // 선택된 시의 cortarNo 패턴 찾기
+        // 선택된 시의 dongCode 패턴 찾기
         const cityRegion = regions.find(r => 
             r.cortarName === selectedCity || 
             (r.areaFull && r.areaFull.startsWith(selectedCity) && !r.areaFull.includes(' '))
@@ -818,6 +612,150 @@ const ArticleList = () => {
         return result;
     };
 
+    // 거래 유형별 매물 수 계산하는 함수
+    const getTradeTypeCounts = () => {
+        const counts = {
+            매매: 0,
+            전세: 0,
+            월세: 0,
+            기타: 0
+        };
+        
+        articles.forEach(article => {
+            if (article.tradeType === "매매") {
+                counts.매매++;
+            } else if (article.tradeType === "전세") {
+                counts.전세++;
+            } else if (article.tradeType === "월세" || article.tradeType === "단기임대") {
+                counts.월세++;
+            } else {
+                counts.기타++;
+            }
+        });
+        
+        return counts;
+    };
+
+    // 더 불러오기 버튼을 클릭했을 때 호출될 함수
+    const fetchMoreArticles = async () => {
+        try {
+            setIsFetchingMore(true);
+            
+            // 다음 페이지 번호 계산
+            const nextPage = currentPage + 1;
+            console.log(`매물 더 불러오기: 페이지 ${nextPage} 요청`);
+            
+            const params: any = {
+                page: nextPage,
+                size: 1000, // 추가로 1000개 매물 더 로드
+                sort: "id,desc"
+            };
+            
+            if (typeFilter.length > 0) {
+                params.articleType = typeFilter;
+            }
+            
+            if (tradeTypeFilter.length > 0) {
+                params.tradeType = tradeTypeFilter;
+            }
+            
+            if (searchTerm) {
+                params.articleName = searchTerm;
+            }
+            
+            // 지역 필터링 적용 (원래 fetchArticles와 동일한 로직)
+            if (selectedCity) {
+                let targetDongCode: string | undefined;
+                
+                // 1. 동 수준 필터링
+                if (selectedNeighborhood.length > 0) {
+                    const dongRegion = regions.find(r => 
+                        r.cortarName === selectedNeighborhood[0] &&
+                        r.cortarNo
+                    );
+                    
+                    if (dongRegion && dongRegion.cortarNo) {
+                        targetDongCode = dongRegion.cortarNo;
+                    }
+                } 
+                // 2. 구/군 수준 필터링 
+                else if (selectedDistrict) {
+                    const districtRegion = regions.find(r => 
+                        r.cortarName === selectedDistrict &&
+                        r.cortarNo
+                    );
+                    
+                    if (districtRegion && districtRegion.cortarNo) {
+                        targetDongCode = districtRegion.cortarNo;
+                    }
+                } 
+                // 3. 시/도 수준 필터링
+                else {
+                    const cityRegion = regions.find(r => 
+                        r.cortarName === selectedCity &&
+                        r.cortarNo
+                    );
+                    
+                    if (cityRegion && cityRegion.cortarNo) {
+                        targetDongCode = cityRegion.cortarNo;
+                    }
+                }
+                
+                if (targetDongCode) {
+                    params.dongCode = targetDongCode;
+                } 
+                else if (selectedNeighborhood.length > 0) {
+                    params.cortarName = selectedNeighborhood[0];
+                } else if (selectedDistrict) {
+                    params.cortarName = selectedDistrict;
+                } else if (selectedCity) {
+                    params.cortarName = selectedCity;
+                }
+            }
+            
+            if (minPrice) {
+                params.minPriceSale = convertKoreanPriceToNumber(minPrice);
+            }
+            
+            if (maxPrice) {
+                params.maxPriceSale = convertKoreanPriceToNumber(maxPrice);
+            }
+            
+            const response = await articleApi.getAllArticles(params);
+            
+            if (response.data.success && response.data.data) {
+                const newArticles = response.data.data.content || [];
+                console.log('추가로 불러온 매물:', newArticles.length, '건');
+                
+                // 혹시 모를 중복을 클라이언트에서 한 번 더 필터링
+                const existingIds = new Set(articles.map(article => article.id));
+                const uniqueNewArticles = newArticles.filter(
+                    article => !existingIds.has(article.id)
+                );
+                
+                if (uniqueNewArticles.length > 0) {
+                    setArticles(prev => [...prev, ...uniqueNewArticles]);
+                    setCurrentPage(nextPage);
+                }
+                
+                // 마지막 페이지인지 확인
+                const isLastPage = response.data.data.last;
+                setHasMore(!isLastPage && newArticles.length > 0);
+                
+                if (newArticles.length === 0 || isLastPage) {
+                    console.log('더 이상 불러올 매물이 없습니다.');
+                }
+            } else {
+                setError("추가 매물을 불러오는데 실패했습니다.");
+            }
+        } catch (err) {
+            console.error("Error fetching more articles:", err);
+            setError("추가 매물을 불러오는데 실패했습니다.");
+        } finally {
+            setIsFetchingMore(false);
+        }
+    };
+
     return (
         <Box sx={{ width: '100%', height: '82vh', display: 'flex', flexDirection: 'column' }}>
             <AppBar position="static" color="default" elevation={1}>
@@ -826,10 +764,19 @@ const ArticleList = () => {
                         <ArrowBackIcon />
                     </IconButton>
                     <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                        부동산 매물
+                        {loading ? "매물 로딩 중..." : `매매 ${getTradeTypeCounts().매매}건, 전세 ${getTradeTypeCounts().전세}건, 월세 ${getTradeTypeCounts().월세}건`}
                     </Typography>
+                    <Button 
+                        color="inherit" 
+                        onClick={fetchMoreArticles} 
+                        disabled={isFetchingMore || !hasMore}
+                        startIcon={isFetchingMore ? null : <></>}
+                        sx={{ mr: 1 }}
+                    >
+                        {isFetchingMore ? "로딩 중..." : "매물 더 불러오기"}
+                    </Button>
                     <IconButton color="inherit" onClick={() => setShowList(!showList)}>
-                        {showList ? <ViewListIcon /> : <ViewMapIcon />}
+                        {showList ? <ViewMapIcon /> : <ViewListIcon />}
                     </IconButton>
                     <IconButton color="inherit" onClick={() => setIsFilterDrawerOpen(true)}>
                         <FilterListIcon />
@@ -851,16 +798,15 @@ const ArticleList = () => {
                             articles={articles}
                             selectedArticle={selectedArticle}
                             onArticleClick={handleArticleClick}
-                            getTypeColor={getTypeColor}
-                            getTypeEmoji={getTypeEmoji}
-                            getTradeTypeColor={getTradeTypeColor}
-                            formatPrice={formatPrice}
                             selectedRegions={{
                                 city: selectedCity,
                                 district: selectedDistrict,
                                 neighborhoods: selectedNeighborhood
                             }}
                             allRegions={regions}
+                            initialCenter={{lat: 37.5665, lng: 126.9780}} 
+                            initialZoom={9}
+                            fixedInitialView={true}
                         />
                     </Box>
                 )}
@@ -889,11 +835,6 @@ const ArticleList = () => {
                                 article={article} 
                                 isSelected={selectedArticle?.id === article.id}
                                 onClick={() => handleArticleClick(article)}
-                                getTypeColor={getTypeColor}
-                                getTypeEmoji={getTypeEmoji}
-                                getTradeTypeColor={getTradeTypeColor}
-                                isZeroPrice={isZeroPrice}
-                                formatPrice={formatPrice}
                             />
                         ))}
                         {(hasMore && !loading) && (
@@ -917,7 +858,7 @@ const ArticleList = () => {
                         transition: 'transform 0.3s ease-in-out, width 0.3s ease-in-out, left 0.3s ease-in-out',
                         transform: detailVisible ? 'translateX(0)' : 'translateX(-100%)',
                         boxShadow: '4px 0px 10px rgba(0, 0, 0, 0.1)',
-                        opacity: 0.97,
+                        opacity: 0.9,
                         visibility: selectedArticle ? 'visible' : 'hidden'
                     }}
                 >

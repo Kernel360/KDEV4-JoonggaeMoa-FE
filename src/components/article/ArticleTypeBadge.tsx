@@ -2,18 +2,18 @@ import { Box, Chip } from '@mui/material';
 import { getTypeColor, getTradeTypeColor } from '../../utils/articleUtils';
 
 interface ArticleTypeBadgeProps {
-    realEstateType: string;
+    articleType: string;
     tradeType: string;
 }
 
-const ArticleTypeBadge = ({ realEstateType, tradeType }: ArticleTypeBadgeProps) => {
+const ArticleTypeBadge = ({ articleType, tradeType }: ArticleTypeBadgeProps) => {
     return (
         <Box sx={{ display: 'flex', gap: 1 }}>
             <Chip
-                label={realEstateType}
+                label={articleType}
                 size="small"
                 sx={{
-                    bgcolor: getTypeColor(realEstateType),
+                    bgcolor: getTypeColor(articleType),
                     color: "white",
                 }}
             />
