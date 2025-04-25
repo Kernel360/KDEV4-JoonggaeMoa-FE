@@ -35,6 +35,8 @@ import NotificationList from "./pages/NotificationList.tsx"
 import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer } from 'react-toastify';
 import { NotificationProvider } from "./context/NotificationContext"
+import InquiryBoard from "./pages/InquiryBoard"
+import InquiryDetail from "./pages/InquiryDetail"
 
 // Create a theme instance
 const theme = createTheme({
@@ -332,6 +334,18 @@ function App() {
                                     </ProtectedRoute>
                                 }
                             />
+                            {/* 문의 게시판 라우트 */}
+                            {/* Remove ProtectedRoute for inquiry board */}
+                            <Route
+                                path="/inquiry"
+                                element={<InquiryBoard />}
+                            />
+                            <Route
+                                path="/inquiry/:id"
+                                element={<InquiryDetail />}
+                            />
+                            
+                            {/* Keep the catch-all route at the end */}
                             <Route path="*" element={<Navigate to="/" />} />
                         </Routes>
                         <ToastContainer

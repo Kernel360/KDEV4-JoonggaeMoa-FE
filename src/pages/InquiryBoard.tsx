@@ -1,0 +1,341 @@
+import React, { useState, useEffect } from 'react';
+import {
+    Box,
+    Typography,
+    Button,
+    Paper,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    TextField,
+    Pagination,
+    CircularProgress,
+    Snackbar,
+    Alert,
+} from '@mui/material';
+import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
+import { Inquiry, InquiryRequest } from '../types/inquiry';
+import { useNavigate } from 'react-router-dom';
+
+
+const InquiryBoard: React.FC = () => {
+    const navigate = useNavigate();
+    
+    const [inquiries, setInquiries] = useState<Inquiry[]>([]);
+    const [page, setPage] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [openDialog, setOpenDialog] = useState(false);
+    const [newInquiry, setNewInquiry] = useState<InquiryRequest>({
+        name: '',
+        password: '',
+        title: '',
+        content: '',
+    });
+    const { isAuthenticated } = useAuth();
+
+    const fetchInquiries = async () => {
+        try {
+            setLoading(true);
+            const response = await api.get(`/api/inquiries?page=${page}&size=10`);
+            if (response.data.success) {
+                setInquiries(response.data.data.content);
+                setTotalPages(response.data.data.totalPages);
+            }
+        } catch (err) {
+            setError('문의글을 불러오는데 실패했습니다.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchInquiries();
+    }, [page]);
+
+    const handleSubmitInquiry = async () => {
+        try {
+            if (newInquiry.password.length < 4 || newInquiry.password.length > 12) {
+                setError('비밀번호는 4~12자리여야 합니다.');
+                return;
+            }
+
+            const response = await api.post('/api/inquiries', newInquiry);
+            if (response.data.success) {
+                setOpenDialog(false);
+                fetchInquiries();
+                setNewInquiry({ name: '', password: '', title: '', content: '' });
+            }
+        } catch (err: any) {
+            if (err.response?.data?.error?.code === 4003) {
+                setError('잘못된 데이터 형식입니다.');
+            } else {
+                setError('문의글 작성에 실패했습니다.');
+            }
+        }
+    };
+
+    // Remove handleSubmitAnswer function as it's no longer needed
+
+    return (
+        <Box sx={{ p: 3, bgcolor: '#f5f5f5' }}>
+            <Box sx={{ 
+                display: 'flex', 
+                flexDirection: 'column',
+                alignItems: 'center', 
+                mb: 4,
+                pb: 2,
+                borderBottom: '2px solid #333'
+            }}>
+                <img 
+                    src="/배경없는 로고.ico"
+                    alt="중개모아 로고" 
+                    style={{ height: '50px', marginBottom: '8px' }} 
+                />
+                <Typography 
+                    variant="h5" 
+                    sx={{ 
+                        color: '#333',
+                        fontWeight: 'bold',
+                        letterSpacing: '0.1em'
+                    }}
+                >
+                    중개모아
+                </Typography>
+            </Box>
+
+            <Typography 
+                variant="h4" 
+                sx={{ 
+                    color: '#333',
+                    mb: 3,
+                    fontWeight: 'bold'
+                }}
+            >
+                문의 게시판
+            </Typography>
+            
+            <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
+                <Button 
+                    variant="contained" 
+                    onClick={() => setOpenDialog(true)}
+                    sx={{
+                        backgroundColor: '#333',
+                        '&:hover': {
+                            backgroundColor: '#000'
+                        }
+                    }}
+                >
+                    문의하기
+                </Button>
+            </Box>
+
+            <TableContainer component={Paper} sx={{ 
+                boxShadow: 3,
+                '& .MuiTableCell-head': {
+                    backgroundColor: '#333',
+                    color: 'white'
+                }
+            }}>
+                <Table>
+                    <TableHead>
+                        <TableRow>
+                            <TableCell sx={{ fontWeight: 'bold', width: '10%' }}>번호</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold', width: '40%' }}>제목</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold', width: '20%' }}>작성자</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold', width: '20%' }}>작성일</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold', width: '10%' }}>답변수</TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {loading ? (
+                            <TableRow>
+                                <TableCell colSpan={5} align="center" sx={{ py: 5 }}>
+                                    <CircularProgress sx={{ color: '#333' }} />
+                                </TableCell>
+                            </TableRow>
+                        ) : (
+                            inquiries.map((inquiry) => (
+                                <TableRow 
+                                    key={inquiry.id}
+                                    onClick={() => navigate(`/inquiry/${inquiry.id}`)}
+                                    sx={{ 
+                                        cursor: 'pointer',
+                                        '&:hover': {
+                                            backgroundColor: '#f5f5f5'
+                                        }
+                                    }}
+                                >
+                                    <TableCell>{inquiry.id}</TableCell>
+                                    <TableCell>{inquiry.title}</TableCell>
+                                    <TableCell>{inquiry.name}</TableCell>
+                                    <TableCell>
+                                        {new Date(inquiry.createdAt).toLocaleDateString()}
+                                    </TableCell>
+                                    <TableCell>{inquiry.answers.length}</TableCell>
+                                </TableRow>
+                            ))
+                        )}
+                    </TableBody>
+                </Table>
+            </TableContainer>
+
+            <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
+                <Pagination 
+                    count={totalPages} 
+                    page={page + 1} 
+                    onChange={(_, value) => setPage(value - 1)}
+                    sx={{
+                        '& .Mui-selected': {
+                            backgroundColor: '#333 !important',
+                            color: 'white'
+                        }
+                    }}
+                />
+            </Box>
+
+            <Dialog 
+                open={openDialog} 
+                onClose={() => setOpenDialog(false)} 
+                maxWidth="sm" 
+                fullWidth
+                PaperProps={{
+                    sx: { 
+                        borderRadius: 2,
+                        bgcolor: '#f8f9fa'
+                    }
+                }}
+            >
+                <DialogTitle sx={{ 
+                    borderBottom: '2px solid #333', 
+                    color: '#333',
+                    fontWeight: 'bold',
+                    fontSize: '1.5rem',
+                    pb: 2
+                }}>
+                    문의하기
+                </DialogTitle>
+                <DialogContent sx={{ mt: 2 }}>
+                    <TextField
+                        fullWidth
+                        label="이름"
+                        margin="normal"
+                        value={newInquiry.name}
+                        onChange={(e) => setNewInquiry({ ...newInquiry, name: e.target.value })}
+                        sx={{ 
+                            '& .MuiOutlinedInput-root': {
+                                '&.Mui-focused fieldset': {
+                                    borderColor: '#333'
+                                }
+                            },
+                            '& .MuiInputLabel-root.Mui-focused': {
+                                color: '#333'
+                            }
+                        }}
+                    />
+                    <TextField
+                        fullWidth
+                        label="비밀번호"
+                        type="password"
+                        margin="normal"
+                        value={newInquiry.password}
+                        onChange={(e) => setNewInquiry({ ...newInquiry, password: e.target.value })}
+                        helperText="비밀번호는 4~12자리여야 합니다"
+                        sx={{ 
+                            '& .MuiOutlinedInput-root': {
+                                '&.Mui-focused fieldset': {
+                                    borderColor: '#333'
+                                }
+                            },
+                            '& .MuiInputLabel-root.Mui-focused': {
+                                color: '#333'
+                            },
+                            '& .MuiFormHelperText-root': {
+                                color: '#666'
+                            }
+                        }}
+                    />
+                    <TextField
+                        fullWidth
+                        label="제목"
+                        margin="normal"
+                        value={newInquiry.title}
+                        onChange={(e) => setNewInquiry({ ...newInquiry, title: e.target.value })}
+                        sx={{ 
+                            '& .MuiOutlinedInput-root': {
+                                '&.Mui-focused fieldset': {
+                                    borderColor: '#333'
+                                }
+                            },
+                            '& .MuiInputLabel-root.Mui-focused': {
+                                color: '#333'
+                            }
+                        }}
+                    />
+                    <TextField
+                        fullWidth
+                        label="내용"
+                        multiline
+                        rows={4}
+                        margin="normal"
+                        value={newInquiry.content}
+                        onChange={(e) => setNewInquiry({ ...newInquiry, content: e.target.value })}
+                        sx={{ 
+                            '& .MuiOutlinedInput-root': {
+                                '&.Mui-focused fieldset': {
+                                    borderColor: '#333'
+                                }
+                            },
+                            '& .MuiInputLabel-root.Mui-focused': {
+                                color: '#333'
+                            }
+                        }}
+                    />
+                </DialogContent>
+                <DialogActions sx={{ 
+                    p: 3, 
+                    borderTop: '1px solid #e0e0e0',
+                    gap: 1
+                }}>
+                    <Button 
+                        onClick={() => setOpenDialog(false)}
+                        variant="outlined"
+                        sx={{ 
+                            color: '#333',
+                            borderColor: '#333',
+                            '&:hover': {
+                                borderColor: '#000',
+                                backgroundColor: 'rgba(0, 0, 0, 0.04)'
+                            }
+                        }}
+                    >
+                        취소
+                    </Button>
+                    <Button 
+                        onClick={handleSubmitInquiry} 
+                        variant="contained"
+                        sx={{
+                            backgroundColor: '#333',
+                            '&:hover': {
+                                backgroundColor: '#000'
+                            }
+                        }}
+                    >
+                        등록
+                    </Button>
+                </DialogActions>
+            </Dialog>
+        </Box>
+    );
+};
+
+export default InquiryBoard;
