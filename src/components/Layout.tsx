@@ -34,6 +34,7 @@ import {
     Menu as MenuIcon,
     ChevronLeft,
     Logout,
+    QuestionAnswer
 } from "@mui/icons-material";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -474,6 +475,27 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                             </ListItemIcon>
                             <ListItemText 
                                 primary="문자 관리"
+                                primaryTypographyProps={{
+                                    fontSize: '0.9rem',
+                                }}
+                            />
+                        </ListItem>
+
+                        <ListItem 
+                            button 
+                            onClick={() => navigate("/inquiry")}
+                            selected={location.pathname.startsWith("/inquiry")}
+                            sx={{ 
+                                py: 1.5,
+                                bgcolor: location.pathname.startsWith("/inquiry") ? 'rgba(255,255,255,0.1)' : 'transparent',
+                                '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' },
+                            }}
+                        >
+                            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
+                                <QuestionAnswer />
+                            </ListItemIcon>
+                            <ListItemText 
+                                primary="문의 게시판"
                                 primaryTypographyProps={{
                                     fontSize: '0.9rem',
                                 }}
