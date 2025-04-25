@@ -1,4 +1,5 @@
 export interface InquiryAnswer {
+    agentId: number;
     agentName: string;
     agentOffice: string;
     agentRegion: string;
@@ -22,6 +23,15 @@ export interface InquiryRequest {
     password: string;
     title: string;
     content: string;
+}
+
+export interface InquiryConsultationRequest {
+    agentId: number;
+    name: string;
+    phone: string;
+    email: string;
+    consent: boolean;
+    consultAt: string;
 }
 
 export interface PageInfo {
