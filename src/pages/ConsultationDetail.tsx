@@ -395,6 +395,12 @@ const ConsultationDetail = () => {
                     ...selectedConsultation,
                     consultationStatus: newStatus
                 })
+                
+                // Also update the editFormData state to reflect the new status
+                setEditFormData(prev => ({
+                    ...prev,
+                    consultationStatus: newStatus
+                }))
             }
             
             // Update the consultation in the history list
@@ -416,6 +422,14 @@ const ConsultationDetail = () => {
                         content: updatedConsultations
                     }
                 })
+                
+                // If the consultation being edited is in the history list, update the editFormData
+                if (currentlyEditingConsultationId === consultationId) {
+                    setEditFormData(prev => ({
+                        ...prev,
+                        consultationStatus: newStatus
+                    }))
+                }
             }
             
             setSnackbar({
@@ -621,14 +635,9 @@ const ConsultationDetail = () => {
                                                                 sx={{
                                                                     bgcolor: statusConfig[consultation.consultationStatus]?.color,
                                                                     color: statusConfig[consultation.consultationStatus]?.textColor,
-                                                                    cursor: currentlyEditingConsultationId === consultation.consultationId ? 'default' : 'pointer'
+                                                                    cursor: 'pointer'
                                                                 }}
                                                                 onClick={(e) => {
-                                                                    if (currentlyEditingConsultationId === consultation.consultationId) {
-                                                                        e.stopPropagation();
-                                                                        return;
-                                                                    }
-                                                                    
                                                                     e.stopPropagation();
                                                                     
                                                                     // Close any other open menu
