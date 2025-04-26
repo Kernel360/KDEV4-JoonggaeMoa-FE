@@ -1,7 +1,6 @@
 import { Box, Paper, Typography } from "@mui/material";
 import type { ArticleResponse } from "../types/article";
-import ArticleImage from "./article/ArticleImage";
-import ArticleTypeBadge from "./article/ArticleTypeBadge";
+import { getTypeColor, getTypeEmoji } from "../utils/articleUtils";
 import ArticlePrice from "./article/ArticlePrice";
 
 interface ArticleItemProps {
@@ -25,43 +24,82 @@ const ArticleItem = ({ article, isSelected, onClick }: ArticleItemProps) => {
             }}
             onClick={onClick}
         >
-            <Box sx={{ display: 'flex', gap: 2 }}>
-                <Box 
-                    sx={{ 
-                        width: 100, 
-                        height: 100, 
-                        bgcolor: 'grey.200',
-                        borderRadius: 1,
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, flex: 1, minWidth: 0 }}>
+                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                    <Box
+                        sx={{
+                            width: 24,
+                            height: 24,
+                            borderRadius: article.tradeType === "매매" ? '50%' : 
+                                        article.tradeType === "전세" ? '4px' : '0',
+                            bgcolor: getTypeColor(article.articleType),
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            flexShrink: 0
+                        }}
+                    >
+                        <Typography 
+                            variant="caption" 
+                            sx={{ 
+                                color: 'white', 
+                                fontSize: '12px',
+                                lineHeight: 1
+                            }}
+                        >
+                            {getTypeEmoji(article.articleType)}
+                        </Typography>
+                    </Box>
+                    <Typography 
+                        variant="subtitle1" 
+                        fontWeight="bold"
+                        sx={{
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            flex: 1
+                        }}
+                    >
+                        {article.cortarName ? `${article.cortarName} ${article.buildingName || article.articleName}` : article.buildingName || article.articleName}
+                    </Typography>
+                </Box>
+                
+                <Typography 
+                    variant="body2" 
+                    color="text.secondary"
+                    sx={{
                         overflow: 'hidden',
-                        flexShrink: 0
+                        textOverflow: 'ellipsis',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        whiteSpace: 'normal'
                     }}
                 >
-                    <ArticleImage
-                        imageUrl={article.imageUrl}
-                        realEstateType={article.realEstateType}
-                        name={article.name}
-                    />
-                </Box>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, flex: 1 }}>
-                    <Typography variant="subtitle1" fontWeight="bold">
-                        {article.buildingName || article.name}
-                    </Typography>
-                    <ArticleTypeBadge 
-                        realEstateType={article.realEstateType} 
-                        tradeType={article.tradeType} 
-                    />
-                    <Typography variant="body2" color="text.secondary">
-                        {article.direction && `${article.direction}`}
-                        {article.subwayInfo && ` · ${article.subwayInfo}`}
-                    </Typography>
+                    {article.district && `${article.district}`}{article.town && ` ${article.town}`} · {article.articleType}
+                </Typography>
+                
+                <Typography 
+                    variant="body2" 
+                    color="text.secondary"
+                    sx={{
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        whiteSpace: 'normal'
+                    }}
+                >
+                    {article.atclFetrDesc}
+                </Typography>
+                
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                     <ArticlePrice 
-                        tradeType={article.tradeType} 
-                        price={article.price} 
-                        rentPrice={article.rentPrice}
+                        tradeType={article.tradeType}
+                        priceSale={article.priceSale}
+                        priceRent={article.priceRent}
                     />
-                    <Typography variant="body2" color="text.secondary">
-                        {article.cortarName || "-"}
-                    </Typography>
                 </Box>
             </Box>
         </Paper>

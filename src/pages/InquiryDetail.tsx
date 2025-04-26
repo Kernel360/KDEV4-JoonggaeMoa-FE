@@ -191,7 +191,7 @@ const InquiryDetail: React.FC = () => {
                     }).replace(',', '') 
             };
     
-            const response = await api.post('/api/inquiries/consultation', payload);
+            const response = await api.post('/api/inquiries/consultations', payload);
             if (response.data.success) {
                 setOpenDialog(false);
                 setConsultation({

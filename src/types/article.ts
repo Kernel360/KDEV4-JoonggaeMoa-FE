@@ -24,27 +24,66 @@ export type TradeType = "매매" | "전세" | "월세" | "단기임대";
 
 export interface ArticleResponse {
     id: number;
-    cortarNo: string;
-    articleNo: string;
-    name: string;
-    buildingName?: string;
-    realEstateType: RealEstateType;
-    tradeType: TradeType;
-    price: string;
-    rentPrice: number;
+    articleCode: string;
+    bjdCode: string;
+    articleName: string;
+    buildingTypeCode: string;
+    buildingType: string;
+    tradeType: string;
+    floors: string;
+    priceSale: number;
+    priceRent: number;
+    areaSupply: string;
+    areaExclusive: string;
+    direction: string;
     confirmedAt: string;
+    imageUrl: string;
     latitude: number;
     longitude: number;
-    imageUrl: string;
-    direction: string;
-    tags: string[];
-    subwayInfo: string;
-    companyId: string;
+    articleDesc: string;
     companyName: string;
-    agentName: string;
+    agency: string;
+    subway: string;
+    isChecked: boolean;
+    addressFullLot: string;
+    addressFullRoad: string;
+    address1SiDo: string;
+    address2SiGunGu: string;
+    address3DongEupMyeon: string;
+    complexId?: number;
+}
+
+export interface ComplexResponse {
+    id: number;
+    name: string;
+    type: string;
+    approvedAt: string;
+}
+
+export interface RegionResponse {
+    cortarNo: string;
+    centerLat: number;
+    centerLon: number;
     cortarName: string;
-    roadAddressName: string;
-    lotAddressName: string;
+    cortarType: string;
+}
+
+export interface TradeTypeSummaryResponse {
+    values: TradeTypeSummary[];
+}
+
+export interface TradeTypeSummary {
+    type: string;
+    ratio: number;
+}
+
+export interface RealEstateTypeSummaryResponse {
+    values: RealEstateTypeSummary[];
+}
+
+export interface RealEstateTypeSummary {
+    type: string;
+    ratio: number;
 }
 
 export interface ArticleListResponse {
@@ -68,4 +107,10 @@ export interface ArticleListParams {
     cortarName?: string;
     minPrice?: number;
     maxPrice?: number;
+}
+
+// 새로 추가할 Tag 타입
+export interface Tag {
+    id: number;
+    name: string;
 }

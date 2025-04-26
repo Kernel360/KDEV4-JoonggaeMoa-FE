@@ -1,51 +1,68 @@
+import { withImageSize } from '../../utils/articleUtils';
 import { Box, Typography } from '@mui/material';
 import { getTypeColor, getTypeEmoji } from '../../utils/articleUtils';
 import { useState } from 'react';
 
 interface ArticleImageProps {
     imageUrl?: string;
-    realEstateType: string;
+    articleType: string;
     name: string;
 }
 
-const ArticleImage = ({ imageUrl, realEstateType, name }: ArticleImageProps) => {
+const ArticleImage = ({ imageUrl, articleType, name }: ArticleImageProps) => {
     const [imageError, setImageError] = useState(false);
 
     return (
-        <Box sx={{ width: '100%', height: '100%', position: 'relative' }}>
-            {imageUrl && !imageError ? (
+        <Box 
+            sx={{ 
+                width: '100%', 
+                height: '100%', 
+                position: 'relative',
+                overflow: 'hidden',
+                backgroundColor: getTypeColor(articleType),
+                minHeight: '200px'
+            }}
+        >
+            {!imageError && imageUrl ? (
                 <img 
-                    src={`https://landthumb-phinf.pstatic.net/${encodeURI(imageUrl)}`} 
-                    alt={name}
+                    src={withImageSize(imageUrl, 1000)} 
+                    alt={name} 
                     style={{ 
                         width: '100%', 
                         height: '100%', 
-                        objectFit: 'cover' 
+                        objectFit: 'cover',
+                        display: 'block'
                     }}
-                    onError={(e) => {
-                        console.error("Image load error:", imageUrl);
-                        setImageError(true);
-                    }}
+                    onError={() => setImageError(true)}
                 />
             ) : (
                 <Box 
                     sx={{ 
-                        width: '100%',
-                        height: '100%',
+                        width: '100%', 
+                        height: '100%', 
                         display: 'flex', 
-                        flexDirection: 'column',
                         alignItems: 'center', 
                         justifyContent: 'center',
-                        bgcolor: getTypeColor(realEstateType),
-                        color: 'white',
-                        gap: 1
+                        flexDirection: 'column'
                     }}
                 >
-                    <Typography variant="h1" sx={{ fontSize: '3rem', lineHeight: 1 }}>
-                        {getTypeEmoji(realEstateType)}
+                    <Typography 
+                        sx={{ 
+                            fontSize: '4rem', 
+                            color: 'white',
+                            lineHeight: 1
+                        }}
+                    >
+                        {getTypeEmoji(articleType)}
                     </Typography>
-                    <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                        {realEstateType}
+                    <Typography 
+                        sx={{ 
+                            fontSize: '1rem', 
+                            color: 'white',
+                            mt: 1
+                        }}
+                    >
+                        {name}
                     </Typography>
                 </Box>
             )}

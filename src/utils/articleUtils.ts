@@ -1,152 +1,121 @@
 import type { ArticleResponse } from "../types/article";
 
-export const getTypeColor = (type: string) => {
+export const getTypeColor = (type: string): string => {
     switch (type) {
-        case "아파트":
-            return "#4CAF50";
-        case "오피스텔":
-            return "#2196F3";
-        case "빌라":
-            return "#9C27B0";
-        case "아파트분양권":
-            return "#FF9800";
-        case "오피스텔분양권":
-            return "#00BCD4";
-        case "재건축":
-            return "#F44336";
-        case "전원주택":
-            return "#8BC34A";
-        case "단독/다가구":
-            return "#673AB7";
-        case "상가주택":
-            return "#E91E63";
-        case "한옥주택":
-            return "#795548";
-        case "재개발":
-            return "#FF5722";
-        case "원룸":
-            return "#03A9F4";
-        case "고시원":
-            return "#9E9E9E";
-        case "상가":
-            return "#FFC107";
-        case "사무실":
-            return "#3F51B5";
-        case "공장/창고":
-            return "#607D8B";
-        case "건물":
-            return "#009688";
-        case "토지":
-            return "#CDDC39";
-        case "지식산업센터":
-            return "#00BCD4";
+        case '아파트':
+            return '#2196f3';
+        case '오피스텔':
+            return '#4caf50';
+        case '빌라':
+            return '#ff9800';
+        case '단독/다가구':
+            return '#9c27b0';
+        case '상가':
+            return '#f44336';
+        case '사무실':
+            return '#607d8b';
+        case '원룸':
+            return '#00bcd4';
+        case '고시원':
+            return '#795548';
         default:
-            return "#757575";
+            return '#9e9e9e';
     }
 };
 
-export const getTradeTypeColor = (type: string) => {
+export const getTradeTypeColor = (type: string): string => {
     switch (type) {
-        case "매매":
-            return "#E91E63";
-        case "전세":
-            return "#2196F3";
-        case "월세":
-            return "#4CAF50";
-        case "단기임대":
-            return "#FF9800";
+        case '매매':
+            return 'primary';
+        case '전세':
+            return 'success';
+        case '월세':
+            return 'warning';
+        case '단기임대':
+            return 'info';
         default:
-            return "#757575";
+            return 'default';
     }
 };
 
 export const getTypeEmoji = (type: string): string => {
     switch (type) {
-        case "아파트":
-            return "🏢";
-        case "오피스텔":
-            return "🏬";
-        case "빌라":
-            return "🏠";
-        case "아파트분양권":
-            return "📄";
-        case "오피스텔분양권":
-            return "📄";
-        case "재건축":
-            return "🏗️";
-        case "전원주택":
-            return "🏡";
-        case "단독/다가구":
-            return "🏘️";
-        case "상가주택":
-            return "🏪";
-        case "한옥주택":
-            return "🏯";
-        case "재개발":
-            return "🏗️";
-        case "원룸":
-            return "🏠";
-        case "고시원":
-            return "🏢";
-        case "상가":
-            return "🏪";
-        case "사무실":
-            return "🏢";
-        case "공장/창고":
-            return "🏭";
-        case "건물":
-            return "🏢";
-        case "토지":
-            return "🌳";
-        case "지식산업센터":
-            return "🏢";
+        case '아파트':
+            return '🏢';
+        case '오피스텔':
+            return '🏬';
+        case '빌라':
+            return '🏠';
+        case '단독/다가구':
+            return '🏡';
+        case '상가':
+            return '🏪';
+        case '사무실':
+            return '🏢';
+        case '원룸':
+            return '🏠';
+        case '고시원':
+            return '🏠';
         default:
-            return "🏠";
+            return '🏠';
     }
 };
 
-export const isZeroPrice = (price: number | string | null): boolean => {
-    if (price === null || price === undefined) return false;
-    if (typeof price === 'string') {
-        return price === "0" || price === "0.0" || price === "0.00";
+export const convertKoreanPriceToNumber = (price: string): number => {
+    if (!price) return 0;
+    
+    // 숫자만 추출
+    const numbers = price.match(/\d+/g);
+    if (!numbers) return 0;
+    
+    let result = 0;
+    const priceStr = price.replace(/\s/g, '');
+    
+    // 억 단위 처리
+    const eokIndex = priceStr.indexOf('억');
+    if (eokIndex !== -1) {
+        const eokStr = priceStr.substring(0, eokIndex);
+        const eokNum = parseInt(eokStr.replace(/[^0-9]/g, ''));
+        result += eokNum * 100000000;
     }
-    return price === 0;
+    
+    // 만 단위 처리
+    const manIndex = priceStr.indexOf('만');
+    if (manIndex !== -1) {
+        const manStr = priceStr.substring(eokIndex !== -1 ? eokIndex + 1 : 0, manIndex);
+        const manNum = parseInt(manStr.replace(/[^0-9]/g, ''));
+        result += manNum * 10000;
+    }
+    
+    return result;
 };
 
-export const formatPrice = (price: number | string | null): string => {
-    if (price === null || price === undefined) return "-"
+export const isZeroPrice = (price: number): boolean => {
+    return !price || price === 0;
+};
+
+export const formatPrice = (price: number): string => {
+    if (!price) return '0';
+    const priceStr = price.toString();
+    const length = priceStr.length;
     
-    if (typeof price === 'string') {
-        const numPrice = parseFloat(price);
-        if (isNaN(numPrice)) return price;
-        price = numPrice;
-    }
-    
-    if (price < 10000) {
-        return `${price}만원`;
+    if (length <= 4) {
+        return `${priceStr}만원`;
+    } else if (length <= 8) {
+        const man = priceStr.slice(-4);
+        const eok = priceStr.slice(0, length - 4);
+        return `${eok}억 ${man !== '0000' ? man + '만' : ''}원`;
     } else {
-        const eok = Math.floor(price / 10000);
-        const man = price % 10000;
-        
-        if (man === 0) {
-            return `${eok}억원`;
-        } else {
-            return `${eok}억 ${man}만원`;
-        }
+        const man = priceStr.slice(-4);
+        const eok = priceStr.slice(-8, -4);
+        const cheok = priceStr.slice(0, length - 8);
+        return `${cheok}천억 ${eok !== '0000' ? eok + '억' : ''} ${man !== '0000' ? man + '만' : ''}원`;
     }
 };
 
-export const formatDate = (dateString: string): string => {
-    if (!dateString) return "-"
-    if (dateString.match(/^\d{2}\.\d{2}\.\d{2}\.$/)) {
-        return dateString;
-    }
-    const date = new Date(dateString)
-    return date.toLocaleDateString("ko-KR", {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    }).replace(/년 /g, '년 ').replace(/월 /g, '월 ').replace(/일$/, '일');
+export const formatDate = (date: string): string => {
+    if (!date) return '-';
+    return date.split('T')[0].replace(/-/g, '.');
 };
 
 export const validateCoordinates = (lat: number | string, lng: number | string): boolean => {
@@ -156,22 +125,10 @@ export const validateCoordinates = (lat: number | string, lng: number | string):
     return !isNaN(numLat) && !isNaN(numLng) && 
            numLat >= -90 && numLat <= 90 && 
            numLng >= -180 && numLng <= 180;
-};
-
-export const convertKoreanPriceToNumber = (price: string): number => {
-    if (!price) return 0;
-    
-    const match = price.match(/(\d+)억\s*(\d+)?만원/);
-    if (match) {
-        const eok = parseInt(match[1]) * 10000;
-        const man = match[2] ? parseInt(match[2]) : 0;
-        return eok + man;
-    }
-    
-    const manMatch = price.match(/(\d+)만원/);
-    if (manMatch) {
-        return parseInt(manMatch[1]);
-    }
-    
-    return 0;
 }; 
+
+export const withImageSize = (url?: string, width: number = 1000): string | undefined => {
+    if (!url) return undefined;
+    const separator = url.includes('?');
+    return `${url}${separator}w=${width}`;
+};

@@ -1,7 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { Box, Alert, Popover, Typography, Button } from '@mui/material';
 import type { ArticleResponse } from '../../types/article';
 import MarkerPopup from './MarkerPopup';
+import { formatPrice, getTypeColor, getTypeEmoji, getTradeTypeColor } from '../../utils/articleUtils';
+import ArticleDetail from '../ArticleDetail';
 
 interface Region {
     id: number;
@@ -17,28 +19,26 @@ interface MapViewProps {
     articles: ArticleResponse[];
     selectedArticle: ArticleResponse | null;
     onArticleClick: (article: ArticleResponse) => void;
-    getTypeColor: (type: string) => string;
-    getTypeEmoji: (type: string) => string;
-    getTradeTypeColor: (type: string) => string;
-    formatPrice: (price: number | string | null) => string;
     selectedRegions?: {
         city: string;
         district: string;
         neighborhoods: string[];
     };
     allRegions?: Region[];
+    initialCenter?: {lat: number, lng: number};
+    initialZoom?: number;
+    fixedInitialView?: boolean;
 }
 
 const MapView = ({
     articles,
     selectedArticle,
     onArticleClick,
-    getTypeColor,
-    getTypeEmoji,
-    getTradeTypeColor,
-    formatPrice,
     selectedRegions,
-    allRegions
+    allRegions,
+    initialCenter,
+    initialZoom,
+    fixedInitialView
 }: MapViewProps) => {
     const mapRef = useRef<HTMLDivElement>(null);
     const mapInstance = useRef<any>(null);
@@ -51,6 +51,7 @@ const MapView = ({
     const [mapErrorMessage, setMapErrorMessage] = useState<string | null>(null);
     const [popoverArticle, setPopoverArticle] = useState<ArticleResponse | null>(null);
     const [anchorPosition, setAnchorPosition] = useState<{ top: number, left: number } | null>(null);
+    const [mapBounds, setMapBounds] = useState<any>(null);
     const KAKAO_APP_KEY = import.meta.env.VITE_KAKAO_APP_KEY;
     
     // 카카오맵 스크립트 로드
@@ -107,13 +108,27 @@ const MapView = ({
             console.log('Initializing map...');
             const container = mapRef.current;
             const options = {
-                center: new (window as any).kakao.maps.LatLng(37.5665, 126.9780),
-                level: 8
+                center: new (window as any).kakao.maps.LatLng(
+                    initialCenter?.lat || 37.5665, 
+                    initialCenter?.lng || 126.9780
+                ),
+                level: initialZoom || 8
             };
             
             const kakaoMap = new (window as any).kakao.maps.Map(container, options);
             mapInstance.current = kakaoMap;
             setMap(kakaoMap);
+
+            // 초기 지도 경계 설정
+            const bounds = kakaoMap.getBounds();
+            setMapBounds(bounds);
+
+            // 지도 이동 완료 시 경계 업데이트 이벤트 추가
+            (window as any).kakao.maps.event.addListener(kakaoMap, 'idle', () => {
+                const newBounds = kakaoMap.getBounds();
+                setMapBounds(newBounds);
+                console.log('Map bounds updated');
+            });
 
             // 인포윈도우 초기화
             const infoWindowInstance = new (window as any).kakao.maps.InfoWindow({
@@ -164,7 +179,90 @@ const MapView = ({
         } catch (error) {
             console.error('Error initializing map:', error);
         }
-    }, [isScriptLoaded]);
+    }, [isScriptLoaded, initialCenter, initialZoom]);
+
+    // 거래 유형에 따른 마커 SVG를 생성하는 함수
+    const getMarkerSvg = useCallback((article: ArticleResponse): string => {
+        // 가격 숫자로 변환
+        const numPrice = typeof article.priceSale === 'string' ? parseFloat(article.priceSale) : (article.priceSale || 0);
+        const numRentPrice = article.priceRent || 0;
+        
+        // 거래 유형 판단
+        let displayType;
+        if (numPrice > 0 && numRentPrice === 0) {
+            displayType = "매매"; // 원형
+        } else if (numPrice > 0 && numRentPrice > 0) {
+            displayType = "전세"; // 정사각형
+        } else if (numPrice === 0 && numRentPrice > 0) {
+            displayType = "월세"; // 정삼각형
+        } else {
+            displayType = article.tradeType; // 기본값은 원래 tradeType
+        }
+        
+        const color = getTypeColor(article.articleType);
+        const emoji = getTypeEmoji(article.articleType);
+        
+        // 선택된 매물인지 확인하고 opacity 설정
+        const isSelected = selectedArticle && selectedArticle.id === article.id;
+        const opacity = isSelected ? 0.7 : 1.0;
+        
+        if (displayType === "전세") {
+            // 정사각형 - iOS 스타일 둥근 모서리 추가
+            return `<svg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="4" width="42" height="42" rx="10" ry="10" fill="${color}" stroke="white" stroke-width="2" opacity="${opacity}"/><text x="25" y="32" font-size="24" text-anchor="middle" fill="white">${emoji}</text></svg>`;
+        } else if (displayType === "월세") {
+            // 정삼각형 - 둥근 모서리를 위해 path 사용
+            return `<svg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg"><defs><filter id="round-triangle"><feGaussianBlur in="SourceGraphic" stdDeviation="1.3" result="blur"/><feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 19 -9" result="rounded"/><feComposite in="SourceGraphic" in2="rounded" operator="atop"/></filter></defs><polygon points="25,4 46,42 4,42" fill="${color}" stroke="white" stroke-width="2" filter="url(#round-triangle)" opacity="${opacity}"/><text x="25" y="35" font-size="24" text-anchor="middle" fill="white">${emoji}</text></svg>`;
+        } else {
+            // 원형 (매매 또는 기본값)
+            return `<svg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg"><circle cx="25" cy="25" r="23" fill="${color}" stroke="white" stroke-width="2" opacity="${opacity}"/><text x="25" y="32" font-size="24" text-anchor="middle" fill="white">${emoji}</text></svg>`;
+        }
+    }, [selectedArticle]);
+
+    // 현재 마우스 오버된 마커의 위치를 화면 좌표로 업데이트하는 함수
+    const updateHoveredMarkerPosition = useCallback(() => {
+        if (!hoveredArticle || !mapInstance.current || !mapRef.current) return;
+        
+        // 현재 hoveredArticle의 위치 찾기
+        const article = articles.find(a => a.id === hoveredArticle.id);
+        if (!article || !article.latitude || !article.longitude) return;
+        
+        const lat = typeof article.latitude === 'number' ? article.latitude : parseFloat(article.latitude);
+        const lng = typeof article.longitude === 'number' ? article.longitude : parseFloat(article.longitude);
+        
+        if (isNaN(lat) || isNaN(lng)) return;
+        
+        const position = new (window as any).kakao.maps.LatLng(lat, lng);
+        const projection = mapInstance.current.getProjection();
+        
+        if (projection) {
+            const point = projection.pointFromCoords(position);
+            const mapRect = mapRef.current.getBoundingClientRect();
+            
+            // 마커 위치를 화면 좌표로 변환
+            const screenX = mapRect.left + point.x;
+            const screenY = mapRect.top + point.y - 10;
+            
+            console.log('Updating marker position:', { screenX, screenY });
+            setAnchorPosition({ top: screenY, left: screenX });
+        }
+    }, [hoveredArticle, articles, mapInstance, mapRef]);
+
+    // 현재 지도 경계 내에 있는 매물만 필터링하는 함수
+    const filterVisibleArticles = useCallback((articles: ArticleResponse[]) => {
+        if (!mapBounds) return articles;
+        
+        return articles.filter(article => {
+            if (!article.latitude || !article.longitude) return false;
+            
+            const lat = typeof article.latitude === 'number' ? article.latitude : parseFloat(article.latitude);
+            const lng = typeof article.longitude === 'number' ? article.longitude : parseFloat(article.longitude);
+            
+            if (isNaN(lat) || isNaN(lng)) return false;
+            
+            const position = new (window as any).kakao.maps.LatLng(lat, lng);
+            return mapBounds.contain(position);
+        });
+    }, [mapBounds]);
 
     // 마커 업데이트 (articles 변경 시)
     useEffect(() => {
@@ -192,55 +290,67 @@ const MapView = ({
 
                 const markerPosition = new (window as any).kakao.maps.LatLng(lat, lng);
                 
-                // 마커 이미지 생성
-                const markerImage = new (window as any).kakao.maps.MarkerImage(
-                    `data:image/svg+xml,${encodeURIComponent(`
-                        <svg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="25" cy="25" r="23" fill="${getTypeColor(article.realEstateType)}" stroke="white" stroke-width="2" />
-                            <text x="25" y="32" font-size="24" text-anchor="middle" fill="white">
-                                ${getTypeEmoji(article.realEstateType)}
-                            </text>
-                        </svg>
-                    `)}`,
-                    new (window as any).kakao.maps.Size(50, 50),
-                    { offset: new (window as any).kakao.maps.Point(25, 25) }
-                );
-                
-                // 마커 생성
-                const marker = new (window as any).kakao.maps.Marker({
-                    position: markerPosition,
-                    image: markerImage, // 생성된 마커 이미지 설정
-                    map: null, // 클러스터러에 추가될 것이므로 map 속성은 null로 설정
-                    title: article.name
-                });
+                try {
+                    // 마커 이미지 생성 - 거래 유형에 따라 다른 도형 사용
+                    const svgString = getMarkerSvg(article);
+                    // 개행 문자와 공백 제거로 URI 인코딩 오류 방지
+                    const cleanedSvg = svgString.replace(/\n\s*/g, '');
+                    const markerImage = new (window as any).kakao.maps.MarkerImage(
+                        `data:image/svg+xml;base64,${btoa(cleanedSvg)}`,
+                        new (window as any).kakao.maps.Size(50, 50),
+                        { offset: new (window as any).kakao.maps.Point(25, 25) }
+                    );
+                    
+                    // 마커 생성
+                    const marker = new (window as any).kakao.maps.Marker({
+                        position: markerPosition,
+                        image: markerImage, // 생성된 마커 이미지 설정
+                        map: null, // 클러스터러에 추가될 것이므로 map 속성은 null로 설정
+                        title: article.articleName
+                    });
 
-                // 마커에 이벤트 등록
-                (window as any).kakao.maps.event.addListener(marker, 'mouseover', () => {
-                    setHoveredArticle(article);
-                });
-
-                (window as any).kakao.maps.event.addListener(marker, 'mouseout', () => {
-                    setHoveredArticle(null);
-                });
-
-                (window as any).kakao.maps.event.addListener(marker, 'click', () => {
-                    if (mapInstance.current && markerPosition) {
-                        const projection = mapInstance.current.getProjection && mapInstance.current.getProjection();
-                        let containerPoint = { x: 0, y: 0 };
-                        if (projection && projection.pointFromCoords) {
-                            containerPoint = projection.pointFromCoords(markerPosition);
-                        } else if (mapRef.current) {
-                            const rect = mapRef.current.getBoundingClientRect();
-                            containerPoint = { x: rect.width / 2, y: rect.height / 2 };
+                    // 마커에 이벤트 등록
+                    (window as any).kakao.maps.event.addListener(marker, 'mouseover', () => {
+                        setHoveredArticle(article);
+                        
+                        // 마커 위치를 화면 좌표로 변환
+                        if (mapInstance.current && mapRef.current) {
+                            const position = marker.getPosition();
+                            const projection = mapInstance.current.getProjection();
+                            if (projection) {
+                                const point = projection.pointFromCoords(position);
+                                const mapRect = mapRef.current.getBoundingClientRect();
+                                
+                                // 마커 위치를 화면 좌표로 변환
+                                const screenX = mapRect.left + point.x;
+                                const screenY = mapRect.top + point.y - 10; // 마커 위에 표시하기 위해 10px 위로
+                                
+                                console.log('Initial marker position:', { screenX, screenY });
+                                setAnchorPosition({ top: screenY, left: screenX });
+                            }
                         }
-                        setAnchorPosition({ top: containerPoint.y, left: containerPoint.x });
-                        setPopoverArticle(article);
-                    }
-                    mapInstance.current.setCenter(markerPosition);
-                    mapInstance.current.setLevel(3);
-                });
+                    });
 
-                newMarkers.push(marker);
+                    (window as any).kakao.maps.event.addListener(marker, 'mouseout', () => {
+                        setHoveredArticle(null);
+                        setAnchorPosition(null);
+                    });
+
+                    (window as any).kakao.maps.event.addListener(marker, 'click', () => {
+                        // 마커 클릭 시 해당 매물의 상세 정보를 보여줍니다
+                        onArticleClick(article);
+                        
+                        // 선택된 마커로 지도 이동
+                        if (mapInstance.current && markerPosition) {
+                            mapInstance.current.setCenter(markerPosition);
+                            mapInstance.current.setLevel(3);
+                        }
+                    });
+
+                    newMarkers.push(marker);
+                } catch (error) {
+                    console.error('Error creating marker for article:', article.id, error);
+                }
             });
 
             // 클러스터러에 마커 추가
@@ -258,7 +368,7 @@ const MapView = ({
         } catch (error) {
             console.error('Error updating markers:', error);
         }
-    }, [articles, selectedArticle, isMapLoaded, clusterer, infoWindow, getTypeColor, getTypeEmoji, getTradeTypeColor, formatPrice, onArticleClick]);
+    }, [articles, selectedArticle, isMapLoaded, clusterer, infoWindow, onArticleClick, getMarkerSvg]);
 
     // 선택된 매물이 변경될 때 해당 위치로 이동
     useEffect(() => {
@@ -272,7 +382,7 @@ const MapView = ({
             
             const position = new (window as any).kakao.maps.LatLng(lat, lng);
             mapInstance.current.setCenter(position);
-            mapInstance.current.setLevel(3);
+            mapInstance.current.setLevel(3); // 맵 줌 레벨 3으로 설정
         } catch (error) {
             console.error('Error focusing on selected article:', error);
         }
@@ -330,6 +440,122 @@ const MapView = ({
         }
     }, [isMapLoaded, selectedRegions, allRegions]);
 
+    // 지도 이동/줌 이벤트 처리
+    useEffect(() => {
+        if (!isMapLoaded || !mapInstance.current) return;
+        
+        // 지도 이동/줌 시 팝오버 위치 업데이트
+        const moveHandler = () => {
+            if (hoveredArticle) {
+                updateHoveredMarkerPosition();
+            }
+        };
+        
+        (window as any).kakao.maps.event.addListener(mapInstance.current, 'drag', moveHandler);
+        (window as any).kakao.maps.event.addListener(mapInstance.current, 'zoom_changed', moveHandler);
+        
+        return () => {
+            if (mapInstance.current) {
+                (window as any).kakao.maps.event.removeListener(mapInstance.current, 'drag', moveHandler);
+                (window as any).kakao.maps.event.removeListener(mapInstance.current, 'zoom_changed', moveHandler);
+            }
+        };
+    }, [isMapLoaded, hoveredArticle, updateHoveredMarkerPosition]);
+
+    // 마커 렌더링 (지도가 로드되고 articles가 있을 때)
+    useEffect(() => {
+        if (!map || !clusterer || !articles.length || !mapBounds) return;
+        
+        console.log('Rendering markers for', articles.length, 'articles');
+        
+        // 기존 마커 모두 제거
+        clusterer.clear();
+        
+        // 현재 지도 영역에 보이는 매물만 필터링
+        const visibleArticles = filterVisibleArticles(articles);
+        console.log('Visible articles:', visibleArticles.length, '/', articles.length);
+        
+        // 마커와 인포윈도우 생성
+        const markers: any[] = [];
+        const markerInfoMap = new Map();
+        
+        visibleArticles.forEach(article => {
+            if (!article.latitude || !article.longitude) return;
+            
+            const lat = typeof article.latitude === 'number' ? article.latitude : parseFloat(article.latitude);
+            const lng = typeof article.longitude === 'number' ? article.longitude : parseFloat(article.longitude);
+            
+            if (isNaN(lat) || isNaN(lng)) return;
+            
+            const position = new (window as any).kakao.maps.LatLng(lat, lng);
+            
+            try {
+                // 마커 아이콘 생성 (SVG로 생성하고 Base64 인코딩)
+                const svgString = getMarkerSvg(article);
+                // URI malformed 에러 방지를 위한 안전한 인코딩
+                const encodedSvg = encodeURIComponent(svgString.replace(/\n\s*/g, ''));
+                const svgUrl = 'data:image/svg+xml;charset=utf-8,' + encodedSvg;
+                
+                const marker = new (window as any).kakao.maps.Marker({
+                    position: position,
+                    image: new (window as any).kakao.maps.MarkerImage(
+                        svgUrl,
+                        new (window as any).kakao.maps.Size(50, 50),
+                        { offset: new (window as any).kakao.maps.Point(25, 25) }
+                    ),
+                    clickable: true,
+                    title: article.articleName
+                });
+                
+                // 마커 정보 저장 (추후 이벤트에서 사용)
+                markerInfoMap.set(marker, article);
+                
+                // 마커 클릭 이벤트 추가
+                (window as any).kakao.maps.event.addListener(marker, 'click', () => {
+                    onArticleClick(article);
+                });
+                
+                // 마커 마우스오버 이벤트 추가
+                (window as any).kakao.maps.event.addListener(marker, 'mouseover', () => {
+                    setHoveredArticle(article);
+                    setPopoverArticle(article);
+                });
+                
+                // 마커 마우스아웃 이벤트 추가
+                (window as any).kakao.maps.event.addListener(marker, 'mouseout', () => {
+                    setHoveredArticle(null);
+                    setPopoverArticle(null);
+                });
+                
+                markers.push(marker);
+            } catch (error) {
+                console.error('Error creating marker for article:', article.id, error);
+            }
+        });
+        
+        // 생성한 마커를 클러스터러에 추가
+        clusterer.addMarkers(markers);
+        
+        // 지도 범위 조정 (마커가 모두 보이게) - 초기 로드 또는 필터 변경 시에만 적용
+        if (markers.length > 0 && !fixedInitialView) {
+            const bounds = new (window as any).kakao.maps.LatLngBounds();
+            markers.forEach(marker => {
+                bounds.extend(marker.getPosition());
+            });
+            map.setBounds(bounds);
+        }
+        
+        return () => {
+            // 이벤트 리스너 제거 및 마커 정보 맵 초기화
+            markers.forEach(marker => {
+                (window as any).kakao.maps.event.removeListener(marker, 'click');
+                (window as any).kakao.maps.event.removeListener(marker, 'mouseover');
+                (window as any).kakao.maps.event.removeListener(marker, 'mouseout');
+            });
+            markerInfoMap.clear();
+        };
+    }, [map, clusterer, articles, onArticleClick, getMarkerSvg, fixedInitialView, mapBounds, filterVisibleArticles, selectedArticle]);
+
     return (
         <>
             {mapErrorMessage && (
@@ -339,60 +565,31 @@ const MapView = ({
             )}
             <Box sx={{ width: '100%', height: '100%', position: 'relative' }}>
                 <div ref={mapRef} style={{ width: '100%', height: '100%' }} />
-                {hoveredArticle && (
-                    <Box sx={{ 
-                        position: 'absolute', 
-                        top: 20, 
-                        left: 20, 
+                <Popover
+                    open={Boolean(hoveredArticle) && Boolean(anchorPosition)}
+                    anchorReference="anchorPosition"
+                    anchorPosition={anchorPosition || { top: 0, left: 0 }}
+                    onClose={() => {
+                        setHoveredArticle(null);
+                        setAnchorPosition(null);
+                    }}
+                    anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+                    transformOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+                    sx={{ 
                         pointerEvents: 'none',
-                        zIndex: 999
-                    }}>
-                        <MarkerPopup
-                            article={hoveredArticle}
-                            getTypeColor={getTypeColor}
-                            getTypeEmoji={getTypeEmoji}
-                            getTradeTypeColor={getTradeTypeColor}
-                            formatPrice={formatPrice}
-                        />
-                    </Box>
-                )}
+                        zIndex: 9999,
+                        '& .MuiPaper-root': {
+                            maxWidth: 'none',
+                            opacity: 0.8
+                        }
+                    }}
+                    disableRestoreFocus
+                >
+                    {hoveredArticle && (
+                        <MarkerPopup article={hoveredArticle} />
+                    )}
+                </Popover>
             </Box>
-            <Popover
-                open={Boolean(popoverArticle)}
-                anchorReference="anchorPosition"
-                anchorPosition={anchorPosition ? { top: anchorPosition.top, left: anchorPosition.left } : { top: 0, left: 0 }}
-                onClose={() => setPopoverArticle(null)}
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-                transformOrigin={{ vertical: 'top', horizontal: 'center' }}
-            >
-                {popoverArticle && (
-                    <Box sx={{ p: 2, maxWidth: 300 }}>
-                        <Typography variant="h6">
-                            {popoverArticle.name || popoverArticle.buildingName || '매물'}
-                        </Typography>
-                        <Typography variant="subtitle2">
-                            {popoverArticle.cortarName || ''}
-                        </Typography>
-                        <Typography variant="body1" sx={{ mt: 1 }}>
-                            {popoverArticle.tradeType}: {formatPrice(popoverArticle.price)}
-                        </Typography>
-                        {(popoverArticle.tradeType === "전세" || popoverArticle.tradeType === "월세" || popoverArticle.tradeType === "단기임대") && popoverArticle.rentPrice > 0 && (
-                            <Typography variant="body2" sx={{ mt: 1 }}>
-                                월세: {formatPrice(popoverArticle.rentPrice)}
-                            </Typography>
-                        )}
-                        <Button
-                            variant="contained"
-                            color="primary"
-                            fullWidth
-                            sx={{ mt: 2 }}
-                            onClick={() => { onArticleClick(popoverArticle); setPopoverArticle(null); }}
-                        >
-                            상세정보 보기
-                        </Button>
-                    </Box>
-                )}
-            </Popover>
         </>
     );
 };

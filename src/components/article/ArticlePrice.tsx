@@ -3,20 +3,29 @@ import { formatPrice, isZeroPrice } from '../../utils/articleUtils';
 
 interface ArticlePriceProps {
     tradeType: string;
-    price: string | number | null;
-    rentPrice?: number;
+    priceSale: string | number | null;
+    priceRent?: number;
+    priceRoomMin?: number;
+    priceRoomMax?: number;
 }
 
-const ArticlePrice = ({ tradeType, price, rentPrice }: ArticlePriceProps) => {
+const ArticlePrice = ({ tradeType, priceSale, priceRent, priceRoomMin, priceRoomMax }: ArticlePriceProps) => {
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-            <Typography variant="subtitle1" fontWeight="bold">
-                {tradeType === "매매" ? "매매가" : "보증금"} {isZeroPrice(price) ? "X" : formatPrice(price)}
-            </Typography>
-            {(tradeType === "전세" || tradeType === "월세" || tradeType === "단기임대") && rentPrice && rentPrice > 0 && (
-                <Typography variant="body2" color="text.secondary">
-                    월세 {formatPrice(rentPrice)}
+            {tradeType === "단기임대" ? (
+                <Typography variant="subtitle1" fontWeight="bold">
+                    {priceRoomMin && priceRoomMax 
+                        ? `단기임대 ${formatPrice(priceRoomMin)}원 ~ ${formatPrice(priceRoomMax)}원` 
+                        : `단기임대 가격 정보 없음`}
                 </Typography>
+            ) : isZeroPrice(priceSale) ? (
+                <Typography variant="subtitle1" fontWeight="bold">월세 {formatPrice(priceRent)}</Typography>
+            ) : (
+                <>
+                    <Typography variant="subtitle1" fontWeight="bold">
+                        {tradeType === "매매" ? `매매가 ${formatPrice(priceSale)}원` : `보증금 ${formatPrice(priceSale)}원 / 월세 ${formatPrice(priceRent)}원`}
+                    </Typography>
+                </>
             )}
         </Box>
     );
