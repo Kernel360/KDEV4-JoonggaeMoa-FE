@@ -208,7 +208,7 @@ const ContractList = () => {
     })
 
     return (
-        <Box sx={{ flexGrow: 1, bgcolor: "#f5f5f5", minHeight: "100vh" }}>
+        <Box sx={{ flexGrow: 1, minHeight: "100vh" }}>
             <Container
                 maxWidth="lg"
                 sx={{
@@ -231,8 +231,8 @@ const ContractList = () => {
                         variant="contained"
                         startIcon={<Add />}
                         sx={{
-                            bgcolor: "#000",
-                            "&:hover": { bgcolor: "#333" },
+                            bgcolor: "#007ea7",
+                            "&:hover": { bgcolor: "#003459" },
                         }}
                         onClick={() => navigate("/contract/create")}
                     >
@@ -240,7 +240,7 @@ const ContractList = () => {
                     </Button>
                 </Box>
 
-                <Paper elevation={0} sx={{ mb: 3, p: 3, borderRadius: 2 }}>
+                <Paper elevation={0} sx={{ mb: 3, p: 3, borderRadius: 2, bgcolor: "#ffffff", boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)' }}>
                     <Box sx={{ display: "flex", gap: 2 }}>
                         <TextField
                             placeholder="임대인 또는 임차인 이름으로 검색"
@@ -285,16 +285,67 @@ const ContractList = () => {
                         </Button>
                     </Paper>
                 ) : (
-                    <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2, overflow: "hidden" }}>
+                    <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2, overflow: "hidden", boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)' }}>
                         <Table>
                             <TableHead>
-                                <TableRow sx={{ bgcolor: "#f9f9f9" }}>
-                                    <TableCell sx={{ fontWeight: 500 }}>계약번호</TableCell>
-                                    <TableCell sx={{ fontWeight: 500 }}>임대인 이름</TableCell>
-                                    <TableCell sx={{ fontWeight: 500 }}>임차인 이름</TableCell>
-                                    <TableCell sx={{ fontWeight: 500 }}>계약일</TableCell>
-                                    <TableCell sx={{ fontWeight: 500 }}>만료일</TableCell>
-                                    <TableCell sx={{ fontWeight: 500 }}>상태</TableCell>
+                                <TableRow sx={{ 
+                                    backgroundColor: '#e9ecef',
+                                    borderBottom: '1px solid #e9ecef'
+                                }}>
+                                    <TableCell sx={{ 
+                                        padding: '12px 16px',
+                                        textAlign: 'left',
+                                        fontSize: '0.875rem',
+                                        fontWeight: 500,
+                                        color: '#003459'
+                                    }}>
+                                        계약번호
+                                    </TableCell>
+                                    <TableCell sx={{ 
+                                        padding: '12px 16px',
+                                        textAlign: 'left',
+                                        fontSize: '0.875rem',
+                                        fontWeight: 500,
+                                        color: '#003459'
+                                    }}>
+                                        임대인 이름
+                                    </TableCell>
+                                    <TableCell sx={{ 
+                                        padding: '12px 16px',
+                                        textAlign: 'left',
+                                        fontSize: '0.875rem',
+                                        fontWeight: 500,
+                                        color: '#003459'
+                                    }}>
+                                        임차인 이름
+                                    </TableCell>
+                                    <TableCell sx={{ 
+                                        padding: '12px 16px',
+                                        textAlign: 'left',
+                                        fontSize: '0.875rem',
+                                        fontWeight: 500,
+                                        color: '#003459'
+                                    }}>
+                                        계약일
+                                    </TableCell>
+                                    <TableCell sx={{ 
+                                        padding: '12px 16px',
+                                        textAlign: 'left',
+                                        fontSize: '0.875rem',
+                                        fontWeight: 500,
+                                        color: '#003459'
+                                    }}>
+                                        만료일
+                                    </TableCell>
+                                    <TableCell sx={{ 
+                                        padding: '12px 16px',
+                                        textAlign: 'left',
+                                        fontSize: '0.875rem',
+                                        fontWeight: 500,
+                                        color: '#003459'
+                                    }}>
+                                        상태
+                                    </TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -307,14 +358,56 @@ const ContractList = () => {
                                                     key={contract.id}
                                                     hover
                                                     onClick={() => handleViewContract(contract.id)}
-                                                    sx={{ cursor: "pointer" }}
+                                                    sx={{ 
+                                                        cursor: "pointer",
+                                                        borderBottom: '1px solid #e9ecef',
+                                                        backgroundColor: 'transparent',
+                                                        transition: 'background-color 0.2s',
+                                                        '&:hover': {
+                                                            backgroundColor: '#f8f9fa'
+                                                        }
+                                                    }}
                                                 >
-                                                    <TableCell>{contract.id.slice(0,8)} {contract.id.length > 8 && '...'}</TableCell>
-                                                    <TableCell>{contract.landlordName}</TableCell>
-                                                    <TableCell>{contract.tenantName}</TableCell>
-                                                    <TableCell>{formatDate(contract.startedAt)}</TableCell>
-                                                    <TableCell>{formatDate(contract.expiredAt)}</TableCell>
-                                                    <TableCell>
+                                                    <TableCell sx={{ 
+                                                        padding: '12px 16px',
+                                                        fontSize: '0.875rem',
+                                                        color: '#00171f'
+                                                    }}>
+                                                        {contract.id.slice(0,8)} {contract.id.length > 8 && '...'}
+                                                    </TableCell>
+                                                    <TableCell sx={{ 
+                                                        padding: '12px 16px',
+                                                        fontSize: '0.875rem',
+                                                        color: '#00171f'
+                                                    }}>
+                                                        {contract.landlordName}
+                                                    </TableCell>
+                                                    <TableCell sx={{ 
+                                                        padding: '12px 16px',
+                                                        fontSize: '0.875rem',
+                                                        color: '#00171f'
+                                                    }}>
+                                                        {contract.tenantName}
+                                                    </TableCell>
+                                                    <TableCell sx={{ 
+                                                        padding: '12px 16px',
+                                                        fontSize: '0.875rem',
+                                                        color: '#00171f'
+                                                    }}>
+                                                        {formatDate(contract.startedAt)}
+                                                    </TableCell>
+                                                    <TableCell sx={{ 
+                                                        padding: '12px 16px',
+                                                        fontSize: '0.875rem',
+                                                        color: '#00171f'
+                                                    }}>
+                                                        {formatDate(contract.expiredAt)}
+                                                    </TableCell>
+                                                    <TableCell sx={{ 
+                                                        padding: '12px 16px',
+                                                        fontSize: '0.875rem',
+                                                        color: '#00171f'
+                                                    }}>
                                                         <Chip
                                                             label={statusConfig[status as keyof typeof statusConfig].label}
                                                             size="small"
@@ -326,8 +419,7 @@ const ContractList = () => {
                                                     </TableCell>
                                                 </TableRow>
                                             )
-                                        })
-                                        }
+                                        })}
                                         <TableRow>
                                             <TableCell 
                                                 colSpan={7} 
@@ -387,7 +479,7 @@ const ContractList = () => {
                 </Alert>
             </Snackbar>
 
-            <Box sx={{ bgcolor: "#fff", p: 2, textAlign: "center", mt: 4 }}>
+            <Box sx={{ p: 2, textAlign: "center", mt: 4 }}>
                 <Typography variant="caption" color="textSecondary">
                     © 2024 Customer Management System. All rights reserved.
                 </Typography>

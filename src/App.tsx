@@ -20,7 +20,6 @@ import ConsultationDetail from "./pages/ConsultationDetail.tsx"
 import MessageList from "./pages/MessageList.tsx"
 import MessageHistory from "./pages/MessageHistory.tsx"
 import MessageCreate from "./pages/MessageCreate.tsx"
-import MessageDetail from "./pages/MessageDetail.tsx"
 import MessageTemplateCreate from "./pages/MessageTemplateCreate.tsx"
 import ContractList from "./pages/ContractList.tsx"
 import ContractCreate from "./pages/ContractCreate.tsx"
@@ -242,15 +241,6 @@ function App() {
                                     </ProtectedRoute>
                                 }
                             />
-                            {/* <Route
-                                path="/consultation/edit/:id"
-                                element={
-                                    <ProtectedRoute>
-                                        <ConsultationEdit />
-                                    </ProtectedRoute>
-                                }
-                            /> */}
-                            {/* 메시지 관리 라우트 */}
                             <Route
                                 path="/message"
                                 element={
@@ -272,15 +262,6 @@ function App() {
                                 element={
                                     <ProtectedRoute>
                                         <MessageCreate />
-                                    </ProtectedRoute>
-                                }
-                            />
-                            {/* 메시지 상세 페이지 라우트 추가 */}
-                            <Route
-                                path="/message/:id"
-                                element={
-                                    <ProtectedRoute>
-                                        <MessageDetail />
                                     </ProtectedRoute>
                                 }
                             />

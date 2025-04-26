@@ -34,13 +34,15 @@ import {
     Menu as MenuIcon,
     ChevronLeft,
     Logout,
-    QuestionAnswer
+    QuestionAnswer,
+    KeyboardArrowDown
 } from "@mui/icons-material";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import { toast } from 'react-toastify';
 import { useNotification } from "../context/NotificationContext";
+import { formatDistanceToNow } from 'date-fns';
 
 // 커스텀 테마 생성
 const theme = createTheme({
@@ -79,6 +81,22 @@ const theme = createTheme({
                 },
             },
         },
+        MuiListItem: {
+            styleOverrides: {
+                root: {
+                    '&.Mui-selected': {
+                        backgroundColor: 'rgba(25, 118, 210, 0.08)',
+                        borderLeft: '4px solid #1976d2',
+                        '&:hover': {
+                            backgroundColor: 'rgba(25, 118, 210, 0.12)',
+                        },
+                    },
+                    '&:hover': {
+                        backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                    },
+                },
+            },
+        },
     },
 });
 
@@ -87,6 +105,7 @@ interface Notification {
     type: string;
     content: string;
     isRead: boolean;
+    createdAt: string;
 }
 
 // Add this helper function before the Layout component
@@ -167,11 +186,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     };
 
     const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-        if (anchorEl) {
-            handleMenuClose();
-        } else {
-            setAnchorEl(event.currentTarget);
-        }
+        setAnchorEl(event.currentTarget);
     };
 
     const handleMenuClose = () => {
@@ -276,13 +291,295 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     return (
         <ThemeProvider theme={theme}>
             <Box sx={{ display: 'flex', bgcolor: '#f8f9fa', minHeight: "100vh" }}>
+                {/* Header */}
+                <Box sx={{ 
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    zIndex: 1100,
+                    bgcolor: 'white',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                }}>
+                    <Box sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'space-between',
+                        height: 64,
+                        px: 3,
+                    }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                            <Box
+                                onClick={() => navigate("/dashboard")}
+                                sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 2,
+                                    cursor: 'pointer',
+                                    '&:hover': {
+                                        '& .logo-title': {
+                                            color: '#007ea7',
+                                        },
+                                    },
+                                }}
+                            >
+                                <img 
+                                    src="/public/로고.png" 
+                                    alt="중개모아 로고" 
+                                    style={{ width: '45px', height: '50px' }}
+                                />
+                                <Box>
+                                    <Typography 
+                                        variant="h5" 
+                                        className="logo-title"
+                                        sx={{ 
+                                            fontWeight: 800, 
+                                            color: '#003459',
+                                            fontSize: '1.4rem',
+                                            transition: 'color 0.2s ease',
+                                        }}
+                                    >
+                                        중개모아
+                                    </Typography>
+                                    <Typography variant="body2" color="text.secondary">
+                                        공인중개사 솔루션
+                                    </Typography>
+                                </Box>
+                            </Box>
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                            <IconButton 
+                                color="inherit" 
+                                onClick={handleNotificationClick}
+                                sx={{ 
+                                    position: 'relative',
+                                    mr: 2
+                                }}
+                            >
+                                <Badge badgeContent={unreadCount} color="error">
+                                    <Notifications />
+                                </Badge>
+                            </IconButton>
+                            <Menu
+                                anchorEl={notificationAnchorEl}
+                                open={Boolean(notificationAnchorEl)}
+                                onClose={handleNotificationClose}
+                                PaperProps={{
+                                    sx: {
+                                        width: 320,
+                                        maxHeight: 400,
+                                        mt: 1,
+                                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                                        borderRadius: 2
+                                    }
+                                }}
+                                MenuListProps={{
+                                    sx: { overflow: 'auto' }
+                                }}
+                                disableScrollLock={true}
+                            >
+                                <Box sx={{ p: 1.5, borderBottom: '1px solid #e9ecef', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                                        알림
+                                    </Typography>
+                                    <Button
+                                        size="small"
+                                        onClick={() => {
+                                            navigate("/notification-list");
+                                            handleNotificationClose();
+                                        }}
+                                        sx={{ 
+                                            color: 'primary.main',
+                                            fontWeight: 500
+                                        }}
+                                    >
+                                        전체 알림 보기
+                                    </Button>
+                                </Box>
+                                {notificationError ? (
+                                    <Box sx={{ p: 2, textAlign: 'center' }}>
+                                        <Typography color="error" variant="body2">
+                                            {notificationError}
+                                        </Typography>
+                                    </Box>
+                                ) : notifications.length === 0 ? (
+                                    <Box sx={{ p: 3, textAlign: 'center' }}>
+                                        <Typography variant="body2" color="text.secondary">
+                                            새로운 알림이 없습니다
+                                        </Typography>
+                                    </Box>
+                                ) : (
+                                    <List sx={{ p: 0 }}>
+                                        {notifications
+                                            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                                            .map((notification) => (
+                                            <ListItem
+                                                key={notification.id}
+                                                button
+                                                onClick={() => handleNotificationNavigation(notification)}
+                                                sx={{
+                                                    py: 1.5,
+                                                    px: 2,
+                                                    borderBottom: '1px solid #f0f0f0',
+                                                    '&:hover': {
+                                                        bgcolor: 'rgba(0, 0, 0, 0.04)'
+                                                    }
+                                                }}
+                                            >
+                                                <ListItemIcon sx={{ minWidth: 40 }}>
+                                                    <Box
+                                                        sx={{
+                                                            width: 32,
+                                                            height: 32,
+                                                            borderRadius: '50%',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            bgcolor: `${getNotificationColor(notification.type)}20`,
+                                                            color: getNotificationColor(notification.type)
+                                                        }}
+                                                    >
+                                                        {notification.type === 'SURVEY' && <Assignment fontSize="small" />}
+                                                        {notification.type === 'ARTICLE' && <InsertDriveFile fontSize="small" />}
+                                                        {notification.type === 'CONSULTATION' && <Forum fontSize="small" />}
+                                                        {notification.type === 'MESSAGE' && <Email fontSize="small" />}
+                                                        {notification.type === 'CONTRACT' && <InsertDriveFile fontSize="small" />}
+                                                    </Box>
+                                                </ListItemIcon>
+                                                <ListItemText
+                                                    primary={
+                                                        <Typography
+                                                            variant="body2"
+                                                            sx={{
+                                                                fontWeight: notification.isRead ? 400 : 600,
+                                                                color: notification.isRead ? 'text.primary' : 'primary.main'
+                                                            }}
+                                                        >
+                                                            {notification.content}
+                                                        </Typography>
+                                                    }
+                                                    secondary={
+                                                        <Typography variant="caption" color="text.secondary">
+                                                            {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+                                                        </Typography>
+                                                    }
+                                                />
+                                            </ListItem>
+                                        ))}
+                                    </List>
+                                )}
+                            </Menu>
+                            {profile && (
+                                <Box 
+                                    sx={{ 
+                                        display: 'flex', 
+                                        alignItems: 'center', 
+                                        cursor: 'pointer',
+                                        '&:hover': {
+                                            bgcolor: 'rgba(0,0,0,0.04)',
+                                            borderRadius: 1,
+                                        },
+                                        p: 1,
+                                    }} 
+                                    onClick={handleMenuOpen}
+                                >
+                                    <Avatar 
+                                        sx={{ 
+                                            width: 36, 
+                                            height: 36, 
+                                            bgcolor: '#007ea7',
+                                            fontSize: '1rem',
+                                        }}
+                                    >
+                                        {profile.name ? profile.name.charAt(0).toUpperCase() : 'U'}
+                                    </Avatar>
+                                    <Box sx={{ ml: 1, display: { xs: 'none', sm: 'block' } }}>
+                                        <Typography variant="body1" sx={{ fontWeight: 600, fontSize: '0.9rem' }}>
+                                            {profile.name}
+                                        </Typography>
+                                    </Box>
+                                    <Box sx={{ ml: 0.5, display: 'flex', alignItems: 'center' }}>
+                                        <KeyboardArrowDown sx={{ color: '#003459', fontSize: '1.2rem' }} />
+                                    </Box>
+                                </Box>
+                            )}
+                            <Menu
+                                anchorEl={anchorEl}
+                                open={Boolean(anchorEl)}
+                                onClose={handleMenuClose}
+                                PaperProps={{
+                                    sx: {
+                                        mt: 1.5,
+                                        minWidth: 180,
+                                        borderRadius: 2,
+                                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                                    }
+                                }}
+                                transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                                anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                                MenuListProps={{
+                                    sx: { overflow: 'auto' }
+                                }}
+                                disableScrollLock={true}
+                            >
+                                <MenuItem 
+                                    onClick={() => {
+                                        navigate("/my-page");
+                                        handleMenuClose();
+                                    }}
+                                    sx={{ 
+                                        py: 1.5,
+                                        px: 2,
+                                        '&:hover': {
+                                            bgcolor: 'rgba(0,0,0,0.04)',
+                                        }
+                                    }}
+                                >
+                                    <ListItemIcon>
+                                        <Person sx={{ color: '#007ea7' }} />
+                                    </ListItemIcon>
+                                    <ListItemText 
+                                        primary="마이페이지" 
+                                        primaryTypographyProps={{
+                                            fontSize: '0.9rem',
+                                            fontWeight: 500,
+                                        }}
+                                    />
+                                </MenuItem>
+                                <MenuItem 
+                                    onClick={handleLogout}
+                                    sx={{ 
+                                        py: 1.5,
+                                        px: 2,
+                                        '&:hover': {
+                                            bgcolor: 'rgba(0,0,0,0.04)',
+                                        }
+                                    }}
+                                >
+                                    <ListItemIcon>
+                                        <Logout sx={{ color: '#007ea7' }} />
+                                    </ListItemIcon>
+                                    <ListItemText 
+                                        primary="로그아웃" 
+                                        primaryTypographyProps={{
+                                            fontSize: '0.9rem',
+                                            fontWeight: 500,
+                                        }}
+                                    />
+                                </MenuItem>
+                            </Menu>
+                        </Box>
+                    </Box>
+                </Box>
+
                 {/* Sidebar */}
                 <Box
                     sx={{
                         width: 240,
                         minWidth: sidebarOpen ? 240 : 0,
-                        bgcolor: '#111',
-                        color: 'white',
+                        bgcolor: 'white',
+                        boxShadow: '0 0 10px rgba(0,0,0,0.1)',
+                        color: 'text.primary',
                         display: 'flex',
                         flexDirection: 'column',
                         transition: 'all 0.3s ease',
@@ -290,6 +587,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                         height: '100vh',
                         transform: sidebarOpen ? 'none' : 'translateX(-240px)',
                         zIndex: 1200,
+                        top: 64,
                     }}
                 >
                     {/* Toggle Button */}
@@ -298,59 +596,39 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                         sx={{
                             position: 'absolute',
                             right: -20,
-                            top: 20,
-                            bgcolor: '#111',
-                            color: 'white',
+                            top: 12,
+                            bgcolor: 'white',
+                            color: 'text.primary',
                             width: 20,
                             height: 40,
                             '&:hover': {
-                                bgcolor: '#333',
+                                bgcolor: 'grey.100',
                             },
                             zIndex: 1200,
                             borderRadius: '0 8px 8px 0',
+                            border: '1px solid',
+                            borderColor: 'divider',
                         }}
                     >
                         <ChevronLeft sx={{ transform: sidebarOpen ? 'none' : 'scaleX(-1)' }} />
                     </IconButton>
 
-                    {/* Logo */}
-                    <Box sx={{ p: 3, borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <img 
-                            src="/public/배경없는 로고.ico" 
-                            alt="중개모아 로고" 
-                            style={{ width: '60px', height: '60px' }}
-                        />
-                        <Typography variant="h5" sx={{ 
-                            fontWeight: 800, 
-                            color: 'white',
-                            fontSize: '1.4rem',
-                            whiteSpace: 'nowrap',
-                            paddingTop: '10px',
-                            paddingLeft: '15px',
-                        }}>
-                            중개모아
-                        </Typography>
-                    </Box>
-
                     {/* Menu Items */}
-                    <List sx={{ py: 1, whiteSpace: 'nowrap' }}>
+                    <List sx={{ py: 1 }}>
                         <ListItem 
                             button 
                             onClick={() => navigate("/dashboard")}
                             selected={location.pathname === "/dashboard"}
-                            sx={{ 
-                                py: 1.5,
-                                bgcolor: location.pathname === "/dashboard" ? 'rgba(255,255,255,0.1)' : 'transparent',
-                                '&:hover': { bgcolor: 'rgba(255,255,255,0.15)' },
-                            }}
+                            sx={{ py: 1.5 }}
                         >
-                            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
-                                <DashboardIcon />
+                            <ListItemIcon sx={{ minWidth: 40 }}>
+                                <DashboardIcon color={location.pathname === "/dashboard" ? "primary" : "action"} />
                             </ListItemIcon>
                             <ListItemText 
                                 primary="대시보드" 
                                 primaryTypographyProps={{
                                     fontSize: '0.9rem',
+                                    color: location.pathname === "/dashboard" ? "primary" : "text.primary",
                                 }}
                             />
                         </ListItem>
@@ -359,19 +637,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                             button
                             onClick={handleArticleManagement}
                             selected={location.pathname.startsWith("/article")}
-                            sx={{ 
-                                py: 1.5,
-                                bgcolor: location.pathname.startsWith("/article") ? 'rgba(255,255,255,0.1)' : 'transparent',
-                                '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' },
-                            }}
+                            sx={{ py: 1.5 }}
                         >
-                            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
-                                <Business />
+                            <ListItemIcon sx={{ minWidth: 40 }}>
+                                <Business color={location.pathname.startsWith("/article") ? "primary" : "action"} />
                             </ListItemIcon>
                             <ListItemText 
                                 primary="매물 관리"
                                 primaryTypographyProps={{
                                     fontSize: '0.9rem',
+                                    color: location.pathname.startsWith("/article") ? "primary" : "text.primary",
                                 }}
                             />
                         </ListItem>
@@ -380,19 +655,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                             button 
                             onClick={() => navigate("/contract")}
                             selected={location.pathname.startsWith("/contract")}
-                            sx={{ 
-                                py: 1.5,
-                                bgcolor: location.pathname.startsWith("/contract") ? 'rgba(255,255,255,0.1)' : 'transparent',
-                                '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' },
-                            }}
+                            sx={{ py: 1.5 }}
                         >
-                            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
-                                <InsertDriveFile />
+                            <ListItemIcon sx={{ minWidth: 40 }}>
+                                <InsertDriveFile color={location.pathname.startsWith("/contract") ? "primary" : "action"} />
                             </ListItemIcon>
                             <ListItemText 
                                 primary="계약 관리"
                                 primaryTypographyProps={{
                                     fontSize: '0.9rem',
+                                    color: location.pathname.startsWith("/contract") ? "primary" : "text.primary",
                                 }}
                             />
                         </ListItem>
@@ -401,19 +673,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                             button 
                             onClick={() => navigate("/customer-management")}
                             selected={location.pathname.startsWith("/customer-management")}
-                            sx={{ 
-                                py: 1.5,
-                                bgcolor: location.pathname.startsWith("/customer-management") ? 'rgba(255,255,255,0.1)' : 'transparent',
-                                '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' },
-                            }}
+                            sx={{ py: 1.5 }}
                         >
-                            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
-                                <People />
+                            <ListItemIcon sx={{ minWidth: 40 }}>
+                                <People color={location.pathname.startsWith("/customer-management") ? "primary" : "action"} />
                             </ListItemIcon>
                             <ListItemText 
                                 primary="고객 관리"
                                 primaryTypographyProps={{
                                     fontSize: '0.9rem',
+                                    color: location.pathname.startsWith("/customer-management") ? "primary" : "text.primary",
                                 }}
                             />
                         </ListItem>
@@ -422,19 +691,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                             button 
                             onClick={() => navigate("/consultation")}
                             selected={location.pathname.startsWith("/consultation")}
-                            sx={{ 
-                                py: 1.5,
-                                bgcolor: location.pathname.startsWith("/consultation") ? 'rgba(255,255,255,0.1)' : 'transparent',
-                                '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' },
-                            }}
+                            sx={{ py: 1.5 }}
                         >
-                            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
-                                <Forum />
+                            <ListItemIcon sx={{ minWidth: 40 }}>
+                                <Forum color={location.pathname.startsWith("/consultation") ? "primary" : "action"} />
                             </ListItemIcon>
                             <ListItemText 
                                 primary="상담 관리"
                                 primaryTypographyProps={{
                                     fontSize: '0.9rem',
+                                    color: location.pathname.startsWith("/consultation") ? "primary" : "text.primary",
                                 }}
                             />
                         </ListItem>
@@ -443,19 +709,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                             button 
                             onClick={() => navigate("/survey")}
                             selected={location.pathname.startsWith("/survey")}
-                            sx={{ 
-                                py: 1.5,
-                                bgcolor: location.pathname.startsWith("/survey") ? 'rgba(255,255,255,0.1)' : 'transparent',
-                                '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' },
-                            }}
+                            sx={{ py: 1.5 }}
                         >
-                            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
-                                <Assignment />
+                            <ListItemIcon sx={{ minWidth: 40 }}>
+                                <Assignment color={location.pathname.startsWith("/survey") ? "primary" : "action"} />
                             </ListItemIcon>
                             <ListItemText 
                                 primary="설문 관리"
                                 primaryTypographyProps={{
                                     fontSize: '0.9rem',
+                                    color: location.pathname.startsWith("/survey") ? "primary" : "text.primary",
                                 }}
                             />
                         </ListItem>
@@ -464,19 +727,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                             button 
                             onClick={() => navigate("/message")}
                             selected={location.pathname.startsWith("/message")}
-                            sx={{ 
-                                py: 1.5,
-                                bgcolor: location.pathname.startsWith("/message") ? 'rgba(255,255,255,0.1)' : 'transparent',
-                                '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' },
-                            }}
+                            sx={{ py: 1.5 }}
                         >
-                            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
-                                <Email />
+                            <ListItemIcon sx={{ minWidth: 40 }}>
+                                <Email color={location.pathname.startsWith("/message") ? "primary" : "action"} />
                             </ListItemIcon>
                             <ListItemText 
                                 primary="문자 관리"
                                 primaryTypographyProps={{
                                     fontSize: '0.9rem',
+                                    color: location.pathname.startsWith("/message") ? "primary" : "text.primary",
                                 }}
                             />
                         </ListItem>
@@ -485,42 +745,38 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                             button 
                             onClick={() => navigate("/inquiry")}
                             selected={location.pathname.startsWith("/inquiry")}
-                            sx={{ 
-                                py: 1.5,
-                                bgcolor: location.pathname.startsWith("/inquiry") ? 'rgba(255,255,255,0.1)' : 'transparent',
-                                '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' },
-                            }}
+                            sx={{ py: 1.5 }}
                         >
-                            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
-                                <QuestionAnswer />
+                            <ListItemIcon sx={{ minWidth: 40 }}>
+                                <QuestionAnswer color={location.pathname.startsWith("/inquiry") ? "primary" : "action"} />
                             </ListItemIcon>
                             <ListItemText 
                                 primary="문의 게시판"
                                 primaryTypographyProps={{
                                     fontSize: '0.9rem',
+                                    color: location.pathname.startsWith("/inquiry") ? "primary" : "text.primary",
                                 }}
                             />
                         </ListItem>
                     </List>
 
-                    <Box sx={{ mt: 'auto', p: 2, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                    <Box sx={{ mt: 'auto', p: 2, borderTop: '1px solid rgba(0,0,0,0.1)' }}>
                         <ListItem 
                             button
                             onClick={() => navigate("/my-page")}
                             selected={location.pathname === "/my-page"}
                             sx={{ 
                                 borderRadius: '8px',
-                                bgcolor: location.pathname === "/my-page" ? 'rgba(255,255,255,0.1)' : 'transparent',
-                                '&:hover': { bgcolor: 'rgba(255,255,255,0.08)' },
                             }}
                         >
-                            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
-                                <Person />
+                            <ListItemIcon sx={{ minWidth: 40 }}>
+                                <Person color={location.pathname === "/my-page" ? "primary" : "action"} />
                             </ListItemIcon>
                             <ListItemText 
                                 primary="마이페이지"
                                 primaryTypographyProps={{
                                     fontSize: '0.9rem',
+                                    color: location.pathname === "/my-page" ? "primary" : "text.primary",
                                 }}
                             />
                         </ListItem>
@@ -530,193 +786,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 {/* Main Content */}
                 <Box sx={{ 
                     flexGrow: 1, 
-                    p: 4,
                     transition: 'all 0.3s ease',
                     marginLeft: sidebarOpen ? '240px' : 0,
                     width: sidebarOpen ? 'calc(100% - 240px)' : '100%',
+                    mt: 8,
                 }}>
-                    {/* Header */}
-                    <Box sx={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        mb: 4, 
-                        justifyContent: 'flex-end',
-                    }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                            <IconButton onClick={handleNotificationClick}>
-                                <Badge badgeContent={unreadCount} color="error">
-                                    <Notifications />
-                                </Badge>
-                            </IconButton>
-                            {/* In the Menu component, filter notifications to show only unread ones */}
-                            <Menu
-                                anchorEl={notificationAnchorEl}
-                                open={Boolean(notificationAnchorEl)}
-                                onClose={handleNotificationClose}
-                                anchorOrigin={{
-                                    vertical: "bottom",
-                                    horizontal: "right",
-                                }}
-                                transformOrigin={{
-                                    vertical: "top",
-                                    horizontal: "right",
-                                }}
-                                PaperProps={{
-                                    sx: {
-                                        mt: 1.5,
-                                        width: 360,
-                                        maxHeight: 400,
-                                        overflowY: 'auto',
-                                    }
-                                }}
-                            >
-                                <Box sx={{ p: 2, borderBottom: '1px solid rgba(0,0,0,0.1)' }}>
-                                    <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600 }}>
-                                        알림 ({unreadCount})
-                                    </Typography>
-                                </Box>
-                                {notifications
-                                    .slice()
-                                    .sort((a, b) => {
-                                        if (a.isRead === b.isRead) {
-                                            return b.id - a.id; // 같은 읽음 상태면 최신순
-                                        }
-                                        return a.isRead ? 1 : -1; // 안 읽은게 위로
-                                    })
-                                    .slice(0, 10)
-                                    .map((notification) => (
-                                        <MenuItem 
-                                            key={`${notification.id}-${notification.isRead}`}
-                                                onClick={() => handleNotificationNavigation(notification)}
-                                                sx={{ 
-                                                    py: 2,
-                                                    px: 2,
-                                                    borderBottom: '1px solid rgba(0,0,0,0.06)',
-                                                    '&:last-child': { borderBottom: 'none' },
-                                                    bgcolor: notification.isRead ? 'action.hover' : 'transparent',
-                                                }}
-                                            >
-                                                <Box sx={{ 
-                                                    width: 4, 
-                                                    height: 40, 
-                                                    borderRadius: '4px',
-                                                    bgcolor: notification.isRead ? 'grey.400' : getNotificationColor(notification.type),
-                                                    mr: 2
-                                                }} />
-                                                <Box sx={{ width: '100%' }}>
-                                                    <Typography 
-                                                        variant="body1" 
-                                                        sx={{ 
-                                                            fontWeight: notification.isRead ? 400 : 600,
-                                                            color: notification.isRead ? 'text.disabled' : 'text.primary',
-                                                            fontSize: '0.95rem',
-                                                            mb: 0.5
-                                                        }}
-                                                    >
-                                                        {notification.content}
-                                                    </Typography>
-                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                        <Typography 
-                                                            component="span"
-                                                            variant="body2"
-                                                            sx={{
-                                                                display: 'inline-flex',
-                                                                alignItems: 'center',
-                                                                bgcolor: notification.isRead ? 'grey.100' : `${getNotificationColor(notification.type)}15`,
-                                                                color: notification.isRead ? 'grey.500' : getNotificationColor(notification.type),
-                                                                py: 0.5,
-                                                                px: 1,
-                                                                borderRadius: '4px',
-                                                                fontSize: '0.8rem',
-                                                                fontWeight: 600,
-                                                            }}
-                                                        >
-                                                            {notification.type}
-                                                        </Typography>
-                                                        <Typography 
-                                                            variant="caption" 
-                                                            sx={{ 
-                                                                color: 'text.secondary',
-                                                                fontSize: '0.75rem'
-                                                            }}
-                                                        >
-                                                            {new Date(notification.createdAt).toLocaleString('ko-KR', {
-                                                                year: 'numeric',
-                                                                month: '2-digit',
-                                                                day: '2-digit',
-                                                                hour: '2-digit',
-                                                                minute: '2-digit'
-                                                            })}
-                                                        </Typography>
-                                                    </Box>
-                                                </Box>
-                                            </MenuItem>
-                                        ))}
-                                <Box sx={{ p: 2, borderTop: '1px solid rgba(0,0,0,0.1)' }}>
-                                    <Button 
-                                        fullWidth
-                                        variant="text"
-                                        onClick={() => {
-                                            handleNotificationClose();
-                                            navigate('/notification-list');
-                                        }}
-                                        sx={{
-                                            color: 'primary.main',
-                                            '&:hover': { bgcolor: 'rgba(25, 118, 210, 0.04)' },
-                                        }}
-                                    >
-                                        전체 알림 보기
-                                    </Button>
-                                </Box>
-                            </Menu>
-                            
-                            {/* Add profile display here */}
-                            {profile && (
-                                <Box sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={handleMenuOpen}>
-                                    <Avatar sx={{ width: 36, height: 36, bgcolor: '#1976d2' }}>
-                                        {profile.name ? profile.name.charAt(0).toUpperCase() : 'U'}
-                                    </Avatar>
-                                    <Box sx={{ ml: 1, display: { xs: 'none', sm: 'block' } }}>
-                                        <Typography variant="body1" sx={{ fontWeight: 600, fontSize: '0.9rem' }}>
-                                            {profile.name}
-                                        </Typography>
-                                        <Typography variant="body2" color="textSecondary" sx={{ fontSize: '0.8rem' }}>
-                                            {profile.email}
-                                        </Typography>
-                                    </Box>
-                                </Box>
-                            )}
-                            
-                            <Menu
-                                anchorEl={anchorEl}
-                                open={Boolean(anchorEl)}
-                                onClose={handleMenuClose}
-                                anchorOrigin={{
-                                    vertical: 'bottom',
-                                    horizontal: 'right',
-                                }}
-                                transformOrigin={{
-                                    vertical: 'top',
-                                    horizontal: 'right',
-                                }}
-                            >
-                                <MenuItem onClick={() => { navigate("/my-page"); handleMenuClose(); }}>
-                                    <ListItemIcon>
-                                        <Person fontSize="small" />
-                                    </ListItemIcon>
-                                    마이페이지
-                                </MenuItem>
-                                <MenuItem onClick={handleLogout}>
-                                    <ListItemIcon>
-                                        <Logout fontSize="small" />
-                                    </ListItemIcon>
-                                    로그아웃
-                                </MenuItem>
-                            </Menu>
-                        </Box>
-                    </Box>
-
-                    {/* Page Content */}
                     {children}
                 </Box>
             </Box>

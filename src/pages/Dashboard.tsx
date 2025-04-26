@@ -188,6 +188,8 @@ const Dashboard = () => {
     const [contractsLoading, setContractsLoading] = useState(false);
     const [contractsError, setContractsError] = useState<string | null>(null);
 
+    const [selectedPeriod, setSelectedPeriod] = useState('today');
+
     // Add these missing notification handler functions
     const handleNotificationClick = (event: React.MouseEvent<HTMLElement>) => {
         setNotificationAnchorEl(event.currentTarget);
@@ -540,6 +542,37 @@ const Dashboard = () => {
         }
     };
 
+    const handlePeriodChange = (event: React.MouseEvent<HTMLElement>, newPeriod: string) => {
+        if (newPeriod !== null) {
+            setSelectedPeriod(newPeriod);
+        }
+    };
+
+    const getContractsByPeriod = (period: string = selectedPeriod) => {
+        if (!contracts) return [];
+        
+        return contracts.filter(contract => {
+            const expiredDate = parseISO(contract.expiredAt);
+            switch (period) {
+                case 'today':
+                    return isToday(expiredDate);
+                case '1-2month':
+                    return !isToday(expiredDate) && (
+                        isSameMonth(expiredDate, new Date()) ||
+                        isSameMonth(expiredDate, addMonths(new Date(), 1))
+                    );
+                case '3month':
+                    const daysDiff3 = differenceInDays(expiredDate, new Date());
+                    return daysDiff3 > 60 && daysDiff3 <= 90;
+                case '4-6month':
+                    const daysDiff6 = differenceInDays(expiredDate, new Date());
+                    return daysDiff6 > 90 && daysDiff6 <= 180;
+                default:
+                    return false;
+            }
+        }).sort((a, b) => new Date(a.expiredAt).getTime() - new Date(b.expiredAt).getTime());
+    };
+
     // 차트 렌더링
     useEffect(() => {
         if (!realEstateTypeData.length || !realEstateTypeChartRef.current) return;
@@ -704,373 +737,395 @@ const Dashboard = () => {
 };
 
     return (
-        <>
-            {/* Stats */}
-            <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Box sx={{ px: 4, pb: 6 }}>
+            {/* 통계 */}
+            <Grid container spacing={4} sx={{ mb: 4, mt: 2 }}>
                 <Grid item xs={12} md={4}>
-                    <Paper sx={{ p: 3 }}>
-                        <Typography color="textSecondary" variant="body2" sx={{ mb: 1 }}>
-                            금주 신규 고객
-                        </Typography>
-                        {customerSummaryLoading ? (
-                            <Box sx={{ display: "flex", justifyContent: "center", my: 2 }}>
-                                <CircularProgress size={24} />
-                            </Box>
-                        ) : customerSummaryError ? (
-                            <Typography color="error" variant="body2">
-                                {customerSummaryError}
-                            </Typography>
-                        ) : customerSummary ? (
-                            <>
-                                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
-                                    <Typography variant="h4">{customerSummary.count}</Typography>
-                                    <Typography 
-                                        variant="body2" 
-                                        sx={{ 
-                                            color: customerSummary.rate >= 0 ? '#f44336' : '#2196f3',
-                                            bgcolor: customerSummary.rate >= 0 ? '#ffebee' : '#e3f2fd',
-                                            px: 1,
-                                            py: 0.5,
-                                            borderRadius: '4px',
-                                        }}
-                                    >
-                                        {customerSummary.rate >= 0 ? '+' : ''}{customerSummary.rate.toFixed(1)}%
+                    <Paper sx={{ p: 4, bgcolor: '#ffffff', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)' }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2 }}>
+                            <Box>
+                                <Typography color="#003459" variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
+                                    금주 신규 고객
+                                </Typography>
+                                {customerSummaryLoading ? (
+                                    <CircularProgress size={24} />
+                                ) : customerSummaryError ? (
+                                    <Typography color="error" variant="body2">
+                                        {customerSummaryError}
                                     </Typography>
-                                </Box>
-                                <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                                ) : customerSummary ? (
+                                    <Typography variant="h4" sx={{ color: '#00171f', fontWeight: 600 }}>
+                                        {customerSummary.count}
+                                    </Typography>
+                                ) : (
+                                    <Typography variant="body2" color="textSecondary">
+                                        데이터를 불러올 수 없습니다.
+                                    </Typography>
+                                )}
+                            </Box>
+                            <Box sx={{ 
+                                p: 1.5, 
+                                bgcolor: '#00a8e8', 
+                                borderRadius: '50%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}>
+                                <People sx={{ color: '#ffffff' }} />
+                            </Box>
+                        </Box>
+                        {customerSummary && (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Typography 
+                                    variant="body2" 
+                                    sx={{ 
+                                        color: customerSummary.rate >= 0 ? '#007ea7' : '#00171f',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 0.5
+                                    }}
+                                >
+                                    {customerSummary.rate >= 0 ? '+' : ''}{customerSummary.rate.toFixed(1)}%
+                                </Typography>
+                                <Typography variant="body2" color="#003459">
                                     전주 대비
                                 </Typography>
-                            </>
-                        ) : (
-                            <Typography variant="body2" color="textSecondary">
-                                데이터를 불러올 수 없습니다.
-                            </Typography>
+                            </Box>
                         )}
                     </Paper>
                 </Grid>
+
                 <Grid item xs={12} md={4}>
-                    <Paper sx={{ p: 3 }}>
-                        <Typography color="textSecondary" variant="body2" sx={{ mb: 1 }}>
-                            진행중인 계약
-                        </Typography>
-                        {contractSummaryLoading ? (
-                            <Box sx={{ display: "flex", justifyContent: "center", my: 2 }}>
-                                <CircularProgress size={24} />
-                            </Box>
-                        ) : contractSummaryError ? (
-                            <Typography color="error" variant="body2">
-                                {contractSummaryError}
-                            </Typography>
-                        ) : contractSummary ? (
-                            <>
-                                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
-                                    <Typography variant="h4">{contractSummary.count}</Typography>
-                                    <Typography 
-                                        variant="body2" 
-                                        sx={{ 
-                                            color: contractSummary.rate >= 0 ? '#f44336' : '#2196f3',
-                                            bgcolor: contractSummary.rate >= 0 ? '#ffebee' : '#e3f2fd',
-                                            px: 1,
-                                            py: 0.5,
-                                            borderRadius: '4px',
-                                        }}
-                                    >
-                                        {contractSummary.rate >= 0 ? '+' : ''}{contractSummary.rate.toFixed(1)}%
+                    <Paper sx={{ p: 4, bgcolor: '#ffffff', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)' }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2 }}>
+                            <Box>
+                                <Typography color="#003459" variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
+                                    진행중인 계약
+                                </Typography>
+                                {contractSummaryLoading ? (
+                                    <CircularProgress size={24} />
+                                ) : contractSummaryError ? (
+                                    <Typography color="error" variant="body2">
+                                        {contractSummaryError}
                                     </Typography>
-                                </Box>
-                                <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                                ) : contractSummary ? (
+                                    <Typography variant="h4" sx={{ color: '#00171f', fontWeight: 600 }}>
+                                        {contractSummary.count}
+                                    </Typography>
+                                ) : (
+                                    <Typography variant="body2" color="textSecondary">
+                                        데이터를 불러올 수 없습니다.
+                                    </Typography>
+                                )}
+                            </Box>
+                            <Box sx={{ 
+                                p: 1.5, 
+                                bgcolor: '#00a8e8', 
+                                borderRadius: '50%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}>
+                                <InsertDriveFile sx={{ color: '#ffffff' }} />
+                            </Box>
+                        </Box>
+                        {contractSummary && (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Typography 
+                                    variant="body2" 
+                                    sx={{ 
+                                        color: contractSummary.rate >= 0 ? '#007ea7' : '#00171f',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 0.5
+                                    }}
+                                >
+                                    {contractSummary.rate >= 0 ? '+' : ''}{contractSummary.rate.toFixed(1)}%
+                                </Typography>
+                                <Typography variant="body2" color="#003459">
                                     전주 대비
                                 </Typography>
-                            </>
-                        ) : (
-                            <Typography variant="body2" color="textSecondary">
-                                데이터를 불러올 수 없습니다.
-                            </Typography>
+                            </Box>
                         )}
                     </Paper>
                 </Grid>
+
                 <Grid item xs={12} md={4}>
-                    <Paper sx={{ p: 3 }}>
-                        <Typography color="textSecondary" variant="body2" sx={{ mb: 1 }}>
-                            오늘 상담
-                        </Typography>
-                        {consultationSummaryLoading ? (
-                            <Box sx={{ display: "flex", justifyContent: "center", my: 2 }}>
-                                <CircularProgress size={24} />
-                            </Box>
-                        ) : consultationSummaryError ? (
-                            <Typography color="error" variant="body2">
-                                {consultationSummaryError}
-                            </Typography>
-                        ) : consultationSummary ? (
-                            <>
-                                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
-                                    <Typography variant="h4">{consultationSummary.todayCount}</Typography>
-                                    <Typography 
-                                        variant="body2" 
-                                        sx={{ 
-                                            color: '#f44336',
-                                            bgcolor: '#ffebee',
-                                            px: 1,
-                                            py: 0.5,
-                                            borderRadius: '4px',
-                                        }}
-                                    >
-                                        {consultationSummary.remainingCount}건 남음
+                    <Paper 
+                        sx={{ 
+                            p: 4, 
+                            bgcolor: '#ffffff',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                            '&:hover': {
+                                boxShadow: '0 8px 16px rgba(0, 0, 0, 0.15)',
+                                transform: 'translateY(-4px)'
+                            }
+                        }}
+                        onClick={() => navigate('/consultation')}
+                    >
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2 }}>
+                            <Box>
+                                <Typography color="#003459" variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
+                                    오늘 상담
+                                </Typography>
+                                {consultationSummaryLoading ? (
+                                    <CircularProgress size={24} />
+                                ) : consultationSummaryError ? (
+                                    <Typography color="error" variant="body2">
+                                        {consultationSummaryError}
                                     </Typography>
-                                </Box>
-                                <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                                ) : consultationSummary ? (
+                                    <Typography variant="h4" sx={{ color: '#00171f', fontWeight: 600 }}>
+                                        {consultationSummary.todayCount}
+                                    </Typography>
+                                ) : (
+                                    <Typography variant="body2" color="textSecondary">
+                                        데이터를 불러올 수 없습니다.
+                                    </Typography>
+                                )}
+                            </Box>
+                            <Box sx={{ 
+                                p: 1.5, 
+                                bgcolor: '#00a8e8', 
+                                borderRadius: '50%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}>
+                                <Forum sx={{ color: '#ffffff' }} />
+                            </Box>
+                        </Box>
+                        {consultationSummary && (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Typography 
+                                    variant="body2" 
+                                    sx={{ 
+                                        color: '#007ea7',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 0.5
+                                    }}
+                                >
+                                    {consultationSummary.remainingCount}건 남음
+                                </Typography>
+                                <Typography variant="body2" color="#003459">
                                     오늘의 상담 일정
                                 </Typography>
-                            </>
-                        ) : (
-                            <Typography variant="body2" color="textSecondary">
-                                데이터를 불러올 수 없습니다.
-                            </Typography>
+                            </Box>
                         )}
                     </Paper>
                 </Grid>
             </Grid>
 
-             {/* 만료 예정 계약 */}
-             <Grid container spacing={3} sx={{ mb: 4 }}>
+            {/* 만료 예정 계약 */}
+            <Grid container spacing={3} sx={{ mb: 4 }}>
                 <Grid item xs={12}>
-                    <Paper sx={{ p: 3 }}>
-                    <Typography variant="h6" sx={{ mb: 3 }}>
-                        만료 예정 계약
-                    </Typography>
-
-                    {contractsLoading ? (
-                        <Box sx={{ display: "flex", justifyContent: "center", my: 2 }}>
-                        <CircularProgress size={24} />
+                    <Paper sx={{ p: 4, bgcolor: '#ffffff', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)' }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                            <Typography variant="h6" sx={{ color: '#00171f', fontWeight: 600 }}>
+                                만료 예정 계약
+                            </Typography>
+                            <ToggleButtonGroup
+                                value={selectedPeriod}
+                                exclusive
+                                onChange={handlePeriodChange}
+                                aria-label="만료 계약 기간 선택"
+                                size="small"
+                                sx={{
+                                    '& .MuiToggleButton-root': {
+                                        px: 2,
+                                        py: 0.5,
+                                        fontSize: '0.875rem',
+                                        color: '#003459',
+                                        '&.Mui-selected': {
+                                            bgcolor: '#007ea7',
+                                            color: '#ffffff',
+                                            '&:hover': {
+                                                bgcolor: '#003459',
+                                            },
+                                        },
+                                    },
+                                }}
+                            >
+                                <ToggleButton value="today" aria-label="오늘">
+                                    오늘 ({contracts.filter(c => isToday(parseISO(c.expiredAt))).length})
+                                </ToggleButton>
+                                <ToggleButton value="1-2month" aria-label="1-2개월">
+                                    1-2개월 ({contracts.filter(c => {
+                                        const expiredDate = parseISO(c.expiredAt);
+                                        return !isToday(expiredDate) && (
+                                            isSameMonth(expiredDate, new Date()) ||
+                                            isSameMonth(expiredDate, addMonths(new Date(), 1))
+                                        );
+                                    }).length})
+                                </ToggleButton>
+                                <ToggleButton value="3month" aria-label="3개월">
+                                    3개월 ({contracts.filter(c => {
+                                        const expiredDate = parseISO(c.expiredAt);
+                                        const today = new Date();
+                                        const daysDiff = differenceInDays(expiredDate, today);
+                                        return daysDiff > 60 && daysDiff <= 90;
+                                    }).length})
+                                </ToggleButton>
+                                <ToggleButton value="4-6month" aria-label="4-6개월">
+                                    4-6개월 ({contracts.filter(c => {
+                                        const expiredDate = parseISO(c.expiredAt);
+                                        const today = new Date();
+                                        const daysDiff = differenceInDays(expiredDate, today);
+                                        return daysDiff > 90 && daysDiff <= 180;
+                                    }).length})
+                                </ToggleButton>
+                            </ToggleButtonGroup>
                         </Box>
-                    ) : contractsError ? (
-                        <Typography color="error" variant="body2">
-                        {contractsError}
-                        </Typography>
-                    ) : (
-                        <Grid container spacing={3}>
-                        {/* 오늘 만료 */}
-                        <Grid item xs={12} md={6}>
-                            <Paper sx={{ p: 2, border: '1px solid #ddd', borderRadius: 2,
-                                height: '100%',
-                                display: 'flex',
-                                flexDirection: 'column' }}>
-                            <Typography variant="subtitle1" sx={{ mb: 2, color: 'error.main' }}>
-                                오늘 만료
+
+                        {contractsLoading ? (
+                            <Box sx={{ display: "flex", justifyContent: "center", my: 2 }}>
+                                <CircularProgress size={24} />
+                            </Box>
+                        ) : contractsError ? (
+                            <Typography color="error" variant="body2">
+                                {contractsError}
                             </Typography>
-                            {contracts.filter(contract => isToday(parseISO(contract.expiredAt))).length === 0 ? (
-                                <Typography variant="body2" color="textSecondary">
-                                오늘 만료되는 계약이 없습니다.
-                                </Typography>
-                            ) : (
-                                contracts
-                                .filter(contract => isToday(parseISO(contract.expiredAt)))
-                                .sort((a, b) => new Date(a.expiredAt).getTime() - new Date(b.expiredAt).getTime())
-                                .map(contract => (
-                                    <Typography key={contract.id} variant="body2" sx={{ mb: 1 }}>
-                                        <Box 
-                                        onClick={() => handleContractClick(contract.id)}
-                                        sx={{ display: "flex",  my: 0.3, cursor: 'pointer', 
-                                            '&:hover': {
-                                              backgroundColor: '#f5f5f5', 
-                                            }, }}>
-                                            {contract.landlordName}님과 {contract.tenantName}님의 계약
-                                        </Box>
-                                    </Typography>
-                                ))
-                            )}
-                            </Paper>
-                        </Grid>
-
-                        {/* 1~2개월 이내 */}
-                        <Grid item xs={12} md={6}>
-                            <Paper sx={{ p: 2, border: '1px solid #ddd', borderRadius: 2,
-                                height: '100%',
-                                display: 'flex',
-                                flexDirection: 'column' }}>
-                            <Typography variant="subtitle1" sx={{ mb: 2, color: 'warning.main' }}>
-                                1~2개월 이내 만료
-                            </Typography>
-
-                            {/* 이번 달 */}
-                            {contracts.filter(contract => {
-                                const expiredDate = parseISO(contract.expiredAt);
-                                return !isToday(expiredDate) && isSameMonth(expiredDate, new Date());
-                            }).length > 0 && (
-                                <>
-                                <Typography variant="subtitle2" color="primary" sx={{ mb: 1 }}>
-                                    이번 달
-                                </Typography>
-                                {contracts
-                                    .filter(contract => {
-                                    const expiredDate = parseISO(contract.expiredAt);
-                                    return !isToday(expiredDate) && isSameMonth(expiredDate, new Date());
-                                    })
-                                    .sort((a, b) => new Date(a.expiredAt).getTime() - new Date(b.expiredAt).getTime())
-                                    .map(contract => (
-                                    <Typography key={contract.id} variant="body2" sx={{ mb: 1 }}>
-                                        <Box 
-                                        onClick={() => handleContractClick(contract.id)}
-                                        sx={{ display: "flex",  my: 0.3, cursor: 'pointer', 
-                                            '&:hover': {
-                                              backgroundColor: '#f5f5f5', 
-                                            }, }}>
-                                            {contract.landlordName}님과 {contract.tenantName}님의 계약 ({format(parseISO(contract.expiredAt), 'M/d')})
-                                        </Box>
-                                    </Typography>
-                                    ))}
-                                </>
-                            )}
-
-                            {/* 다음 달 */}
-                            {contracts.filter(contract => {
-                                const expiredDate = parseISO(contract.expiredAt);
-                                return isSameMonth(expiredDate, addMonths(new Date(), 1));
-                            }).length > 0 && (
-                                <>
-                                <Typography variant="subtitle2" color="primary" sx={{ mt: 2, mb: 1 }}>
-                                    다음 달
-                                </Typography>
-                                {contracts
-                                    .filter(contract => {
-                                    const expiredDate = parseISO(contract.expiredAt);
-                                    return isSameMonth(expiredDate, addMonths(new Date(), 1));
-                                    })
-                                    .sort((a, b) => new Date(a.expiredAt).getTime() - new Date(b.expiredAt).getTime())
-                                    .map(contract => (
-                                    <Typography key={contract.id} variant="body2" sx={{ mb: 1 }}>
-                                    <Box 
-                                        onClick={() => handleContractClick(contract.id)}
-                                        sx={{ display: "flex",  my: 0.3, cursor: 'pointer', 
-                                            '&:hover': {
-                                              backgroundColor: '#f5f5f5', 
-                                            }, }}>
-                                            {contract.landlordName}님과 {contract.tenantName}님의 계약 ({format(parseISO(contract.expiredAt), 'M/d')})
-                                        </Box>
-                                    </Typography>
-                                    ))}
-                                </>
-                            )}
-
-                            {contracts.filter(contract => {
-                                const expiredDate = parseISO(contract.expiredAt);
-                                return !isToday(expiredDate) && (
-                                isSameMonth(expiredDate, new Date()) ||
-                                isSameMonth(expiredDate, addMonths(new Date(), 1))
-                                );
-                            }).length === 0 && (
-                                <Typography variant="body2" color="textSecondary">
-                                1~2개월 이내 만료되는 계약이 없습니다.
-                                </Typography>
-                            )}
-                            </Paper>
-                        </Grid>
-
-                        {/* 3개월 이내 */}
-                        <Grid item xs={12} md={6}>
-                            <Paper sx={{ p: 2, border: '1px solid #ddd', borderRadius: 2,
-                                height: '100%',
-                                display: 'flex',
-                                flexDirection: 'column' }}>
-                            <Typography variant="subtitle1" sx={{ mb: 2, color: 'info.main' }}>
-                                3개월 이내 만료
-                            </Typography>
-                            {contracts.filter(contract => {
-                                const expiredDate = parseISO(contract.expiredAt);
-                                const today = new Date();
-                                const daysDiff = differenceInDays(expiredDate, today);
-                                return daysDiff > 60 && daysDiff <= 90;
-                            }).length === 0 ? (
-                                <Typography variant="body2" color="textSecondary">
-                                3개월 이내 만료되는 계약이 없습니다.
-                                </Typography>
-                            ) : (
-                                contracts
-                                .filter(contract => {
-                                    const expiredDate = parseISO(contract.expiredAt);
-                                    const today = new Date();
-                                    const daysDiff = differenceInDays(expiredDate, today);
-                                    return daysDiff > 60 && daysDiff <= 90;
-                                })
-                                .sort((a, b) => new Date(a.expiredAt).getTime() - new Date(b.expiredAt).getTime())
-                                .map(contract => (
-                                    <Typography key={contract.id} variant="body2" sx={{ mb: 1 }}>
-                                        <Box 
-                                        onClick={() => handleContractClick(contract.id)}
-                                        sx={{ display: "flex",  my: 0.3, cursor: 'pointer', 
-                                            '&:hover': {
-                                              backgroundColor: '#f5f5f5', 
-                                            }, }}>
-                                            {contract.landlordName}님과 {contract.tenantName}님의 계약 ({format(parseISO(contract.expiredAt), 'M/d')})
-                                        </Box>
-                                    </Typography>
-                                ))
-                            )}
-                            </Paper>
-                        </Grid>
-
-                        {/* 4~6개월 이내 */}
-                        <Grid item xs={12} md={6}>
-                            <Paper sx={{ p: 2, border: '1px solid #ddd', borderRadius: 2,
-                                height: '100%',
-                                display: 'flex',
-                                flexDirection: 'column' }}>
-                            <Typography variant="subtitle1" sx={{ mb: 2, color: 'success.main' }}>
-                                4~6개월 이내 만료
-                            </Typography>
-                            {contracts.filter(contract => {
-                                const expiredDate = parseISO(contract.expiredAt);
-                                const today = new Date();
-                                const daysDiff = differenceInDays(expiredDate, today);
-                                return daysDiff > 90 && daysDiff <= 180;
-                            }).length === 0 ? (
-                                <Typography variant="body2" color="textSecondary">
-                                4~6개월 이내 만료되는 계약이 없습니다.
-                                </Typography>
-                            ) : (
-                                contracts
-                                .filter(contract => {
-                                    const expiredDate = parseISO(contract.expiredAt);
-                                    const today = new Date();
-                                    const daysDiff = differenceInDays(expiredDate, today);
-                                    return daysDiff > 90 && daysDiff <= 180;
-                                })
-                                .sort((a, b) => new Date(a.expiredAt).getTime() - new Date(b.expiredAt).getTime())
-                                .map(contract => (
-                                    <Typography key={contract.id} variant="body2" sx={{ mb: 1 }}>
-                                        <Box 
-                                        onClick={() => handleContractClick(contract.id)}
-                                        sx={{ display: "flex",  my: 0.3, cursor: 'pointer', 
-                                            '&:hover': {
-                                              backgroundColor: '#f5f5f5', 
-                                            }, }}>
-                                            {contract.landlordName}님과 {contract.tenantName}님의 계약 ({format(parseISO(contract.expiredAt), 'M/d')})
-                                        </Box>
-                                    </Typography>
-                                ))
-                            )}
-                            </Paper>
-                        </Grid>
-                        </Grid>
-                    )}
+                        ) : (
+                            <Box sx={{ overflowX: 'auto' }}>
+                                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                    <thead>
+                                        <tr style={{ 
+                                            backgroundColor: '#e9ecef',
+                                            borderBottom: '1px solid #e9ecef'
+                                        }}>
+                                            <th style={{ 
+                                                padding: '12px 16px',
+                                                textAlign: 'left',
+                                                fontSize: '0.875rem',
+                                                fontWeight: 500,
+                                                color: '#003459'
+                                            }}>임대인</th>
+                                            <th style={{ 
+                                                padding: '12px 16px',
+                                                textAlign: 'left',
+                                                fontSize: '0.875rem',
+                                                fontWeight: 500,
+                                                color: '#003459'
+                                            }}>임차인</th>
+                                            <th style={{ 
+                                                padding: '12px 16px',
+                                                textAlign: 'left',
+                                                fontSize: '0.875rem',
+                                                fontWeight: 500,
+                                                color: '#003459'
+                                            }}>만료일</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {getContractsByPeriod().filter(contract => {
+                                            const expiredDate = parseISO(contract.expiredAt);
+                                            switch (selectedPeriod) {
+                                                case 'today':
+                                                    return isToday(expiredDate);
+                                                case '1-2month':
+                                                    return !isToday(expiredDate) && (
+                                                        isSameMonth(expiredDate, new Date()) ||
+                                                        isSameMonth(expiredDate, addMonths(new Date(), 1))
+                                                    );
+                                                case '3month':
+                                                    const daysDiff3 = differenceInDays(expiredDate, new Date());
+                                                    return daysDiff3 > 60 && daysDiff3 <= 90;
+                                                case '4-6month':
+                                                    const daysDiff6 = differenceInDays(expiredDate, new Date());
+                                                    return daysDiff6 > 90 && daysDiff6 <= 180;
+                                                default:
+                                                    return false;
+                                            }
+                                        }).length === 0 ? (
+                                            <tr>
+                                                <td colSpan={4} style={{ 
+                                                    padding: '24px',
+                                                    textAlign: 'center',
+                                                    color: '#00a8e8'
+                                                }}>
+                                                    {selectedPeriod === 'today' && '오늘 만료되는 계약이 없습니다.'}
+                                                    {selectedPeriod === '1-2month' && '1-2개월 이내 만료되는 계약이 없습니다.'}
+                                                    {selectedPeriod === '3month' && '3개월 이내 만료되는 계약이 없습니다.'}
+                                                    {selectedPeriod === '4-6month' && '4-6개월 이내 만료되는 계약이 없습니다.'}
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            getContractsByPeriod()
+                                                .map(contract => (
+                                                    <tr 
+                                                        key={contract.id}
+                                                        style={{ 
+                                                            borderBottom: '1px solid #e9ecef',
+                                                            cursor: 'pointer',
+                                                            backgroundColor: 'transparent',
+                                                            transition: 'background-color 0.2s'
+                                                        }}
+                                                        onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f8f9fa'}
+                                                        onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                                        onClick={() => handleContractClick(contract.id)}
+                                                    >
+                                                        <td style={{ 
+                                                            padding: '12px 16px',
+                                                            fontSize: '0.875rem',
+                                                            color: '#00171f'
+                                                        }}>
+                                                            {contract.landlordName}
+                                                        </td>
+                                                        <td style={{ 
+                                                            padding: '12px 16px',
+                                                            fontSize: '0.875rem',
+                                                            color: '#00171f'
+                                                        }}>
+                                                            {contract.tenantName}
+                                                        </td>
+                                                        <td style={{ 
+                                                            padding: '12px 16px',
+                                                            fontSize: '0.875rem',
+                                                            color: '#666666'
+                                                        }}>
+                                                            {format(parseISO(contract.expiredAt), 'yyyy년 M월 d일')}
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </Box>
+                        )}
                     </Paper>
                 </Grid>
-                </Grid>
-
+            </Grid>
 
             {/* Charts */}
             <Grid container spacing={3}>
                 <Grid item xs={12} md={6}>
-                    <Paper sx={{ p: 3 }}>
+                    <Paper sx={{ p: 3, boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)' }}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                            <Typography variant="h6">부동산 유형 분포</Typography>
+                            <Typography variant="h6">매물 유형별 분포</Typography>
                             <ToggleButtonGroup
                                 value={realEstateTypePeriod}
                                 exclusive
                                 onChange={handleRealEstateTypePeriodChange}
-                                aria-label="부동산 유형 기간 선택"
+                                aria-label="매물 유형 기간 선택"
                                 size="small"
+                                sx={{
+                                    '& .MuiToggleButton-root': {
+                                        px: 2,
+                                        py: 0.5,
+                                        fontSize: '0.875rem',
+                                        color: '#003459',
+                                        '&.Mui-selected': {
+                                            bgcolor: '#003459',
+                                            color: '#ffffff',
+                                            '&:hover': {
+                                                bgcolor: '#002137',
+                                            },
+                                        },
+                                    },
+                                }}
                             >
                                 <ToggleButton value="daily" aria-label="일간">
                                     일간
@@ -1114,16 +1169,32 @@ const Dashboard = () => {
                         )}
                     </Paper>
                 </Grid>
+
                 <Grid item xs={12} md={6}>
-                    <Paper sx={{ p: 3 }}>
+                    <Paper sx={{ p: 3, boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)' }}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                            <Typography variant="h6">거래 유형 분포</Typography>
+                            <Typography variant="h6">거래 유형별 분포</Typography>
                             <ToggleButtonGroup
                                 value={tradeTypePeriod}
                                 exclusive
                                 onChange={handleTradeTypePeriodChange}
                                 aria-label="거래 유형 기간 선택"
                                 size="small"
+                                sx={{
+                                    '& .MuiToggleButton-root': {
+                                        px: 2,
+                                        py: 0.5,
+                                        fontSize: '0.875rem',
+                                        color: '#003459',
+                                        '&.Mui-selected': {
+                                            bgcolor: '#003459',
+                                            color: '#ffffff',
+                                            '&:hover': {
+                                                bgcolor: '#002137',
+                                            },
+                                        },
+                                    },
+                                }}
                             >
                                 <ToggleButton value="daily" aria-label="일간">
                                     일간
@@ -1168,7 +1239,7 @@ const Dashboard = () => {
                     </Paper>
                 </Grid>
             </Grid>
-        </>
+        </Box>
     )
 }
 

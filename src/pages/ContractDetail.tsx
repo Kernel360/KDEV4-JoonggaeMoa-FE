@@ -163,7 +163,7 @@ const ContractDetail = () => {
     const contractStatus = getContractStatus(contract.expiredAt)
 
     return (
-        <Box sx={{ flexGrow: 1, bgcolor: "#f5f5f5", minHeight: "100vh" }}>
+        <Box sx={{ flexGrow: 1, minHeight: "100vh" }}>
             <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
                 <Box sx={{ display: "flex", alignItems: "center", mb: 4 }}>
                     <IconButton onClick={() => navigate("/contract")} sx={{ mr: 1 }}>
@@ -178,9 +178,9 @@ const ContractDetail = () => {
                     </Button>
                 </Box>
 
-                <Paper elevation={0} sx={{ p: 4, mb: 3 }}>
+                <Paper elevation={0} sx={{ p: 4, mb: 3, borderRadius: 2, bgcolor: "#ffffff" }}>
                     <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
-                        <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                        <Typography variant="h6" sx={{ fontWeight: "bold", color: "#003459" }}>
                             계약 기본 정보
                         </Typography>
                         <Chip
@@ -211,7 +211,7 @@ const ContractDetail = () => {
                                 startIcon={<Download />}
                                 size="small"
                                 onClick={handleDownloadContract}
-                                sx={{ mt: 1, mb: 2 }}
+                                sx={{ mt: 1, mb: 2, borderColor: "#007ea7", color: "#007ea7" }}
                             >
                                 계약서 파일 보기
                             </Button>
@@ -235,12 +235,12 @@ const ContractDetail = () => {
                     </Grid>
                 </Paper>
 
-                <Paper elevation={0} sx={{ p: 4 }}>
-                    <Typography variant="h6" sx={{ fontWeight: "bold", mb: 3 }}>
+                <Paper elevation={0} sx={{ p: 4, borderRadius: 2, bgcolor: "#ffffff" }}>
+                    <Typography variant="h6" sx={{ fontWeight: "bold", mb: 3, color: "#003459" }}>
                         계약 당사자 정보
                     </Typography>
 
-                    <Typography variant="subtitle1" sx={{ fontWeight: "medium", mb: 2 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: "medium", mb: 2, color: "#007ea7" }}>
                         임대인 정보
                     </Typography>
                     <Grid container spacing={3} sx={{ mb: 4 }}>
@@ -272,7 +272,7 @@ const ContractDetail = () => {
 
                     <Divider sx={{ my: 3 }} />
 
-                    <Typography variant="subtitle1" sx={{ fontWeight: "medium", mb: 2 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: "medium", mb: 2, color: "#007ea7" }}>
                         임차인 정보
                     </Typography>
                     <Grid container spacing={3}>

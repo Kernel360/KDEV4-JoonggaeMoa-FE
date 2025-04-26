@@ -160,7 +160,7 @@ const CustomerEdit = () => {
     }
 
     return (
-        <Box sx={{ flexGrow: 1, bgcolor: "#f5f5f5", minHeight: "100vh" }}>
+        <Box sx={{ flexGrow: 1, minHeight: "100vh" }}>
             <Container
                 maxWidth="md"
                 sx={{
@@ -170,9 +170,9 @@ const CustomerEdit = () => {
                     px: { xs: 2, sm: 3, md: 4 },
                 }}
             >
-                <Paper elevation={0} sx={{ p: 4, borderRadius: 2 }}>
+                <Paper elevation={0} sx={{ p: 4, borderRadius: 2, bgcolor: "#ffffff" }}>
                     <Box sx={{ display: "flex", alignItems: "center", mb: 4 }}>
-                        <IconButton onClick={() => navigate(`/customer-management/${id}`)} sx={{ mr: 1 }}>
+                        <IconButton onClick={() => navigate("/customer-management")} sx={{ mr: 1 }}>
                             <ArrowBack />
                         </IconButton>
                         <Typography variant="h6" sx={{ fontWeight: "bold" }}>
@@ -187,7 +187,7 @@ const CustomerEdit = () => {
                     <form onSubmit={handleSubmit}>
                         <Grid container spacing={3}>
                             <Grid item xs={12} sm={6}>
-                                <TextField 
+                                <TextField
                                     required
                                     fullWidth
                                     label="이름"
@@ -200,20 +200,11 @@ const CustomerEdit = () => {
                                 <TextField
                                     required
                                     fullWidth
-                                    label="연락처"
+                                    label="전화번호"
                                     name="phone"
                                     value={formData.phone}
                                     onChange={handleChange}
                                     placeholder="010-0000-0000"
-                                    inputProps={{
-                                        maxLength: 13
-                                    }}
-                                    error={formData.phone !== "" && !/^010-\d{4}-\d{4}$/.test(formData.phone)}
-                                    helperText={
-                                        formData.phone !== "" && 
-                                        !/^010-\d{4}-\d{4}$/.test(formData.phone) ? 
-                                        "올바른 전화번호 형식(010-XXXX-XXXX)으로 입력해주세요." : ""
-                                    }
                                 />
                             </Grid>
                             <Grid item xs={12} sm={6}>
@@ -225,11 +216,6 @@ const CustomerEdit = () => {
                                     type="email"
                                     value={formData.email}
                                     onChange={handleChange}
-                                    error={formData.email !== "" && !formData.email.includes('@')}
-                                    helperText={
-                                        formData.email !== "" && !formData.email.includes('@') ?
-                                        "이메일 주소에 '@'를 포함해주세요." : ""
-                                    }
                                 />
                             </Grid>
                             <Grid item xs={12} sm={6}>
@@ -313,7 +299,7 @@ const CustomerEdit = () => {
                                 <Button
                                     variant="outlined"
                                     sx={{ mr: 1, borderColor: "#ddd", color: "#333" }}
-                                    onClick={() => navigate(`/customer-management/${id}`)}
+                                    onClick={() => navigate("/customer-management")}
                                     disabled={loading}
                                 >
                                     취소
@@ -321,7 +307,7 @@ const CustomerEdit = () => {
                                 <Button
                                     type="submit"
                                     variant="contained"
-                                    sx={{ bgcolor: "#000", "&:hover": { bgcolor: "#333" } }}
+                                    sx={{ bgcolor: "#007ea7", "&:hover": { bgcolor: "#003459" } }}
                                     disabled={loading}
                                 >
                                     {loading ? <CircularProgress size={24} /> : "고객 정보 수정하기"}
@@ -340,7 +326,7 @@ const CustomerEdit = () => {
 
             <Snackbar open={success} autoHideDuration={6000} onClose={() => setSuccess(false)}>
                 <Alert onClose={() => setSuccess(false)} severity="success" sx={{ width: "100%" }}>
-                    고객 정보가 성공적으로 수정되었습니다.
+                    고객 정보가 성공적으로 수정되었습니다. 고객 목록 페이지로 이동합니다.
                 </Alert>
             </Snackbar>
 

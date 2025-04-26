@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import {
     Box,
     Container,
@@ -146,6 +146,13 @@ const ConsultationList = () => {
     const [createLoading, setCreateLoading] = useState(false)
     const [createSuccess, setCreateSuccess] = useState(false)
     const [createError, setCreateError] = useState<string | null>(null)
+    
+    // 고객 목록 페이지네이션 관련 상태
+    const [customerPage, setCustomerPage] = useState(0)
+    const [hasMoreCustomers, setHasMoreCustomers] = useState(true)
+    const [isLoadingMoreCustomers, setIsLoadingMoreCustomers] = useState(false)
+    const customerObserver = useRef<IntersectionObserver | null>(null)
+    const lastCustomerElementRef = useRef<HTMLDivElement | null>(null)
 
     // 상태별 상담 목록 관련 상태
     const [statusFilteredConsultations, setStatusFilteredConsultations] = useState<ConsultationResponse[]>([])
@@ -154,13 +161,28 @@ const ConsultationList = () => {
     const [openStatusMenuId, setOpenStatusMenuId] = useState<number | null>(null)
 
     // 날짜 별 고객 목록 가져오기
-    const fetchCustomers = async () => {
+    const fetchCustomers = async (pageNum = 0) => {
         try {
-            setCustomersLoading(true)
-            const response = await customerApi.getCustomers()
+            if (pageNum === 0) {
+                setCustomersLoading(true)
+            } else {
+                setIsLoadingMoreCustomers(true)
+            }
+            
+            const response = await customerApi.getCustomers(pageNum, 20)
 
             if (response.data.success && response.data.data) {
-                setCustomers(response.data.data.content)
+                const newCustomers = response.data.data.content
+                
+                if (pageNum === 0) {
+                    setCustomers(newCustomers)
+                } else {
+                    setCustomers(prev => [...prev, ...newCustomers])
+                }
+                
+                // 페이지네이션 정보 업데이트
+                setHasMoreCustomers(!response.data.data.last)
+                setCustomerPage(pageNum)
             } else {
                 setCreateError("고객 목록을 불러오는데 실패했습니다.")
             }
@@ -169,8 +191,25 @@ const ConsultationList = () => {
             setCreateError("고객 목록을 불러오는데 실패했습니다.")
         } finally {
             setCustomersLoading(false)
+            setIsLoadingMoreCustomers(false)
         }
     }
+
+    // 무한 스크롤을 위한 콜백 함수
+    const lastCustomerRef = useCallback((node: HTMLDivElement | null) => {
+        if (customersLoading) return
+        
+        if (customerObserver.current) customerObserver.current.disconnect()
+        
+        customerObserver.current = new IntersectionObserver(entries => {
+            if (entries[0].isIntersecting && hasMoreCustomers && !isLoadingMoreCustomers) {
+                fetchCustomers(customerPage + 1)
+            }
+        })
+        
+        if (node) customerObserver.current.observe(node)
+        lastCustomerElementRef.current = node
+    }, [customersLoading, hasMoreCustomers, isLoadingMoreCustomers, customerPage])
 
     // 이전 달로 이동
     const goToPreviousMonth = () => {
@@ -410,7 +449,9 @@ const ConsultationList = () => {
     // 상담 등록 모달 열기
     const handleCreateModalOpen = () => {
         setCreateModalOpen(true)
-        fetchCustomers()
+        setCustomerPage(0)
+        setHasMoreCustomers(true)
+        fetchCustomers(0)
         // 오늘 날짜로 초기화
         const today = new Date()
         setScheduledDate(formatDateToYYYYMMDD(today))
@@ -566,7 +607,7 @@ const ConsultationList = () => {
 
     // Update the summary information section in the render
     return (
-        <Box sx={{ flexGrow: 1, bgcolor: "#f5f5f5", minHeight: "100vh", overflow: "auto" }}>
+        <Box sx={{ flexGrow: 1, minHeight: "100vh", overflow: "auto" }}>
             <Container maxWidth="lg" sx={{ mt: 4, mb: 4, mx: "auto", px: { xs: 2, sm: 3, md: 4 } }}>
                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
                     <Box sx={{ display: "flex", alignItems: "center" }}>
@@ -581,8 +622,8 @@ const ConsultationList = () => {
                         variant="contained"
                         startIcon={<Add />}
                         sx={{
-                            bgcolor: "#000",
-                            "&:hover": { bgcolor: "#333" },
+                            bgcolor: "#007ea7",
+                            "&:hover": { bgcolor: "#003459" },
                         }}
                         onClick={handleCreateModalOpen}
                     >
@@ -603,10 +644,11 @@ const ConsultationList = () => {
                                 alignItems: "center",
                                 cursor: "pointer",
                                 transition: "all 0.2s",
+                                boxShadow: '0 4px 8px -1px rgba(0, 0, 0, 0.2), 0 2px 6px -1px rgba(0, 0, 0, 0.15)',
                                 "&:hover": {
-                                    bgcolor: "rgba(33, 150, 243, 0.08)",
+                                    bgcolor: "rgba(0, 126, 167, 0.08)",
                                     transform: "translateY(-2px)",
-                                    boxShadow: "0 4px 8px rgba(0,0,0,0.1)"
+                                    boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.15)"
                                 }
                             }}
                             onClick={() => handleStatusCardClick(ConsultationStatus.WAITING)}
@@ -630,10 +672,11 @@ const ConsultationList = () => {
                                 alignItems: "center",
                                 cursor: "pointer",
                                 transition: "all 0.2s",
+                                boxShadow: '0 4px 8px -1px rgba(0, 0, 0, 0.2), 0 2px 6px -1px rgba(0, 0, 0, 0.15)',
                                 "&:hover": {
-                                    bgcolor: "rgba(255, 152, 0, 0.08)",
+                                    bgcolor: "rgba(0, 126, 167, 0.08)",
                                     transform: "translateY(-2px)",
-                                    boxShadow: "0 4px 8px rgba(0,0,0,0.1)"
+                                    boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.15)"
                                 }
                             }}
                             onClick={() => handleStatusCardClick(ConsultationStatus.CONFIRMED)}
@@ -657,10 +700,11 @@ const ConsultationList = () => {
                                 alignItems: "center",
                                 cursor: "pointer",
                                 transition: "all 0.2s",
+                                boxShadow: '0 4px 8px -1px rgba(0, 0, 0, 0.2), 0 2px 6px -1px rgba(0, 0, 0, 0.15)',
                                 "&:hover": {
-                                    bgcolor: "rgba(76, 175, 80, 0.08)",
+                                    bgcolor: "rgba(0, 126, 167, 0.08)",
                                     transform: "translateY(-2px)",
-                                    boxShadow: "0 4px 8px rgba(0,0,0,0.1)"
+                                    boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.15)"
                                 }
                             }}
                             onClick={() => handleStatusCardClick(ConsultationStatus.COMPLETED)}
@@ -677,7 +721,7 @@ const ConsultationList = () => {
                 {/* 캘린더 뷰 */}
                 <Grid container spacing={3}>
                     <Grid item xs={12} md={6}>
-                        <Paper elevation={0} sx={{ p: 3, borderRadius: 2 }}>
+                        <Paper elevation={0} sx={{ p: 3, borderRadius: 2, boxShadow: '0 4px 8px -1px rgba(0, 0, 0, 0.2), 0 2px 6px -1px rgba(0, 0, 0, 0.15)' }}>
                             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
                                 <Typography variant="h6">
                                     <CalendarMonth sx={{ verticalAlign: "middle", mr: 1 }} />
@@ -772,7 +816,7 @@ const ConsultationList = () => {
 
                     {/* 상담 목록 테이블 - 캘린더 오른쪽에 배치 */}
                     <Grid item xs={12} md={6}>
-                        <Paper elevation={0} sx={{ p: 3, borderRadius: 2, height: '100%' }}>
+                        <Paper elevation={0} sx={{ p: 3, borderRadius: 2, height: '100%', boxShadow: '0 4px 8px -1px rgba(0, 0, 0, 0.2), 0 2px 6px -1px rgba(0, 0, 0, 0.15)' }}>
                             <Typography variant="h6" sx={{ mb: 2 }}>
                                 {selectedStatus 
                                     ? `${statusConfig[selectedStatus].label} 상담 목록` 
@@ -780,14 +824,49 @@ const ConsultationList = () => {
                                         ? `${selectedDate.getMonth() + 1}월 ${selectedDate.getDate()}일 상담 목록` 
                                         : '상담 목록'}
                             </Typography>
-                            <TableContainer>
+                            <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2, overflow: "hidden" }}>
                                 <Table>
                                     <TableHead>
-                                        <TableRow>
-                                            <TableCell>고객명</TableCell>
-                                            <TableCell>연락처</TableCell>
-                                            <TableCell>상담 시간</TableCell>
-                                            <TableCell>상태</TableCell>
+                                        <TableRow sx={{ 
+                                            backgroundColor: '#e9ecef',
+                                            borderBottom: '1px solid #e9ecef'
+                                        }}>
+                                            <TableCell sx={{ 
+                                                padding: '12px 16px',
+                                                textAlign: 'left',
+                                                fontSize: '0.875rem',
+                                                fontWeight: 500,
+                                                color: '#003459'
+                                            }}>
+                                                고객명
+                                            </TableCell>
+                                            <TableCell sx={{ 
+                                                padding: '12px 16px',
+                                                textAlign: 'left',
+                                                fontSize: '0.875rem',
+                                                fontWeight: 500,
+                                                color: '#003459'
+                                            }}>
+                                                연락처
+                                            </TableCell>
+                                            <TableCell sx={{ 
+                                                padding: '12px 16px',
+                                                textAlign: 'left',
+                                                fontSize: '0.875rem',
+                                                fontWeight: 500,
+                                                color: '#003459'
+                                            }}>
+                                                상담 시간
+                                            </TableCell>
+                                            <TableCell sx={{ 
+                                                padding: '12px 16px',
+                                                textAlign: 'left',
+                                                fontSize: '0.875rem',
+                                                fontWeight: 500,
+                                                color: '#003459'
+                                            }}>
+                                                상태
+                                            </TableCell>
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
@@ -805,17 +884,40 @@ const ConsultationList = () => {
                                                         onClick={() => handleViewConsultation(consultation.consultationId, consultation.customerId)}
                                                         sx={{ 
                                                             cursor: 'pointer',
-                                                            '&:hover': { 
-                                                                backgroundColor: 'rgba(0, 0, 0, 0.04)' 
+                                                            borderBottom: '1px solid #e9ecef',
+                                                            backgroundColor: 'transparent',
+                                                            transition: 'background-color 0.2s',
+                                                            '&:hover': {
+                                                                backgroundColor: '#f8f9fa'
                                                             }
                                                         }}
                                                     >
-                                                        <TableCell>{consultation.customerName}</TableCell>
-                                                        <TableCell>{consultation.customerPhone}</TableCell>
-                                                        <TableCell>
+                                                        <TableCell sx={{ 
+                                                            padding: '12px 16px',
+                                                            fontSize: '0.875rem',
+                                                            color: '#00171f'
+                                                        }}>
+                                                            {consultation.customerName}
+                                                        </TableCell>
+                                                        <TableCell sx={{ 
+                                                            padding: '12px 16px',
+                                                            fontSize: '0.875rem',
+                                                            color: '#00171f'
+                                                        }}>
+                                                            {consultation.customerPhone}
+                                                        </TableCell>
+                                                        <TableCell sx={{ 
+                                                            padding: '12px 16px',
+                                                            fontSize: '0.875rem',
+                                                            color: '#00171f'
+                                                        }}>
                                                             {consultation.date ? formatDateTime(consultation.date) : '-'}
                                                         </TableCell>
-                                                        <TableCell>
+                                                        <TableCell sx={{ 
+                                                            padding: '12px 16px',
+                                                            fontSize: '0.875rem',
+                                                            color: '#00171f'
+                                                        }}>
                                                             <Chip
                                                                 label={statusConfig[consultation.consultationStatus].label}
                                                                 sx={{
@@ -910,17 +1012,40 @@ const ConsultationList = () => {
                                                     onClick={() => handleViewConsultation(consultation.consultationId, consultation.customerId)}
                                                     sx={{ 
                                                         cursor: 'pointer',
-                                                        '&:hover': { 
-                                                            backgroundColor: 'rgba(0, 0, 0, 0.04)' 
+                                                        borderBottom: '1px solid #e9ecef',
+                                                        backgroundColor: 'transparent',
+                                                        transition: 'background-color 0.2s',
+                                                        '&:hover': {
+                                                            backgroundColor: '#f8f9fa'
                                                         }
                                                     }}
                                                 >
-                                                    <TableCell>{consultation.customerName}</TableCell>
-                                                    <TableCell>{consultation.customerPhone}</TableCell>
-                                                    <TableCell>
+                                                    <TableCell sx={{ 
+                                                        padding: '12px 16px',
+                                                        fontSize: '0.875rem',
+                                                        color: '#00171f'
+                                                    }}>
+                                                        {consultation.customerName}
+                                                    </TableCell>
+                                                    <TableCell sx={{ 
+                                                        padding: '12px 16px',
+                                                        fontSize: '0.875rem',
+                                                        color: '#00171f'
+                                                    }}>
+                                                        {consultation.customerPhone}
+                                                    </TableCell>
+                                                    <TableCell sx={{ 
+                                                        padding: '12px 16px',
+                                                        fontSize: '0.875rem',
+                                                        color: '#00171f'
+                                                    }}>
                                                         {consultation.date ? formatDateTime(consultation.date) : '-'}
                                                     </TableCell>
-                                                    <TableCell>
+                                                    <TableCell sx={{ 
+                                                        padding: '12px 16px',
+                                                        fontSize: '0.875rem',
+                                                        color: '#00171f'
+                                                    }}>
                                                         <Chip
                                                             label={statusConfig[consultation.consultationStatus].label}
                                                             sx={{
@@ -1080,6 +1205,25 @@ const ConsultationList = () => {
                                                 ),
                                             }}
                                         />
+                                    )}
+                                    ListboxProps={{
+                                        style: { maxHeight: '300px' }
+                                    }}
+                                    ListboxComponent={(props) => (
+                                        <Box component="ul" {...props} sx={{ p: 0, m: 0 }}>
+                                            {props.children}
+                                            {isLoadingMoreCustomers && (
+                                                <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+                                                    <CircularProgress size={24} />
+                                                </Box>
+                                            )}
+                                            {props.children && Array.isArray(props.children) && props.children.length > 0 && (
+                                                <Box 
+                                                    ref={lastCustomerRef} 
+                                                    sx={{ height: '20px' }}
+                                                />
+                                            )}
+                                        </Box>
                                     )}
                                 />
                             </Grid>
