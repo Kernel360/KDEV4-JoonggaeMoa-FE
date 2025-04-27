@@ -125,7 +125,7 @@ const CustomerManagement: React.FC = () => {
     }, [loading, hasMore, fetchCustomers])
 
     return (
-        <Box sx={{ flexGrow: 1, bgcolor: "#f5f5f5", minHeight: "100vh" }}>
+        <Box sx={{ flexGrow: 1, minHeight: "100vh" }}>
             <Container
                 maxWidth="lg"
                 sx={{
@@ -135,57 +135,96 @@ const CustomerManagement: React.FC = () => {
                     px: { xs: 2, sm: 3, md: 4 },
                 }}
             >
+                {/* 상단 액션 영역 */}
                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
-                    <Box sx={{ display: "flex", alignItems: "center" }}>
-                        <IconButton onClick={() => navigate("/dashboard")} sx={{ mr: 1 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                        <IconButton 
+                            onClick={() => navigate("/dashboard")} 
+                            sx={{ 
+                                color: "text.primary",
+                                "&:hover": { bgcolor: "action.hover" }
+                            }}
+                        >
                             <ArrowBack />
                         </IconButton>
-                        <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                            고객 관리
+                        <Typography variant="h6" sx={{ fontWeight: "bold", color: "text.primary" }}>
+                            고객 목록
                         </Typography>
                     </Box>
-                    <Box>
+                    <Box sx={{ display: "flex", gap: 2 }}>
                         <Button
                             variant="contained"
                             startIcon={<Add />}
                             sx={{
-                                bgcolor: "#000",
-                                "&:hover": { bgcolor: "#333" },
-                                mr: 1,
+                                bgcolor: '#007ea7',
+                                '&:hover': { bgcolor: '#003459' },
+                                textTransform: 'none',
+                                boxShadow: 2,
                             }}
                             onClick={() => navigate("/customer-management/add")}
                         >
-                            개인 고객 등록
+                            개인고객등록
                         </Button>
                         <Button
                             variant="outlined"
                             startIcon={<FileUpload />}
-                            sx={{ borderColor: "#ddd", color: "#333" }}
+                            sx={{ 
+                                mr: 2, 
+                                borderColor: "#007ea7", 
+                                color: "#007ea7",
+                                '&:hover': {
+                                    borderColor: "#003459",
+                                    color: "#003459",
+                                    bgcolor: 'rgba(0, 126, 167, 0.08)'
+                                }
+                            }}
                             onClick={() => navigate("/customer-management/import")}
                         >
-                            엑셀 등록
+                            엑셀등록
                         </Button>
                     </Box>
                 </Box>
 
-                <Paper elevation={0} sx={{ mb: 3, p: 3, borderRadius: 2 }}>
-                    <TextField
-                        placeholder="고객명, 연락처 또는 이메일로 검색"
-                        variant="outlined"
-                        size="small"
-                        fullWidth
-                        value={searchTerm}
-                        onChange={handleSearchChange}
-                        InputProps={{
-                            startAdornment: (
-                                <InputAdornment position="start">
-                                    <Search />
-                                </InputAdornment>
-                            ),
-                        }}
-                    />
+                {/* 검색 영역 */}
+                <Paper 
+                    elevation={0} 
+                    sx={{ 
+                        mb: 3, 
+                        p: 3, 
+                        borderRadius: 2,
+                        bgcolor: "white",
+                        boxShadow: 2,
+                    }}
+                >
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                        <TextField
+                            placeholder="고객명, 연락처로 검색"
+                            variant="outlined"
+                            size="small"
+                            fullWidth
+                            value={searchTerm}
+                            onChange={handleSearchChange}
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <Search sx={{ color: "text.secondary" }} />
+                                    </InputAdornment>
+                                ),
+                                sx: {
+                                    borderRadius: 2,
+                                    "& fieldset": {
+                                        borderColor: "grey.300",
+                                    },
+                                    "&:hover fieldset": {
+                                        borderColor: "primary.main",
+                                    },
+                                },
+                            }}
+                        />
+                    </Box>
                 </Paper>
 
+                {/* 고객 리스트 테이블 */}
                 {loading && customers.length === 0 ? (
                     <Box sx={{ display: "flex", justifyContent: "center", my: 5 }}>
                         <CircularProgress />
@@ -193,20 +232,80 @@ const CustomerManagement: React.FC = () => {
                 ) : error ? (
                     <Paper elevation={0} sx={{ p: 3, textAlign: "center", borderRadius: 2 }}>
                         <Typography color="error">{error}</Typography>
-                        <Button variant="contained" sx={{ mt: 2 }} onClick={() => setPage(0)}> {/* 첫 페이지부터 다시 로드 */}
+                        <Button variant="contained" sx={{ mt: 2 }} onClick={() => setPage(0)}>
                             다시 시도
                         </Button>
                     </Paper>
                 ) : (
-                    <>
-                        <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2, overflow: "hidden" }}>
+                    <Paper 
+                        elevation={0} 
+                        sx={{ 
+                            borderRadius: 2,
+                            overflow: "hidden",
+                            boxShadow: 2,
+                        }}
+                    >
+                        <TableContainer>
                             <Table sx={{ minWidth: 650 }}>
                                 <TableHead>
-                                    <TableRow sx={{ bgcolor: "#f9f9f9" }}>
-                                        <TableCell sx={{ fontWeight: 500 }}>고객명</TableCell>
-                                        <TableCell sx={{ fontWeight: 500 }}>연락처</TableCell>
-                                        <TableCell sx={{ fontWeight: 500 }}>이메일</TableCell>
-                                        <TableCell sx={{ fontWeight: 500 }}>상태</TableCell>
+                                    <TableRow sx={{ 
+                                        backgroundColor: '#e9ecef',
+                                        borderBottom: '1px solid #e9ecef'
+                                    }}>
+                                        <TableCell sx={{ 
+                                            padding: '12px 16px',
+                                            textAlign: 'left',
+                                            fontSize: '0.875rem',
+                                            fontWeight: 500,
+                                            color: '#003459'
+                                        }}>
+                                            고객명
+                                        </TableCell>
+                                        <TableCell sx={{ 
+                                            padding: '12px 16px',
+                                            textAlign: 'left',
+                                            fontSize: '0.875rem',
+                                            fontWeight: 500,
+                                            color: '#003459'
+                                        }}>
+                                            연락처
+                                        </TableCell>
+                                        <TableCell sx={{ 
+                                            padding: '12px 16px',
+                                            textAlign: 'left',
+                                            fontSize: '0.875rem',
+                                            fontWeight: 500,
+                                            color: '#003459'
+                                        }}>
+                                            이메일
+                                        </TableCell>
+                                        <TableCell sx={{ 
+                                            padding: '12px 16px',
+                                            textAlign: 'left',
+                                            fontSize: '0.875rem',
+                                            fontWeight: 500,
+                                            color: '#003459'
+                                        }}>
+                                            상태
+                                        </TableCell>
+                                        <TableCell sx={{ 
+                                            padding: '12px 16px',
+                                            textAlign: 'left',
+                                            fontSize: '0.875rem',
+                                            fontWeight: 500,
+                                            color: '#003459'
+                                        }}>
+                                            생년월일
+                                        </TableCell>
+                                        <TableCell sx={{ 
+                                            padding: '12px 16px',
+                                            textAlign: 'left',
+                                            fontSize: '0.875rem',
+                                            fontWeight: 500,
+                                            color: '#003459'
+                                        }}>
+                                            직업
+                                        </TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -215,29 +314,58 @@ const CustomerManagement: React.FC = () => {
                                             key={customer.id}
                                             hover
                                             onClick={() => navigate(`/customer-management/${customer.id}`)}
-                                            sx={{ cursor: "pointer" }}
+                                            sx={{ 
+                                                cursor: "pointer",
+                                                bgcolor: index % 2 === 0 ? "white" : "grey.50",
+                                                "&:hover": {
+                                                    bgcolor: "action.hover",
+                                                },
+                                            }}
                                             ref={index === customers.length - 1 ? lastCustomerRef : null}
                                         >
-                                            <TableCell>{customer.name}</TableCell>
-                                            <TableCell>{customer.phone}</TableCell>
-                                            <TableCell>{customer.email}</TableCell>
+                                            <TableCell>
+                                                <Typography variant="body2" sx={{ fontWeight: 500, color: '#00171f', fontSize: '0.875rem' }}>
+                                                    {customer.name}
+                                                </Typography>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Typography variant="body2" sx={{ color: '#00171f', fontSize: '0.875rem' }}>
+                                                    {customer.phone}
+                                                </Typography>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Typography variant="body2" sx={{ color: '#00171f', fontSize: '0.875rem' }}>
+                                                    {customer.email}
+                                                </Typography>
+                                            </TableCell>
                                             <TableCell>
                                                 <Chip
                                                     label={customer.isVip ? "VIP" : "일반"}
-                                                    color={customer.isVip ? "success" : "default"}
+                                                    color={customer.isVip ? "warning" : "default"}
                                                     size="small"
                                                     sx={{
-                                                        bgcolor: customer.isVip ? "#e8f5e9" : "#f5f5f5",
-                                                        color: customer.isVip ? "#2e7d32" : "#757575",
-                                                        border: "none",
+                                                        bgcolor: customer.isVip ? '#007ea7' : '#f5f5f5',
+                                                        color: customer.isVip ? '#ffffff' : '#003459',
+                                                        fontWeight: 600,
+                                                        fontSize: '0.75rem',
                                                     }}
                                                 />
+                                            </TableCell>
+                                            <TableCell>
+                                                <Typography variant="body2" sx={{ color: '#00171f', fontSize: '0.875rem' }}>
+                                                    {customer.birthday}
+                                                </Typography>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Typography variant="body2" sx={{ color: '#00171f', fontSize: '0.875rem' }}>
+                                                    {customer.job}
+                                                </Typography>
                                             </TableCell>
                                         </TableRow>
                                     ))}
                                     {loading && customers.length > 0 && (
                                         <TableRow>
-                                            <TableCell colSpan={4} align="center">
+                                            <TableCell colSpan={6} align="center">
                                                 <CircularProgress size={20} />
                                             </TableCell>
                                         </TableRow>
@@ -246,11 +374,20 @@ const CustomerManagement: React.FC = () => {
                             </Table>
                         </TableContainer>
 
-                        <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
-                            <Typography variant="body2" color="textSecondary">
+                        {/* 페이지네이션 */}
+                        <Box sx={{ 
+                            display: "flex", 
+                            justifyContent: "space-between", 
+                            alignItems: "center",
+                            p: 2,
+                            borderTop: 1,
+                            borderColor: "divider",
+                        }}>
+                            <Typography variant="body2" color="text.secondary">
+                                총 {customers.length}명의 고객
                             </Typography>
                         </Box>
-                    </>
+                    </Paper>
                 )}
             </Container>
 
@@ -274,12 +411,6 @@ const CustomerManagement: React.FC = () => {
                     </Button>
                 </DialogActions>
             </Dialog>
-
-            <Box sx={{ bgcolor: "#fff", p: 2, textAlign: "center", mt: 4 }}>
-                <Typography variant="caption" color="textSecondary">
-                    © 2024 Customer Management System. All rights reserved.
-                </Typography>
-            </Box>
         </Box>
     )
 }

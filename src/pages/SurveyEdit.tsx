@@ -472,9 +472,9 @@ const SurveyEdit = () => {
     }
 
     return (
-        <Box sx={{ flexGrow: 1, bgcolor: "#f5f5f5", minHeight: "100vh" }}>
+        <Box sx={{ flexGrow: 1, bgcolor: "#ffffff", minHeight: "100vh", py: 3 }}>
             <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
-                <Paper elevation={0} sx={{ p: 4 }}>
+                <Paper elevation={0} sx={{ p: 4, borderRadius: 2, boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
                     <Box sx={{ display: "flex", alignItems: "center", mb: 4 }}>
                         <IconButton onClick={() => navigate(`/survey/${id}`)} sx={{ mr: 1 }}>
                             <ArrowBack />
@@ -590,7 +590,13 @@ const SurveyEdit = () => {
                     <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
                         <Button
                             variant="outlined"
-                            sx={{ mr: 1, borderColor: "#ddd", color: "#333" }}
+                            sx={{ mr: 1, borderColor: "#007ea7", color: "#007ea7",
+                                '&:hover': {
+                                    borderColor: "#003459",
+                                    color: "#003459",
+                                    bgcolor: 'rgba(0, 126, 167, 0.08)'
+                                }
+                            }}
                             onClick={() => navigate(`/survey/${id}`)}
                             disabled={loading}
                         >
@@ -598,7 +604,7 @@ const SurveyEdit = () => {
                         </Button>
                         <Button
                             variant="contained"
-                            sx={{ bgcolor: "#000", "&:hover": { bgcolor: "#333" } }}
+                            sx={{ bgcolor: "#007ea7", "&:hover": { bgcolor: "#003459" } }}
                             onClick={handleSubmit}
                             disabled={loading}
                         >
@@ -620,7 +626,7 @@ const SurveyEdit = () => {
                 </Alert>
             </Snackbar>
 
-            <Box sx={{ bgcolor: "#fff", p: 2, textAlign: "center", mt: 4 }}>
+            <Box sx={{ bgcolor: "#ffffff", p: 2, textAlign: "center", mt: 4 }}>
                 <Typography variant="caption" color="textSecondary">
                     © 2024 Customer Management System. All rights reserved.
                 </Typography>

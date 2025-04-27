@@ -507,7 +507,7 @@ const ConsultationDetail = () => {
     }
 
     return (
-        <Box sx={{ flexGrow: 1, bgcolor: "#f5f5f5", minHeight: "100vh", py: 3 }}>
+        <Box sx={{ flexGrow: 1, minHeight: "100vh", py: 3 }}>
             <Container maxWidth="xl">
                 {/* 헤더 & 고객 정보 카드 */}
                 <Box sx={{ mb: 3 }}>
@@ -515,69 +515,98 @@ const ConsultationDetail = () => {
                         <IconButton onClick={() => navigate("/consultation")} sx={{ mr: 2 }}>
                             <ArrowBack />
                         </IconButton>
-                        <Typography variant="h5" sx={{ fontWeight: "bold", flexGrow: 1 }}>
+                        <Typography variant="h6" sx={{ fontWeight: "bold", flexGrow: 1 }}>
                             고객 상담 관리
                         </Typography>
                     </Box>
 
-                    <Paper elevation={0} sx={{ p: 3, borderRadius: 2 }}>
+                    <Paper elevation={0} sx={{ p: 3, borderRadius: 2, boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)' }}>
                         <Grid container spacing={3}>
-                            <Grid item xs={12} md={8}>
-                                <Paper sx={{ p: 2, height: '100%' }}>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                                        <Typography variant="h6" component="h2" sx={{ flexGrow: 1 }}>
-                                            고객 정보
-                                        </Typography>
-                                        <IconButton
-                                            component={RouterLink}
-                                            to={`/customer-management/${consultationHistory?.customer.id}`}
-                                            color="primary"
-                                            size="small"
-                                        >
-                                            <Person />
-                                        </IconButton>
-                                    </Box>
-                                    <Grid container spacing={2}>
-                                        <Grid item xs={12} sm={6}>
-                                            <Typography variant="body1" gutterBottom>
-                                                이름: {consultationHistory?.customer.name}
-                                            </Typography>
+                            <Grid item xs={12}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                    <Typography variant="h6" component="h2" sx={{ flexGrow: 1, color: '#00171f', fontWeight: 'bold' }}>
+                                        고객 정보
+                                    </Typography>
+                                    <IconButton
+                                        component={RouterLink}
+                                        to={`/customer-management/${consultationHistory?.customer.id}`}
+                                        color="primary"
+                                        size="small"
+                                    >
+                                        <Person />
+                                    </IconButton>
+                                </Box>
+                                <Paper sx={{ p: 2, bgcolor: '#f9fafb' }}>
+                                    <Grid container spacing={3}>
+                                        <Grid item xs={12} md={6}>
+                                            <Grid container spacing={2}>
+                                                <Grid item xs={6}>
+                                                    <Typography variant="body2" sx={{ color: '#007ea7', fontWeight: 'medium' }}>
+                                                        이름
+                                                    </Typography>
+                                                    <Typography variant="body1" sx={{ color: '#007ea7', mt: 0.5, fontWeight: 'bold' }}>
+                                                        {consultationHistory?.customer.name}
+                                                    </Typography>
+                                                </Grid>
+                                                <Grid item xs={6}>
+                                                    <Typography variant="body2" sx={{ color: '#6b7280', fontWeight: 'medium' }}>
+                                                        이메일
+                                                    </Typography>
+                                                    <Typography variant="body1" sx={{ color: '#111827', mt: 0.5 }}>
+                                                        {consultationHistory?.customer.email}
+                                                    </Typography>
+                                                </Grid>
+                                                <Grid item xs={6}>
+                                                    <Typography variant="body2" sx={{ color: '#6b7280', fontWeight: 'medium' }}>
+                                                        전화번호
+                                                    </Typography>
+                                                    <Typography variant="body1" sx={{ color: '#111827', mt: 0.5 }}>
+                                                        {consultationHistory?.customer.phone}
+                                                    </Typography>
+                                                </Grid>
+                                                <Grid item xs={6}>
+                                                    <Typography variant="body2" sx={{ color: '#6b7280', fontWeight: 'medium' }}>
+                                                        직업
+                                                    </Typography>
+                                                    <Typography variant="body1" sx={{ color: '#111827', mt: 0.5 }}>
+                                                        {consultationHistory?.customer.job || "-"}
+                                                    </Typography>
+                                                </Grid>
+                                            </Grid>
                                         </Grid>
-                                        <Grid item xs={12} sm={6}>
-                                            <Typography variant="body1" gutterBottom>
-                                                이메일: {consultationHistory?.customer.email}
-                                            </Typography>
-                                        </Grid>
-                                        <Grid item xs={12} sm={6}>
-                                            <Typography variant="body1" gutterBottom>
-                                                전화번호: {consultationHistory?.customer.phone}
-                                            </Typography>
-                                        </Grid>
-                                        <Grid item xs={12} sm={6}>
-                                            <Typography variant="body1" gutterBottom>
-                                                직업: {consultationHistory?.customer.job || "-"}
-                                            </Typography>
-                                        </Grid>
-                                        <Grid item xs={12} sm={6}>
-                                            <Typography variant="body1" gutterBottom>
-                                                관심 매물: {consultationHistory?.customer.interestProperty || "-"}
-                                            </Typography>
-                                        </Grid>
-                                        <Grid item xs={12} sm={6}>
-                                            <Typography variant="body1" gutterBottom>
-                                                관심 지역: {consultationHistory?.customer.interestLocation || "-"}
-                                            </Typography>
-                                        </Grid>
-                                        <Grid item xs={12} sm={6}>
-                                            <Typography variant="body1" gutterBottom>
-                                                자산 상태: {consultationHistory?.customer.assetStatus || "-"}
-                                            </Typography>
+                                        <Grid item xs={12} md={6} sx={{ 
+                                            borderLeft: { md: '1px solid #e5e7eb' },
+                                            pl: { md: 3 }
+                                        }}>
+                                            <Grid container spacing={2}>
+                                                <Grid item xs={6}>
+                                                    <Typography variant="body2" sx={{ color: '#6b7280', fontWeight: 'medium' }}>
+                                                        관심매물
+                                                    </Typography>
+                                                    <Typography variant="body1" sx={{ color: '#111827', mt: 0.5 }}>
+                                                        {consultationHistory?.customer.interestProperty || "-"}
+                                                    </Typography>
+                                                </Grid>
+                                                <Grid item xs={6}>
+                                                    <Typography variant="body2" sx={{ color: '#6b7280', fontWeight: 'medium' }}>
+                                                        관심지역
+                                                    </Typography>
+                                                    <Typography variant="body1" sx={{ color: '#111827', mt: 0.5 }}>
+                                                        {consultationHistory?.customer.interestLocation || "-"}
+                                                    </Typography>
+                                                </Grid>
+                                                <Grid item xs={6}>
+                                                    <Typography variant="body2" sx={{ color: '#6b7280', fontWeight: 'medium' }}>
+                                                        자산상태
+                                                    </Typography>
+                                                    <Typography variant="body1" sx={{ color: '#111827', mt: 0.5 }}>
+                                                        {consultationHistory?.customer.assetStatus || "-"}
+                                                    </Typography>
+                                                </Grid>
+                                            </Grid>
                                         </Grid>
                                     </Grid>
                                 </Paper>
-                            </Grid>
-                            <Grid item xs={12} md={4}>
-                                {/* 최근 상담일 섹션 제거 */}
                             </Grid>
                         </Grid>
                     </Paper>
@@ -586,10 +615,10 @@ const ConsultationDetail = () => {
                 <Grid container spacing={3}>
                     {/* 좌측: 상담 히스토리 리스트 또는 상세 정보 */}
                     <Grid item xs={12} md={6}>
-                        <Paper elevation={0} sx={{ p: 3, borderRadius: 2, height: '100%', display: 'flex', flexDirection: 'column', minHeight: '600px' }}>
+                        <Paper elevation={0} sx={{ p: 3, borderRadius: 2, height: '100%', display: 'flex', flexDirection: 'column', minHeight: '600px', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)' }}>
                             {viewMode === 'history' ? (
                                 <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                                    <Typography variant="h6" sx={{ mb: 3, fontWeight: "medium" }}>
+                                    <Typography variant="h6" sx={{ mb: 3, fontWeight: "bold", color: '#111827' }}>
                                         상담 히스토리
                                     </Typography>
 
@@ -611,12 +640,12 @@ const ConsultationDetail = () => {
                                                         p: 2,
                                                         mb: 1,
                                                         border: '1px solid',
-                                                        borderColor: currentlyEditingConsultationId === consultation.consultationId ? 'primary.main' : 'grey.200',
+                                                        borderColor: currentlyEditingConsultationId === consultation.consultationId ? 'primary.main' : '#e5e7eb',
                                                         borderRadius: 1,
                                                         cursor: 'pointer',
                                                         bgcolor: currentlyEditingConsultationId === consultation.consultationId ? 'rgba(25, 118, 210, 0.08)' : 'transparent',
                                                         '&:hover': {
-                                                            bgcolor: currentlyEditingConsultationId === consultation.consultationId ? 'rgba(25, 118, 210, 0.12)' : 'grey.50'
+                                                            bgcolor: currentlyEditingConsultationId === consultation.consultationId ? 'rgba(25, 118, 210, 0.12)' : '#f9fafb'
                                                         },
                                                         minHeight: '80px',
                                                         display: 'flex',
@@ -709,18 +738,40 @@ const ConsultationDetail = () => {
                                                             />
                                                         </Box>
                                                     </Box>
-                                                    <Typography 
-                                                        variant="subtitle1" 
-                                                        sx={{ 
-                                                            fontWeight: "medium",
-                                                            minHeight: '24px',
-                                                            display: 'flex',
-                                                            alignItems: 'center'
-                                                        }} 
-                                                        noWrap
-                                                    >
-                                                        {consultation.purpose || ""}
-                                                    </Typography>
+                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                        <Typography 
+                                                            variant="subtitle1" 
+                                                            sx={{ 
+                                                                fontWeight: "medium",
+                                                                minHeight: '24px',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                flex: 1,
+                                                                mr: 1,
+                                                                color: '#111827'
+                                                            }} 
+                                                            noWrap
+                                                        >
+                                                            {consultation.purpose || ""}
+                                                        </Typography>
+                                                        <Button
+                                                            size="small"
+                                                            startIcon={<Edit />}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleEditClick(consultation);
+                                                            }}
+                                                            sx={{ 
+                                                                color: '#007ea7',
+                                                                '&:hover': {
+                                                                    backgroundColor: 'rgba(0, 126, 167, 0.08)',
+                                                                    color: '#003459'
+                                                                }
+                                                            }}
+                                                        >
+                                                            수정
+                                                        </Button>
+                                                    </Box>
                                                 </Box>
                                             ))
                                         ) : (
@@ -737,12 +788,13 @@ const ConsultationDetail = () => {
                                     </Box>
 
                                     {/* 페이지네이션 컨트롤 */}
-                                    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2, gap: 1, pt: 2, borderTop: '1px solid', borderColor: 'grey.200' }}>
+                                    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2, gap: 1, pt: 2, borderTop: '1px solid', borderColor: '#e5e7eb' }}>
                                         <Button
                                             size="small"
                                             onClick={() => handlePageChange(currentPage - 1)}
                                             disabled={currentPage === 0}
                                             startIcon={<ChevronLeft />}
+                                            sx={{ color: '#007ea7' }}
                                         >
                                             이전
                                         </Button>
@@ -754,6 +806,7 @@ const ConsultationDetail = () => {
                                             onClick={() => handlePageChange(currentPage + 1)}
                                             disabled={currentPage >= consultationHistory.consultations.totalPages - 1}
                                             endIcon={<ChevronRight />}
+                                            sx={{ color: '#007ea7' }}
                                         >
                                             다음
                                         </Button>
@@ -763,7 +816,7 @@ const ConsultationDetail = () => {
                                 <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                            <Typography variant="h6" sx={{ fontWeight: "medium", mr: 2 }}>
+                                            <Typography variant="h6" sx={{ fontWeight: "bold", mr: 2, color: '#111827' }}>
                                                 상담 상세 정보
                                             </Typography>
                                             {selectedConsultation && (
@@ -852,7 +905,13 @@ const ConsultationDetail = () => {
                                                 variant="contained"
                                                 startIcon={<Edit />}
                                                 onClick={() => handleEditClick(selectedConsultation!)}
-                                                sx={{ mr: 1 }}
+                                                sx={{ 
+                                                    mr: 1,
+                                                    bgcolor: '#007ea7',
+                                                    '&:hover': {
+                                                        bgcolor: '#003459'
+                                                    }
+                                                }}
                                             >
                                                 수정
                                             </Button>
@@ -860,6 +919,15 @@ const ConsultationDetail = () => {
                                                 variant="outlined"
                                                 startIcon={<ArrowBack />}
                                                 onClick={handleBackToHistory}
+                                                sx={{ 
+                                                    borderColor: '#007ea7',
+                                                    color: '#007ea7',
+                                                    '&:hover': {
+                                                        borderColor: '#003459',
+                                                        color: '#003459',
+                                                        bgcolor: '#f8f9fa'
+                                                    }
+                                                }}
                                             >
                                                 히스토리로 돌아가기
                                             </Button>
@@ -877,21 +945,21 @@ const ConsultationDetail = () => {
                                                 <Grid item xs={12}>
                                                     <Grid container spacing={2}>
                                                         <Grid item xs={12} sm={6}>
-                                                            <Typography variant="subtitle1" gutterBottom>
+                                                            <Typography variant="subtitle1" gutterBottom sx={{ color: '#374151', fontWeight: 'medium' }}>
                                                                 상담 일시
                                                             </Typography>
-                                                            <Paper variant="outlined" sx={{ p: 2 }}>
-                                                                <Typography variant="body1">
+                                                            <Paper variant="outlined" sx={{ p: 2, bgcolor: '#f9fafb' }}>
+                                                                <Typography variant="body1" sx={{ color: '#111827' }}>
                                                                     {selectedConsultation.date}
                                                                 </Typography>
                                                             </Paper>
                                                         </Grid>
                                                         <Grid item xs={12} sm={6}>
-                                                            <Typography variant="subtitle1" gutterBottom>
+                                                            <Typography variant="subtitle1" gutterBottom sx={{ color: '#374151', fontWeight: 'medium' }}>
                                                                 상담 목적
                                                             </Typography>
-                                                            <Paper variant="outlined" sx={{ p: 2 }}>
-                                                                <Typography variant="body1">
+                                                            <Paper variant="outlined" sx={{ p: 2, bgcolor: '#f9fafb' }}>
+                                                                <Typography variant="body1" sx={{ color: '#111827' }}>
                                                                     {selectedConsultation.purpose || "없음"}
                                                                 </Typography>
                                                             </Paper>
@@ -899,11 +967,11 @@ const ConsultationDetail = () => {
                                                     </Grid>
                                                 </Grid>
                                                 <Grid item xs={12} sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', mt: 0 }}>
-                                                    <Typography variant="subtitle1" gutterBottom>
+                                                    <Typography variant="subtitle1" gutterBottom sx={{ color: '#374151', fontWeight: 'medium' }}>
                                                         메모
                                                     </Typography>
-                                                    <Paper variant="outlined" sx={{ p: 2, flexGrow: 1, display: 'flex', flexDirection: 'column', minHeight: '400px' }}>
-                                                        <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', flexGrow: 1 }}>
+                                                    <Paper variant="outlined" sx={{ p: 2, flexGrow: 1, display: 'flex', flexDirection: 'column', minHeight: '400px', bgcolor: '#f9fafb' }}>
+                                                        <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', flexGrow: 1, color: '#111827' }}>
                                                             {selectedConsultation.memo || "메모 없음"}
                                                         </Typography>
                                                     </Paper>
@@ -918,9 +986,9 @@ const ConsultationDetail = () => {
 
                     {/* 우측: 상담 상세 정보 & 수정 폼 */}
                     <Grid item xs={12} md={6}>
-                        <Paper elevation={0} sx={{ p: 3, borderRadius: 2, height: '100%', display: 'flex', flexDirection: 'column', minHeight: '600px' }}>
+                        <Paper elevation={0} sx={{ p: 3, borderRadius: 2, height: '100%', display: 'flex', flexDirection: 'column', minHeight: '600px', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)' }}>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                                <Typography variant="h6" sx={{ fontWeight: "medium" }}>
+                                <Typography variant="h6" sx={{ fontWeight: "bold", color: '#111827' }}>
                                     {isNewConsultation ? "새 상담 등록" : "상담 수정"}
                                 </Typography>
                                 <Box>
@@ -928,7 +996,13 @@ const ConsultationDetail = () => {
                                         variant="contained"
                                         startIcon={<Save />}
                                         onClick={handleSave}
-                                        sx={{ mr: 1 }}
+                                        sx={{ 
+                                            mr: 1,
+                                            bgcolor: '#007ea7',
+                                            '&:hover': {
+                                                bgcolor: '#003459'
+                                            }
+                                        }}
                                         disabled={isLoadingConsultation}
                                     >
                                         저장
@@ -937,6 +1011,15 @@ const ConsultationDetail = () => {
                                         variant="outlined"
                                         startIcon={<Add />}
                                         onClick={handleNewConsultation}
+                                        sx={{ 
+                                            borderColor: '#007ea7',
+                                            color: '#007ea7',
+                                            '&:hover': {
+                                                borderColor: '#003459',
+                                                color: '#003459',
+                                                bgcolor: '#f8f9fa'
+                                            }
+                                        }}
                                         disabled={isLoadingConsultation}
                                     >
                                         새 상담
@@ -954,7 +1037,7 @@ const ConsultationDetail = () => {
                                         <Grid item xs={12}>
                                             <Grid container spacing={2}>
                                                 <Grid item xs={12} sm={6}>
-                                                    <Typography variant="subtitle1" gutterBottom>
+                                                    <Typography variant="subtitle1" gutterBottom sx={{ color: '#374151', fontWeight: 'medium' }}>
                                                         상담 일시
                                                     </Typography>
                                                     <TextField
@@ -966,10 +1049,23 @@ const ConsultationDetail = () => {
                                                         InputLabelProps={{ shrink: true }}
                                                         disabled={!isNewConsultation}
                                                         variant="outlined"
+                                                        sx={{
+                                                            '& .MuiOutlinedInput-root': {
+                                                                '& fieldset': {
+                                                                    borderColor: '#d1d5db',
+                                                                },
+                                                                '&:hover fieldset': {
+                                                                    borderColor: '#9ca3af',
+                                                                },
+                                                                '&.Mui-focused fieldset': {
+                                                                    borderColor: '#007ea7',
+                                                                },
+                                                            },
+                                                        }}
                                                     />
                                                 </Grid>
                                                 <Grid item xs={12} sm={6}>
-                                                    <Typography variant="subtitle1" gutterBottom>
+                                                    <Typography variant="subtitle1" gutterBottom sx={{ color: '#374151', fontWeight: 'medium' }}>
                                                         상담 목적
                                                     </Typography>
                                                     <TextField
@@ -981,12 +1077,25 @@ const ConsultationDetail = () => {
                                                         error={!editFormData.purpose}
                                                         helperText={!editFormData.purpose ? "상담 목적을 입력해주세요" : ""}
                                                         variant="outlined"
+                                                        sx={{
+                                                            '& .MuiOutlinedInput-root': {
+                                                                '& fieldset': {
+                                                                    borderColor: '#d1d5db',
+                                                                },
+                                                                '&:hover fieldset': {
+                                                                    borderColor: '#9ca3af',
+                                                                },
+                                                                '&.Mui-focused fieldset': {
+                                                                    borderColor: '#007ea7',
+                                                                },
+                                                            },
+                                                        }}
                                                     />
                                                 </Grid>
                                             </Grid>
                                         </Grid>
                                         <Grid item xs={12} sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', mt: 0 }}>
-                                            <Typography variant="subtitle1" gutterBottom>
+                                            <Typography variant="subtitle1" gutterBottom sx={{ color: '#374151', fontWeight: 'medium' }}>
                                                 메모
                                             </Typography>
                                             <TextField
@@ -997,11 +1106,23 @@ const ConsultationDetail = () => {
                                                 multiline
                                                 rows={20}
                                                 variant="outlined"
+                                                placeholder="상담 내용을 입력하세요..."
                                                 sx={{
                                                     '& .MuiInputBase-root': {
                                                         height: '100%',
                                                         minHeight: '400px',
-                                                    }
+                                                    },
+                                                    '& .MuiOutlinedInput-root': {
+                                                        '& fieldset': {
+                                                            borderColor: '#d1d5db',
+                                                        },
+                                                        '&:hover fieldset': {
+                                                            borderColor: '#9ca3af',
+                                                        },
+                                                        '&.Mui-focused fieldset': {
+                                                            borderColor: '#007ea7',
+                                                        },
+                                                    },
                                                 }}
                                             />
                                         </Grid>

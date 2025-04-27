@@ -47,7 +47,7 @@ export interface UpdateCustomerRequest {
 export interface History {
     id: string;
     type: 'CONSULTATION' | 'CONTRACT' | 'MESSAGE' | 'SURVEY';
-    date: string;
+    date: string | null;
     purpose?: string;
     startDate?: string;
     endDate?: string;

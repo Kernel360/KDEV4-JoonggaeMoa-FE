@@ -92,7 +92,7 @@ const CustomerImport = () => {
     };
 
     return (
-        <Box sx={{ flexGrow: 1, bgcolor: "#f5f5f5", minHeight: "100vh" }}>
+        <Box sx={{ flexGrow: 1, minHeight: "100vh" }}>
             <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
                 <Paper elevation={0} sx={{ p: 4 }}>
                     <Box sx={{ display: "flex", alignItems: "center", mb: 4, justifyContent: "space-between" }}>

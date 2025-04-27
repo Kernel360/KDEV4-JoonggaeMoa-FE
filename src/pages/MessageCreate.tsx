@@ -3,7 +3,7 @@
 import type React from "react"
 import type { SelectChangeEvent } from "@mui/material/Select"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import {
     Box,
     Container,
@@ -26,8 +26,9 @@ import {
     Divider,
     Checkbox,
     FormHelperText,
+    InputAdornment,
 } from "@mui/material"
-import { ArrowBack, InfoOutlined } from "@mui/icons-material"
+import { ArrowBack, InfoOutlined, Search } from "@mui/icons-material"
 import { useNavigate } from "react-router-dom"
 import { messageApi } from "../services/messageApi"
 import { messageTemplateApi } from "../services/messageTemplateApi"
@@ -90,6 +91,13 @@ const MessageCreate = () => {
     const [selectedCustomers, setSelectedCustomers] = useState<number[]>([])
     const [customerLoading, setCustomerLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState("")
+    
+    // 고객 목록 페이지네이션 관련 상태
+    const [customerPage, setCustomerPage] = useState(0)
+    const [hasMoreCustomers, setHasMoreCustomers] = useState(true)
+    const [isLoadingMoreCustomers, setIsLoadingMoreCustomers] = useState(false)
+    const customerObserver = useRef<IntersectionObserver | null>(null)
+    const lastCustomerElementRef = useRef<HTMLDivElement | null>(null)
 
     // 메시지 관련 상태
     const [content, setContent] = useState("")
@@ -105,7 +113,7 @@ const MessageCreate = () => {
     const [byteCount, setByteCount] = useState(0)
 
     useEffect(() => {
-        fetchCustomers()
+        fetchCustomers(0)
         fetchTemplates()
 
         // 현재 시간에서 30분 후로 초기화
@@ -124,12 +132,29 @@ const MessageCreate = () => {
         }
     }, [scheduledDate, scheduledTime])
 
-    const fetchCustomers = async () => {
+    // 날짜 별 고객 목록 가져오기
+    const fetchCustomers = async (pageNum = 0) => {
         try {
-            setCustomerLoading(true)
-            const response = await customerApi.getCustomers()
+            if (pageNum === 0) {
+                setCustomerLoading(true)
+            } else {
+                setIsLoadingMoreCustomers(true)
+            }
+            
+            const response = await customerApi.getCustomers(pageNum, 20)
+            
             if (response.data.success && response.data.data) {
-                setCustomers(response.data.data.content)
+                const newCustomers = response.data.data.content
+                
+                if (pageNum === 0) {
+                    setCustomers(newCustomers)
+                } else {
+                    setCustomers(prev => [...prev, ...newCustomers])
+                }
+                
+                // 페이지네이션 정보 업데이트
+                setHasMoreCustomers(!response.data.data.last)
+                setCustomerPage(pageNum)
             } else {
                 setError("고객 목록을 불러오는데 실패했습니다.")
             }
@@ -138,8 +163,25 @@ const MessageCreate = () => {
             setError("고객 목록을 불러오는데 실패했습니다.")
         } finally {
             setCustomerLoading(false)
+            setIsLoadingMoreCustomers(false)
         }
     }
+    
+    // 무한 스크롤을 위한 콜백 함수
+    const lastCustomerRef = useCallback((node: HTMLDivElement | null) => {
+        if (customerLoading) return
+        
+        if (customerObserver.current) customerObserver.current.disconnect()
+        
+        customerObserver.current = new IntersectionObserver(entries => {
+            if (entries[0].isIntersecting && hasMoreCustomers && !isLoadingMoreCustomers) {
+                fetchCustomers(customerPage + 1)
+            }
+        })
+        
+        if (node) customerObserver.current.observe(node)
+        lastCustomerElementRef.current = node
+    }, [customerLoading, hasMoreCustomers, isLoadingMoreCustomers, customerPage])
 
     const fetchTemplates = async () => {
         try {
@@ -197,14 +239,6 @@ const MessageCreate = () => {
                 return [...prev, customerId]
             }
         })
-    }
-
-    const handleSelectAll = () => {
-        if (selectedCustomers.length === filteredCustomers.length) {
-            setSelectedCustomers([])
-        } else {
-            setSelectedCustomers(filteredCustomers.map((customer) => customer.id))
-        }
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -293,7 +327,7 @@ const MessageCreate = () => {
     }
 
     return (
-        <Box component="div" sx={{ flexGrow: 1, bgcolor: "#f5f5f5", minHeight: "100vh" }}>
+        <Box sx={{ flexGrow: 1, minHeight: "100vh" }}>
             <Container
                 maxWidth="lg"
                 sx={{
@@ -315,8 +349,16 @@ const MessageCreate = () => {
                 <form onSubmit={handleSubmit}>
                     <Grid container spacing={3}>
                         <Grid item xs={12} md={5}>
-                            <Paper elevation={0} sx={{ p: 4, borderRadius: 2, height: "100%" }}>
-                                <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: "bold" }}>
+                            <Paper 
+                                elevation={0} 
+                                sx={{ 
+                                    p: 3, 
+                                    borderRadius: 2, 
+                                    height: "100%",
+                                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                                }}
+                            >
+                                <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: "bold", color: "#00171f" }}>
                                     고객 선택
                                 </Typography>
 
@@ -327,75 +369,152 @@ const MessageCreate = () => {
                                     placeholder="고객명 또는 전화번호로 검색"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    sx={{ mb: 2 }}
+                                    sx={{ 
+                                        mb: 2,
+                                        '& .MuiOutlinedInput-root': {
+                                            borderRadius: 1,
+                                            '&:hover fieldset': {
+                                                borderColor: '#007ea7',
+                                            },
+                                            '&.Mui-focused fieldset': {
+                                                borderColor: '#007ea7',
+                                            }
+                                        }
+                                    }}
+                                    InputProps={{
+                                        startAdornment: (
+                                            <InputAdornment position="start">
+                                                <Search fontSize="small" sx={{ color: '#666' }} />
+                                            </InputAdornment>
+                                        ),
+                                    }}
                                 />
 
                                 {/* 고객 목록 */}
-                                <Box sx={{ border: "1px solid #eee", borderRadius: 1, mb: 2 }}>
-                                    <Box sx={{ maxHeight: "300px", overflow: "auto", p: 1 }}>
-                                        {customerLoading ? (
-                                            <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
-                                                <CircularProgress size={24} />
-                                            </Box>
-                                        ) : filteredCustomers.length > 0 ? (
-                                            filteredCustomers.map((customer) => (
-                                                <Box
-                                                    component="div" // 이 부분 추가
-                                                    key={customer.id}
-                                                    sx={{
-                                                        display: "flex",
-                                                        alignItems: "center",
-                                                        p: 1,
-                                                        borderBottom: "1px solid #f0f0f0",
+                                <Box 
+                                    sx={{ 
+                                        border: "1px solid #eee", 
+                                        borderRadius: 1, 
+                                        mb: 2,
+                                        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                                        maxHeight: "500px", 
+                                        overflow: "auto"
+                                    }}
+                                >
+                                    {customerLoading ? (
+                                        <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
+                                            <CircularProgress size={24} sx={{ color: '#007ea7' }} />
+                                        </Box>
+                                    ) : filteredCustomers.length > 0 ? (
+                                        filteredCustomers.map((customer, index) => (
+                                            <Box
+                                                component="div"
+                                                key={customer.id}
+                                                ref={index === filteredCustomers.length - 1 ? lastCustomerRef : null}
+                                                sx={{
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    p: 1.5,
+                                                    borderBottom: "1px solid #f0f0f0",
+                                                    cursor: "pointer",
+                                                    transition: "all 0.2s ease",
+                                                    "&:hover": {
+                                                        bgcolor: "rgba(0, 126, 167, 0.08)"
+                                                    },
+                                                    "&:last-child": {
+                                                        borderBottom: "none"
+                                                    }
+                                                }}
+                                                onClick={() => handleCustomerSelect(customer.id)}
+                                            >
+                                                <Checkbox
+                                                    checked={selectedCustomers.includes(customer.id)}
+                                                    onChange={() => handleCustomerSelect(customer.id)}
+                                                    size="small"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    sx={{ 
+                                                        color: '#007ea7',
+                                                        '&.Mui-checked': {
+                                                            color: '#007ea7',
+                                                        }
+                                                    }}
+                                                />
+                                                <Typography 
+                                                    variant="body1" 
+                                                    sx={{ 
+                                                        ml: 1, 
+                                                        fontWeight: 500,
+                                                        fontSize: "0.95rem"
                                                     }}
                                                 >
-                                                    <FormControlLabel
-                                                        control={
-                                                            <Checkbox
-                                                                checked={selectedCustomers.includes(customer.id)}
-                                                                onChange={() => handleCustomerSelect(customer.id)}
-                                                                size="small"
-                                                            />
-                                                        }
-                                                        label={
-                                                            <Typography variant="body2">
-                                                                {customer.name} ({customer.phone})
-                                                            </Typography>
-                                                        }
-                                                    />
-                                                </Box>
-                                            ))
-                                        ) : (
-                                            <Box sx={{ p: 2, textAlign: "center" }}>
-                                                <Typography variant="body2" color="text.secondary">
-                                                    검색 결과가 없습니다.
+                                                    {customer.name} ({customer.phone})
                                                 </Typography>
                                             </Box>
-                                        )}
-                                    </Box>
+                                        ))
+                                    ) : (
+                                        <Box sx={{ p: 3, textAlign: "center" }}>
+                                            <Typography variant="body2" color="text.secondary">
+                                                검색 결과가 없습니다.
+                                            </Typography>
+                                        </Box>
+                                    )}
+                                    
+                                    {isLoadingMoreCustomers && (
+                                        <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
+                                            <CircularProgress size={20} sx={{ color: '#007ea7' }} />
+                                        </Box>
+                                    )}
                                 </Box>
 
-                                {/* 선택된 고객 수와 전체 선택 버튼 */}
-                                <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
-                                    <Typography variant="body2" color="textSecondary">
+                                {/* 선택된 고객 수 */}
+                                <Box 
+                                    sx={{ 
+                                        display: "flex", 
+                                        justifyContent: "space-between", 
+                                        alignItems: "center",
+                                        p: 1,
+                                        bgcolor: "rgba(0, 126, 167, 0.05)",
+                                        borderRadius: 1
+                                    }}
+                                >
+                                    <Typography variant="body2" sx={{ fontWeight: 500, color: "#007ea7" }}>
                                         {selectedCustomers.length}명 선택됨
                                     </Typography>
-                                    <Button size="small" onClick={handleSelectAll} sx={{ color: "#1976d2" }}>
-                                        {selectedCustomers.length === filteredCustomers.length ? "전체 해제" : "전체 선택"}
-                                    </Button>
                                 </Box>
                             </Paper>
                         </Grid>
 
                         <Grid item xs={12} md={7}>
-                            <Paper elevation={0} sx={{ p: 4, borderRadius: 2 }}>
-                                <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: "bold" }}>
+                            <Paper 
+                                elevation={0} 
+                                sx={{ 
+                                    p: 3, 
+                                    borderRadius: 2,
+                                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                                }}
+                            >
+                                <Typography variant="subtitle1" sx={{ mb: 3, fontWeight: "bold", color: "#00171f" }}>
                                     메시지 정보
                                 </Typography>
 
                                 <Grid container spacing={2}>
                                     <Grid item xs={12}>
-                                        <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+                                        <FormControl 
+                                            fullWidth 
+                                            size="small" 
+                                            sx={{ 
+                                                mb: 2,
+                                                '& .MuiOutlinedInput-root': {
+                                                    borderRadius: 1,
+                                                    '&:hover fieldset': {
+                                                        borderColor: '#007ea7',
+                                                    },
+                                                    '&.Mui-focused fieldset': {
+                                                        borderColor: '#007ea7',
+                                                    }
+                                                }
+                                            }}
+                                        >
                                             <InputLabel>템플릿 선택</InputLabel>
                                             <Select value={selectedTemplate} label="템플릿 선택" onChange={handleTemplateChange}>
                                                 <MenuItem value="">직접 입력</MenuItem>
@@ -417,7 +536,18 @@ const MessageCreate = () => {
                                     value={content}
                                     onChange={handleContentChange}
                                     placeholder="문자 내용을 입력하세요. (고객명은 ${이름}으로 입력하세요.)"
-                                    sx={{ mb: 1 }}
+                                    sx={{ 
+                                        mb: 1,
+                                        '& .MuiOutlinedInput-root': {
+                                            borderRadius: 1,
+                                            '&:hover fieldset': {
+                                                borderColor: '#007ea7',
+                                            },
+                                            '&.Mui-focused fieldset': {
+                                                borderColor: '#007ea7',
+                                            }
+                                        }
+                                    }}
                                     error={byteCount > 90}
                                     helperText={byteCount > 90 ? "최대 90바이트까지 입력 가능합니다." : ""}
                                 />
@@ -430,7 +560,7 @@ const MessageCreate = () => {
 
                                 <Divider sx={{ my: 2 }} />
 
-                                <Typography variant="subtitle2" color="textSecondary" sx={{ mb: 1 }}>
+                                <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 500, color: "#00171f" }}>
                                     미리보기
                                 </Typography>
                                 <Paper
@@ -442,6 +572,10 @@ const MessageCreate = () => {
                                         minHeight: "100px",
                                         mb: 3,
                                         whiteSpace: "pre-wrap",
+                                        wordBreak: "break-word",
+                                        overflowWrap: "break-word",
+                                        maxWidth: "100%",
+                                        border: "1px solid #eee"
                                     }}
                                 >
                                     {previewContent || "미리보기 내용이 여기에 표시됩니다."}
@@ -450,22 +584,22 @@ const MessageCreate = () => {
                                 <Divider sx={{ my: 2 }} />
 
                                 <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                                    <Typography variant="subtitle1" sx={{ mr: 1 }}>
+                                    <Typography variant="subtitle1" sx={{ mr: 1, fontWeight: 500, color: "#00171f" }}>
                                         발송 예약
                                     </Typography>
                                     <Box
                                         sx={{
                                             display: "flex",
                                             alignItems: "center",
-                                            bgcolor: "#f5f5f5",
+                                            bgcolor: "rgba(0, 126, 167, 0.05)",
                                             borderRadius: 1,
                                             px: 1.5,
                                             py: 0.5,
                                             ml: 1,
                                         }}
                                     >
-                                        <InfoOutlined fontSize="small" sx={{ mr: 0.5, color: "#666" }} />
-                                        <Typography variant="caption" color="text.secondary">
+                                        <InfoOutlined fontSize="small" sx={{ mr: 0.5, color: "#007ea7" }} />
+                                        <Typography variant="caption" sx={{ color: "#007ea7" }}>
                                             현재 시간으로부터 최소 30분 이후로 설정해야 합니다
                                         </Typography>
                                     </Box>
@@ -481,6 +615,17 @@ const MessageCreate = () => {
                                             onChange={(e) => setScheduledDate(e.target.value)}
                                             InputLabelProps={{ shrink: true }}
                                             error={timeError}
+                                            sx={{
+                                                '& .MuiOutlinedInput-root': {
+                                                    borderRadius: 1,
+                                                    '&:hover fieldset': {
+                                                        borderColor: '#007ea7',
+                                                    },
+                                                    '&.Mui-focused fieldset': {
+                                                        borderColor: '#007ea7',
+                                                    }
+                                                }
+                                            }}
                                         />
                                     </Grid>
                                     <Grid item xs={12} sm={6}>
@@ -492,6 +637,17 @@ const MessageCreate = () => {
                                             onChange={(e) => setScheduledTime(e.target.value)}
                                             InputLabelProps={{ shrink: true }}
                                             error={timeError}
+                                            sx={{
+                                                '& .MuiOutlinedInput-root': {
+                                                    borderRadius: 1,
+                                                    '&:hover fieldset': {
+                                                        borderColor: '#007ea7',
+                                                    },
+                                                    '&.Mui-focused fieldset': {
+                                                        borderColor: '#007ea7',
+                                                    }
+                                                }
+                                            }}
                                         />
                                     </Grid>
                                 </Grid>
@@ -502,7 +658,13 @@ const MessageCreate = () => {
                                         <Button
                                             size="small"
                                             onClick={resetToThirtyMinutesLater}
-                                            sx={{ color: "#1976d2", fontSize: "0.75rem" }}
+                                            sx={{ 
+                                                color: "#007ea7", 
+                                                fontSize: "0.75rem",
+                                                '&:hover': {
+                                                    bgcolor: 'rgba(0, 126, 167, 0.1)'
+                                                }
+                                            }}
                                         >
                                             30분 후로 재설정
                                         </Button>
@@ -513,7 +675,16 @@ const MessageCreate = () => {
                                     <Button
                                         variant="outlined"
                                         onClick={() => navigate("/message")}
-                                        sx={{ mr: 1, borderColor: "#ddd", color: "#333" }}
+                                        sx={{ 
+                                            mr: 1, 
+                                            borderColor: "#007ea7", 
+                                            color: "#007ea7",
+                                            '&:hover': {
+                                                borderColor: "#003459",
+                                                color: "#003459",
+                                                bgcolor: 'rgba(0, 126, 167, 0.08)'
+                                            }
+                                        }}
                                         disabled={loading}
                                     >
                                         취소
@@ -521,7 +692,10 @@ const MessageCreate = () => {
                                     <Button
                                         type="submit"
                                         variant="contained"
-                                        sx={{ bgcolor: "#000", "&:hover": { bgcolor: "#333" } }}
+                                        sx={{ 
+                                            bgcolor: "#007ea7", 
+                                            "&:hover": { bgcolor: "#003459" } 
+                                        }}
                                         disabled={loading}
                                     >
                                         {loading ? <CircularProgress size={24} /> : "예약하기"}
@@ -555,4 +729,5 @@ const MessageCreate = () => {
 }
 
 export default MessageCreate
+
 

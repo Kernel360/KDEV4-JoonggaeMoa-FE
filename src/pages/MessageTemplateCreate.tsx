@@ -87,7 +87,19 @@ const MessageTemplateCreate = () => {
             return
         }
         
-        setSelectedTemplate(null)
+        // Create a temporary empty template with a temporary ID
+        const tempId = Date.now() // Use timestamp as temporary ID
+        const emptyTemplate: MessageTemplateResponse = {
+            id: tempId,
+            title: "새 템플릿",
+            content: ""
+        }
+        
+        // Add the empty template to the list
+        setTemplates([...templates, emptyTemplate])
+        
+        // Select the new empty template
+        setSelectedTemplate(emptyTemplate)
         setTemplateTitle("")
         setTemplateContent("")
         updatePreview("")
@@ -133,18 +145,50 @@ const MessageTemplateCreate = () => {
             }
 
             let response
+            let savedTemplateId: number | null = null
 
             if (selectedTemplate) {
-                // 기존 템플릿 수정
-                response = await messageTemplateApi.updateMessageTemplate(selectedTemplate.id, templateData)
+                // Check if this is a temporary template (created with handleAddTemplate)
+                const isTemporaryTemplate = templates.some(t => t.id === selectedTemplate.id && t.title === "새 템플릿" && t.content === "")
+                
+                if (isTemporaryTemplate) {
+                    // Create a new template instead of updating
+                    response = await messageTemplateApi.createMessageTemplate(templateData)
+                    // Get the ID of the newly created template from the response
+                    if (response.data.success && response.data.data) {
+                        savedTemplateId = response.data.data.id
+                    }
+                } else {
+                    // 기존 템플릿 수정
+                    response = await messageTemplateApi.updateMessageTemplate(selectedTemplate.id, templateData)
+                    savedTemplateId = selectedTemplate.id
+                }
             } else {
                 // 새 템플릿 생성
                 response = await messageTemplateApi.createMessageTemplate(templateData)
+                // Get the ID of the newly created template from the response
+                if (response.data.success && response.data.data) {
+                    savedTemplateId = response.data.data.id
+                }
             }
 
             if (response.data.success) {
                 setSuccess(true)
-                fetchTemplates() // 템플릿 목록 새로고침
+                
+                // Fetch templates and maintain focus on the saved template
+                const templatesResponse = await messageTemplateApi.getMessageTemplates()
+                if (templatesResponse.data.success) {
+                    const updatedTemplates = templatesResponse.data.data || []
+                    setTemplates(updatedTemplates)
+                    
+                    // Find the saved template and select it
+                    if (savedTemplateId) {
+                        const savedTemplate = updatedTemplates.find(t => t.id === savedTemplateId)
+                        if (savedTemplate) {
+                            handleTemplateSelect(savedTemplate)
+                        }
+                    }
+                }
             } else {
                 setError(response.data.error?.message || "템플릿 저장에 실패했습니다.")
             }
@@ -156,8 +200,11 @@ const MessageTemplateCreate = () => {
         }
     }
 
-    const handleDelete = async () => {
-        if (!selectedTemplate) return
+    const handleDelete = async (templateToDelete?: MessageTemplateResponse) => {
+        // Use the passed template or the currently selected template
+        const templateToRemove = templateToDelete || selectedTemplate
+        
+        if (!templateToRemove) return
 
         if (!window.confirm("정말로 이 템플릿을 삭제하시겠습니까?")) return
 
@@ -165,23 +212,45 @@ const MessageTemplateCreate = () => {
             setLoading(true)
             setError(null)
 
-            const response = await messageTemplateApi.deleteMessageTemplate(selectedTemplate.id)
-
-            if (response.data.success) {
-                setSuccess(true)
-
-                // 템플릿 목록에서 삭제
-                const updatedTemplates = templates.filter((t) => t.id !== selectedTemplate.id)
+            // Check if this is a temporary template (created with handleAddTemplate)
+            const isTemporaryTemplate = templates.some(t => t.id === templateToRemove.id && t.title === "새 템플릿" && t.content === "")
+            
+            if (isTemporaryTemplate) {
+                // Just remove the temporary template from the list
+                const updatedTemplates = templates.filter((t) => t.id !== templateToRemove.id)
                 setTemplates(updatedTemplates)
-
-                // 다른 템플릿 선택 또는 초기화
+                
+                // Select another template or reset
                 if (updatedTemplates.length > 0) {
                     handleTemplateSelect(updatedTemplates[0])
                 } else {
-                    handleAddTemplate()
+                    setSelectedTemplate(null)
+                    setTemplateTitle("")
+                    setTemplateContent("")
+                    updatePreview("")
                 }
+                
+                setSuccess(true)
             } else {
-                setError(response.data.error?.message || "템플릿 삭제에 실패했습니다.")
+                // Delete the template from the server
+                const response = await messageTemplateApi.deleteMessageTemplate(templateToRemove.id)
+
+                if (response.data.success) {
+                    setSuccess(true)
+
+                    // 템플릿 목록에서 삭제
+                    const updatedTemplates = templates.filter((t) => t.id !== templateToRemove.id)
+                    setTemplates(updatedTemplates)
+
+                    // 다른 템플릿 선택 또는 초기화
+                    if (updatedTemplates.length > 0) {
+                        handleTemplateSelect(updatedTemplates[0])
+                    } else {
+                        handleAddTemplate()
+                    }
+                } else {
+                    setError(response.data.error?.message || "템플릿 삭제에 실패했습니다.")
+                }
             }
         } catch (err: any) {
             console.error("Error deleting template:", err)
@@ -211,7 +280,7 @@ const MessageTemplateCreate = () => {
     )
 
     return (
-        <Box sx={{ flexGrow: 1, bgcolor: "#f5f5f5", minHeight: "100vh" }}>
+        <Box sx={{ flexGrow: 1, minHeight: "100vh" }}>
             <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
                 <Box sx={{ display: "flex", alignItems: "center", mb: 4 }}>
                     <IconButton onClick={() => navigate("/message")} sx={{ mr: 1 }}>
@@ -255,7 +324,7 @@ const MessageTemplateCreate = () => {
                                 }}
                             />
 
-                            <Box sx={{ maxHeight: "500px", overflow: "auto" }}>
+                            <Box sx={{ maxHeight: "600px", overflow: "auto" }}>
                                 {filteredTemplates.map((template) => (
                                     <Card
                                         key={template.id}
@@ -279,8 +348,8 @@ const MessageTemplateCreate = () => {
                                                         sx={{ p: 0.5 }}
                                                         onClick={(e) => {
                                                             e.stopPropagation()
-                                                            setSelectedTemplate(template)
-                                                            handleDelete()
+                                                            // Don't set the selected template here, just pass the template directly
+                                                            handleDelete(template)
                                                         }}
                                                     >
                                                         <Delete fontSize="small" />

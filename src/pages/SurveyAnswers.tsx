@@ -226,7 +226,7 @@ const SurveyAnswers = () => {
     }
 
     return (
-        <Box sx={{ flexGrow: 1, bgcolor: "#f5f5f5", minHeight: "100vh" }}>
+        <Box sx={{ flexGrow: 1, minHeight: "100vh", py: 3 }}>
             <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
                 <Box sx={{ display: "flex", alignItems: "center", mb: 4 }}>
                     <IconButton onClick={() => navigate("/survey")} sx={{ mr: 1 }}>
@@ -237,7 +237,7 @@ const SurveyAnswers = () => {
                     </Typography>
                 </Box>
 
-                <Paper elevation={0} sx={{ mb: 3, p: 3, borderRadius: 2 }}>
+                <Paper elevation={0} sx={{ mb: 3, p: 3, borderRadius: 2, boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
                     <TextField
                         placeholder="고객명, 이메일, 전화번호 또는 설문 제목으로 검색"
                         variant="outlined"
@@ -282,16 +282,48 @@ const SurveyAnswers = () => {
                         {/* 전체 응답 탭 */}
                         <TabPanel value={tabValue} index={0}>
                             {filteredAnswers.length > 0 ? (
-                                <TableContainer>
+                                <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2, overflow: "hidden", boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
                                     <Table>
                                         <TableHead>
-                                            <TableRow sx={{ bgcolor: "#f9f9f9" }}>
-                                                <TableCell sx={{ fontWeight: 500 }}>고객명</TableCell>
-                                                <TableCell sx={{ fontWeight: 500 }}>연락처</TableCell>
-                                                <TableCell sx={{ fontWeight: 500 }}>이메일</TableCell>
-                                                <TableCell sx={{ fontWeight: 500 }}>설문 제목</TableCell>
-                                                <TableCell sx={{ fontWeight: 500 }}>응답 수</TableCell>
-                                                <TableCell sx={{ fontWeight: 500 }}>등록 날짜</TableCell>
+                                            <TableRow sx={{ 
+                                                backgroundColor: '#e9ecef',
+                                                borderBottom: '1px solid #e9ecef'
+                                            }}>
+                                                <TableCell sx={{ 
+                                                    padding: '12px 16px',
+                                                    textAlign: 'left',
+                                                    fontSize: '0.875rem',
+                                                    fontWeight: 500,
+                                                    color: '#003459'
+                                                }}>고객명</TableCell>
+                                                <TableCell sx={{ 
+                                                    padding: '12px 16px',
+                                                    textAlign: 'left',
+                                                    fontSize: '0.875rem',
+                                                    fontWeight: 500,
+                                                    color: '#003459'
+                                                }}>이메일</TableCell>
+                                                <TableCell sx={{ 
+                                                    padding: '12px 16px',
+                                                    textAlign: 'left',
+                                                    fontSize: '0.875rem',
+                                                    fontWeight: 500,
+                                                    color: '#003459'
+                                                }}>전화번호</TableCell>
+                                                <TableCell sx={{ 
+                                                    padding: '12px 16px',
+                                                    textAlign: 'left',
+                                                    fontSize: '0.875rem',
+                                                    fontWeight: 500,
+                                                    color: '#003459'
+                                                }}>설문 제목</TableCell>
+                                                <TableCell sx={{ 
+                                                    padding: '12px 16px',
+                                                    textAlign: 'left',
+                                                    fontSize: '0.875rem',
+                                                    fontWeight: 500,
+                                                    color: '#003459'
+                                                }}>응답일</TableCell>
                                             </TableRow>
                                         </TableHead>
                                         <TableBody>
@@ -303,10 +335,9 @@ const SurveyAnswers = () => {
                                                     sx={{ cursor: "pointer" }}
                                                 >
                                                     <TableCell>{answer.customer.name}</TableCell>
-                                                    <TableCell>{answer.customer.phone}</TableCell>
                                                     <TableCell>{answer.customer.email}</TableCell>
+                                                    <TableCell>{answer.customer.phone}</TableCell>
                                                     <TableCell>{answer.survey.title}</TableCell>
-                                                    <TableCell>{answer.answer.length}</TableCell>
                                                     <TableCell>{formatDate(answer.createdAt)}</TableCell>
                                                 </TableRow>
                                             ))}
@@ -342,14 +373,41 @@ const SurveyAnswers = () => {
                                             </Box>
                                         </AccordionSummary>
                                         <AccordionDetails>
-                                            <TableContainer>
+                                            <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2, overflow: "hidden", boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
                                                 <Table size="small">
                                                     <TableHead>
-                                                        <TableRow sx={{ bgcolor: "#f9f9f9" }}>
-                                                            <TableCell sx={{ fontWeight: 500 }}>고객명</TableCell>
-                                                            <TableCell sx={{ fontWeight: 500 }}>연락처</TableCell>
-                                                            <TableCell sx={{ fontWeight: 500 }}>이메일</TableCell>
-                                                            <TableCell sx={{ fontWeight: 500 }}>등록 날짜</TableCell>
+                                                        <TableRow sx={{ 
+                                                            backgroundColor: '#e9ecef',
+                                                            borderBottom: '1px solid #e9ecef'
+                                                        }}>
+                                                            <TableCell sx={{ 
+                                                                padding: '12px 16px',
+                                                                textAlign: 'left',
+                                                                fontSize: '0.875rem',
+                                                                fontWeight: 500,
+                                                                color: '#003459'
+                                                            }}>고객명</TableCell>
+                                                            <TableCell sx={{ 
+                                                                padding: '12px 16px',
+                                                                textAlign: 'left',
+                                                                fontSize: '0.875rem',
+                                                                fontWeight: 500,
+                                                                color: '#003459'
+                                                            }}>이메일</TableCell>
+                                                            <TableCell sx={{ 
+                                                                padding: '12px 16px',
+                                                                textAlign: 'left',
+                                                                fontSize: '0.875rem',
+                                                                fontWeight: 500,
+                                                                color: '#003459'
+                                                            }}>전화번호</TableCell>
+                                                            <TableCell sx={{ 
+                                                                padding: '12px 16px',
+                                                                textAlign: 'left',
+                                                                fontSize: '0.875rem',
+                                                                fontWeight: 500,
+                                                                color: '#003459'
+                                                            }}>응답일</TableCell>
                                                         </TableRow>
                                                     </TableHead>
                                                     <TableBody>
@@ -361,8 +419,8 @@ const SurveyAnswers = () => {
                                                                 sx={{ cursor: "pointer" }}
                                                             >
                                                                 <TableCell>{answer.customer.name}</TableCell>
-                                                                <TableCell>{answer.customer.phone}</TableCell>
                                                                 <TableCell>{answer.customer.email}</TableCell>
+                                                                <TableCell>{answer.customer.phone}</TableCell>
                                                                 <TableCell>{formatDate(answer.createdAt)}</TableCell>
                                                             </TableRow>
                                                         ))}
@@ -385,7 +443,18 @@ const SurveyAnswers = () => {
             </Container>
 
             {/* 상세 보기 다이얼로그 */}
-            <Dialog open={detailDialogOpen} onClose={handleCloseDetail} maxWidth="md" fullWidth scroll="paper">
+            <Dialog
+                open={detailDialogOpen}
+                onClose={handleCloseDetail}
+                maxWidth="md"
+                fullWidth
+                PaperProps={{
+                    sx: {
+                        borderRadius: 2,
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                    }
+                }}
+            >
                 {selectedAnswer && (
                     <>
                         <DialogTitle>
@@ -414,7 +483,7 @@ const SurveyAnswers = () => {
 
                                 {/* 고객 정보 */}
                                 <Grid item xs={12} md={6}>
-                                    <Card variant="outlined" sx={{ height: "100%" }}>
+                                    <Card variant="outlined" sx={{ height: "100%", boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
                                         <CardContent>
                                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                                                 <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
@@ -446,7 +515,7 @@ const SurveyAnswers = () => {
 
                                 {/* 응답 시간 정보 */}
                                 <Grid item xs={12} md={6}>
-                                    <Card variant="outlined" sx={{ height: "100%" }}>
+                                    <Card variant="outlined" sx={{ height: "100%", boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
                                         <CardContent>
                                             <Typography variant="subtitle1" sx={{ fontWeight: "bold", mb: 2 }}>
                                                 응답 정보
@@ -472,7 +541,7 @@ const SurveyAnswers = () => {
                                         응답 내용
                                     </Typography>
                                     {selectedAnswer.answer.map((item: QuestionAnswerResponse, index: number) => (
-                                        <Card key={index} variant="outlined" sx={{ mb: 2 }}>
+                                        <Card key={index} variant="outlined" sx={{ mb: 2, boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
                                             <CardContent>
                                                 <Typography variant="subtitle2" sx={{ fontWeight: "bold", mb: 1 }}>
                                                     {index + 1}. {selectedAnswer.survey.questionList.find(q => q.id === parseInt(item.question))?.content || item.question}
@@ -510,7 +579,7 @@ const SurveyAnswers = () => {
                 </Alert>
             </Snackbar>
 
-            <Box sx={{ bgcolor: "#fff", p: 2, textAlign: "center", mt: 4 }}>
+            <Box sx={{ bgcolor: "#ffffff", p: 2, textAlign: "center", mt: 4 }}>
                 <Typography variant="caption" color="textSecondary">
                     © 2024 Customer Management System. All rights reserved.
                 </Typography>

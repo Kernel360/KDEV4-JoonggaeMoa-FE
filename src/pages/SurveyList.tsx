@@ -232,7 +232,7 @@ const SurveyList = () => {
     }
 
     return (
-        <Box sx={{ flexGrow: 1, bgcolor: "#f5f5f5", minHeight: "100vh" }}>
+        <Box sx={{ flexGrow: 1, minHeight: "100vh" }}>
             <Container
                 maxWidth="lg"
                 sx={{
@@ -255,7 +255,16 @@ const SurveyList = () => {
                         <Button
                             variant="outlined"
                             startIcon={<Assessment />}
-                            sx={{ mr: 2, borderColor: "#ddd", color: "#333" }}
+                            sx={{ 
+                                mr: 2, 
+                                borderColor: "#007ea7", 
+                                color: "#007ea7",
+                                '&:hover': {
+                                    borderColor: "#003459",
+                                    color: "#003459",
+                                    bgcolor: 'rgba(0, 126, 167, 0.08)'
+                                }
+                            }}
                             onClick={handleViewAnswers}
                         >
                             응답 확인
@@ -264,8 +273,8 @@ const SurveyList = () => {
                             variant="contained"
                             startIcon={<Add />}
                             sx={{
-                                bgcolor: "#000",
-                                "&:hover": { bgcolor: "#333" },
+                                bgcolor: "#007ea7",
+                                "&:hover": { bgcolor: "#003459" },
                             }}
                             onClick={handleCreateSurvey}
                         >
@@ -274,7 +283,7 @@ const SurveyList = () => {
                     </Box>
                 </Box>
 
-                <Paper elevation={0} sx={{ mb: 3, p: 3, borderRadius: 2 }}>
+                <Paper elevation={0} sx={{ mb: 3, p: 3, borderRadius: 2, boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
                     <TextField
                         placeholder="설문 제목으로 검색"
                         variant="outlined"
@@ -311,16 +320,48 @@ const SurveyList = () => {
                         </Button>
                     </Paper>
                 ) : (
-                    <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2, overflow: "hidden" }}>
+                    <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2, overflow: "hidden", boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
                         <Table>
                             <TableHead>
-                                <TableRow sx={{ bgcolor: "#f9f9f9" }}>
-                                    <TableCell sx={{ fontWeight: 500 }}>제목</TableCell>
-                                    <TableCell sx={{ fontWeight: 500 }}>설명</TableCell>
-                                    <TableCell sx={{ fontWeight: 500 }}>질문 수</TableCell>
-                                    <TableCell sx={{ fontWeight: 500 }}>등록일</TableCell>
-                                    <TableCell sx={{ fontWeight: 500 }} align="right">
-                                    </TableCell>
+                                <TableRow sx={{ 
+                                    backgroundColor: '#e9ecef',
+                                    borderBottom: '1px solid #e9ecef'
+                                }}>
+                                    <TableCell sx={{ 
+                                        padding: '12px 16px',
+                                        textAlign: 'left',
+                                        fontSize: '0.875rem',
+                                        fontWeight: 500,
+                                        color: '#003459'
+                                    }}>제목</TableCell>
+                                    <TableCell sx={{ 
+                                        padding: '12px 16px',
+                                        textAlign: 'left',
+                                        fontSize: '0.875rem',
+                                        fontWeight: 500,
+                                        color: '#003459'
+                                    }}>설명</TableCell>
+                                    <TableCell sx={{ 
+                                        padding: '12px 16px',
+                                        textAlign: 'left',
+                                        fontSize: '0.875rem',
+                                        fontWeight: 500,
+                                        color: '#003459'
+                                    }}>질문 수</TableCell>
+                                    <TableCell sx={{ 
+                                        padding: '12px 16px',
+                                        textAlign: 'left',
+                                        fontSize: '0.875rem',
+                                        fontWeight: 500,
+                                        color: '#003459'
+                                    }}>등록일</TableCell>
+                                    <TableCell sx={{ 
+                                        padding: '12px 16px',
+                                        textAlign: 'right',
+                                        fontSize: '0.875rem',
+                                        fontWeight: 500,
+                                        color: '#003459'
+                                    }}></TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -409,7 +450,7 @@ const SurveyList = () => {
                 </Alert>
             </Snackbar>
 
-            <Box sx={{ bgcolor: "#fff", p: 2, textAlign: "center", mt: 4 }}>
+            <Box sx={{ bgcolor: "#ffffff", p: 2, textAlign: "center", mt: 4 }}>
                 <Typography variant="caption" color="textSecondary">
                     © 2024 Customer Management System. All rights reserved.
                 </Typography>

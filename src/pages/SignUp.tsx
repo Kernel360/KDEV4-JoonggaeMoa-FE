@@ -1,16 +1,19 @@
 import React, { useState } from 'react';
 import {
   Box,
-  Container,
   TextField,
   Button,
   Typography,
-  Paper,
-  Divider,
   Alert,
   Snackbar,
+  InputAdornment,
+  IconButton,
+  FormControlLabel,
+  Checkbox,
+  Link,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { Visibility, VisibilityOff, Person, Lock, Email, Phone, Business, LocationOn, Badge } from '@mui/icons-material';
 import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -53,6 +56,8 @@ const SignUp = () => {
     businessNo: '',
   });
 
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -175,47 +180,34 @@ const SignUp = () => {
           });
           
           navigate('/login');
-        } else {
-          if(response.data.error.code === '4091'){
-            setSnackbar({
-              open: true,
-              message: '이미 사용 중인 아이디입니다.',
-              severity: 'error'
-            });
-            return;
-          }
-          else if(response.data.error.code === '4092'){
-            setSnackbar({
-              open: true,
-              message: '이미 사용 중인 핸드폰 번호입니다.',
-              severity: 'error'
-            });
-            return;
-          }
-          else if(response.data.error.code === '4093'){
-            setSnackbar({
-              open: true,
-              message: '이미 사용 중인 이메일입니다.',
-              severity: 'error'
-            });
-            return;
-          }
-          else{
-            setSnackbar({
-              open: true,
-              message: response.data.error.message || '회원가입 중 오류가 발생했습니다.',
-              severity: 'error'
-            });
-          }
-          
         }
       } catch (error: any) {
         console.error('Error:', error);
-        setSnackbar({
-          open: true,
-          message: error.response?.data?.message || '회원가입 중 오류가 발생했습니다.',
-          severity: 'error'
-        });
+        if (error.response?.data?.error?.code === '4091') {
+          setSnackbar({
+            open: true,
+            message: '이미 사용 중인 아이디입니다.',
+            severity: 'error'
+          });
+        } else if (error.response?.data?.error?.code === '4092') {
+          setSnackbar({
+            open: true,
+            message: '이미 사용 중인 핸드폰 번호입니다.',
+            severity: 'error'
+          });
+        } else if (error.response?.data?.error?.code === '4093') {
+          setSnackbar({
+            open: true,
+            message: '이미 사용 중인 이메일입니다.',
+            severity: 'error'
+          });
+        } else {
+          setSnackbar({
+            open: true,
+            message: error.response?.data?.error?.message || '회원가입 중 오류가 발생했습니다.',
+            severity: 'error'
+          });
+        }
       }
     }
   };
@@ -225,145 +217,534 @@ const SignUp = () => {
   };
 
   return (
-    <Container component="main" maxWidth="sm" sx={{ mt: 50 }}>
-      <Box sx={{ mb: 4 }}>
-        <Typography component="h1" variant="h4" align="center" gutterBottom>
-          회원가입
-        </Typography>
-      </Box>
-      
-      <form onSubmit={handleSubmit}>
-        <Paper elevation={2} sx={{ p: 4, mb: 4 }}>
-          <Typography variant="h6" gutterBottom>
-            기본 정보
-          </Typography>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <TextField
-              name="username"
-              label="아이디"
-              value={formData.username}
-              onChange={handleChange}
-              error={!!errors.username}
-              helperText={errors.username}
-              required
-            />
-            <TextField
-              name="password"
-              type="password"
-              label="비밀번호"
-              value={formData.password}
-              onChange={handleChange}
-              error={!!errors.password}
-              helperText={errors.password}
-              required
-            />
-            <TextField
-              name="passwordConfirm"
-              type="password"
-              label="비밀번호 확인"
-              value={formData.passwordConfirm}
-              onChange={handleChange}
-              error={!!errors.passwordConfirm}
-              helperText={errors.passwordConfirm}
-              required
-            />
-            <TextField
-              name="name"
-              label="이름"
-              value={formData.name}
-              onChange={handleChange}
-              error={!!errors.name}
-              helperText={errors.name}
-              required
-            />
-            <TextField
-              name="phone"
-              label="휴대폰 번호"
-              value={formData.phone}
-              onChange={handleChange}
-              error={!!errors.phone}
-              helperText={errors.phone}
-              required
-              inputProps={{ maxLength: 13 }}
-            />
-            <TextField
-              name="email"
-              label="이메일"
-              type="email"
-              value={formData.email}
-              onChange={handleChange}
-              error={!!errors.email}
-              helperText={errors.email}
-              required
+    <Box sx={{ 
+      minHeight: '100vh',
+      width: '100vw',
+      display: 'flex',
+      bgcolor: '#ffffff',
+      overflow: 'hidden'
+    }}>
+      {/* 왼쪽 브랜드 소개 영역 */}
+      <Box sx={{ 
+        display: { xs: 'none', lg: 'flex' },
+        width: '50%',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        p: 6,
+        background: 'linear-gradient(to right, #e6f3f7, #f0f7fa)',
+        height: '100vh'
+      }}>
+        <Box>
+          <Box sx={{ width: '90px', mb: 4 }}>
+            <img
+              src="/public/로고.png"
+              alt="브랜드 로고"
+              style={{ width: '100%' }}
             />
           </Box>
-        </Paper>
-
-        <Paper elevation={2} sx={{ p: 4, mb: 4 }}>
-          <Typography variant="h6" gutterBottom>
-            부동산 정보
+          <Typography variant="h2" sx={{ 
+            color: '#007ea7',
+            fontWeight: 700,
+            mb: 3,
+            fontSize: '2.5rem',
+            lineHeight: 1.2
+          }}>
+            부동산 중개의<br />새로운 기준
           </Typography>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <TextField
-              name="office"
-              label="부동산 이름"
-              value={formData.office}
-              onChange={handleChange}
-              error={!!errors.office}
-              helperText={errors.office}
-            />
-            <TextField
-              name="region"
-              label="지역"
-              value={formData.region}
-              onChange={handleChange}
-              error={!!errors.region}
-              helperText={errors.region}
-            />
-            <TextField
-              name="businessNo"
-              label="사업자 번호"
-              value={formData.businessNo}
-              onChange={handleChange}
-              error={!!errors.businessNo}
-              helperText={errors.businessNo}
-            />
-          </Box>
-        </Paper>
-
-        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
-          <Button
-            variant="outlined"
-            onClick={() => navigate('/login')}
-            sx={{ minWidth: 120 }}
-          >
-            취소
-          </Button>
-          <Button
-            type="submit"
-            variant="contained"
-            sx={{ minWidth: 120 }}
-          >
-            가입하기
-          </Button>
+          <Typography sx={{ 
+            color: '#00a8e8',
+            fontSize: '1.25rem',
+            mb: 4
+          }}>
+            더 쉽고 편리한 부동산 중개 서비스로<br />
+            여러분의 성공을 지원합니다.
+          </Typography>
         </Box>
-      </form>
+
+        <Box>
+          <Box sx={{ 
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: 2,
+            mb: 4
+          }}>
+            {[
+              { icon: 'home', title: '매물 관리', desc: '효율적인 관리' },
+              { icon: 'handshake', title: '계약 관리', desc: '안전한 계약' },
+              { icon: 'chart-line', title: '실적 분석', desc: '성과 확인' }
+            ].map((item, i) => (
+              <Box key={i} sx={{
+                bgcolor: 'rgba(255,255,255,0.8)',
+                p: 2,
+                borderRadius: 2,
+                boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+              }}>
+                <Typography sx={{ color: '#007ea7', mb: 1, fontWeight: 600 }}>
+                  {item.title}
+                </Typography>
+                <Typography sx={{ color: '#007ea7', fontSize: '0.875rem' }}>
+                  {item.desc}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
+          <Typography sx={{ color: '#007ea7', fontSize: '0.875rem' }}>
+            © 2025 중개모아. All rights reserved.
+          </Typography>
+        </Box>
+      </Box>
+
+      {/* 오른쪽 회원가입 폼 */}
+      <Box sx={{ 
+        width: { xs: '100%', lg: '50%' },
+        display: 'flex',
+        flexDirection: 'column',
+        p: 4,
+        overflow: 'auto',
+        height: '100vh'
+      }}>
+        <Box sx={{ 
+          width: '100%', 
+          maxWidth: '32rem',
+          mx: 'auto',
+          pt: 4
+        }}>
+          <Box sx={{ textAlign: { xs: 'center', lg: 'left' }, mb: 5 }}>
+            <Typography variant="h4" sx={{ 
+              fontWeight: 700,
+              color: 'text.primary',
+              mb: 1
+            }}>
+              회원가입
+            </Typography>
+            <Typography sx={{ color: 'text.secondary' }}>
+              중개모아의 새로운 회원이 되어주세요.
+            </Typography>
+          </Box>
+
+          <form onSubmit={handleSubmit}>
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="h6" sx={{ 
+                fontWeight: 600,
+                color: 'text.primary',
+                mb: 2
+              }}>
+                기본 정보
+              </Typography>
+              
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Box>
+                  <Typography sx={{ 
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                    color: 'text.primary',
+                    mb: 1
+                  }}>
+                    아이디 <Box component="span" sx={{ color: 'error.main' }}>*</Box>
+                  </Typography>
+                  <TextField
+                    fullWidth
+                    name="username"
+                    placeholder="아이디를 입력하세요"
+                    value={formData.username}
+                    onChange={handleChange}
+                    error={!!errors.username}
+                    helperText={errors.username}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Person sx={{ color: 'text.secondary' }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        '& fieldset': {
+                          borderColor: 'grey.300',
+                        },
+                      },
+                    }}
+                  />
+                </Box>
+
+                <Box>
+                  <Typography sx={{ 
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                    color: 'text.primary',
+                    mb: 1
+                  }}>
+                    비밀번호 <Box component="span" sx={{ color: 'error.main' }}>*</Box>
+                  </Typography>
+                  <TextField
+                    fullWidth
+                    name="password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="비밀번호를 입력하세요"
+                    value={formData.password}
+                    onChange={handleChange}
+                    error={!!errors.password}
+                    helperText={errors.password}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Lock sx={{ color: 'text.secondary' }} />
+                        </InputAdornment>
+                      ),
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={() => setShowPassword(!showPassword)}
+                            edge="end"
+                          >
+                            {showPassword ? <VisibilityOff /> : <Visibility />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        '& fieldset': {
+                          borderColor: 'grey.300',
+                        },
+                      },
+                    }}
+                  />
+                </Box>
+
+                <Box>
+                  <Typography sx={{ 
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                    color: 'text.primary',
+                    mb: 1
+                  }}>
+                    비밀번호 확인 <Box component="span" sx={{ color: 'error.main' }}>*</Box>
+                  </Typography>
+                  <TextField
+                    fullWidth
+                    name="passwordConfirm"
+                    type={showPasswordConfirm ? 'text' : 'password'}
+                    placeholder="비밀번호를 다시 입력하세요"
+                    value={formData.passwordConfirm}
+                    onChange={handleChange}
+                    error={!!errors.passwordConfirm}
+                    helperText={errors.passwordConfirm}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Lock sx={{ color: 'text.secondary' }} />
+                        </InputAdornment>
+                      ),
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
+                            edge="end"
+                          >
+                            {showPasswordConfirm ? <VisibilityOff /> : <Visibility />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        '& fieldset': {
+                          borderColor: 'grey.300',
+                        },
+                      },
+                    }}
+                  />
+                </Box>
+
+                <Box>
+                  <Typography sx={{ 
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                    color: 'text.primary',
+                    mb: 1
+                  }}>
+                    이름 <Box component="span" sx={{ color: 'error.main' }}>*</Box>
+                  </Typography>
+                  <TextField
+                    fullWidth
+                    name="name"
+                    placeholder="이름을 입력하세요"
+                    value={formData.name}
+                    onChange={handleChange}
+                    error={!!errors.name}
+                    helperText={errors.name}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Person sx={{ color: 'text.secondary' }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        '& fieldset': {
+                          borderColor: 'grey.300',
+                        },
+                      },
+                    }}
+                  />
+                </Box>
+
+                <Box>
+                  <Typography sx={{ 
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                    color: 'text.primary',
+                    mb: 1
+                  }}>
+                    휴대폰 번호 <Box component="span" sx={{ color: 'error.main' }}>*</Box>
+                  </Typography>
+                  <TextField
+                    fullWidth
+                    name="phone"
+                    placeholder="휴대폰 번호를 입력하세요"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    error={!!errors.phone}
+                    helperText={errors.phone}
+                    inputProps={{ maxLength: 13 }}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Phone sx={{ color: 'text.secondary' }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        '& fieldset': {
+                          borderColor: 'grey.300',
+                        },
+                      },
+                    }}
+                  />
+                </Box>
+
+                <Box>
+                  <Typography sx={{ 
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                    color: 'text.primary',
+                    mb: 1
+                  }}>
+                    이메일 <Box component="span" sx={{ color: 'error.main' }}>*</Box>
+                  </Typography>
+                  <TextField
+                    fullWidth
+                    name="email"
+                    type="email"
+                    placeholder="이메일을 입력하세요"
+                    value={formData.email}
+                    onChange={handleChange}
+                    error={!!errors.email}
+                    helperText={errors.email}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Email sx={{ color: 'text.secondary' }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        '& fieldset': {
+                          borderColor: 'grey.300',
+                        },
+                      },
+                    }}
+                  />
+                </Box>
+              </Box>
+            </Box>
+
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="h6" sx={{ 
+                fontWeight: 600,
+                color: 'text.primary',
+                mb: 2
+              }}>
+                부동산 정보
+              </Typography>
+              
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Box>
+                  <Typography sx={{ 
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                    color: 'text.primary',
+                    mb: 1
+                  }}>
+                    부동산 이름
+                  </Typography>
+                  <TextField
+                    fullWidth
+                    name="office"
+                    placeholder="부동산 이름을 입력하세요"
+                    value={formData.office}
+                    onChange={handleChange}
+                    error={!!errors.office}
+                    helperText={errors.office}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Business sx={{ color: 'text.secondary' }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        '& fieldset': {
+                          borderColor: 'grey.300',
+                        },
+                      },
+                    }}
+                  />
+                </Box>
+
+                <Box>
+                  <Typography sx={{ 
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                    color: 'text.primary',
+                    mb: 1
+                  }}>
+                    지역
+                  </Typography>
+                  <TextField
+                    fullWidth
+                    name="region"
+                    placeholder="지역을 입력하세요"
+                    value={formData.region}
+                    onChange={handleChange}
+                    error={!!errors.region}
+                    helperText={errors.region}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <LocationOn sx={{ color: 'text.secondary' }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        '& fieldset': {
+                          borderColor: 'grey.300',
+                        },
+                      },
+                    }}
+                  />
+                </Box>
+
+                <Box>
+                  <Typography sx={{ 
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                    color: 'text.primary',
+                    mb: 1
+                  }}>
+                    사업자 번호
+                  </Typography>
+                  <TextField
+                    fullWidth
+                    name="businessNo"
+                    placeholder="사업자 번호를 입력하세요"
+                    value={formData.businessNo}
+                    onChange={handleChange}
+                    error={!!errors.businessNo}
+                    helperText={errors.businessNo}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Badge sx={{ color: 'text.secondary' }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        '& fieldset': {
+                          borderColor: 'grey.300',
+                        },
+                      },
+                    }}
+                  />
+                </Box>
+              </Box>
+            </Box>
+
+            <Box sx={{ display: 'flex', gap: 2, mb: 4 }}>
+              <Button
+                type="submit"
+                variant="contained"
+                sx={{ 
+                  flex: 1,
+                  py: 1.5,
+                  bgcolor: 'rgba(0, 168, 232, 0.8)',
+                  '&:hover': {
+                    bgcolor: '#00a8e8',
+                  },
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontSize: '1rem',
+                }}
+              >
+                가입하기
+              </Button>
+            </Box>
+
+            <Box sx={{ 
+              mt: 4,
+              textAlign: 'center'
+            }}>
+              <Typography sx={{ color: 'text.secondary' }}>
+                이미 계정이 있으신가요?{' '}
+                <Link 
+                  component="button"
+                  variant="body2"
+                  onClick={() => navigate('/login')}
+                  sx={{ 
+                    textDecoration: 'none',
+                    color: '#00a8e8',
+                    fontWeight: 500
+                  }}
+                >
+                  로그인
+                </Link>
+              </Typography>
+            </Box>
+          </form>
+        </Box>
+      </Box>
 
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}
         onClose={handleSnackbarClose}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
         <Alert 
           onClose={handleSnackbarClose} 
           severity={snackbar.severity}
-          sx={{ width: '100%' }}
+          sx={{ width: '100%', borderRadius: 2 }}
         >
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </Container>
+    </Box>
   );
 };
 

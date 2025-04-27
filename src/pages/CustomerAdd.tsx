@@ -115,7 +115,7 @@ const CustomerAdd = () => {
     }
 
     return (
-        <Box sx={{ flexGrow: 1, bgcolor: "#f5f5f5", minHeight: "100vh" }}>
+        <Box sx={{ flexGrow: 1, minHeight: "100vh" }}>
             <Container
                 maxWidth="md"
                 sx={{
@@ -125,7 +125,7 @@ const CustomerAdd = () => {
                     px: { xs: 2, sm: 3, md: 4 },
                 }}
             >
-                <Paper elevation={0} sx={{ p: 4, borderRadius: 2 }}>
+                <Paper elevation={0} sx={{ p: 4, borderRadius: 2, bgcolor: "#ffffff" }}>
                     <Box sx={{ display: "flex", alignItems: "center", mb: 4 }}>
                         <IconButton onClick={() => navigate("/customer-management")} sx={{ mr: 1 }}>
                             <ArrowBack />
@@ -262,7 +262,7 @@ const CustomerAdd = () => {
                                 <Button
                                     type="submit"
                                     variant="contained"
-                                    sx={{ bgcolor: "#000", "&:hover": { bgcolor: "#333" } }}
+                                    sx={{ bgcolor: "#007ea7", "&:hover": { bgcolor: "#003459" } }}
                                     disabled={loading}
                                 >
                                     {loading ? <CircularProgress size={24} /> : "고객 등록하기"}
