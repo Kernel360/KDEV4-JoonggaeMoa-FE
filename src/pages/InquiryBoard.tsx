@@ -24,7 +24,8 @@ import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { Inquiry, InquiryRequest } from '../types/inquiry';
 import { useNavigate } from 'react-router-dom';
-
+import ChatbotDialog from '../components/ChatbotDialog';
+import ChatIcon from '@mui/icons-material/Chat';
 
 const InquiryBoard: React.FC = () => {
     const navigate = useNavigate();
@@ -42,6 +43,7 @@ const InquiryBoard: React.FC = () => {
         content: '',
     });
     const { isAuthenticated } = useAuth();
+    const [openChatbot, setOpenChatbot] = useState(false);
 
     const fetchInquiries = async () => {
         try {
@@ -125,18 +127,20 @@ const InquiryBoard: React.FC = () => {
             </Typography>
             
             <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
-                <Button 
-                    variant="contained" 
-                    onClick={() => setOpenDialog(true)}
-                    sx={{
-                        backgroundColor: '#333',
-                        '&:hover': {
-                            backgroundColor: '#000'
-                        }
-                    }}
-                >
-                    문의하기
-                </Button>
+                <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
+                    <Button 
+                        variant="contained" 
+                        onClick={() => setOpenDialog(true)}
+                        sx={{
+                            backgroundColor: '#333',
+                            '&:hover': {
+                                backgroundColor: '#000'
+                            }
+                        }}
+                    >
+                        문의하기
+                    </Button>
+                </Box>
             </Box>
 
             <TableContainer component={Paper} sx={{ 
@@ -334,6 +338,37 @@ const InquiryBoard: React.FC = () => {
                     </Button>
                 </DialogActions>
             </Dialog>
+        
+            <Box
+                sx={{
+                    position: 'fixed',
+                    bottom: 20,
+                    right: 20,
+                    zIndex: 1000
+                }}
+            >
+                <Button
+                    variant="contained"
+                    onClick={() => setOpenChatbot(true)}
+                    sx={{
+                        backgroundColor: '#333',
+                        borderRadius: '50%',
+                        minWidth: '56px',
+                        width: '56px',
+                        height: '56px',
+                        '&:hover': {
+                            backgroundColor: '#000'
+                        }
+                    }}
+                >
+                    <ChatIcon />
+                </Button>
+            </Box>
+
+            <ChatbotDialog 
+                open={openChatbot}
+                onClose={() => setOpenChatbot(false)}
+            />
         </Box>
     );
 };
