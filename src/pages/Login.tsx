@@ -104,12 +104,30 @@ function Login() {
                 height: '100vh'
             }}>
                 <Box>
-                    <Box sx={{ width: '90px', mb: 4 }}>
-                        <img
-                            src="/로고.png"
-                            alt="브랜드 로고"
-                            style={{ width: '100%' }}
-                        />
+                    <Box sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        mb: 4 
+                    }}>
+                        <Box sx={{ width: '90px' }}>
+                            <img
+                                src="/로고.png"
+                                alt="브랜드 로고"
+                                style={{ width: '100%' }}
+                            />
+                        </Box>
+                        <Typography 
+                            variant="h5" 
+                            sx={{ 
+                                ml: 2,
+                                color: '#0047AB',
+                                fontWeight: 700,
+                                mb: 3,
+                                fontSize: '3rem',
+                            }}
+                        >
+                            중개모아
+                        </Typography>
                     </Box>
                     <Typography variant="h2" sx={{ 
                         color: '#007ea7',
