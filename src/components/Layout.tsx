@@ -324,7 +324,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 }}
                             >
                                 <img 
-                                    src="/public/로고.png" 
+                                    src="/로고.png" 
                                     alt="중개모아 로고" 
                                     style={{ width: '45px', height: '50px' }}
                                 />

@@ -89,122 +89,194 @@ const InquiryBoard: React.FC = () => {
     // Remove handleSubmitAnswer function as it's no longer needed
 
     return (
-        <Box sx={{ p: 3, bgcolor: '#f5f5f5' }}>
+        <Box sx={{ p: 3}}>
             <Box sx={{ 
-                display: 'flex', 
-                flexDirection: 'column',
-                alignItems: 'center', 
-                mb: 4,
-                pb: 2,
-                borderBottom: '2px solid #333'
+                maxWidth: '1200px',
+                mx: 'auto',
+                px: 4
             }}>
-                <img 
-                    src="/배경없는 로고.ico"
-                    alt="중개모아 로고" 
-                    style={{ height: '50px', marginBottom: '8px' }} 
-                />
-                <Typography 
-                    variant="h5" 
-                    sx={{ 
-                        color: '#333',
-                        fontWeight: 'bold',
-                        letterSpacing: '0.1em'
-                    }}
-                >
-                    중개모아
-                </Typography>
-            </Box>
+                <Box sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center',
+                    gap: 2,
+                    mb: 4,
+                    pb: 2,
+                    borderBottom: '2px solid #333'
+                }}>
+                    <img 
+                        src="/로고.png"
+                        alt="중개모아 로고" 
+                        style={{ height: '50px' }} 
+                    />
+                    <Typography 
+                        variant="h5" 
+                        sx={{ 
+                            color: '#333',
+                            fontWeight: 'bold',
+                            letterSpacing: '0.1em'
+                        }}
+                    >
+                        중개모아
+                    </Typography>
+                    <Box sx={{ flexGrow: 1 }} />
+                    <Button 
+                        variant="outlined" 
+                        onClick={() => navigate('/dashboard')}
+                        sx={{ 
+                            borderColor: "#007ea7", 
+                            color: "#007ea7",
+                            '&:hover': {
+                                borderColor: "#003459",
+                                color: "#003459",
+                                bgcolor: 'rgba(0, 126, 167, 0.08)'
+                            }
+                        }}
+                    >
+                        대시보드
+                    </Button>
+                </Box>
 
-            <Typography 
-                variant="h4" 
-                sx={{ 
-                    color: '#333',
-                    mb: 3,
-                    fontWeight: 'bold'
-                }}
-            >
-                문의 게시판
-            </Typography>
-            
-            <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
-                <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
+                <Box sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    mb: 3
+                }}>
+                    <Typography 
+                        variant="h4" 
+                        sx={{ 
+                            color: '#333',
+                            fontWeight: 'bold'
+                        }}
+                    >
+                        문의 게시판
+                    </Typography>
                     <Button 
                         variant="contained" 
                         onClick={() => setOpenDialog(true)}
                         sx={{
-                            backgroundColor: '#333',
-                            '&:hover': {
-                                backgroundColor: '#000'
-                            }
+                            bgcolor: '#007ea7',
+                            '&:hover': { bgcolor: '#003459' },
+                            textTransform: 'none',
+                            boxShadow: 2,
                         }}
                     >
                         문의하기
                     </Button>
                 </Box>
-            </Box>
 
-            <TableContainer component={Paper} sx={{ 
-                boxShadow: 3,
-                '& .MuiTableCell-head': {
-                    backgroundColor: '#333',
-                    color: 'white'
-                }
-            }}>
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell sx={{ fontWeight: 'bold', width: '10%' }}>번호</TableCell>
-                            <TableCell sx={{ fontWeight: 'bold', width: '40%' }}>제목</TableCell>
-                            <TableCell sx={{ fontWeight: 'bold', width: '20%' }}>작성자</TableCell>
-                            <TableCell sx={{ fontWeight: 'bold', width: '20%' }}>작성일</TableCell>
-                            <TableCell sx={{ fontWeight: 'bold', width: '10%' }}>답변수</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {loading ? (
-                            <TableRow>
-                                <TableCell colSpan={5} align="center" sx={{ py: 5 }}>
-                                    <CircularProgress sx={{ color: '#333' }} />
-                                </TableCell>
+                <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2, overflow: "hidden", boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
+                    <Table>
+                        <TableHead>
+                            <TableRow sx={{ 
+                                backgroundColor: '#e9ecef',
+                                borderBottom: '1px solid #e9ecef'
+                            }}>
+                                <TableCell sx={{ 
+                                    padding: '12px 16px',
+                                    textAlign: 'left',
+                                    fontSize: '0.875rem',
+                                    fontWeight: 500,
+                                    color: '#003459'
+                                }}>번호</TableCell>
+                                <TableCell sx={{ 
+                                    padding: '12px 16px',
+                                    textAlign: 'left',
+                                    fontSize: '0.875rem',
+                                    fontWeight: 500,
+                                    color: '#003459'
+                                }}>제목</TableCell>
+                                <TableCell sx={{ 
+                                    padding: '12px 16px',
+                                    textAlign: 'left',
+                                    fontSize: '0.875rem',
+                                    fontWeight: 500,
+                                    color: '#003459'
+                                }}>작성자</TableCell>
+                                <TableCell sx={{ 
+                                    padding: '12px 16px',
+                                    textAlign: 'left',
+                                    fontSize: '0.875rem',
+                                    fontWeight: 500,
+                                    color: '#003459'
+                                }}>작성일</TableCell>
+                                <TableCell sx={{ 
+                                    padding: '12px 16px',
+                                    textAlign: 'left',
+                                    fontSize: '0.875rem',
+                                    fontWeight: 500,
+                                    color: '#003459'
+                                }}>답변수</TableCell>
                             </TableRow>
-                        ) : (
-                            inquiries.map((inquiry) => (
-                                <TableRow 
-                                    key={inquiry.id}
-                                    onClick={() => navigate(`/inquiry/${inquiry.id}`)}
-                                    sx={{ 
-                                        cursor: 'pointer',
-                                        '&:hover': {
-                                            backgroundColor: '#f5f5f5'
-                                        }
-                                    }}
-                                >
-                                    <TableCell>{inquiry.id}</TableCell>
-                                    <TableCell>{inquiry.title}</TableCell>
-                                    <TableCell>{inquiry.name}</TableCell>
-                                    <TableCell>
-                                        {new Date(inquiry.createdAt).toLocaleDateString()}
+                        </TableHead>
+                        <TableBody>
+                            {loading ? (
+                                <TableRow>
+                                    <TableCell colSpan={5} align="center" sx={{ py: 5 }}>
+                                        <CircularProgress sx={{ color: '#333' }} />
                                     </TableCell>
-                                    <TableCell>{inquiry.answers.length}</TableCell>
                                 </TableRow>
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
-            </TableContainer>
+                            ) : (
+                                inquiries.map((inquiry) => (
+                                    <TableRow
+                                        key={inquiry.id}
+                                        hover
+                                        onClick={() => navigate(`/inquiry/${inquiry.id}`)}
+                                        sx={{ 
+                                            cursor: "pointer",
+                                            borderBottom: '1px solid #e9ecef',
+                                            backgroundColor: 'transparent',
+                                            transition: 'background-color 0.2s',
+                                            '&:hover': {
+                                                backgroundColor: '#f8f9fa'
+                                            }
+                                        }}
+                                    >
+                                        <TableCell sx={{ 
+                                            padding: '12px 16px',
+                                            fontSize: '0.875rem',
+                                            color: '#00171f'
+                                        }}>{inquiry.id}</TableCell>
+                                        <TableCell sx={{ 
+                                            padding: '12px 16px',
+                                            fontSize: '0.875rem',
+                                            color: '#00171f'
+                                        }}>{inquiry.title}</TableCell>
+                                        <TableCell sx={{ 
+                                            padding: '12px 16px',
+                                            fontSize: '0.875rem',
+                                            color: '#00171f'
+                                        }}>{inquiry.name}</TableCell>
+                                        <TableCell sx={{ 
+                                            padding: '12px 16px',
+                                            fontSize: '0.875rem',
+                                            color: '#00171f'
+                                        }}>{new Date(inquiry.createdAt).toLocaleString()}</TableCell>
+                                        <TableCell sx={{ 
+                                            padding: '12px 16px',
+                                            fontSize: '0.875rem',
+                                            color: '#00171f'
+                                        }}>{inquiry.answers.length}</TableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
 
-            <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
-                <Pagination 
-                    count={totalPages} 
-                    page={page + 1} 
-                    onChange={(_, value) => setPage(value - 1)}
-                    sx={{
-                        '& .Mui-selected': {
-                            backgroundColor: '#333 !important',
-                            color: 'white'
-                        }
-                    }}
-                />
+                <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
+                    <Pagination 
+                        count={totalPages} 
+                        page={page + 1} 
+                        onChange={(_, value) => setPage(value - 1)}
+                        sx={{
+                            '& .Mui-selected': {
+                                backgroundColor: '#333 !important',
+                                color: 'white'
+                            }
+                        }}
+                    />
+                </Box>
             </Box>
 
             <Dialog 

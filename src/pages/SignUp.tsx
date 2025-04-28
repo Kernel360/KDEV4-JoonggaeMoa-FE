@@ -237,7 +237,7 @@ const SignUp = () => {
         <Box>
           <Box sx={{ width: '90px', mb: 4 }}>
             <img
-              src="/public/로고.png"
+              src="/로고.png"
               alt="브랜드 로고"
               style={{ width: '100%' }}
             />
