@@ -3,8 +3,8 @@ import { formatPrice, isZeroPrice } from '../../utils/articleUtils';
 
 interface ArticlePriceProps {
     tradeType: string;
-    priceSale: string | number | null;
-    priceRent?: number;
+    priceSale: number;
+    priceRent: number;
     priceRoomMin?: number;
     priceRoomMax?: number;
 }
