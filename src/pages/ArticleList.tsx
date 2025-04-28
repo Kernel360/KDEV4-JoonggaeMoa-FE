@@ -53,9 +53,9 @@ const ArticleItem = ({
                 m: 2, 
                 p: 2,
                 cursor: "pointer",
-                bgcolor: isSelected ? 'rgba(0, 0, 0, 0.04)' : 'inherit',
+                bgcolor: isSelected ? 'rgba(0, 0, 0, 0.04)' : `${getTypeColor(article.buildingType)}10`,
                 '&:hover': {
-                    bgcolor: 'rgba(0, 0, 0, 0.04)'
+                    bgcolor: `${getTypeColor(article.buildingType)}15`
                 }
             }}
             onClick={onClick}
@@ -72,7 +72,21 @@ const ArticleItem = ({
                             display: 'flex',
                             justifyContent: 'center',
                             alignItems: 'center',
-                            flexShrink: 0
+                            flexShrink: 0,
+                            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                            filter: 'brightness(1.1)',
+                            '&::after': {
+                                content: '""',
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                borderRadius: article.tradeType === "매매" ? '50%' : 
+                                            article.tradeType === "전세" ? '4px' : '0',
+                                background: 'rgba(255, 255, 255, 0.2)',
+                                pointerEvents: 'none'
+                            }
                         }}
                     >
                         <Typography 
@@ -115,7 +129,8 @@ const ArticleItem = ({
                     {article.address1SiDo && `${article.address1SiDo}`}
                     {article.address2SiGunGu && ` ${article.address2SiGunGu}`}
                     {article.address3DongEupMyeon && ` ${article.address3DongEupMyeon}`}
-                    {article.floors && ` · ${article.floors}`}
+                    {article.floors && ` · ${article.floors}층`}
+                    {article.areaExclusive && ` · ${article.areaExclusive}㎡ (${Math.round(Number(article.areaExclusive) * 0.3025)}평)`}
                 </Typography>
                 
                 <Typography 
@@ -164,6 +179,29 @@ const ArticleItem = ({
     );
 };
 
+// 매물 유형 상수 정의
+const ARTICLE_TYPES = {
+    APT: { code: 'APT', name: '아파트' },
+    OPST: { code: 'OPST', name: '오피스텔' },
+    VL: { code: 'VL', name: '빌라' },
+    JWJT: { code: 'JWJT', name: '전원주택' },
+    DDDGG: { code: 'DDDGG', name: '단독/다가구' },
+    SGJT: { code: 'SGJT', name: '상가주택' },
+    HOJT: { code: 'HOJT', name: '한옥주택' },
+    SG: { code: 'SG', name: '상가' },
+    SMS: { code: 'SMS', name: '사무실' }
+};
+
+// 매물 유형 코드를 한글로 변환하는 함수
+const getArticleTypeName = (code: string) => {
+    return ARTICLE_TYPES[code as keyof typeof ARTICLE_TYPES]?.name || code;
+};
+
+// 매물 유형 한글을 코드로 변환하는 함수
+const getArticleTypeCode = (name: string) => {
+    return Object.entries(ARTICLE_TYPES).find(([_, value]) => value.name === name)?.[0] || name;
+};
+
 const ArticleList = () => {
     const navigate = useNavigate()
     const [articles, setArticles] = useState<ArticleResponse[]>([])
@@ -192,6 +230,30 @@ const ArticleList = () => {
     const [showMap, setShowMap] = useState(true)
     const [showList, setShowList] = useState(true)
     const [detailVisible, setDetailVisible] = useState(false)
+    const [cityOptions, setCityOptions] = useState<Region[]>([]);
+    const [districtOptions, setDistrictOptions] = useState<Region[]>([]);
+    const [neighborhoodOptions, setNeighborhoodOptions] = useState<Region[]>([]);
+
+    // 시/도 옵션을 백엔드에서 불러옵니다.
+    useEffect(() => {
+      const loadCities = async () => {
+        try {
+          const res = await regionApi.getAllRegions();
+          if (res.data.success) {
+            setRegions(res.data.data);
+            // cortarNo 끝 00000000인 시/도만 선택
+            setCityOptions(res.data.data.filter(r => r.cortarNo?.endsWith("00000000")));
+          }
+        } catch (err) {
+          console.error("Failed to load cities:", err);
+        }
+      };
+      loadCities();
+    }, []);
+    const [sortField, setSortField] = useState<string>("id");
+    const [sortOrder, setSortOrder] = useState<string>("desc");
+    const ALLOWED_SORT_FIELDS = ["id", "priceSale", "confirmedAt"];
+    const ALLOWED_SORT_DIRECTIONS = ["asc", "desc"];
 
     useEffect(() => {
         fetchArticles()
@@ -235,10 +297,14 @@ const ArticleList = () => {
                 setIsLoadingMore(true);
             }
             
+            // 안전한 정렬 필드/순서 적용
+            let safeSortField = ALLOWED_SORT_FIELDS.includes(sortField) ? sortField : "id";
+            let safeSortOrder = ALLOWED_SORT_DIRECTIONS.includes(sortOrder.toLowerCase()) ? sortOrder : "desc";
             const params: any = {
                 page: pageNum,
                 size: 100,
-                sort: "id,desc"
+                sortBy: safeSortField,
+                direction: safeSortOrder
             };
             
             if (typeFilter.length > 0) {
@@ -406,32 +472,42 @@ const ArticleList = () => {
         setPage(0);
     }
 
-    const handleCityChange = (value: string) => {
-        console.log('ArticleList - City changing to:', value);
-        setSelectedCity(value);
-        
-        // Reset district and neighborhood when city changes
-        if (selectedDistrict) {
-            console.log('Resetting district because city changed');
-            setSelectedDistrict('');
+    const handleCityChange = async (value: string) => {
+      setSelectedCity(value);
+      setSelectedDistrict("");
+      setSelectedNeighborhood([]);
+      const city = cityOptions.find(r => r.cortarName === value);
+      if (city) {
+        try {
+          const res = await regionApi.getChildRegions(city.id);
+          if (res.data.success) {
+            setDistrictOptions(res.data.data);
+          }
+        } catch (err) {
+          console.error("Failed to load districts:", err);
         }
-        
-        if (selectedNeighborhood.length > 0) {
-            console.log('Resetting neighborhood because city changed');
-            setSelectedNeighborhood([]);
-        }
-    }
+      } else {
+        setDistrictOptions([]);
+      }
+    };
 
-    const handleDistrictChange = (value: string) => {
-        console.log('ArticleList - District changing to:', value);
-        setSelectedDistrict(value);
-        
-        // Reset neighborhood when district changes
-        if (selectedNeighborhood.length > 0) {
-            console.log('Resetting neighborhood because district changed');
-            setSelectedNeighborhood([]);
+    const handleDistrictChange = async (value: string) => {
+      setSelectedDistrict(value);
+      setSelectedNeighborhood([]);
+      const district = districtOptions.find(r => r.cortarName === value);
+      if (district) {
+        try {
+          const res = await regionApi.getChildRegions(district.id);
+          if (res.data.success) {
+            setNeighborhoodOptions(res.data.data);
+          }
+        } catch (err) {
+          console.error("Failed to load neighborhoods:", err);
         }
-    }
+      } else {
+        setNeighborhoodOptions([]);
+      }
+    };
 
     const handleNeighborhoodChange = (value: string[]) => {
         setSelectedNeighborhood(value);
@@ -659,10 +735,14 @@ const ArticleList = () => {
             const nextPage = currentPage + 1;
             console.log(`매물 더 불러오기: 페이지 ${nextPage} 요청`);
             
+            // 안전한 정렬 필드/순서 적용
+            let safeSortField = ALLOWED_SORT_FIELDS.includes(sortField) ? sortField : "id";
+            let safeSortOrder = ALLOWED_SORT_DIRECTIONS.includes(sortOrder.toLowerCase()) ? sortOrder : "desc";
             const params: any = {
                 page: nextPage,
                 size: 100,
-                sort: "id,desc"
+                sortBy: safeSortField,
+                direction: safeSortOrder
             };
             
             if (typeFilter.length > 0) {
@@ -911,7 +991,7 @@ const ArticleList = () => {
                         필터
                     </Typography>
                     
-                    <RegionSelector 
+                    <RegionSelector
                         regions={regions}
                         selectedCity={selectedCity}
                         selectedDistrict={selectedDistrict}
@@ -920,6 +1000,31 @@ const ArticleList = () => {
                         onDistrictChange={handleDistrictChange}
                         onNeighborhoodChange={handleNeighborhoodChange}
                     />
+
+                    <FormControl fullWidth margin="normal">
+                      <InputLabel id="sort-field-label">정렬 기준</InputLabel>
+                      <Select
+                        labelId="sort-field-label"
+                        id="sort-field-select"
+                        value={`${sortField},${sortOrder}`}
+                        onChange={(e) => {
+                          const [field, order] = e.target.value.split(',');
+                          const safeField = ALLOWED_SORT_FIELDS.includes(field) ? field : "id";
+                          const safeOrder = ALLOWED_SORT_DIRECTIONS.includes(order?.toLowerCase()) ? order : "desc";
+                          setSortField(safeField);
+                          setSortOrder(safeOrder);
+                          setPage(0);
+                          fetchArticles(0);
+                        }}
+                      >
+                        <MenuItem value="id,desc">최신 등록순</MenuItem>
+                        <MenuItem value="id,asc">오래된 등록순</MenuItem>
+                        <MenuItem value="priceSale,desc">가격 낮은순</MenuItem>
+                        <MenuItem value="priceSale,asc">가격 높은순</MenuItem>
+                        <MenuItem value="confirmedAt,desc">최신 확인일순</MenuItem>
+                        <MenuItem value="confirmedAt,asc">오래된 확인일순</MenuItem>
+                      </Select>
+                    </FormControl>
                     
                     <FormControl fullWidth margin="normal">
                         <InputLabel id="property-type-label">매물 유형</InputLabel>
@@ -932,14 +1037,14 @@ const ArticleList = () => {
                             renderValue={(selected) => (
                                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                                     {selected.map((value) => (
-                                        <Chip key={value} label={value} />
+                                        <Chip key={value} label={getArticleTypeName(value)} />
                                     ))}
                                 </Box>
                             )}
                         >
-                            {["아파트", "오피스텔", "빌라", "아파트분양권", "오피스텔분양권", "재건축", "전원주택", "단독/다가구", "상가주택", "한옥주택", "재개발", "원룸", "고시원", "상가", "사무실", "공장/창고", "건물", "토지", "지식산업센터"].map(type => (
-                                <MenuItem key={type} value={type}>
-                                    {type}
+                            {Object.values(ARTICLE_TYPES).map(type => (
+                                <MenuItem key={type.code} value={type.code}>
+                                    {type.name}
                                 </MenuItem>
                             ))}
                         </Select>

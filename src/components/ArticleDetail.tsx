@@ -74,11 +74,26 @@ const ArticleDetail = ({ article, complex, onClose }: ArticleDetailProps) => {
         mapInstance.current = map;
         marker.setMap(map);
 
+        // 지도 컨테이너의 크기가 변경될 때마다 지도 크기 조정
+        const resizeObserver = new ResizeObserver(() => {
+            map.relayout();
+        });
+        resizeObserver.observe(mapRef.current);
+
         return () => {
             marker.setMap(null);
             mapInstance.current = null;
+            resizeObserver.disconnect();
         };
     }, [article]);
+
+    // 모달이 열려있을 때 body 스크롤 막기
+    useEffect(() => {
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, []);
 
     const handleOpenMap = () => {
         if (article.latitude && article.longitude) {
@@ -95,7 +110,8 @@ const ArticleDetail = ({ article, complex, onClose }: ArticleDetailProps) => {
             PaperProps={{
                 sx: {
                     borderRadius: 2,
-                    overflow: 'hidden'
+                    overflow: 'hidden',
+                    maxHeight: '90vh'
                 }
             }}
         >
@@ -331,7 +347,18 @@ const ArticleDetail = ({ article, complex, onClose }: ArticleDetailProps) => {
                                     width: '100%', 
                                     height: '300px', 
                                     borderRadius: 1,
-                                    overflow: 'hidden'
+                                    overflow: 'hidden',
+                                    position: 'relative',
+                                    '&::after': {
+                                        content: '""',
+                                        position: 'absolute',
+                                        top: 0,
+                                        left: 0,
+                                        right: 0,
+                                        bottom: 0,
+                                        pointerEvents: 'none',
+                                        boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.1)'
+                                    }
                                 }}
                             />
                         </Box>

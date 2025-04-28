@@ -199,8 +199,8 @@ const MapView = ({
             displayType = article.tradeType; // 기본값은 원래 tradeType
         }
         
-        const color = getTypeColor(article.articleType);
-        const emoji = getTypeEmoji(article.articleType);
+        const color = getTypeColor(article.buildingType);
+        const emoji = getTypeEmoji(article.buildingType);
         
         // 선택된 매물인지 확인하고 opacity 설정
         const isSelected = selectedArticle && selectedArticle.id === article.id;

@@ -20,5 +20,14 @@ export const regionApi = {
             console.error("Error fetching regions:", error)
             throw error
         }
+    },
+    getChildRegions: async (parentId: number) => {
+        try {
+            const response = await api.get<ApiResponse<RegionResponse[]>>(`/api/regions/${parentId}`)
+            return response
+        } catch (error) {
+            console.error("Error fetching child regions:", error)
+            throw error
+        }
     }
 } 
