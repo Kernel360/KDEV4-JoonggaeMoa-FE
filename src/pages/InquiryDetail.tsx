@@ -14,7 +14,13 @@ import {
     DialogContent,
     DialogActions,
     FormControlLabel,
-    Checkbox
+    Checkbox,
+    TableContainer,
+    Table,
+    TableHead,
+    TableBody,
+    TableRow,
+    TableCell
 } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
@@ -23,8 +29,6 @@ import { LocalizationProvider } from '@mui/x-date-pickers';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { ko } from 'date-fns/locale';
-// Update the import statement at the top
-import logo from '../../public/배경없는 로고.ico';
 
 const InquiryDetail: React.FC = () => {
     const { id } = useParams();
@@ -161,15 +165,20 @@ const InquiryDetail: React.FC = () => {
                 return;
             }
     
-            const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
-            if (!emailRegex.test(consultation.email)) {
+            const emailRegex = /^.+@.+\..+$/.test(consultation.email);
+            if (!emailRegex) {
                 setError('이메일 형식이 올바르지 않습니다.');
                 return;
             }
     
             const consultDate = new Date(consultation.consultAt);
-            if (consultDate <= new Date()) {
-                setError('상담 일시는 현재 시간 이후로 선택해주세요.');
+            const now = new Date();
+            // 시간을 00:00:00으로 맞춰서 비교
+            now.setHours(0, 0, 0, 0);
+            consultDate.setHours(0, 0, 0, 0);
+            
+            if (consultDate < now) {
+                setError('상담 일시는 오늘 이후로 선택해주세요.');
                 return;
             }
     
@@ -214,245 +223,341 @@ const InquiryDetail: React.FC = () => {
 
 
     return (
-        <Box sx={{ p: 3, bgcolor: '#f5f5f5' }}>
+        <Box sx={{ p: 3 }}>
             <Box sx={{ 
-                display: 'flex', 
-                flexDirection: 'column',
-                alignItems: 'center', 
-                mb: 4,
-                pb: 2,
-                borderBottom: '2px solid #333'
+                maxWidth: '1200px',
+                mx: 'auto',
+                px: 4
             }}>
-                <img 
-                    src="/배경없는 로고.ico"
-                    alt="중개모아 로고" 
-                    style={{ height: '50px', marginBottom: '8px' }} 
-                />
-                <Typography 
-                    variant="h5" 
-                    sx={{ 
-                        color: '#333',
-                        fontWeight: 'bold',
-                        letterSpacing: '0.1em'
-                    }}
-                >
-                    중개모아
-                </Typography>
-            </Box>
-
-            <Button 
-                variant="contained" 
-                onClick={() => navigate('/inquiry')} 
-                sx={{ 
-                    mb: 3,
-                    backgroundColor: '#333',
-                    '&:hover': {
-                        backgroundColor: '#000'
-                    }
-                }}
-            >
-                목록으로 돌아가기
-            </Button>
-
-            {inquiry && (
-                <Paper sx={{ p: 3, backgroundColor: '#fff', boxShadow: 3 }}>
-                    {!editMode ? (
-                        <>
-                            <Typography variant="h5" sx={{ mb: 2, color: '#333', fontWeight: 'bold' }}>
-                                {inquiry.title}
-                            </Typography>
-                            <Typography variant="subtitle2" sx={{ mb: 3, color: '#666' }}>
-                                작성자: {inquiry.name} | 작성일: {new Date(inquiry.createdAt).toLocaleString()}
-                            </Typography>
-                            <Typography variant="body1" sx={{ mb: 4, whiteSpace: 'pre-wrap', color: '#333' }}>
-                                {inquiry.content}
-                            </Typography>
-                            <Button 
-                                variant="outlined" 
-                                onClick={() => setEditMode(true)}
-                                sx={{ 
-                                    mb: 3,
-                                    color: '#333',
-                                    borderColor: '#333',
-                                    '&:hover': {
-                                        borderColor: '#000',
-                                        backgroundColor: 'rgba(0, 0, 0, 0.04)'
-                                    }
-                                }}
-                            >
-                                수정하기
-                            </Button>
-                        </>
-                    ) : (
-                        <Box sx={{ mb: 4 }}>
-                            <TextField
-                                fullWidth
-                                label="제목"
-                                value={editedInquiry.title}
-                                onChange={(e) => setEditedInquiry({ ...editedInquiry, title: e.target.value })}
-                                sx={{ 
-                                    mb: 2,
-                                    '& .MuiOutlinedInput-root': {
-                                        '&.Mui-focused fieldset': {
-                                            borderColor: '#333'
-                                        }
-                                    },
-                                    '& .MuiInputLabel-root.Mui-focused': {
-                                        color: '#333'
-                                    }
-                                }}
-                            />
-                            <TextField
-                                fullWidth
-                                label="내용"
-                                multiline
-                                rows={4}
-                                value={editedInquiry.content}
-                                onChange={(e) => setEditedInquiry({ ...editedInquiry, content: e.target.value })}
-                                sx={{ 
-                                    mb: 2,
-                                    '& .MuiOutlinedInput-root': {
-                                        '&.Mui-focused fieldset': {
-                                            borderColor: '#333'
-                                        }
-                                    },
-                                    '& .MuiInputLabel-root.Mui-focused': {
-                                        color: '#333'
-                                    }
-                                }}
-                            />
-                            <TextField
-                                fullWidth
-                                label="비밀번호"
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                sx={{ 
-                                    mb: 2,
-                                    '& .MuiOutlinedInput-root': {
-                                        '&.Mui-focused fieldset': {
-                                            borderColor: '#333'
-                                        }
-                                    },
-                                    '& .MuiInputLabel-root.Mui-focused': {
-                                        color: '#333'
-                                    }
-                                }}
-                            />
-                            <Box sx={{ display: 'flex', gap: 1 }}>
-                                <Button 
-                                    variant="contained" 
-                                    onClick={handleEdit}
-                                    sx={{
-                                        backgroundColor: '#333',
-                                        '&:hover': {
-                                            backgroundColor: '#000'
-                                        }
-                                    }}
-                                >
-                                    저장
-                                </Button>
-                                <Button 
-                                    variant="outlined" 
-                                    onClick={() => setEditMode(false)}
-                                    sx={{
-                                        color: '#333',
-                                        borderColor: '#333',
-                                        '&:hover': {
-                                            borderColor: '#000',
-                                            backgroundColor: 'rgba(0, 0, 0, 0.04)'
-                                        }
-                                    }}
-                                >
-                                    취소
-                                </Button>
-                            </Box>
-                        </Box>
-                    )}
-
-                    <Typography variant="h6" sx={{ mt: 4, mb: 2, color: '#333', fontWeight: 'bold' }}>
-                        답변
-                    </Typography>
-                    {inquiry.answers.map((answer, index) => (
-                        <Paper 
-                            key={index} 
+                <Box sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center',
+                    gap: 2,
+                    mb: 4,
+                    pb: 2,
+                    borderBottom: '2px solid #333'
+                }}>
+                    <Box 
+                        sx={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: 2,
+                            cursor: 'pointer',
+                            flexGrow: 1
+                        }}
+                        onClick={() => navigate('/inquiry')}
+                    >
+                        <img 
+                            src="/로고.png"
+                            alt="중개모아 로고" 
+                            style={{ height: '50px' }} 
+                        />
+                        <Typography 
+                            variant="h5" 
                             sx={{ 
-                                p: 2, 
-                                mb: 2, 
-                                bgcolor: '#f8f9fa',
-                                border: '1px solid #e0e0e0',
-                                borderRadius: '4px'
+                                color: '#333',
+                                fontWeight: 'bold',
+                                letterSpacing: '0.1em'
                             }}
                         >
-                            <Typography variant="subtitle2" sx={{ color: '#333', fontWeight: 'bold' }}>
-                                {answer.agentName} ({answer.agentOffice} - {answer.agentRegion})
-                            </Typography>
-                            <Typography variant="body1" sx={{ my: 1, color: '#333' }}>
-                                {answer.content}
-                            </Typography>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
-                                <Typography variant="caption" sx={{ color: '#666' }}>
-                                    {new Date(answer.createdAt).toLocaleString()}
+                            중개모아
+                        </Typography>
+                    </Box>
+                </Box>
+
+                <Box sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    mb: 3
+                }}>
+                    <Button 
+                        variant="outlined" 
+                        onClick={() => navigate('/inquiry')} 
+                        sx={{ 
+                            borderColor: "#007ea7", 
+                            color: "#007ea7",
+                            '&:hover': {
+                                borderColor: "#003459",
+                                color: "#003459",
+                                bgcolor: 'rgba(0, 126, 167, 0.08)'
+                            }
+                        }}
+                    >
+                        돌아가기
+                    </Button>
+                    {!editMode && (
+                        <Button 
+                            variant="outlined" 
+                            onClick={() => setEditMode(true)}
+                            sx={{ 
+                                borderColor: "#007ea7", 
+                                color: "#007ea7",
+                                '&:hover': {
+                                    borderColor: "#003459",
+                                    color: "#003459",
+                                    bgcolor: 'rgba(0, 126, 167, 0.08)'
+                                }
+                            }}
+                        >
+                            수정하기
+                        </Button>
+                    )}
+                </Box>
+
+                {inquiry && (
+                    <Paper sx={{ p: 3, backgroundColor: '#fff', boxShadow: 3 }}>
+                        {!editMode ? (
+                            <>
+                                <Typography variant="h5" sx={{ mb: 2, color: '#333', fontWeight: 'bold' }}>
+                                    {inquiry.title}
                                 </Typography>
-                                <Button
-                                    variant="contained"
-                                    size="small"
-                                    onClick={() => {
-                                        console.log('Agent ID:', answer.agentId);
-                                        setConsultation(prev => ({ ...prev, agentId: answer.agentId }));
-                                        console.log('Consultation Object:', consultation);
-                                        setOpenDialog(true);
-                                    }}
-                                    sx={{
-                                        backgroundColor: '#666',
-                                        '&:hover': {
-                                            backgroundColor: '#666'
-                                        }
+                                <Typography variant="subtitle2" sx={{ mb: 3, color: '#666' }}>
+                                    작성자: {inquiry.name} | 작성일: {new Date(inquiry.createdAt).toLocaleString()}
+                                </Typography>
+                                <Typography variant="body1" sx={{ mb: 4, whiteSpace: 'pre-wrap', color: '#333' }}>
+                                    {inquiry.content}
+                                </Typography>
+                            </>
+                        ) : (
+                            <Box sx={{ mb: 4 }}>
+                                <Paper 
+                                    elevation={0} 
+                                    sx={{ 
+                                        p: 3, 
+                                        mb: 3,
+                                        borderRadius: 2,
+                                        bgcolor: '#f8f9fa',
+                                        border: '1px solid #e9ecef'
                                     }}
                                 >
-                                    상담 신청
-                                </Button>
+                                    <Typography variant="subtitle1" sx={{ mb: 2, color: '#003459', fontWeight: 500 }}>
+                                        문의글 수정
+                                    </Typography>
+                                    <TextField
+                                        fullWidth
+                                        label="제목"
+                                        value={editedInquiry.title}
+                                        onChange={(e) => setEditedInquiry({ ...editedInquiry, title: e.target.value })}
+                                        sx={{ 
+                                            mb: 2,
+                                            '& .MuiOutlinedInput-root': {
+                                                '&.Mui-focused fieldset': {
+                                                    borderColor: '#007ea7'
+                                                }
+                                            },
+                                            '& .MuiInputLabel-root.Mui-focused': {
+                                                color: '#007ea7'
+                                            }
+                                        }}
+                                    />
+                                    <TextField
+                                        fullWidth
+                                        label="내용"
+                                        multiline
+                                        rows={6}
+                                        value={editedInquiry.content}
+                                        onChange={(e) => setEditedInquiry({ ...editedInquiry, content: e.target.value })}
+                                        sx={{ 
+                                            mb: 2,
+                                            '& .MuiOutlinedInput-root': {
+                                                '&.Mui-focused fieldset': {
+                                                    borderColor: '#007ea7'
+                                                }
+                                            },
+                                            '& .MuiInputLabel-root.Mui-focused': {
+                                                color: '#007ea7'
+                                            }
+                                        }}
+                                    />
+                                    <TextField
+                                        fullWidth
+                                        label="비밀번호"
+                                        type="password"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        helperText="수정을 위해 비밀번호를 입력해주세요"
+                                        sx={{ 
+                                            mb: 2,
+                                            '& .MuiOutlinedInput-root': {
+                                                '&.Mui-focused fieldset': {
+                                                    borderColor: '#007ea7'
+                                                }
+                                            },
+                                            '& .MuiInputLabel-root.Mui-focused': {
+                                                color: '#007ea7'
+                                            },
+                                            '& .MuiFormHelperText-root': {
+                                                color: '#666'
+                                            }
+                                        }}
+                                    />
+                                </Paper>
+                                <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+                                    <Button 
+                                        variant="outlined" 
+                                        onClick={() => setEditMode(false)}
+                                        sx={{
+                                            borderColor: "#007ea7", 
+                                            color: "#007ea7",
+                                            '&:hover': {
+                                                borderColor: "#003459",
+                                                color: "#003459",
+                                                bgcolor: 'rgba(0, 126, 167, 0.08)'
+                                            }
+                                        }}
+                                    >
+                                        취소
+                                    </Button>
+                                    <Button 
+                                        variant="contained" 
+                                        onClick={handleEdit}
+                                        sx={{
+                                            bgcolor: '#007ea7',
+                                            '&:hover': { bgcolor: '#003459' },
+                                            textTransform: 'none',
+                                            boxShadow: 2,
+                                        }}
+                                    >
+                                        저장
+                                    </Button>
+                                </Box>
                             </Box>
-                        </Paper>
-                    ))}
+                        )}
 
-                    {isAuthenticated && (
-                        <Box sx={{ mt: 3 }}>
-                            <TextField
-                                fullWidth
-                                label="답변 작성"
-                                multiline
-                                rows={4}
-                                value={answer}
-                                onChange={(e) => setAnswer(e.target.value)}
-                                sx={{
-                                    '& .MuiOutlinedInput-root': {
-                                        '&.Mui-focused fieldset': {
-                                            borderColor: '#333'
-                                        }
-                                    },
-                                    '& .MuiInputLabel-root.Mui-focused': {
-                                        color: '#333'
-                                    }
-                                }}
-                            />
-                            <Button 
-                                variant="contained" 
-                                onClick={handleSubmitAnswer}
+                        <Typography variant="h6" sx={{ mt: 4, mb: 2, color: '#333', fontWeight: 'bold' }}>
+                            답변
+                        </Typography>
+                        {inquiry.answers.map((answer) => (
+                            <Paper 
+                                key={answer.agentId}
+                                elevation={0}
                                 sx={{ 
-                                    mt: 2,
-                                    backgroundColor: '#333',
+                                    p: 3,
+                                    mb: 2,
+                                    borderRadius: 2,
+                                    border: '1px solid #e9ecef',
+                                    backgroundColor: '#fff',
                                     '&:hover': {
-                                        backgroundColor: '#000'
+                                        borderColor: '#003459',
+                                        boxShadow: '0 2px 8px rgba(0, 52, 89, 0.15)'
                                     }
                                 }}
                             >
-                                답변 등록
-                            </Button>
-                        </Box>
-                    )}
-                </Paper>
-            )}
+                                <Box sx={{ 
+                                    display: 'flex', 
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    mb: 2,
+                                    pb: 2,
+                                    borderBottom: '1px solid #e9ecef'
+                                }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <Typography 
+                                            variant="subtitle1" 
+                                            sx={{ 
+                                                color: '#003459',
+                                                fontWeight: 600
+                                            }}
+                                        >
+                                            {answer.agentName}
+                                        </Typography>
+                                        <Typography 
+                                            variant="body2" 
+                                            sx={{ 
+                                                color: '#666',
+                                                ml: 1
+                                            }}
+                                        >
+                                            {answer.agentOffice} | {answer.agentRegion}
+                                        </Typography>
+                                    </Box>
+                                    <Typography 
+                                        variant="body2" 
+                                        sx={{ 
+                                            color: '#666',
+                                            fontSize: '0.875rem'
+                                        }}
+                                    >
+                                        {new Date(answer.createdAt).toLocaleString()}
+                                    </Typography>
+                                </Box>
+                                <Typography 
+                                    variant="body1" 
+                                    sx={{ 
+                                        color: '#333',
+                                        whiteSpace: 'pre-wrap',
+                                        lineHeight: 1.6,
+                                        mb: 2
+                                    }}
+                                >
+                                    {answer.content}
+                                </Typography>
+                                <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                                    <Button
+                                        variant="contained"
+                                        onClick={() => {
+                                            setConsultation({
+                                                ...consultation,
+                                                agentId: answer.agentId
+                                            });
+                                            setOpenDialog(true);
+                                        }}
+                                        sx={{
+                                            bgcolor: '#003459',
+                                            color: '#fff',
+                                            '&:hover': {
+                                                bgcolor: '#002845'
+                                            },
+                                            textTransform: 'none',
+                                            px: 3
+                                        }}
+                                    >
+                                        상담 신청하기
+                                    </Button>
+                                </Box>
+                            </Paper>
+                        ))}
+
+                        {isAuthenticated && (
+                            <Box sx={{ mt: 3 }}>
+                                <TextField
+                                    fullWidth
+                                    label="답변 작성"
+                                    multiline
+                                    rows={4}
+                                    value={answer}
+                                    onChange={(e) => setAnswer(e.target.value)}
+                                    sx={{
+                                        '& .MuiOutlinedInput-root': {
+                                            '&.Mui-focused fieldset': {
+                                                borderColor: '#333'
+                                            }
+                                        },
+                                        '& .MuiInputLabel-root.Mui-focused': {
+                                            color: '#333'
+                                        }
+                                    }}
+                                />
+                                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                                    <Button 
+                                        variant="contained" 
+                                        onClick={handleSubmitAnswer}
+                                        sx={{ 
+                                            bgcolor: '#007ea7',
+                                            '&:hover': { bgcolor: '#003459' },
+                                            textTransform: 'none',
+                                            boxShadow: 2,
+                                        }}
+                                    >
+                                        답변 등록
+                                    </Button>
+                                </Box>
+                            </Box>
+                        )}
+                    </Paper>
+                )}
+            </Box>
 
             <Snackbar 
                 open={!!error} 
@@ -492,107 +597,129 @@ const InquiryDetail: React.FC = () => {
                 }}>
                     상담 신청하기
                 </DialogTitle>
-                <DialogContent sx={{ mt: 3, mb: 2 }}>
-                    <TextField
-                        fullWidth
-                        label="이름"
-                        margin="normal"
-                        value={consultation.name}
-                        onChange={(e) => setConsultation({ ...consultation, name: e.target.value })}
-                        sx={{ 
-                            '& .MuiOutlinedInput-root': {
-                                '&.Mui-focused fieldset': {
-                                    borderColor: '#333'
-                                }
-                            },
-                            '& .MuiInputLabel-root.Mui-focused': {
-                                color: '#333'
-                            }
-                        }}
-                    />
-                    <TextField
-                        fullWidth
-                        label="전화번호"
-                        type="phone"
-                        margin="normal"
-                        value={consultation.phone}
-                        onChange={(e) => setConsultation({ ...consultation, phone: e.target.value })}
-                        helperText="예) 010-1234-5678"
-                        sx={{ 
-                            '& .MuiOutlinedInput-root': {
-                                '&.Mui-focused fieldset': {
-                                    borderColor: '#333'
-                                }
-                            },
-                            '& .MuiInputLabel-root.Mui-focused': {
-                                color: '#333'
-                            },
-                            '& .MuiFormHelperText-root': {
-                                color: '#666'
-                            }
-                        }}
-                    />
-                    <TextField
-                        fullWidth
-                        label="이메일"
-                        type="email"
-                        margin="normal"
-                        value={consultation.email}
-                        onChange={(e) => setConsultation({ ...consultation, email: e.target.value })}
-                        helperText="예) email@email.com"
-                        sx={{ 
-                            '& .MuiOutlinedInput-root': {
-                                '&.Mui-focused fieldset': {
-                                    borderColor: '#333'
-                                }
-                            },
-                            '& .MuiInputLabel-root.Mui-focused': {
-                                color: '#333'
-                            }
-                        }}
-                    />
-                </DialogContent>
-                <DialogContent sx={{ mb: 2 }}>
-                    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
-                        <DateTimePicker
-                            label="상담 희망 일시"
-                            value={consultation.consultAt ? new Date(consultation.consultAt) : null}
-                            onChange={(newValue) => {
-                                if (newValue) {
-                                    const formattedDate = newValue.toISOString().slice(0, 16).replace('T', ' ');
-                                    setConsultation({ ...consultation, consultAt: formattedDate });
-                                }
-                            }}
-                            minDateTime={new Date()}
-                            format="yyyy-MM-dd HH:mm"
+                <DialogContent sx={{ mt: 2 }}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <TextField
+                            fullWidth
+                            label="이름"
+                            margin="normal"
+                            value={consultation.name}
+                            onChange={(e) => setConsultation({ ...consultation, name: e.target.value })}
+                            error={!!error && !consultation.name}
+                            helperText={!!error && !consultation.name ? '이름을 입력해주세요' : ''}
                             sx={{ 
-                                width: '100%',
-                                mt: 2,
                                 '& .MuiOutlinedInput-root': {
                                     '&.Mui-focused fieldset': {
-                                        borderColor: '#333'
+                                        borderColor: '#003459'
                                     }
                                 },
                                 '& .MuiInputLabel-root.Mui-focused': {
-                                    color: '#333'
+                                    color: '#003459'
                                 }
                             }}
                         />
-                    </LocalizationProvider>
-                </DialogContent>
-                <DialogContent sx={{ mb: 2 }}>
-                    <FormControlLabel
-                        control={
-                            <Checkbox
-                                checked={consultation.consent}
-                                onChange={(e) => setConsultation({ ...consultation, consent: e.target.checked })}
+                        <TextField
+                            fullWidth
+                            label="전화번호"
+                            type="tel"
+                            margin="normal"
+                            value={consultation.phone}
+                            onChange={(e) => {
+                                let value = e.target.value.replace(/[^0-9]/g, '');
+                                if (value.length > 0) {
+                                    if (value.length <= 3) {
+                                        value = value;
+                                    } else if (value.length <= 7) {
+                                        value = value.slice(0, 3) + '-' + value.slice(3);
+                                    } else {
+                                        value = value.slice(0, 3) + '-' + value.slice(3, 7) + '-' + value.slice(7, 11);
+                                    }
+                                }
+                                setConsultation({ ...consultation, phone: value });
+                            }}
+                            error={!!error && (!consultation.phone || !/^010-\d{4}-\d{4}$/.test(consultation.phone))}
+                            helperText={!!error && (!consultation.phone || !/^010-\d{4}-\d{4}$/.test(consultation.phone)) ? '올바른 전화번호 형식이 아닙니다' : '예) 010-1234-5678'}
+                            sx={{ 
+                                '& .MuiOutlinedInput-root': {
+                                    '&.Mui-focused fieldset': {
+                                        borderColor: '#003459'
+                                    }
+                                },
+                                '& .MuiInputLabel-root.Mui-focused': {
+                                    color: '#003459'
+                                }
+                            }}
+                        />
+                        <TextField
+                            fullWidth
+                            label="이메일"
+                            type="email"
+                            margin="normal"
+                            value={consultation.email}
+                            onChange={(e) => setConsultation({ ...consultation, email: e.target.value })}
+                            error={!!error && (!consultation.email || !/^.+@.+\..+$/.test(consultation.email))}
+                            helperText={!!error && (!consultation.email || !/^.+@.+\..+$/.test(consultation.email)) ? '올바른 이메일 형식이 아닙니다' : '예) email@email.com'}
+                            sx={{ 
+                                '& .MuiOutlinedInput-root': {
+                                    '&.Mui-focused fieldset': {
+                                        borderColor: '#003459'
+                                    }
+                                },
+                                '& .MuiInputLabel-root.Mui-focused': {
+                                    color: '#003459'
+                                }
+                            }}
+                        />
+                        <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ko}>
+                            <DateTimePicker
+                                label="상담 희망 일시"
+                                value={consultation.consultAt ? new Date(consultation.consultAt) : null}
+                                onChange={(newValue) => {
+                                    if (newValue) {
+                                        // 한국 시간으로 변환
+                                        const koreanTime = new Date(newValue.getTime() + (9 * 60 * 60 * 1000));
+                                        const year = koreanTime.getUTCFullYear();
+                                        const month = String(koreanTime.getUTCMonth() + 1).padStart(2, '0');
+                                        const day = String(koreanTime.getUTCDate()).padStart(2, '0');
+                                        const hours = String(koreanTime.getUTCHours()).padStart(2, '0');
+                                        const minutes = String(koreanTime.getUTCMinutes()).padStart(2, '0');
+                                        const formattedDate = `${year}-${month}-${day} ${hours}:${minutes}`;
+                                        setConsultation({ ...consultation, consultAt: formattedDate });
+                                    }
+                                }}
+                                minDateTime={new Date()}
+                                format="yyyy-MM-dd HH:mm"
+                                sx={{ 
+                                    width: '100%',
+                                    '& .MuiOutlinedInput-root': {
+                                        '&.Mui-focused fieldset': {
+                                            borderColor: '#003459'
+                                        }
+                                    },
+                                    '& .MuiInputLabel-root.Mui-focused': {
+                                        color: '#003459'
+                                    }
+                                }}
                             />
-                        }
-                        label="개인정보 수집 및 이용에 동의합니다"
-                        sx={{ mt: 2 }}
-                    />
+                        </LocalizationProvider>
+                        <FormControlLabel
+                            control={
+                                <Checkbox
+                                    checked={consultation.consent}
+                                    onChange={(e) => setConsultation({ ...consultation, consent: e.target.checked })}
+                                    sx={{
+                                        color: '#003459',
+                                        '&.Mui-checked': {
+                                            color: '#003459',
+                                        },
+                                    }}
+                                />
+                            }
+                            label="개인정보 수집 및 이용에 동의합니다"
+                            sx={{ mt: 1 }}
+                        />
+                    </Box>
                 </DialogContent>
-                
                 <DialogActions sx={{ 
                     p: 3, 
                     borderTop: '1px solid #e0e0e0',
@@ -602,11 +729,11 @@ const InquiryDetail: React.FC = () => {
                         onClick={() => setOpenDialog(false)}
                         variant="outlined"
                         sx={{ 
-                            color: '#333',
-                            borderColor: '#333',
+                            color: '#003459',
+                            borderColor: '#003459',
                             '&:hover': {
-                                borderColor: '#000',
-                                backgroundColor: 'rgba(0, 0, 0, 0.04)'
+                                borderColor: '#002845',
+                                backgroundColor: 'rgba(0, 52, 89, 0.04)'
                             }
                         }}
                     >
@@ -616,9 +743,9 @@ const InquiryDetail: React.FC = () => {
                         onClick={handleSubmitConsultation} 
                         variant="contained"
                         sx={{
-                            backgroundColor: '#333',
+                            backgroundColor: '#003459',
                             '&:hover': {
-                                backgroundColor: '#000'
+                                backgroundColor: '#002845'
                             }
                         }}
                     >
