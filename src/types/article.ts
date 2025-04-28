@@ -51,6 +51,12 @@ export interface ArticleResponse {
     address2SiGunGu: string;
     address3DongEupMyeon: string;
     complexId?: number;
+    articleType: string;
+    cortarName?: string;
+    buildingName?: string;
+    district?: string;
+    town?: string;
+    atclFetrDesc?: string;
 }
 
 export interface ComplexResponse {
