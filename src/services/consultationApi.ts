@@ -64,13 +64,13 @@ export const updateConsultationResult = async (
     return api.patch(`/api/consultations/${consultationId}/result`, resultData)
 }
 
-// 고객 ID로 상담 내역 조회
-export const getConsultationHistoryByCustomerId = async (
-    customerId: number,
+// 상담 ID로 상담 내역 조회
+export const getConsultationHistoryByConsultationId = async (
+    consultationId: number,
     page: number = 0,
     size: number = 5
 ): Promise<AxiosResponse<ApiResponse<ConsultationHistoryDto>>> => {
-    return await api.get(`/api/consultations/customers/${customerId}?page=${page}&size=${size}&sort=date,desc`)
+    return await api.get(`/api/consultations/${consultationId}/customers?page=${page}&size=${size}&sort=date,desc`)
 }
 
 // 오늘 예정된 상담 조회
@@ -109,7 +109,7 @@ export const consultationApi = {
     updateConsultationInfo,
     updateConsultationStatus,
     updateConsultationResult,
-    getConsultationHistoryByCustomerId,
+    getConsultationHistoryByConsultationId,
     getTodayConsultations,
     getConsultationsByDate,
     deleteConsultation,

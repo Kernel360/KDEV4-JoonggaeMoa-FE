@@ -113,13 +113,13 @@ const ConsultationDetail = () => {
             setLoading(true)
             setError(null)
             
-            if (!customerId) {
-                setError("고객 ID가 필요합니다.")
+            if (!consultationId) {
+                setError("상담 ID가 필요합니다.")
                 return
             }
 
-            const response = await consultationApi.getConsultationHistoryByCustomerId(
-                customerId,
+            const response = await consultationApi.getConsultationHistoryByConsultationId(
+                parseInt(consultationId, 10),
                 currentPage,
                 pageSize
             )
@@ -333,8 +333,8 @@ const ConsultationDetail = () => {
                     return
                 }
                 
-                const response = await consultationApi.getConsultationHistoryByCustomerId(
-                    customerId, 
+                const response = await consultationApi.getConsultationHistoryByConsultationId(
+                    parseInt(consultationId, 10), 
                     newPage, 
                     pageSize
                 )
