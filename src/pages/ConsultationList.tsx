@@ -742,16 +742,16 @@ const ConsultationList = () => {
 
                             <Divider sx={{ mb: 2 }} />
 
-                            <Table>
+                            <Table sx={{ tableLayout: 'fixed', width: '100%' }}> {/* 테이블 레이아웃 고정 및 너비 100% 설정 */}
                                 <TableHead>
                                     <TableRow>
-                                        <TableCell align="center">일</TableCell>
-                                        <TableCell align="center">월</TableCell>
-                                        <TableCell align="center">화</TableCell>
-                                        <TableCell align="center">수</TableCell>
-                                        <TableCell align="center">목</TableCell>
-                                        <TableCell align="center">금</TableCell>
-                                        <TableCell align="center">토</TableCell>
+                                        <TableCell align="center" sx={{ width: '14.28%' }}>일</TableCell>
+                                        <TableCell align="center" sx={{ width: '14.28%' }}>월</TableCell>
+                                        <TableCell align="center" sx={{ width: '14.28%' }}>화</TableCell>
+                                        <TableCell align="center" sx={{ width: '14.28%' }}>수</TableCell>
+                                        <TableCell align="center" sx={{ width: '14.28%' }}>목</TableCell>
+                                        <TableCell align="center" sx={{ width: '14.28%' }}>금</TableCell>
+                                        <TableCell align="center" sx={{ width: '14.28%' }}>토</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -776,19 +776,24 @@ const ConsultationList = () => {
                                                                     ? "primary.main"
                                                                     : "inherit"
                                                             : "#aaa",
+                                                        padding: '4px', // 셀 패딩 조정
+                                                        fontSize: '0.8rem', // 폰트 크기 조정
+                                                        overflow: 'hidden', // 내용이 넘칠 경우 숨김 처리
+                                                        textOverflow: 'ellipsis', // 넘치는 텍스트를 ...으로 표시
+                                                        whiteSpace: 'nowrap', // 텍스트 줄바꿈 방지
                                                     }}
                                                     onClick={() => day && handleDateClick(day)}
                                                 >
                                                     {day && (
-                                                        <Box sx={{ 
-                                                            display: 'flex', 
-                                                            flexDirection: 'column', 
+                                                        <Box sx={{
+                                                            display: 'flex',
+                                                            flexDirection: 'column',
                                                             alignItems: 'center',
                                                             height: '100%',
-                                                            pt: 1 
+                                                            pt: 1,
+                                                            overflow: 'hidden' // Box 내부 내용이 넘칠 경우 숨김 처리
                                                         }}>
-                                                            <Typography variant="body2" sx={{ mb: 1 }}>{day.getDate()}</Typography>
-                                                            {/* Inside the TableCell component in the calendar */}
+                                                            <Typography variant="body2" sx={{ mb: 0.5, fontSize: '0.9rem', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{day.getDate()}</Typography>
                                                             {monthInfo.daysCount[day.getDate() - 1] > 0 && (
                                                                 <Chip
                                                                     size="small"
@@ -799,7 +804,11 @@ const ConsultationList = () => {
                                                                         fontSize: "0.7rem",
                                                                         height: "20px",
                                                                         mt: 'auto',
-                                                                        mb: 1
+                                                                        mb: 0.5,
+                                                                        whiteSpace: 'nowrap',
+                                                                        overflow: 'hidden',
+                                                                        textOverflow: 'ellipsis',
+                                                                        maxWidth: '100%' // Chip의 최대 너비 설정
                                                                     }}
                                                                 />
                                                             )}
@@ -1298,9 +1307,9 @@ const ConsultationList = () => {
                 </Alert>
             </Snackbar>
 
-            <Box sx={{ bgcolor: "#fff", p: 2, textAlign: "center", mt: 4 }}>
+            <Box sx={{ p: 2, textAlign: "center", mt: 4 }}>
                 <Typography variant="caption" color="textSecondary">
-                    © 2024 Customer Management System. All rights reserved.
+                    © 2025 중개모아. All rights reserved.
                 </Typography>
             </Box>
         </Box>

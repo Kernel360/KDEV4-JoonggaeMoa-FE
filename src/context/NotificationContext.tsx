@@ -41,7 +41,13 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     const [eventSource, setEventSource] = useState<EventSource | null>(null);
     const navigate = useNavigate();
 
+    const excludedPaths = ['/signup', '/surveys/submit/:surveyId', '/inquiry', '/inquiry/:id', 'login']; 
+    const shouldExclude = excludedPaths.includes(location.pathname);
+
     useEffect(() => {
+        if(!shouldExclude) {
+           return; 
+        }
         const fetchNotifications = async () => {
             try {
                 const response = await api.get("/api/notification");

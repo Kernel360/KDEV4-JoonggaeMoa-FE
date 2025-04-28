@@ -450,9 +450,9 @@ const SurveyList = () => {
                 </Alert>
             </Snackbar>
 
-            <Box sx={{ bgcolor: "#ffffff", p: 2, textAlign: "center", mt: 4 }}>
+            <Box sx={{ p: 2, textAlign: "center", mt: 4 }}>
                 <Typography variant="caption" color="textSecondary">
-                    © 2024 Customer Management System. All rights reserved.
+                    © 2025 중개모아. All rights reserved.
                 </Typography>
             </Box>
         </Box>

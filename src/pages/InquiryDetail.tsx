@@ -528,6 +528,8 @@ const InquiryDetail: React.FC = () => {
                                     rows={4}
                                     value={answer}
                                     onChange={(e) => setAnswer(e.target.value)}
+                                    inputProps={{ maxLength: 255 }}
+                                    helperText={`${answer.length}/255`}
                                     sx={{
                                         '& .MuiOutlinedInput-root': {
                                             '&.Mui-focused fieldset': {
