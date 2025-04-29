@@ -48,7 +48,7 @@ const InquiryBoard: React.FC = () => {
     const fetchInquiries = async () => {
         try {
             setLoading(true);
-            const response = await api.get(`/api/inquiries?page=${page}&size=10`);
+            const response = await api.get(`/api/inquiries?page=${page}&size=10&sort=createdAt,desc`);
             if (response.data.success) {
                 setInquiries(response.data.data.content);
                 setTotalPages(response.data.data.totalPages);
