@@ -17,6 +17,11 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
 }
 
+/* Override article element styles to remove problematic drag properties */
+article {
+  -webkit-user-drag: none;
+}
+
 /* Standardized page container */
 .app-container {
   display: flex;

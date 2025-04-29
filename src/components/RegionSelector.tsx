@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Box, Chip, FormControl, InputLabel, MenuItem, Select, CircularProgress } from '@mui/material';
-import { Region, filterCities, filterDistricts, filterNeighborhoods } from '../../utils/regions/regionUtils';
+import { Region, filterCities, filterDistricts, filterNeighborhoods } from '../utils/regionUtils';
 
 interface RegionSelectorProps {
     regions: Region[];

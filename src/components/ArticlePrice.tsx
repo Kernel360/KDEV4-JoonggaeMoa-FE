@@ -1,5 +1,5 @@
 import { Box, Typography } from '@mui/material';
-import { formatPrice, isZeroPrice } from '../../utils/articleUtils';
+import { formatPrice, isZeroPrice } from '../utils/articleUtils';
 
 interface ArticlePriceProps {
     tradeType: string;

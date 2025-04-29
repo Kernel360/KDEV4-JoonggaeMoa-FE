@@ -6,18 +6,20 @@ export const getTypeColor = (type: string): string => {
             return '#2196f3';
         case '오피스텔':
             return '#4caf50';
+        case '전원주택':
+            return "#00bcd4";
         case '빌라':
             return '#ff9800';
         case '단독/다가구':
             return '#9c27b0';
+        case '상가주택':
+            return '#f44336';
+        case '한옥주택':
+            return '#795548';
         case '상가':
             return '#f44336';
         case '사무실':
             return '#607d8b';
-        case '원룸':
-            return '#00bcd4';
-        case '고시원':
-            return '#795548';
         default:
             return '#9e9e9e';
     }
@@ -46,16 +48,18 @@ export const getTypeEmoji = (type: string): string => {
             return '🏬';
         case '빌라':
             return '🏠';
+        case '전원주택':
+            return '🏡';
         case '단독/다가구':
+            return '🏡';
+        case '상가주택':
+            return '🏪';
+        case '한옥주택':
             return '🏡';
         case '상가':
             return '🏪';
         case '사무실':
             return '🏢';
-        case '원룸':
-            return '🏠';
-        case '고시원':
-            return '🏠';
         default:
             return '🏠';
     }

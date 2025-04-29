@@ -1,7 +1,7 @@
 import { Box, Paper, Typography } from "@mui/material";
 import type { ArticleResponse } from "../types/article";
 import { getTypeColor, getTypeEmoji } from "../utils/articleUtils";
-import ArticlePrice from "./article/ArticlePrice";
+import ArticlePrice from "./ArticlePrice";
 
 interface ArticleItemProps {
     article: ArticleResponse;

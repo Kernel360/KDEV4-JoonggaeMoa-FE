@@ -22,7 +22,7 @@ import {
 import React, { useEffect, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import ArticleDetail from "../components/ArticleDetail"
-import MapView from '../components/map/MapView'
+import MapView from '../components/MapView'
 import { articleApi } from "../services/articleApi"
 import { regionApi } from "../services/regionApi"
 import type { ArticleResponse, ComplexResponse } from "../types/article"
@@ -30,8 +30,9 @@ import FilterListIcon from '@mui/icons-material/FilterList';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import ViewMapIcon from '@mui/icons-material/Map';
-import RegionSelector from '../components/region/RegionSelector'
-import { Region, SelectedRegions } from '../utils/regions/regionUtils'
+import RegionSelector from '../components/RegionSelector'
+import { Region, SelectedRegions } from '../utils/regionUtils'
+import { getCityOptions, getDistrictOptions, getNeighborhoodOptions, KOREA_REGIONS } from '../utils/regionData'
 import { formatDate, formatPrice, getTradeTypeColor, getTypeColor, getTypeEmoji, isZeroPrice, convertKoreanPriceToNumber } from '../utils/articleUtils'
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 
@@ -71,7 +72,7 @@ const ArticleItem = ({
                             width: 24,
                             height: 24,
                             borderRadius: article.tradeType === "매매" ? '50%' : 
-                                        article.tradeType === "전세" ? '4px' : '0',
+                                        article.tradeType === "전세" ? '4px' : '24%',
                             bgcolor: getTypeColor(article.buildingType),
                             display: 'flex',
                             justifyContent: 'center',
@@ -87,7 +88,7 @@ const ArticleItem = ({
                                 right: 0,
                                 bottom: 0,
                                 borderRadius: article.tradeType === "매매" ? '50%' : 
-                                            article.tradeType === "전세" ? '4px' : '0',
+                                            article.tradeType === "전세" ? '4px' : '24%',
                                 background: 'rgba(255, 255, 255, 0.2)',
                                 pointerEvents: 'none'
                             }
@@ -217,6 +218,7 @@ const ArticleList = () => {
     const [minPrice, setMinPrice] = useState<string>("")
     const [maxPrice, setMaxPrice] = useState<string>("")
     const [isPriceSelectionMin, setIsPriceSelectionMin] = useState<boolean>(true)
+    const [priceRange, setPriceRange] = useState<number[]>([])
     const [selectedArticle, setSelectedArticle] = useState<ArticleResponse | null>(null)
     const [selectedComplex, setSelectedComplex] = useState<ComplexResponse | null>(null)
     const [page, setPage] = useState(0)
@@ -225,7 +227,7 @@ const ArticleList = () => {
     const [isFetchingMore, setIsFetchingMore] = useState(false)
     const [currentPage, setCurrentPage] = useState(0)
     const observerTarget = useRef<HTMLDivElement>(null)
-    const [regions, setRegions] = useState<Region[]>([])
+    const [regions, setRegions] = useState<Region[]>(KOREA_REGIONS)
     const [selectedCity, setSelectedCity] = useState<string>("")
     const [selectedDistrict, setSelectedDistrict] = useState<string>("")
     const [selectedNeighborhood, setSelectedNeighborhood] = useState<string[]>([])
@@ -235,7 +237,7 @@ const ArticleList = () => {
     const [showMap, setShowMap] = useState(true)
     const [showList, setShowList] = useState(true)
     const [detailVisible, setDetailVisible] = useState(false)
-    const [cityOptions, setCityOptions] = useState<Region[]>([]);
+    const [cityOptions, setCityOptions] = useState<Region[]>(getCityOptions());
     const [districtOptions, setDistrictOptions] = useState<Region[]>([]);
     const [neighborhoodOptions, setNeighborhoodOptions] = useState<Region[]>([]);
     const [sortField, setSortField] = useState<string>("id");
@@ -246,23 +248,14 @@ const ArticleList = () => {
     const [regionSelectStep, setRegionSelectStep] = useState<'city' | 'district' | 'neighborhood'>('city')
     const [isRegionFiltered, setIsRegionFiltered] = useState(false)
     const [noMatchingArticles, setNoMatchingArticles] = useState(false)
-
-    // loadCities moved here from useEffect
-    const loadCities = async () => {
-      try {
-        const res = await regionApi.getChildRegions('');
-        if (res.data.success) {
-          setRegions(res.data.data);
-          // cortarNo 끝 00000000인 시/도만 선택
-          setCityOptions(res.data.data.filter(r => r.cortarNo?.endsWith("00000000")));
-        }
-      } catch (err) {
-        console.error("Failed to load cities:", err);
-      }
-    };
+    const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number }>({
+        lat: 37.5665,
+        lng: 126.9780,
+    });
+    const [zoom, setZoom] = useState(14);
 
     useEffect(() => {
-        loadCities();
+        // 초기 데이터 설정
         fetchArticles()
     }, [typeFilter, tradeTypeFilter, selectedNeighborhood])
 
@@ -330,24 +323,24 @@ const ArticleList = () => {
 
             // 법정동코드 패턴에 따라 적절한 prefix 설정
             if (selectedNeighborhood.length > 0) {
-                // 동이 선택된 경우: 해당 동의 전체 cortarNo
-                const region = neighborhoodOptions.find(r => r.cortarName === selectedNeighborhood[0]);
-                if (region?.cortarNo) {
-                    params.regionPrefix = region.cortarNo;
+                // 동이 선택된 경우: 하드코딩된 데이터에서 법정동코드 찾기
+                const neighborhood = neighborhoodOptions.find(r => r.cortarName === selectedNeighborhood[0]);
+                if (neighborhood?.cortarNo) {
+                    params.regionPrefix = neighborhood.cortarNo;
                     isRegionFilterApplied = true;
                 }
             } else if (selectedDistrict) {
-                // 구가 선택된 경우: 해당 구의 cortarNo
-                const region = districtOptions.find(r => r.cortarName === selectedDistrict);
-                if (region?.cortarNo) {
-                    params.regionPrefix = region.cortarNo;
+                // 구가 선택된 경우: 하드코딩된 데이터에서 법정동코드 찾기
+                const district = districtOptions.find(r => r.cortarName === selectedDistrict);
+                if (district?.cortarNo) {
+                    params.regionPrefix = district.cortarNo.substring(0, 5);
                     isRegionFilterApplied = true;
                 }
             } else if (selectedCity) {
-                // 시가 선택된 경우: 해당 시의 cortarNo
-                const region = cityOptions.find(r => r.cortarName === selectedCity);
-                if (region?.cortarNo) {
-                    params.regionPrefix = region.cortarNo;
+                // 시가 선택된 경우: 하드코딩된 데이터에서 법정동코드 찾기
+                const city = cityOptions.find(r => r.cortarName === selectedCity);
+                if (city?.cortarNo) {
+                    params.regionPrefix = city.cortarNo.substring(0, 2);
                     isRegionFilterApplied = true;
                 }
             }
@@ -391,29 +384,21 @@ const ArticleList = () => {
     };
 
     const handleArticleClick = async (article: ArticleResponse) => {
-        if (selectedArticle?.id === article.id) {
-            setDetailVisible(false);
-            setTimeout(() => {
-                setSelectedArticle(null);
-                setSelectedComplex(null);
-            }, 300);
-        } else {
-            setSelectedArticle(article);
-            // 단지 정보 가져오기
-            if (article.complexId) {
-                try {
-                    const response = await articleApi.getComplex(article.complexId);
-                    if (response.data.success) {
-                        setSelectedComplex(response.data.data);
-                    }
-                } catch (error) {
-                    console.error('Error fetching complex:', error);
+        setSelectedArticle(article);
+        // 단지 정보 가져오기
+        if (article.complexId) {
+            try {
+                const response = await articleApi.getComplex(article.complexId);
+                if (response.data.success) {
+                    setSelectedComplex(response.data.data);
                 }
+            } catch (error) {
+                console.error('Error fetching complex:', error);
             }
-            setTimeout(() => {
-                setDetailVisible(true);
-            }, 50);
         }
+        setTimeout(() => {
+            setDetailVisible(true);
+        }, 50);
     };
 
     const handleBack = () => {
@@ -439,7 +424,8 @@ const ArticleList = () => {
 
     // 지역 선택 팝오버 열기
     const handleRegionPopoverOpen = (event: React.MouseEvent<HTMLElement>) => {
-        loadCities();
+        // regionData에서 시/도 목록 가져오기 (API 호출 대신)
+        setCityOptions(getCityOptions());
         setRegionPopoverAnchor(event.currentTarget);
         setRegionSelectStep('city');
     };
@@ -450,36 +436,15 @@ const ArticleList = () => {
     };
 
     // 시/도 선택 핸들러
-    const handleCitySelect = async (value: string) => {
+    const handleCitySelect = (value: string) => {
         setSelectedCity(value);
         setSelectedDistrict("");
         setSelectedNeighborhood([]);
         setRegionSelectStep('district');
         
-        // 시/도 선택 시 해당 시/도의 구/군 목록을 가져옵니다.
-        const city = cityOptions.find(r => r.cortarName === value);
-        if (city && city.cortarNo) {
-            try {
-                // 시/도 코드는 앞 2자리 + 0 8개 (XX00000000)
-                // API 호출 시에는 앞 2자리만 전달
-                const prefix = city.cortarNo.substring(0, 2);
-                const res = await regionApi.getChildRegions(prefix);
-                if (res.data.success) {
-                    // 시/군/구는 앞 5자리 + 0 5개 (XXXXX00000)이면서 시/도 코드와 앞 2자리가 일치하고
-                    // 읍/면/동 코드가 아닌 것들만 필터링
-                    const districts = res.data.data.filter(r => 
-                        r.cortarNo.startsWith(prefix) && 
-                        r.cortarNo.endsWith("00000") && 
-                        !r.cortarNo.endsWith("00000000")
-                    );
-                    setDistrictOptions(districts);
-                }
-            } catch (err) {
-                console.error("Failed to load districts:", err);
-            }
-        } else {
-            setDistrictOptions([]);
-        }
+        // 시/도에 해당하는 구/군 목록 가져오기 (API 호출 대신 하드코딩 데이터 활용)
+        const districts = getDistrictOptions(value);
+        setDistrictOptions(districts);
     };
 
     // 구/군 선택 핸들러
@@ -488,7 +453,7 @@ const ArticleList = () => {
         setSelectedNeighborhood([]);
         setRegionSelectStep('neighborhood');
         
-        // 구/군 선택 시 해당 구/군의 동 목록을 가져옵니다.
+        // 구/군에 해당하는 동/읍/면 목록을 백엔드에서 API로 가져오기
         const district = districtOptions.find(r => r.cortarName === value);
         if (district && district.cortarNo) {
             try {
@@ -506,6 +471,7 @@ const ArticleList = () => {
                 }
             } catch (err) {
                 console.error("Failed to load neighborhoods:", err);
+                setNeighborhoodOptions([]);
             }
         } else {
             setNeighborhoodOptions([]);
@@ -516,7 +482,6 @@ const ArticleList = () => {
     const handleNeighborhoodSelect = (value: string) => {
         setSelectedNeighborhood([value]);
         handleRegionPopoverClose();
-        fetchArticles(0);
     };
 
     // 지역 선택 초기화
@@ -591,17 +556,90 @@ const ArticleList = () => {
     // 가격 버튼 클릭 핸들러
     const handlePriceButtonClick = (price: number) => {
         if (isPriceSelectionMin) {
+            // 최소값 설정
             setMinPrice(price.toString());
             setIsPriceSelectionMin(false);
+            // 중간 범위 업데이트
+            if (maxPrice && Number(maxPrice) > price) {
+                updatePriceRange(price, Number(maxPrice));
+            } else {
+                setPriceRange([price]);
+            }
         } else {
+            // 최대값을 선택할 때
+            const minPriceNum = Number(minPrice);
+            
             // 최소값보다 작은 값을 최대값으로 설정하려는 경우
-            if (Number(minPrice) > price) {
+            if (minPriceNum > price) {
+                // 기존 최소값을 최대값으로, 선택한 값을 최소값으로 설정
                 setMaxPrice(minPrice);
                 setMinPrice(price.toString());
+                // 중간 범위 업데이트
+                updatePriceRange(price, minPriceNum);
             } else {
                 setMaxPrice(price.toString());
+                // 중간 범위 업데이트
+                updatePriceRange(minPriceNum, price);
             }
             setIsPriceSelectionMin(true);
+        }
+    };
+
+    // 가격 범위 업데이트
+    const updatePriceRange = (min: number, max: number) => {
+        // min과 max 사이의 가격들을 배열로 생성
+        const prices = [5000, 6000, 7000, 8000, 9000, 10000, 20000, 30000, 40000, 50000, 60000, 70000, 80000, 90000, 100000, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200];
+        const rangeArray = prices.filter(price => price >= min && price <= max);
+        setPriceRange(rangeArray);
+    };
+
+    // 최소 가격 입력 핸들러
+    const handleMinPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newMinPrice = e.target.value;
+        setMinPrice(newMinPrice);
+        
+        // 유효한 숫자고 최대 가격이 설정되어 있는 경우
+        if (newMinPrice && !isNaN(Number(newMinPrice)) && maxPrice) {
+            const minNum = Number(newMinPrice);
+            const maxNum = Number(maxPrice);
+            
+            // 최소 가격이 최대 가격보다 크면 최대 가격을 최소 가격으로 설정
+            if (minNum > maxNum) {
+                setMaxPrice(newMinPrice);
+                updatePriceRange(maxNum, minNum);
+            } else {
+                updatePriceRange(minNum, maxNum);
+            }
+        } else if (!newMinPrice || isNaN(Number(newMinPrice))) {
+            // 유효하지 않은 값이면 범위 비우기
+            setPriceRange([]);
+        }
+    };
+
+    // 최대 가격 입력 핸들러
+    const handleMaxPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newMaxPrice = e.target.value;
+        setMaxPrice(newMaxPrice);
+        
+        // 유효한 숫자고 최소 가격이 설정되어 있는 경우
+        if (newMaxPrice && !isNaN(Number(newMaxPrice)) && minPrice) {
+            const minNum = Number(minPrice);
+            const maxNum = Number(newMaxPrice);
+            
+            // 최대 가격이 최소 가격보다 작으면 최소 가격을 최대 가격으로 설정
+            if (maxNum < minNum) {
+                setMinPrice(newMaxPrice);
+                updatePriceRange(maxNum, minNum);
+            } else {
+                updatePriceRange(minNum, maxNum);
+            }
+        } else if (!newMaxPrice || isNaN(Number(newMaxPrice))) {
+            // 유효하지 않은 값이면 범위만 최소 가격으로 설정
+            if (minPrice && !isNaN(Number(minPrice))) {
+                setPriceRange([Number(minPrice)]);
+            } else {
+                setPriceRange([]);
+            }
         }
     };
 
@@ -610,6 +648,7 @@ const ArticleList = () => {
         setMinPrice("");
         setMaxPrice("");
         setIsPriceSelectionMin(true);
+        setPriceRange([]);
     };
 
     // 더 불러오기 버튼을 클릭했을 때 호출될 함수
@@ -648,24 +687,24 @@ const ArticleList = () => {
 
             // 법정동코드 패턴에 따라 적절한 prefix 설정
             if (selectedNeighborhood.length > 0) {
-                // 동이 선택된 경우: 해당 동의 전체 cortarNo
-                const region = neighborhoodOptions.find(r => r.cortarName === selectedNeighborhood[0]);
-                if (region?.cortarNo) {
-                    params.regionPrefix = region.cortarNo;
+                // 동이 선택된 경우: 하드코딩된 데이터에서 법정동코드 찾기
+                const neighborhood = neighborhoodOptions.find(r => r.cortarName === selectedNeighborhood[0]);
+                if (neighborhood?.cortarNo) {
+                    params.regionPrefix = neighborhood.cortarNo;
                     isRegionFilterApplied = true;
                 }
             } else if (selectedDistrict) {
-                // 구가 선택된 경우: 해당 구의 cortarNo
-                const region = districtOptions.find(r => r.cortarName === selectedDistrict);
-                if (region?.cortarNo) {
-                    params.regionPrefix = region.cortarNo;
+                // 구가 선택된 경우: 하드코딩된 데이터에서 법정동코드 찾기
+                const district = districtOptions.find(r => r.cortarName === selectedDistrict);
+                if (district?.cortarNo) {
+                    params.regionPrefix = district.cortarNo.substring(0, 5);
                     isRegionFilterApplied = true;
                 }
             } else if (selectedCity) {
-                // 시가 선택된 경우: 해당 시의 cortarNo
-                const region = cityOptions.find(r => r.cortarName === selectedCity);
-                if (region?.cortarNo) {
-                    params.regionPrefix = region.cortarNo;
+                // 시가 선택된 경우: 하드코딩된 데이터에서 법정동코드 찾기
+                const city = cityOptions.find(r => r.cortarName === selectedCity);
+                if (city?.cortarNo) {
+                    params.regionPrefix = city.cortarNo.substring(0, 2);
                     isRegionFilterApplied = true;
                 }
             }
@@ -714,7 +753,15 @@ const ArticleList = () => {
     };
 
     return (
-        <Box sx={{ width: '100%', height: '82vh', display: 'flex', flexDirection: 'column' }}>
+        <Box 
+            sx={{ 
+                width: '100%', 
+                height: '100vh', 
+                display: 'flex', 
+                flexDirection: 'column', 
+                overflow: 'hidden'
+            }}
+        >
             <AppBar position="static" color="default" elevation={1}>
                 <Toolbar>
                     <IconButton edge="start" color="inherit" onClick={handleBack}>
@@ -815,7 +862,7 @@ const ArticleList = () => {
                               <Box
                                 sx={{
                                   display: 'grid',
-                                  gridTemplateColumns: 'repeat(3, 1fr)',
+                                  gridTemplateColumns: 'repeat(2, 1fr)',
                                   gap: 1,
                                   maxHeight: '350px',
                                   overflowY: 'auto',
@@ -839,7 +886,7 @@ const ArticleList = () => {
                               <Box
                                 sx={{
                                   display: 'grid',
-                                  gridTemplateColumns: 'repeat(3, 1fr)',
+                                  gridTemplateColumns: 'repeat(2, 1fr)',
                                   gap: 1,
                                   maxHeight: '350px',
                                   overflowY: 'auto',
@@ -863,23 +910,29 @@ const ArticleList = () => {
                               <Box
                                 sx={{
                                   display: 'grid',
-                                  gridTemplateColumns: 'repeat(3, 1fr)',
+                                  gridTemplateColumns: 'repeat(2, 1fr)',
                                   gap: 1,
                                   maxHeight: '350px',
                                   overflowY: 'auto',
                                   p: 1
                                 }}
                               >
-                                {neighborhoodOptions.map((neighborhood) => (
-                                  <Button
-                                    key={neighborhood.id}
-                                    variant={selectedNeighborhood[0] === neighborhood.cortarName ? 'contained' : 'outlined'}
-                                    onClick={() => handleNeighborhoodSelect(neighborhood.cortarName)}
-                                    sx={{ textTransform: 'none' }}
-                                  >
-                                    {neighborhood.cortarName}
-                                  </Button>
-                                ))}
+                                {neighborhoodOptions.length > 0 ? (
+                                  neighborhoodOptions.map((neighborhood) => (
+                                    <Button
+                                      key={neighborhood.id}
+                                      variant={selectedNeighborhood[0] === neighborhood.cortarName ? 'contained' : 'outlined'}
+                                      onClick={() => handleNeighborhoodSelect(neighborhood.cortarName)}
+                                      sx={{ textTransform: 'none' }}
+                                    >
+                                      {neighborhood.cortarName}
+                                    </Button>
+                                  ))
+                                ) : (
+                                  <Typography variant="body2" sx={{ p: 2, gridColumn: '1 / span 2', textAlign: 'center' }}>
+                                    검색결과가 없습니다.
+                                  </Typography>
+                                )}
                               </Box>
                             )}
                         </Box>
@@ -908,7 +961,14 @@ const ArticleList = () => {
                 </Toolbar>
             </AppBar>
             
-            <Box sx={{ position: 'relative', flex: 1, overflow: 'hidden' }}>
+            <Box 
+                sx={{ 
+                    position: 'relative', 
+                    flex: 1, 
+                    overflow: 'hidden',
+                    touchAction: 'none' // 모바일 터치 동작 방지
+                }}
+            >
                 {/* Map component */}
                 {showMap && (
                     <Box
@@ -916,6 +976,9 @@ const ArticleList = () => {
                             width: "100%",
                             height: "100%",
                             position: "absolute",
+                            touchAction: "none", // 터치 이벤트를 맵에서만 처리하도록 설정
+                            pointerEvents: "auto", // 포인터 이벤트 활성화
+                            overflow: 'hidden' // 스크롤 방지
                         }}
                     >
                         <MapView
@@ -928,9 +991,8 @@ const ArticleList = () => {
                                 neighborhoods: selectedNeighborhood
                             }}
                             allRegions={regions}
-                            initialCenter={{lat: 37.5665, lng: 126.9780}} 
-                            initialZoom={9}
-                            fixedInitialView={true}
+                            initialCenter={currentLocation}
+                            initialZoom={zoom}
                         />
                     </Box>
                 )}
@@ -949,7 +1011,7 @@ const ArticleList = () => {
                         bgcolor: 'background.paper',
                         boxShadow: '4px 0px 10px rgba(0, 0, 0, 0.1)',
                         transition: 'left 0.3s ease-in-out',
-                        opacity: 0.9
+                        opacity: 0.95
                     }}
                 >
                     <List>
@@ -957,7 +1019,7 @@ const ArticleList = () => {
                             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', p: 3 }}>
                                 <Paper sx={{ p: 3, textAlign: 'center', maxWidth: '80%' }}>
                                     <Typography variant="h6" gutterBottom>
-                                        지역 조건에 해당하는 매물이 없습니다.
+                                        검색결과가 없습니다.
                                     </Typography>
                                     <Typography variant="body2" color="text.secondary">
                                         다른 지역을 선택하거나 필터를 변경해 보세요.
@@ -1001,12 +1063,12 @@ const ArticleList = () => {
                         width: showList ? `calc(100% - ${drawerWidth}px)` : '100%',
                         bgcolor: 'background.paper',
                         zIndex: 2,
-                        overflowY: 'auto',
+                        overflowY: 'hidden',
                         transition: 'transform 0.3s ease-in-out, width 0.3s ease-in-out, left 0.3s ease-in-out',
-                        transform: detailVisible ? 'translateX(0)' : 'translateX(-100%)',
-                        boxShadow: '4px 0px 10px rgba(0, 0, 0, 0.1)',
-                        opacity: 0.9,
-                        visibility: selectedArticle ? 'visible' : 'hidden'
+                        transform: detailVisible ? 'translateX(0)' : 'translateX(100%)',
+                        boxShadow: '-4px 0px 10px rgba(0, 0, 0, 0.1)',
+                        borderLeft: '1px solid rgba(0, 0, 0, 0.12)',
+                        opacity: 0.95
                     }}
                 >
                     {selectedArticle && (
@@ -1138,11 +1200,13 @@ const ArticleList = () => {
                                     variant={
                                         minPrice === price.toString() ? "contained" :
                                         maxPrice === price.toString() ? "contained" :
+                                        priceRange.includes(price) ? "contained" :
                                         "outlined"
                                     }
                                     color={
                                         minPrice === price.toString() ? "primary" :
                                         maxPrice === price.toString() ? "secondary" :
+                                        priceRange.includes(price) ? "info" :
                                         "primary"
                                     }
                                     size="small"
@@ -1153,10 +1217,14 @@ const ArticleList = () => {
                                         fontSize: '0.875rem',
                                         borderRadius: '4px',
                                         '&.MuiButton-contained': {
-                                            backgroundColor: minPrice === price.toString() ? '#007AFF' : '#FF5722',
+                                            backgroundColor: minPrice === price.toString() ? '#007AFF' : 
+                                                             maxPrice === price.toString() ? '#FF5722' :
+                                                             priceRange.includes(price) ? '#8F96A3' : undefined,
                                             color: 'white',
                                             '&:hover': {
-                                                backgroundColor: minPrice === price.toString() ? '#0056b3' : '#d84315',
+                                                backgroundColor: minPrice === price.toString() ? '#0056b3' : 
+                                                                maxPrice === price.toString() ? '#d84315' :
+                                                                priceRange.includes(price) ? '#6c757d' : undefined,
                                             },
                                         },
                                     }}
@@ -1170,7 +1238,7 @@ const ArticleList = () => {
                                 size="small"
                                 placeholder="최소"
                                 value={minPrice}
-                                onChange={(e) => setMinPrice(e.target.value)}
+                                onChange={handleMinPriceChange}
                                 sx={{ width: '100px' }}
                                 InputProps={{
                                     endAdornment: <InputAdornment position="end">만원</InputAdornment>,
@@ -1181,7 +1249,7 @@ const ArticleList = () => {
                                 size="small"
                                 placeholder="최대"
                                 value={maxPrice}
-                                onChange={(e) => setMaxPrice(e.target.value)}
+                                onChange={handleMaxPriceChange}
                                 sx={{ width: '100px' }}
                                 InputProps={{
                                     endAdornment: <InputAdornment position="end">만원</InputAdornment>,
@@ -1207,11 +1275,13 @@ const ArticleList = () => {
                                     variant={
                                         minPrice === price.toString() ? "contained" :
                                         maxPrice === price.toString() ? "contained" :
+                                        priceRange.includes(price) ? "contained" :
                                         "outlined"
                                     }
                                     color={
                                         minPrice === price.toString() ? "primary" :
                                         maxPrice === price.toString() ? "secondary" :
+                                        priceRange.includes(price) ? "info" :
                                         "primary"
                                     }
                                     size="small"
@@ -1222,10 +1292,14 @@ const ArticleList = () => {
                                         fontSize: '0.875rem',
                                         borderRadius: '4px',
                                         '&.MuiButton-contained': {
-                                            backgroundColor: minPrice === price.toString() ? '#007AFF' : '#FF5722',
+                                            backgroundColor: minPrice === price.toString() ? '#007AFF' : 
+                                                            maxPrice === price.toString() ? '#FF5722' :
+                                                            priceRange.includes(price) ? '#8F96A3' : undefined,
                                             color: 'white',
                                             '&:hover': {
-                                                backgroundColor: minPrice === price.toString() ? '#0056b3' : '#d84315',
+                                                backgroundColor: minPrice === price.toString() ? '#0056b3' : 
+                                                                maxPrice === price.toString() ? '#d84315' :
+                                                                priceRange.includes(price) ? '#6c757d' : undefined,
                                             },
                                         },
                                     }}
@@ -1250,7 +1324,6 @@ const ArticleList = () => {
                     </Box>
                 </Box>
             </Drawer>
-            
         </Box>
     )
 }
