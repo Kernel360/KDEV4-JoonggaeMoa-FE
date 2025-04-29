@@ -132,7 +132,7 @@ export const updateCustomer = async (
 // }
 // 모든 고객 조회 (페이지네이션 적용)
 export const getCustomers = async (page: number = 0, size: number = 10): Promise<AxiosResponse<ApiResponse<PageResponse<CustomerResponse>>>> => {
-    return api.get(`/api/customers?page=${page}&size=${size}`)
+    return api.get(`/api/customers?page=${page}&size=${size}&sort=id,asc`)
 }
 
 // 고객 상세 조회
