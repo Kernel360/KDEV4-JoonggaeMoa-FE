@@ -553,26 +553,24 @@ const Dashboard = () => {
         
         return contracts.filter(contract => {
             const expiredDate = parseISO(contract.expiredAt);
+            const today = new Date();
+            const daysDiff = differenceInDays(expiredDate, today);
+            
             switch (period) {
                 case 'today':
                     return isToday(expiredDate);
                 case '1-2month':
-                    return !isToday(expiredDate) && (
-                        isSameMonth(expiredDate, new Date()) ||
-                        isSameMonth(expiredDate, addMonths(new Date(), 1))
-                    );
+                    return !isToday(expiredDate) && daysDiff >= 1 && daysDiff <= 60;
                 case '3month':
-                    const daysDiff3 = differenceInDays(expiredDate, new Date());
-                    return daysDiff3 > 60 && daysDiff3 <= 90;
+                    return daysDiff > 60 && daysDiff <= 90;
                 case '4-6month':
-                    const daysDiff6 = differenceInDays(expiredDate, new Date());
-                    return daysDiff6 > 90 && daysDiff6 <= 180;
+                    return daysDiff > 90 && daysDiff <= 180;
                 default:
                     return false;
             }
         }).sort((a, b) => new Date(a.expiredAt).getTime() - new Date(b.expiredAt).getTime());
     };
-
+    
     // 차트 렌더링
     useEffect(() => {
         if (!realEstateTypeData.length || !realEstateTypeChartRef.current) return;
@@ -950,32 +948,16 @@ const Dashboard = () => {
                                 }}
                             >
                                 <ToggleButton value="today" aria-label="오늘">
-                                    오늘 ({contracts.filter(c => isToday(parseISO(c.expiredAt))).length})
+                                    오늘 ({getContractsByPeriod('today').length})
                                 </ToggleButton>
                                 <ToggleButton value="1-2month" aria-label="1-2개월">
-                                    1-2개월 ({contracts.filter(c => {
-                                        const expiredDate = parseISO(c.expiredAt);
-                                        return !isToday(expiredDate) && (
-                                            isSameMonth(expiredDate, new Date()) ||
-                                            isSameMonth(expiredDate, addMonths(new Date(), 1))
-                                        );
-                                    }).length})
+                                    1-2개월 ({getContractsByPeriod('1-2month').length})
                                 </ToggleButton>
                                 <ToggleButton value="3month" aria-label="3개월">
-                                    3개월 ({contracts.filter(c => {
-                                        const expiredDate = parseISO(c.expiredAt);
-                                        const today = new Date();
-                                        const daysDiff = differenceInDays(expiredDate, today);
-                                        return daysDiff > 60 && daysDiff <= 90;
-                                    }).length})
+                                    3개월 ({getContractsByPeriod('3month').length})
                                 </ToggleButton>
                                 <ToggleButton value="4-6month" aria-label="4-6개월">
-                                    4-6개월 ({contracts.filter(c => {
-                                        const expiredDate = parseISO(c.expiredAt);
-                                        const today = new Date();
-                                        const daysDiff = differenceInDays(expiredDate, today);
-                                        return daysDiff > 90 && daysDiff <= 180;
-                                    }).length})
+                                    4-6개월 ({getContractsByPeriod('4-6month').length})
                                 </ToggleButton>
                             </ToggleButtonGroup>
                         </Box>
