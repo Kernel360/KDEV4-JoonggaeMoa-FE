@@ -45,7 +45,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     const shouldExclude = excludedPaths.includes(location.pathname);
 
     useEffect(() => {
-        if(!shouldExclude) {
+        if(shouldExclude) {
            return; 
         }
         const fetchNotifications = async () => {

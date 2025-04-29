@@ -90,7 +90,7 @@ const NotificationList: React.FC = () => {
                         .map((notification) => (
                             <ListItem
                                 key={notification.id}
-                                sx={{
+                                sx={{z
                                     py: 2,
                                     borderBottom: '1px solid rgba(0,0,0,0.06)',
                                     '&:last-child': { borderBottom: 'none' },
