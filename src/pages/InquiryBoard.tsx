@@ -443,13 +443,6 @@ const InquiryBoard: React.FC = () => {
                 open={openChatbot}
                 onClose={() => setOpenChatbot(false)}
             />
-            
-            <Box sx={{ p: 2, textAlign: "center", mt: 4 }}>
-                <Typography variant="caption" color="textSecondary">
-                    © 2025 중개모아. All rights reserved.
-                </Typography>
-            </Box>
-
         </Box>
     );
 };
