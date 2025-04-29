@@ -220,10 +220,10 @@ const SurveyDetail = () => {
     }
 
     return (
-        <Box sx={{ flexGrow: 1, bgcolor: "#f5f5f5", minHeight: "100vh" }}>
-            <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
+        <Box sx={{ flexGrow: 1, minHeight: "100vh" }}>
+            <Container maxWidth="md" sx={{ mt: 4, mb: 4, boxShadow: 3 }}>
                 <Paper elevation={0} sx={{ p: 4 }}>
-                    <Box sx={{ display: "flex", alignItems: "center", mb: 4 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", mb: 4}}>
                         <IconButton onClick={() => navigate("/survey")} sx={{ mr: 1 }}>
                             <ArrowBack />
                         </IconButton>
@@ -323,6 +323,7 @@ const SurveyDetail = () => {
                                     mb: 3,
                                     bgcolor: "#f9f9f9",
                                     borderRadius: 2,
+                                    boxShadow: 1,
                                 }}
                             >
                                 <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
@@ -381,12 +382,6 @@ const SurveyDetail = () => {
                     설문 URL이 클립보드에 복사되었습니다.
                 </Alert>
             </Snackbar>
-
-            <Box sx={{ bgcolor: "#fff", p: 2, textAlign: "center", mt: 4 }}>
-                <Typography variant="caption" color="textSecondary">
-                    © 2024 Customer Management System. All rights reserved.
-                </Typography>
-            </Box>
         </Box>
     )
 }

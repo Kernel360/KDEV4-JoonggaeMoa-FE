@@ -625,12 +625,6 @@ const SurveyEdit = () => {
                     설문이 성공적으로 수정되었습니다.
                 </Alert>
             </Snackbar>
-
-            <Box sx={{ bgcolor: "#ffffff", p: 2, textAlign: "center", mt: 4 }}>
-                <Typography variant="caption" color="textSecondary">
-                    © 2024 Customer Management System. All rights reserved.
-                </Typography>
-            </Box>
         </Box>
     )
 }
