@@ -29,6 +29,23 @@ interface MapViewProps {
     onViewChange?: (center: {lat: number, lng: number}, zoom: number) => void;
 }
 
+// debounce 함수 구현
+const debounce = <F extends (...args: any[]) => any>(
+    func: F,
+    wait: number
+): ((...args: Parameters<F>) => void) => {
+    let timeout: ReturnType<typeof setTimeout> | null = null;
+    
+    return function(...args: Parameters<F>) {
+        if (timeout) {
+            clearTimeout(timeout);
+        }
+        timeout = setTimeout(() => {
+            func(...args);
+        }, wait);
+    };
+};
+
 const MapView = ({
     articles,
     selectedArticle,
@@ -52,6 +69,7 @@ const MapView = ({
     const [lastMapCenter, setLastMapCenter] = useState<any>(null);
     const [lastMapLevel, setLastMapLevel] = useState<number | null>(null);
     const [isPreviousPositionSaved, setIsPreviousPositionSaved] = useState<boolean>(false);
+    const [visibleArticles, setVisibleArticles] = useState<ArticleResponse[]>([]);
     const KAKAO_APP_KEY = import.meta.env.VITE_KAKAO_APP_KEY;
     
     // 카카오맵 스크립트 로드
@@ -130,7 +148,8 @@ const MapView = ({
             setMapBounds(bounds);
 
             // 지도 이동 완료 시 경계 업데이트 이벤트 추가
-            (window as any).kakao.maps.event.addListener(kakaoMap, 'idle', () => {
+            // 이벤트 핸들러에 debounce 적용 (300ms)
+            const handleMapIdle = debounce(() => {
                 const newBounds = kakaoMap.getBounds();
                 setMapBounds(newBounds);
                 
@@ -146,7 +165,9 @@ const MapView = ({
                 }
                 
                 console.log('Map bounds updated');
-            });
+            }, 300);
+
+            (window as any).kakao.maps.event.addListener(kakaoMap, 'idle', handleMapIdle);
 
             // 인포윈도우 초기화
             const infoWindowInstance = new (window as any).kakao.maps.InfoWindow({
@@ -260,105 +281,172 @@ const MapView = ({
         return str.replace(/[\u0000-\u001F\u007F-\u009F\u00AD\u0600-\u0604\u070F\u17B4\u17B5\u200B-\u200F\u2028-\u202F\u2060-\u206F\uFEFF\uFFF0-\uFFFF]/g, '');
     };
 
-    // 마커 업데이트 (articles 변경 시)
+    // articles나 지도 영역이 변경될 때마다 보이는 매물 업데이트
     useEffect(() => {
-        if (!isMapLoaded || !mapInstance.current || !clusterer || articles.length === 0) {
+        if (!isMapLoaded || !mapBounds) return;
+        
+        // 현재 보이는 영역의 매물만 필터링
+        const visible = filterVisibleArticles(articles);
+        setVisibleArticles(visible);
+        console.log('Visible articles updated:', visible.length, '/', articles.length);
+    }, [articles, mapBounds, isMapLoaded, filterVisibleArticles]);
+
+    // 지도 경계 내 보이는 매물만 마커로 표시 (최적화)
+    useEffect(() => {
+        if (!isMapLoaded || !mapInstance.current || !clusterer || visibleArticles.length === 0) {
+            if (clusterer) {
+                clusterer.clear();
+            }
             return;
         }
 
         try {
-            console.log('Updating markers for', articles.length, 'articles');
+            console.log('Updating markers for', visibleArticles.length, 'visible articles');
             // 기존 마커 제거
             clusterer.clear();
-            const newMarkers: any[] = [];
-
-            articles.forEach(article => {
+            
+            // 위치별 매물 그룹화 (동일 위치의 매물을 그룹화하여 마커 수 최소화)
+            const articlesByLocation = new Map<string, ArticleResponse[]>();
+            
+            // 같은 위치에 있는 매물들을 그룹화
+            visibleArticles.forEach(article => {
                 if (!article.latitude || !article.longitude) return;
                 
-                // 좌표값 유효성 검사
                 const lat = typeof article.latitude === 'number' ? article.latitude : parseFloat(article.latitude);
                 const lng = typeof article.longitude === 'number' ? article.longitude : parseFloat(article.longitude);
                 
-                if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
-                    console.error('Invalid coordinates:', article.latitude, article.longitude);
-                    return;
+                if (isNaN(lat) || isNaN(lng)) return;
+                
+                // 소수점 6자리까지만 고려 (약 10cm 정밀도)
+                const locationKey = `${lat.toFixed(6)},${lng.toFixed(6)}`;
+                
+                if (!articlesByLocation.has(locationKey)) {
+                    articlesByLocation.set(locationKey, []);
                 }
-
-                const markerPosition = new (window as any).kakao.maps.LatLng(lat, lng);
+                
+                articlesByLocation.get(locationKey)?.push(article);
+            });
+            
+            // 마커 생성
+            const markers: any[] = [];
+            
+            // 그룹화된 위치별로 마커 생성
+            articlesByLocation.forEach((articlesAtLocation, locationKey) => {
+                const [latStr, lngStr] = locationKey.split(',');
+                const lat = parseFloat(latStr);
+                const lng = parseFloat(lngStr);
+                const position = new (window as any).kakao.maps.LatLng(lat, lng);
                 
                 try {
+                    // 대표 매물 선택 (대표 매물의 스타일 기준으로 마커 생성)
+                    const representativeArticle = articlesAtLocation[0];
+                    
                     // article의 모든 문자열 필드 정제
                     const sanitizedArticle = {
-                        ...article,
-                        articleName: sanitizeString(article.articleName),
-                        articleDesc: sanitizeString(article.articleDesc),
-                        address1SiDo: sanitizeString(article.address1SiDo),
-                        address2SiGunGu: sanitizeString(article.address2SiGunGu),
-                        address3DongEupMyeon: sanitizeString(article.address3DongEupMyeon),
-                        tradeType: sanitizeString(article.tradeType),
-                        buildingType: sanitizeString(article.buildingType)
+                        ...representativeArticle,
+                        articleName: sanitizeString(representativeArticle.articleName),
+                        articleDesc: sanitizeString(representativeArticle.articleDesc),
+                        address1SiDo: sanitizeString(representativeArticle.address1SiDo),
+                        address2SiGunGu: sanitizeString(representativeArticle.address2SiGunGu),
+                        address3DongEupMyeon: sanitizeString(representativeArticle.address3DongEupMyeon),
+                        tradeType: sanitizeString(representativeArticle.tradeType),
+                        buildingType: sanitizeString(representativeArticle.buildingType)
                     };
                     
-                    // 마커 이미지 생성 - 거래 유형에 따라 다른 도형 사용
-                    const svgString = getMarkerSvg(sanitizedArticle);
-                    // 개행 문자와 공백 제거로 URI 인코딩 오류 방지
-                    const cleanedSvg = svgString.replace(/\n\s*/g, '');
+                    let svgString = '';
                     
-                    // SVG를 안전하게 인코딩하여 데이터 URL 생성
+                    if (articlesAtLocation.length > 1) {
+                        // 겹친 매물이 있는 경우 수를 표시하는 마커 생성
+                        const color = getTypeColor(sanitizedArticle.buildingType);
+                        const emoji = getTypeEmoji(sanitizedArticle.buildingType);
+                        const isSelected = selectedArticle && articlesAtLocation.some(article => article.id === selectedArticle.id);
+                        const opacity = isSelected ? 0.7 : 1.0;
+                        
+                        // 거래 유형에 따른 도형 선택
+                        if (sanitizedArticle.tradeType === "전세") {
+                            // 정사각형
+                            svgString = `<svg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="4" y="4" width="42" height="42" rx="10" ry="10" fill="${color}" stroke="white" stroke-width="2" opacity="${opacity}"/>
+                                <text x="25" y="28" font-size="16" text-anchor="middle" fill="white">${emoji}</text>
+                                <circle cx="38" cy="12" r="10" fill="rgba(0,0,0,0.5)" stroke="white" stroke-width="1"/>
+                                <text x="38" y="16" font-size="12" text-anchor="middle" fill="white">${articlesAtLocation.length}</text>
+                            </svg>`;
+                        } else if (sanitizedArticle.tradeType === "월세") {
+                            // 육각형
+                            svgString = `<svg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M25,4 L42,14 L42,36 L25,46 L8,36 L8,14 Z" rx="10" ry="10" fill="${color}" stroke="white" stroke-width="2" opacity="${opacity}"/>
+                                <text x="25" y="30" font-size="16" text-anchor="middle" fill="white">${emoji}</text>
+                                <circle cx="38" cy="12" r="10" fill="rgba(0,0,0,0.5)" stroke="white" stroke-width="1"/>
+                                <text x="38" y="16" font-size="12" text-anchor="middle" fill="white">${articlesAtLocation.length}</text>
+                            </svg>`;
+                        } else {
+                            // 원형 (매매 또는 기본값)
+                            svgString = `<svg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="25" cy="25" r="23" fill="${color}" stroke="white" stroke-width="2" opacity="${opacity}"/>
+                                <text x="25" y="30" font-size="16" text-anchor="middle" fill="white">${emoji}</text>
+                                <circle cx="38" cy="12" r="10" fill="rgba(0,0,0,0.5)" stroke="white" stroke-width="1"/>
+                                <text x="38" y="16" font-size="12" text-anchor="middle" fill="white">${articlesAtLocation.length}</text>
+                            </svg>`;
+                        }
+                    } else {
+                        // 단일 매물의 경우 기존 마커 사용
+                        svgString = getMarkerSvg(sanitizedArticle);
+                    }
+                    
+                    // URI malformed 에러 방지를 위한 안전한 인코딩
+                    const cleanedSvg = svgString.replace(/\n\s*/g, '');
                     let svgUrl;
+                    
                     try {
-                        // UTF-8로 인코딩하여 ASCII 범위 밖의 문자로 인한 오류 방지
+                        // SVG 안전하게 인코딩
                         const encodedSvg = encodeURIComponent(cleanedSvg)
                             .replace(/'/g, '%27')
                             .replace(/"/g, '%22');
                         svgUrl = 'data:image/svg+xml,' + encodedSvg;
                     } catch (encodeError) {
-                        console.error('Error encoding SVG:', encodeError);
-                        // 인코딩 실패 시 기본 마커 URL 사용
+                        console.error('Error encoding SVG for location:', locationKey, encodeError);
+                        // 기본 마커 이미지 사용
                         svgUrl = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png';
                     }
                     
-                    const markerImage = new (window as any).kakao.maps.MarkerImage(
-                        svgUrl,
-                        new (window as any).kakao.maps.Size(50, 50),
-                        { offset: new (window as any).kakao.maps.Point(25, 25) }
-                    );
-                    
-                    // 마커 생성
                     const marker = new (window as any).kakao.maps.Marker({
-                        position: markerPosition,
-                        image: markerImage, // 생성된 마커 이미지 설정
-                        map: null, // 클러스터러에 추가될 것이므로 map 속성은 null로 설정
-                        title: sanitizedArticle.articleName
+                        position: position,
+                        image: new (window as any).kakao.maps.MarkerImage(
+                            svgUrl,
+                            new (window as any).kakao.maps.Size(50, 50),
+                            { offset: new (window as any).kakao.maps.Point(25, 25) }
+                        ),
+                        clickable: true,
+                        title: articlesAtLocation.length > 1 ? `${articlesAtLocation.length}개의 매물` : sanitizedArticle.articleName
                     });
-
+                    
                     // 마커 클릭 이벤트 추가
                     (window as any).kakao.maps.event.addListener(marker, 'click', () => {
-                        onArticleClick(sanitizedArticle);
+                        onArticleClick(representativeArticle);
                     });
-
-                    newMarkers.push(marker);
+                    
+                    markers.push(marker);
                 } catch (error) {
-                    console.error(`Error creating marker for article: ${article.id}`, error);
+                    console.error('Error creating marker for location:', locationKey, error);
                 }
             });
-
-            // 클러스터러에 마커 추가
-            if (newMarkers.length > 0) {
-                console.log('Adding', newMarkers.length, 'markers to clusterer');
-                clusterer.addMarkers(newMarkers);
-                
-                // 모든 마커가 보이도록 지도 범위 조정
-                const bounds = new (window as any).kakao.maps.LatLngBounds();
-                newMarkers.forEach(marker => {
-                    bounds.extend(marker.getPosition());
-                });
-                mapInstance.current.setBounds(bounds);
+            
+            // 생성한 마커를 클러스터러에 추가
+            if (markers.length > 0) {
+                clusterer.addMarkers(markers);
+                console.log('Added', markers.length, 'markers to clusterer');
             }
+            
+            return () => {
+                // 이벤트 리스너 제거
+                markers.forEach(marker => {
+                    (window as any).kakao.maps.event.removeListener(marker, 'click');
+                });
+            };
         } catch (error) {
             console.error('Error updating markers:', error);
         }
-    }, [articles, selectedArticle, isMapLoaded, clusterer, infoWindow, onArticleClick, getMarkerSvg]);
+    }, [visibleArticles, isMapLoaded, clusterer, selectedArticle, getMarkerSvg, onArticleClick]);
 
     // 선택된 매물이 변경될 때 해당 위치로 이동하고, 이전 위치 저장하기
     useEffect(() => {
@@ -447,154 +535,6 @@ const MapView = ({
             console.error('Error focusing on selected region:', error);
         }
     }, [isMapLoaded, selectedRegions, allRegions]);
-
-    // 마커 렌더링 (지도가 로드되고 articles가 있을 때)
-    useEffect(() => {
-        if (!map || !clusterer || !mapBounds) return;
-        
-        console.log('Rendering markers for', articles.length, 'articles');
-        
-        // 기존 마커 모두 제거
-        clusterer.clear();
-        
-        // 매물이 없는 경우 마커를 표시하지 않고 종료
-        if (articles.length === 0) {
-            return;
-        }
-        
-        // 현재 지도 영역에 보이는 매물만 필터링
-        const visibleArticles = filterVisibleArticles(articles);
-        console.log('Visible articles:', visibleArticles.length, '/', articles.length);
-        
-        // 위치별 매물 그룹화
-        const articlesByLocation = new Map<string, ArticleResponse[]>();
-        
-        // 같은 위치에 있는 매물들을 그룹화
-        visibleArticles.forEach(article => {
-            if (!article.latitude || !article.longitude) return;
-            
-            const lat = typeof article.latitude === 'number' ? article.latitude : parseFloat(article.latitude);
-            const lng = typeof article.longitude === 'number' ? article.longitude : parseFloat(article.longitude);
-            
-            if (isNaN(lat) || isNaN(lng)) return;
-            
-            // 소수점 6자리까지만 고려 (약 10cm 정밀도)
-            const locationKey = `${lat.toFixed(6)},${lng.toFixed(6)}`;
-            
-            if (!articlesByLocation.has(locationKey)) {
-                articlesByLocation.set(locationKey, []);
-            }
-            
-            articlesByLocation.get(locationKey)?.push(article);
-        });
-        
-        // 마커와 인포윈도우 생성
-        const markers: any[] = [];
-        const markerInfoMap = new Map();
-        
-        // 그룹화된 위치별로 마커 생성
-        articlesByLocation.forEach((articlesAtLocation, locationKey) => {
-            const [latStr, lngStr] = locationKey.split(',');
-            const lat = parseFloat(latStr);
-            const lng = parseFloat(lngStr);
-            const position = new (window as any).kakao.maps.LatLng(lat, lng);
-            
-            try {
-                // 대표 매물 선택 (대표 매물의 스타일 기준으로 마커 생성)
-                const representativeArticle = articlesAtLocation[0];
-                let svgString = '';
-                
-                if (articlesAtLocation.length > 1) {
-                    // 겹친 매물이 있는 경우 수를 표시하는 마커 생성
-                    const color = getTypeColor(representativeArticle.buildingType);
-                    const emoji = getTypeEmoji(representativeArticle.buildingType);
-                    const isSelected = selectedArticle && articlesAtLocation.some(article => article.id === selectedArticle.id);
-                    const opacity = isSelected ? 0.7 : 1.0;
-                    
-                    // 거래 유형에 따른 도형 선택
-                    if (representativeArticle.tradeType === "전세") {
-                        // 정사각형
-                        svgString = `<svg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
-                            <rect x="4" y="4" width="42" height="42" rx="10" ry="10" fill="${color}" stroke="white" stroke-width="2" opacity="${opacity}"/>
-                            <text x="25" y="28" font-size="16" text-anchor="middle" fill="white">${emoji}</text>
-                            <circle cx="38" cy="12" r="10" fill="rgba(0,0,0,0.5)" stroke="white" stroke-width="1"/>
-                            <text x="38" y="16" font-size="12" text-anchor="middle" fill="white">${articlesAtLocation.length}</text>
-                        </svg>`;
-                    } else if (representativeArticle.tradeType === "월세") {
-                        // 육각형
-                        svgString = `<svg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M25,4 L42,14 L42,36 L25,46 L8,36 L8,14 Z" rx="10" ry="10" fill="${color}" stroke="white" stroke-width="2" opacity="${opacity}"/>
-                            <text x="25" y="30" font-size="16" text-anchor="middle" fill="white">${emoji}</text>
-                            <circle cx="38" cy="12" r="10" fill="rgba(0,0,0,0.5)" stroke="white" stroke-width="1"/>
-                            <text x="38" y="16" font-size="12" text-anchor="middle" fill="white">${articlesAtLocation.length}</text>
-                        </svg>`;
-                    } else {
-                        // 원형 (매매 또는 기본값)
-                        svgString = `<svg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="25" cy="25" r="23" fill="${color}" stroke="white" stroke-width="2" opacity="${opacity}"/>
-                            <text x="25" y="30" font-size="16" text-anchor="middle" fill="white">${emoji}</text>
-                            <circle cx="38" cy="12" r="10" fill="rgba(0,0,0,0.5)" stroke="white" stroke-width="1"/>
-                            <text x="38" y="16" font-size="12" text-anchor="middle" fill="white">${articlesAtLocation.length}</text>
-                        </svg>`;
-                    }
-                } else {
-                    // 단일 매물의 경우 기존 마커 사용
-                    svgString = getMarkerSvg(representativeArticle);
-                }
-                
-                // URI malformed 에러 방지를 위한 안전한 인코딩
-                const cleanedSvg = svgString.replace(/\n\s*/g, '');
-                let svgUrl;
-                
-                try {
-                    // SVG 안전하게 인코딩
-                    const encodedSvg = encodeURIComponent(cleanedSvg)
-                        .replace(/'/g, '%27')
-                        .replace(/"/g, '%22');
-                    svgUrl = 'data:image/svg+xml,' + encodedSvg;
-                } catch (encodeError) {
-                    console.error('Error encoding SVG for location:', locationKey, encodeError);
-                    // 기본 마커 이미지 사용
-                    svgUrl = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png';
-                }
-                
-                const marker = new (window as any).kakao.maps.Marker({
-                    position: position,
-                    image: new (window as any).kakao.maps.MarkerImage(
-                        svgUrl,
-                        new (window as any).kakao.maps.Size(50, 50),
-                        { offset: new (window as any).kakao.maps.Point(25, 25) }
-                    ),
-                    clickable: true,
-                    title: articlesAtLocation.length > 1 ? `${articlesAtLocation.length}개의 매물` : representativeArticle.articleName
-                });
-                
-                // 마커 정보 저장 (추후 이벤트에서 사용)
-                markerInfoMap.set(marker, articlesAtLocation);
-                
-                // 마커 클릭 이벤트 추가
-                (window as any).kakao.maps.event.addListener(marker, 'click', () => {
-                    onArticleClick(representativeArticle);
-                });
-                
-                markers.push(marker);
-            } catch (error) {
-                console.error('Error creating marker for location:', locationKey, error);
-            }
-        });
-        
-        // 생성한 마커를 클러스터러에 추가
-        clusterer.addMarkers(markers);
-        
-        
-        return () => {
-            // 이벤트 리스너 제거 및 마커 정보 맵 초기화
-            markers.forEach(marker => {
-                (window as any).kakao.maps.event.removeListener(marker, 'click');
-            });
-            markerInfoMap.clear();
-        };
-    }, [map, clusterer, articles, onArticleClick, getMarkerSvg, fixedInitialView, mapBounds, filterVisibleArticles, selectedArticle]);
 
     return (
         <>
