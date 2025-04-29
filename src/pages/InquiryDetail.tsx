@@ -89,7 +89,7 @@ const InquiryDetail: React.FC = () => {
 
     const handleSubmitAnswer = async () => {
         try {
-            const response = await api.post(`/api/inquiries/${id}`, {
+            const response = await api.post(`/api/inquiries-answers/${id}`, {
                 content: answer
             });
             if (response.data.success) {
