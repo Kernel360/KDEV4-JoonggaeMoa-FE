@@ -50,7 +50,12 @@ const SurveySubmit: React.FC = () => {
     const [phone, setPhone] = useState<string>("")
     const [consent, setConsent] = useState<boolean>(false)
     const [applyConsultation, setApplyConsultation] = useState<boolean>(false)
-    const [consultAt, setConsultAt] = useState<string>("")
+    // Add this near other state declarations
+    const [consultAt, setConsultAt] = useState<string>(() => {
+        const now = new Date();
+        return now.toISOString().slice(0, 16); // Format: YYYY-MM-DDTHH:mm
+    });
+
     const [submitError, setSubmitError] = useState<string | null>(null)
 
     // 답변 관리
@@ -230,9 +235,19 @@ const SurveySubmit: React.FC = () => {
     // 상담 신청 시간 변경 핸들러
     const handleConsultAtChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const dateTimeValue = e.target.value;
-        // ISO 형식의 날짜를 YYYY-MM-DD HH:mm 형식으로 변환
+        const selectedDate = new Date(dateTimeValue);
+        const today = new Date();
+        const twoMonthsLater = new Date();
+        twoMonthsLater.setMonth(today.getMonth() + 2);
+
+        if (selectedDate > twoMonthsLater) {
+            setSubmitError('상담 신청은 오늘로부터 2개월 이내로만 가능합니다.');
+            return;
+        }
+
         const formattedDateTime = dateTimeValue.replace('T', ' ');
         setConsultAt(formattedDateTime);
+        setSubmitError(null);
     };
 
     // 설문 데이터 로드
@@ -627,6 +642,13 @@ const SurveySubmit: React.FC = () => {
                             />
                             {applyConsultation && (
                                 <Box sx={{ mt: 2 }}>
+                                    <Typography 
+                                        variant="body2" 
+                                        color="text.secondary" 
+                                        sx={{ mb: 2 }}
+                                    >
+                                        상담 신청은 오늘로부터 2개월 이내로만 가능합니다.
+                                    </Typography>
                                     <TextField
                                         fullWidth
                                         label="상담 희망 일시"
@@ -635,6 +657,14 @@ const SurveySubmit: React.FC = () => {
                                         onChange={handleConsultAtChange}
                                         InputLabelProps={{
                                             shrink: true,
+                                        }}
+                                        inputProps={{
+                                            min: new Date().toISOString().slice(0, 16),
+                                            max: (() => {
+                                                const maxDate = new Date();
+                                                maxDate.setMonth(maxDate.getMonth() + 2);
+                                                return maxDate.toISOString().slice(0, 16);
+                                            })()
                                         }}
                                         required
                                     />
