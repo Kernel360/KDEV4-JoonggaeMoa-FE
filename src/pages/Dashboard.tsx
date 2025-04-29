@@ -56,7 +56,9 @@ import type {
     TradeTypeSummaryResponse,
     CustomerSummaryResponse,
     ContractSummaryResponse,
-    ConsultationSummaryResponse
+    ConsultationSummaryResponse,
+    RealEstateTypeSummary,
+    TradeTypeSummary
 } from "../types/dashboard"
 import { format, differenceInMonths, isSameMonth, isToday, parseISO, addMonths, differenceInDays } from 'date-fns';
 
@@ -155,8 +157,8 @@ const Dashboard = () => {
     const [profile, setProfile] = useState<{ name: string; email: string } | null>(null);
     const [realEstateTypePeriod, setRealEstateTypePeriod] = useState<string>("daily");
     const [tradeTypePeriod, setTradeTypePeriod] = useState<string>("daily");
-    const [realEstateTypeData, setRealEstateTypeData] = useState<RealEstateTypeSummaryResponse[]>([]);
-    const [tradeTypeData, setTradeTypeData] = useState<TradeTypeSummaryResponse[]>([]);
+    const [realEstateTypeData, setRealEstateTypeData] = useState<RealEstateTypeSummaryResponse | null>(null);
+    const [tradeTypeData, setTradeTypeData] = useState<TradeTypeSummaryResponse | null>(null);
     const [customerSummary, setCustomerSummary] = useState<CustomerSummaryResponse | null>(null);
     const [contractSummary, setContractSummary] = useState<ContractSummaryResponse | null>(null);
     const [consultationSummary, setConsultationSummary] = useState<ConsultationSummaryResponse | null>(null);
@@ -573,7 +575,7 @@ const Dashboard = () => {
     
     // 차트 렌더링
     useEffect(() => {
-        if (!realEstateTypeData.length || !realEstateTypeChartRef.current) return;
+        if (!realEstateTypeData?.values?.length || !realEstateTypeChartRef.current) return;
 
         // 부동산 유형 차트 렌더링
         if (realEstateTypeChartInstance.current) {
@@ -583,7 +585,7 @@ const Dashboard = () => {
 
         // 5% 미만인 부동산 유형을 '기타'로 통합
         const THRESHOLD = 5;
-        const sortedRealEstateTypes = [...realEstateTypeData]
+        const sortedRealEstateTypes = [...realEstateTypeData.values]
             .sort((a, b) => b.ratio - a.ratio);
 
         const mainTypes = sortedRealEstateTypes.filter(item => item.ratio >= THRESHOLD);
@@ -665,7 +667,7 @@ const Dashboard = () => {
 
     // 거래 유형 차트 렌더링
     useEffect(() => {
-        if (!tradeTypeData.length || !tradeTypeChartRef.current) return;
+        if (!tradeTypeData?.values?.length || !tradeTypeChartRef.current) return;
 
         // 거래 유형 차트 렌더링
         if (tradeTypeChartInstance.current) {
@@ -673,7 +675,7 @@ const Dashboard = () => {
             tradeTypeChartInstance.current = null;
         }
 
-        const types = tradeTypeData.filter(item => item.ratio >= 0.5);
+        const types = tradeTypeData.values.filter(item => item.ratio >= 0.5);
         
         const tradeTypeChartData = {
             series: types.map(item => ({
