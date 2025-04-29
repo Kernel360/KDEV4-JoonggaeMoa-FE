@@ -6,7 +6,18 @@ import qs from "qs"
 import axios from 'axios'
 
 // 모든 매물 조회 (페이지네이션)
-export const getAllArticles = async (params: ArticleListParams = {}): Promise<AxiosResponse<ApiResponse<ArticleListResponse>>> => {
+export const getAllArticles = async (
+    params: ArticleListParams & {
+        sortBy?: string;
+        direction?: 'asc' | 'desc';
+        realEstateType?: string[];
+        tradeType?: string[];
+        minPrice?: string;
+        maxPrice?: string;
+        regionPrefix?: string;
+    } = {}
+): Promise<AxiosResponse<ApiResponse<ArticleListResponse>>> => {
+    console.log('API 호출 매개변수:', params);
     return api.get('/api/articles', {
         params,
         paramsSerializer: params => {
@@ -19,7 +30,12 @@ export const getArticleById = async (id: number): Promise<AxiosResponse<ApiRespo
     return api.get(`/api/articles/${id}`)
 }
 
-export const searchArticles = async (params: ArticleListParams): Promise<AxiosResponse<ApiResponse<ArticleListResponse>>> => {
+export const searchArticles = async (
+    params: ArticleListParams & {
+        sortBy?: string;
+        direction?: 'asc' | 'desc';
+    }
+): Promise<AxiosResponse<ApiResponse<ArticleListResponse>>> => {
     return api.get('/api/articles/search', {
         params,
         paramsSerializer: params => {
