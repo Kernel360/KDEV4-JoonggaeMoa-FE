@@ -70,6 +70,11 @@ const InquiryBoard: React.FC = () => {
                 setError('비밀번호는 4~12자리여야 합니다.');
                 return;
             }
+            
+            if (newInquiry.content.length > 500) {
+                setError('내용은 500자를 초과할 수 없습니다.');
+                return;
+            }
 
             const response = await api.post('/api/inquiries', newInquiry);
             if (response.data.success) {
@@ -95,49 +100,37 @@ const InquiryBoard: React.FC = () => {
                 mx: 'auto',
                 px: 4
             }}>
-                <Box sx={{ 
-                    display: 'flex', 
-                    alignItems: 'center',
-                    gap: 2,
-                    mb: 4,
-                    pb: 2,
-                    borderBottom: '2px solid #333'
-                }}>
-                    <img 
-                        src="/로고.png"
-                        alt="중개모아 로고" 
-                        style={{ height: '50px' }} 
-                    />
-                    <Typography 
-                        variant="h5" 
-                        sx={{ 
-                            color: '#333',
-                            fontWeight: 'bold',
-                            letterSpacing: '0.1em'
-                        }}
-                    >
-                        중개모아
-                    </Typography>
-                    <Box sx={{ flexGrow: 1 }} />
-                    <Button 
-                        variant="outlined" 
-                        onClick={() => navigate('/dashboard')}
-                        sx={{ 
-                            borderColor: "#007ea7", 
-                            color: "#007ea7",
-                            '&:hover': {
-                                borderColor: "#003459",
-                                color: "#003459",
-                                bgcolor: 'rgba(0, 126, 167, 0.08)'
-                            }
-                        }}
-                    >
-                        대시보드
-                    </Button>
-                </Box>
+                {!isAuthenticated && (
+                    <Box sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center',
+                        gap: 2,
+                        mb: 4,
+                        pb: 2,
+                        borderBottom: '2px solid #003459'
+                    }}>
+                        <img 
+                            src="/로고.png"
+                            alt="중개모아 로고" 
+                            style={{ height: '50px' }} 
+                        />
+                        <Typography 
+                            variant="h5" 
+                            sx={{ 
+                                fontWeight: 800, 
+                                color: '#003459',
+                                fontSize: '1.4rem',
+                                transition: 'color 0.2s ease',
+                            }}
+                        >
+                            중개모아
+                        </Typography>
+                    </Box>
+                )}
 
                 <Box sx={{ 
                     display: 'flex', 
+                    color: '#003459',
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     mb: 3
@@ -145,24 +138,28 @@ const InquiryBoard: React.FC = () => {
                     <Typography 
                         variant="h4" 
                         sx={{ 
-                            color: '#333',
-                            fontWeight: 'bold'
+                            fontWeight: 800, 
+                            color: '#003459',
+                            fontSize: '1.4rem',
+                            transition: 'color 0.2s ease',
                         }}
                     >
                         문의 게시판
                     </Typography>
-                    <Button 
-                        variant="contained" 
-                        onClick={() => setOpenDialog(true)}
-                        sx={{
-                            bgcolor: '#007ea7',
-                            '&:hover': { bgcolor: '#003459' },
-                            textTransform: 'none',
-                            boxShadow: 2,
-                        }}
-                    >
-                        문의하기
-                    </Button>
+                    {!isAuthenticated && (
+                        <Button 
+                            variant="contained" 
+                            onClick={() => setOpenDialog(true)}
+                            sx={{
+                                bgcolor: '#007ea7',
+                                '&:hover': { bgcolor: '#003459' },
+                                textTransform: 'none',
+                                boxShadow: 2,
+                            }}
+                        >
+                            문의하기
+                        </Button>
+                    )}
                 </Box>
 
                 <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2, overflow: "hidden", boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
@@ -271,7 +268,7 @@ const InquiryBoard: React.FC = () => {
                         onChange={(_, value) => setPage(value - 1)}
                         sx={{
                             '& .Mui-selected': {
-                                backgroundColor: '#333 !important',
+                                backgroundColor: '#003459 !important',
                                 color: 'white'
                             }
                         }}
@@ -287,13 +284,13 @@ const InquiryBoard: React.FC = () => {
                 PaperProps={{
                     sx: { 
                         borderRadius: 2,
-                        bgcolor: '#f8f9fa'
+                        bgcolor: '#ffffff'  // Changed from '#e9ecef' to white
                     }
                 }}
             >
                 <DialogTitle sx={{ 
-                    borderBottom: '2px solid #333', 
-                    color: '#333',
+                    borderBottom: '2px solid #003459', 
+                    color: '#003459',
                     fontWeight: 'bold',
                     fontSize: '1.5rem',
                     pb: 2
@@ -310,11 +307,11 @@ const InquiryBoard: React.FC = () => {
                         sx={{ 
                             '& .MuiOutlinedInput-root': {
                                 '&.Mui-focused fieldset': {
-                                    borderColor: '#333'
+                                    borderColor: '#007ea7'
                                 }
                             },
                             '& .MuiInputLabel-root.Mui-focused': {
-                                color: '#333'
+                                color: '#007ea7'
                             }
                         }}
                     />
@@ -365,32 +362,37 @@ const InquiryBoard: React.FC = () => {
                         margin="normal"
                         value={newInquiry.content}
                         onChange={(e) => setNewInquiry({ ...newInquiry, content: e.target.value })}
+                        inputProps={{ maxLength: 500 }}
+                        helperText={`${newInquiry.content.length}/500자`}
                         sx={{ 
                             '& .MuiOutlinedInput-root': {
                                 '&.Mui-focused fieldset': {
-                                    borderColor: '#333'
+                                    borderColor: '#007ea7'
                                 }
                             },
                             '& .MuiInputLabel-root.Mui-focused': {
-                                color: '#333'
+                                color: '#007ea7'
+                            },
+                            '& .MuiFormHelperText-root': {
+                                color: '#00171f'
                             }
                         }}
                     />
                 </DialogContent>
                 <DialogActions sx={{ 
                     p: 3, 
-                    borderTop: '1px solid #e0e0e0',
+                    borderTop: '1px solid #e9ecef',
                     gap: 1
                 }}>
                     <Button 
                         onClick={() => setOpenDialog(false)}
                         variant="outlined"
                         sx={{ 
-                            color: '#333',
-                            borderColor: '#333',
+                            color: '#007ea7',
+                            borderColor: '#007ea7',
                             '&:hover': {
-                                borderColor: '#000',
-                                backgroundColor: 'rgba(0, 0, 0, 0.04)'
+                                borderColor: '#003459',
+                                backgroundColor: 'rgba(0, 126, 167, 0.04)'
                             }
                         }}
                     >
@@ -400,9 +402,9 @@ const InquiryBoard: React.FC = () => {
                         onClick={handleSubmitInquiry} 
                         variant="contained"
                         sx={{
-                            backgroundColor: '#333',
+                            backgroundColor: '#007ea7',
                             '&:hover': {
-                                backgroundColor: '#000'
+                                backgroundColor: '#003459'
                             }
                         }}
                     >
