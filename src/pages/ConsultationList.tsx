@@ -835,7 +835,7 @@ const ConsultationList = () => {
                             </Typography>
                             <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2, overflow: "hidden" }}>
                                 <Table>
-                                    <TableHead>
+                                <TableHead>
                                         <TableRow sx={{ 
                                             backgroundColor: '#e9ecef',
                                             borderBottom: '1px solid #e9ecef'
@@ -848,15 +848,6 @@ const ConsultationList = () => {
                                                 color: '#003459'
                                             }}>
                                                 고객명
-                                            </TableCell>
-                                            <TableCell sx={{ 
-                                                padding: '12px 16px',
-                                                textAlign: 'left',
-                                                fontSize: '0.875rem',
-                                                fontWeight: 500,
-                                                color: '#003459'
-                                            }}>
-                                                연락처
                                             </TableCell>
                                             <TableCell sx={{ 
                                                 padding: '12px 16px',
@@ -881,7 +872,7 @@ const ConsultationList = () => {
                                     <TableBody>
                                         {loading || statusListLoading ? (
                                             <TableRow>
-                                                <TableCell colSpan={4} align="center">
+                                                <TableCell colSpan={3} align="center">
                                                     <CircularProgress size={24} />
                                                 </TableCell>
                                             </TableRow>
@@ -913,20 +904,9 @@ const ConsultationList = () => {
                                                             fontSize: '0.875rem',
                                                             color: '#00171f'
                                                         }}>
-                                                            {consultation.customerPhone}
-                                                        </TableCell>
-                                                        <TableCell sx={{ 
-                                                            padding: '12px 16px',
-                                                            fontSize: '0.875rem',
-                                                            color: '#00171f'
-                                                        }}>
                                                             {consultation.date ? formatDateTime(consultation.date) : '-'}
                                                         </TableCell>
-                                                        <TableCell sx={{ 
-                                                            padding: '12px 16px',
-                                                            fontSize: '0.875rem',
-                                                            color: '#00171f'
-                                                        }}>
+                                                        <TableCell>
                                                             <Chip
                                                                 label={statusConfig[consultation.consultationStatus].label}
                                                                 sx={{
@@ -1035,13 +1015,6 @@ const ConsultationList = () => {
                                                         color: '#00171f'
                                                     }}>
                                                         {consultation.customerName}
-                                                    </TableCell>
-                                                    <TableCell sx={{ 
-                                                        padding: '12px 16px',
-                                                        fontSize: '0.875rem',
-                                                        color: '#00171f'
-                                                    }}>
-                                                        {consultation.customerPhone}
                                                     </TableCell>
                                                     <TableCell sx={{ 
                                                         padding: '12px 16px',
