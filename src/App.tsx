@@ -92,8 +92,7 @@ function App() {
                             <Route path="/" element={<Login />} />
                             <Route path="/signup" element={<SignUp />} />
                             <Route path="/surveys/submit/:surveyId" element={<SurveySubmit />} />
-                            <Route path="/inquiry" element={<InquiryBoard />} />
-                            <Route path="/inquiry/:id" element={<InquiryDetail />} />
+                            
 
                             {/* Protected routes */}
                             <Route
@@ -103,6 +102,8 @@ function App() {
                                     </ProtectedRoute>
                                 }
                             >
+                                <Route path="/inquiry" element={<InquiryBoard />} />
+                                <Route path="/inquiry/:id" element={<InquiryDetail />} />
                                 <Route path="/dashboard" element={<Dashboard />} />
                                 <Route path="/my-page" element={<MyPage />} />
                                 <Route path="/customer-management" element={<CustomerManagement />} />

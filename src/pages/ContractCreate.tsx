@@ -390,9 +390,17 @@ const ContractCreate = () => {
                                             type="date"
                                             required
                                             value={startedAt}
-                                            onChange={(e) => setStartedAt(e.target.value)}
+                                            onChange={(e) => {
+                                                const year = e.target.value.split('-')[0];
+                                                if (year.length <= 4) {
+                                                    setStartedAt(e.target.value);
+                                                }
+                                            }}
                                             InputLabelProps={{
                                                 shrink: true,
+                                            }}
+                                            inputProps={{
+                                                max: "9999-12-31"
                                             }}
                                         />
                                     </Grid>
@@ -403,9 +411,17 @@ const ContractCreate = () => {
                                             type="date"
                                             required
                                             value={expiredAt}
-                                            onChange={(e) => setExpiredAt(e.target.value)}
+                                            onChange={(e) => {
+                                                const year = e.target.value.split('-')[0];
+                                                if (year.length <= 4) {
+                                                    setExpiredAt(e.target.value);
+                                                }
+                                            }}
                                             InputLabelProps={{
                                                 shrink: true,
+                                            }}
+                                            inputProps={{
+                                                max: "9999-12-31"
                                             }}
                                         />
                                     </Grid>

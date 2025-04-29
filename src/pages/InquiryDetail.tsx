@@ -171,14 +171,20 @@ const InquiryDetail: React.FC = () => {
                 return;
             }
     
+        
             const consultDate = new Date(consultation.consultAt);
             const now = new Date();
-            // 시간을 00:00:00으로 맞춰서 비교
-            now.setHours(0, 0, 0, 0);
-            consultDate.setHours(0, 0, 0, 0);
             
-            if (consultDate < now) {
-                setError('상담 일시는 오늘 이후로 선택해주세요.');
+            if (consultDate.getTime() <= now.getTime()) {
+                setError('상담 일시는 현재 시간 이후로 선택해주세요.');
+                return;
+            }
+            
+            const twoMonthsLater = new Date(now);
+            twoMonthsLater.setMonth(twoMonthsLater.getMonth() + 2);
+
+            if (consultDate > twoMonthsLater) {
+                setError('상담 일시는 오늘부터 2달 이내로 선택해주세요.');
                 return;
             }
     
@@ -678,6 +684,10 @@ const InquiryDetail: React.FC = () => {
                                 value={consultation.consultAt ? new Date(consultation.consultAt) : null}
                                 onChange={(newValue) => {
                                     if (newValue) {
+                                        const now = new Date();
+                                        const twoMonthsLater = new Date();
+                                        twoMonthsLater.setMonth(now.getMonth() + 2);
+
                                         // 한국 시간으로 변환
                                         const koreanTime = new Date(newValue.getTime() + (9 * 60 * 60 * 1000));
                                         const year = koreanTime.getUTCFullYear();
@@ -687,9 +697,15 @@ const InquiryDetail: React.FC = () => {
                                         const minutes = String(koreanTime.getUTCMinutes()).padStart(2, '0');
                                         const formattedDate = `${year}-${month}-${day} ${hours}:${minutes}`;
                                         setConsultation({ ...consultation, consultAt: formattedDate });
+                                        setError(null);
                                     }
                                 }}
                                 minDateTime={new Date()}
+                                maxDateTime={(() => {
+                                    const maxDate = new Date();
+                                    maxDate.setMonth(maxDate.getMonth() + 2);
+                                    return maxDate;
+                                })()}
                                 format="yyyy-MM-dd HH:mm"
                                 sx={{ 
                                     width: '100%',
@@ -700,6 +716,11 @@ const InquiryDetail: React.FC = () => {
                                     },
                                     '& .MuiInputLabel-root.Mui-focused': {
                                         color: '#003459'
+                                    }
+                                }}
+                                slotProps={{
+                                    textField: {
+                                        helperText: "상담 신청은 오늘로부터 2개월 이내로만 가능합니다"
                                     }
                                 }}
                             />

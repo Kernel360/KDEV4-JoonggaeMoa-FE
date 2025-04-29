@@ -12,8 +12,11 @@ interface ProtectedRouteProps {
     children: ReactNode
 }
 
+import { useLocation } from "react-router-dom"
+
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     const { isAuthenticated, loading } = useAuth()
+    const location = useLocation()
     
     if (loading) {
         return (
@@ -29,6 +32,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
         )
     }
 
+    // For inquiry pages, allow access but with different layouts
+    if (location.pathname.startsWith('/inquiry')) {
+        return isAuthenticated ? <Layout>{children}</Layout> : <>{children}</>
+    }
+
+    // For other protected routes
     if (!isAuthenticated) {
         return <Navigate to="/" />
     }
