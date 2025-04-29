@@ -436,9 +436,9 @@ const SurveyCreate = () => {
     };
 
     return (
-        <Box sx={{ flexGrow: 1, minHeight: "100vh" }}>
-            <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
-                <Paper elevation={0} sx={{ p: 4, borderRadius: 2, boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
+        <Box sx={{ flexGrow: 1, minHeight: "100vh"}}>
+            <Container maxWidth="md" sx={{ mt: 4, mb: 4 , boxShadow: 3 }}>
+                <Paper elevation={0} sx={{ p: 4}}>
                     <Box sx={{ display: "flex", alignItems: "center", mb: 4 }}>
                         <IconButton onClick={() => navigate("/survey")} sx={{ mr: 1 }}>
                             <ArrowBack />
@@ -586,12 +586,6 @@ const SurveyCreate = () => {
                     설문이 성공적으로 생성되었습니다. 설문 목록 페이지로 이동합니다.
                 </Alert>
             </Snackbar>
-
-            <Box sx={{ bgcolor: "#ffffff", p: 2, textAlign: "center", mt: 4 }}>
-                <Typography variant="caption" color="textSecondary">
-                    © 2024 Customer Management System. All rights reserved.
-                </Typography>
-            </Box>
         </Box>
     )
 }

@@ -329,12 +329,6 @@ const CustomerEdit = () => {
                     고객 정보가 성공적으로 수정되었습니다. 고객 목록 페이지로 이동합니다.
                 </Alert>
             </Snackbar>
-
-            <Box sx={{ bgcolor: "#fff", p: 2, textAlign: "center", mt: 4 }}>
-                <Typography variant="caption" color="textSecondary">
-                    © 2024 Customer Management System. All rights reserved.
-                </Typography>
-            </Box>
         </Box>
     )
 }

@@ -726,12 +726,6 @@ const MessageCreate = () => {
                     문자가 성공적으로 예약되었습니다.
                 </Alert>
             </Snackbar>
-
-            <Box sx={{ bgcolor: "#fff", p: 2, textAlign: "center", mt: 4 }}>
-                <Typography variant="caption" color="textSecondary">
-                    © 2024 Customer Management System. All rights reserved.
-                </Typography>
-            </Box>
         </Box>
     )
 }
