@@ -2,13 +2,8 @@ import {
     Box,
     Button,
     Card,
-    CardContent,
     CardMedia,
     Chip,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
     Divider,
     Grid,
     IconButton,
@@ -39,61 +34,100 @@ const ArticleDetail = ({ article, complex, onClose }: ArticleDetailProps) => {
         const maps: any = (window as any).kakao?.maps;
         if (!maps || !mapRef.current) return;
 
-        const position = new maps.LatLng(article.latitude, article.longitude);
+        try {
+            const position = new maps.LatLng(article.latitude, article.longitude);
 
-        const markerImage = new maps.MarkerImage(
-            `data:image/svg+xml,${encodeURIComponent(`
-                <svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="30" cy="30" r="28" fill="${getTypeColor(article.buildingType)}" stroke="white" stroke-width="3"/>
-                    <text x="30" y="38" font-size="28" text-anchor="middle" fill="white">
-                        ${getTypeEmoji(article.buildingType)}
-                    </text>
-                </svg>
-            `)}`,
-            new maps.Size(60, 60),
-            { offset: new maps.Point(30, 30) }
-        );
+            const markerImage = new maps.MarkerImage(
+                `data:image/svg+xml,${encodeURIComponent(`
+                    <svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="30" cy="30" r="28" fill="${getTypeColor(article.buildingType)}" stroke="white" stroke-width="3"/>
+                        <text x="30" y="38" font-size="28" text-anchor="middle" fill="white">
+                            ${getTypeEmoji(article.buildingType)}
+                        </text>
+                    </svg>
+                `)}`,
+                new maps.Size(60, 60),
+                { offset: new maps.Point(30, 30) }
+            );
 
-        const marker = new maps.Marker({
-            position: position,
-            image: markerImage,
-            title: article.articleName
-        });
+            const marker = new maps.Marker({
+                position: position,
+                image: markerImage,
+                title: article.articleName
+            });
 
-        const mapOptions: any = {
-            center: position,
-            level: 3,
-            draggable: false,
-            scrollwheel: false,
-            disableDoubleClickZoom: true,
-            mapTypeControl: false,
-            zoomControl: false
-        };
+            const mapOptions: any = {
+                center: position,
+                level: 3,
+                draggable: false,
+                scrollwheel: false,
+                disableDoubleClickZoom: true,
+                mapTypeControl: false,
+                zoomControl: false
+            };
 
-        const map = new maps.Map(mapRef.current, mapOptions);
-        mapInstance.current = map;
-        marker.setMap(map);
-
-        // 지도 컨테이너의 크기가 변경될 때마다 지도 크기 조정
-        const resizeObserver = new ResizeObserver(() => {
-            map.relayout();
-        });
-        resizeObserver.observe(mapRef.current);
-
-        return () => {
-            marker.setMap(null);
-            mapInstance.current = null;
-            resizeObserver.disconnect();
-        };
+            // 지도 초기화 함수
+            const initMap = () => {
+                if (!mapRef.current) return;
+                
+                // 이전 인스턴스 정리
+                if (mapInstance.current) {
+                    mapInstance.current = null;
+                }
+                
+                try {
+                    // 지도 생성
+                    const map = new maps.Map(mapRef.current, mapOptions);
+                    mapInstance.current = map;
+                    marker.setMap(map);
+                    
+                    // 지도 크기 재설정
+                    map.relayout();
+                    
+                    // 지도가 완전히 로드된 후 다시 한번 relayout 호출
+                    setTimeout(() => {
+                        if (map) {
+                            map.relayout();
+                            map.setCenter(position);
+                        }
+                    }, 300);
+                    
+                    // 크기 변경 감지
+                    const resizeObserver = new ResizeObserver(() => {
+                        if (map) {
+                            map.relayout();
+                            map.setCenter(position);
+                        }
+                    });
+                    
+                    resizeObserver.observe(mapRef.current);
+                    
+                    return () => {
+                        marker.setMap(null);
+                        resizeObserver.disconnect();
+                    };
+                } catch (err) {
+                    console.error('맵 초기화 오류:', err);
+                }
+            };
+            
+            // 컴포넌트가 렌더링된 후 지도 초기화
+            setTimeout(initMap, 100);
+            
+            // 500ms 후 다시 한번 실행하여 안정성 확보
+            const secondAttempt = setTimeout(initMap, 500);
+            
+            return () => {
+                clearTimeout(secondAttempt);
+                if (mapInstance.current) {
+                    marker.setMap(null);
+                    mapInstance.current = null;
+                }
+            };
+        } catch (error) {
+            console.error('Error initializing map:', error);
+        }
     }, [article]);
-
-    // 모달이 열려있을 때 body 스크롤 막기
-    useEffect(() => {
-        document.body.style.overflow = 'hidden';
-        return () => {
-            document.body.style.overflow = 'unset';
-        };
-    }, []);
 
     const handleOpenMap = () => {
         if (article.latitude && article.longitude) {
@@ -102,20 +136,18 @@ const ArticleDetail = ({ article, complex, onClose }: ArticleDetailProps) => {
     };
 
     return (
-        <Dialog
-            open={true}
-            onClose={onClose}
-            maxWidth="md"
-            fullWidth
-            PaperProps={{
-                sx: {
-                    borderRadius: 2,
-                    overflow: 'hidden',
-                    maxHeight: '90vh'
-                }
+        <Box 
+            sx={{ 
+                width: '100%', 
+                height: '100%', 
+                display: 'flex', 
+                flexDirection: 'column',
+                bgcolor: 'background.paper',
+                overflow: 'auto'
             }}
         >
-            <DialogTitle sx={{ m: 0, p: 2 }}>
+            {/* 헤더 부분 */}
+            <Box sx={{ p: 2, borderBottom: '1px solid rgba(0, 0, 0, 0.12)' }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <Box
@@ -123,7 +155,7 @@ const ArticleDetail = ({ article, complex, onClose }: ArticleDetailProps) => {
                                 width: 24,
                                 height: 24,
                                 borderRadius: article.tradeType === "매매" ? '50%' : 
-                                            article.tradeType === "전세" ? '4px' : '0',
+                                            article.tradeType === "전세" ? '4px' : '24%',
                                 bgcolor: getTypeColor(article.buildingType),
                                 display: 'flex',
                                 justifyContent: 'center',
@@ -155,9 +187,10 @@ const ArticleDetail = ({ article, complex, onClose }: ArticleDetailProps) => {
                         <CloseIcon />
                     </IconButton>
                 </Box>
-            </DialogTitle>
+            </Box>
 
-            <DialogContent dividers>
+            {/* 컨텐츠 부분 */}
+            <Box sx={{ p: 3, flexGrow: 1, overflow: 'auto' }}>
                 <Grid container spacing={3}>
                     {/* 이미지 섹션 */}
                     <Grid item xs={12} md={6}>
@@ -364,12 +397,13 @@ const ArticleDetail = ({ article, complex, onClose }: ArticleDetailProps) => {
                         </Box>
                     </Grid>
                 </Grid>
-            </DialogContent>
+            </Box>
 
-            <DialogActions>
+            {/* 푸터 부분 */}
+            <Box sx={{ p: 2, borderTop: '1px solid rgba(0, 0, 0, 0.12)', display: 'flex', justifyContent: 'flex-end' }}>
                 <Button onClick={onClose}>닫기</Button>
-            </DialogActions>
-        </Dialog>
+            </Box>
+        </Box>
     );
 };
 

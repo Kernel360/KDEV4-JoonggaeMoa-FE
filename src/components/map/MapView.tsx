@@ -1,9 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { Box, Alert, Popover, Typography, Button } from '@mui/material';
+import { Box, Alert } from '@mui/material';
 import type { ArticleResponse } from '../../types/article';
-import MarkerPopup from './MarkerPopup';
-import { formatPrice, getTypeColor, getTypeEmoji, getTradeTypeColor } from '../../utils/articleUtils';
-import ArticleDetail from '../ArticleDetail';
+import { getTypeColor, getTypeEmoji } from '../../utils/articleUtils';
 
 interface Region {
     id: number;
@@ -28,6 +26,7 @@ interface MapViewProps {
     initialCenter?: {lat: number, lng: number};
     initialZoom?: number;
     fixedInitialView?: boolean;
+    onViewChange?: (center: {lat: number, lng: number}, zoom: number) => void;
 }
 
 const MapView = ({
@@ -38,20 +37,21 @@ const MapView = ({
     allRegions,
     initialCenter,
     initialZoom,
-    fixedInitialView
+    fixedInitialView,
+    onViewChange
 }: MapViewProps) => {
     const mapRef = useRef<HTMLDivElement>(null);
     const mapInstance = useRef<any>(null);
     const [map, setMap] = useState<any>(null);
     const [clusterer, setClusterer] = useState<any>(null);
-    const [hoveredArticle, setHoveredArticle] = useState<ArticleResponse | null>(null);
     const [isMapLoaded, setIsMapLoaded] = useState<boolean>(false);
     const [isScriptLoaded, setIsScriptLoaded] = useState<boolean>(false);
     const [infoWindow, setInfoWindow] = useState<any>(null);
     const [mapErrorMessage, setMapErrorMessage] = useState<string | null>(null);
-    const [popoverArticle, setPopoverArticle] = useState<ArticleResponse | null>(null);
-    const [anchorPosition, setAnchorPosition] = useState<{ top: number, left: number } | null>(null);
     const [mapBounds, setMapBounds] = useState<any>(null);
+    const [lastMapCenter, setLastMapCenter] = useState<any>(null);
+    const [lastMapLevel, setLastMapLevel] = useState<number | null>(null);
+    const [isPreviousPositionSaved, setIsPreviousPositionSaved] = useState<boolean>(false);
     const KAKAO_APP_KEY = import.meta.env.VITE_KAKAO_APP_KEY;
     
     // 카카오맵 스크립트 로드
@@ -127,6 +127,18 @@ const MapView = ({
             (window as any).kakao.maps.event.addListener(kakaoMap, 'idle', () => {
                 const newBounds = kakaoMap.getBounds();
                 setMapBounds(newBounds);
+                
+                // 현재 중심점과 줌 레벨 저장 및 콜백 호출
+                const center = kakaoMap.getCenter();
+                const level = kakaoMap.getLevel();
+                setLastMapCenter({lat: center.getLat(), lng: center.getLng()});
+                setLastMapLevel(level);
+
+                // 뷰 변경 콜백 호출
+                if (onViewChange) {
+                    onViewChange({lat: center.getLat(), lng: center.getLng()}, level);
+                }
+                
                 console.log('Map bounds updated');
             });
 
@@ -179,7 +191,7 @@ const MapView = ({
         } catch (error) {
             console.error('Error initializing map:', error);
         }
-    }, [isScriptLoaded, initialCenter, initialZoom]);
+    }, [isScriptLoaded, initialCenter, initialZoom, onViewChange]);
 
     // 거래 유형에 따른 마커 SVG를 생성하는 함수
     const getMarkerSvg = useCallback((article: ArticleResponse): string => {
@@ -194,7 +206,7 @@ const MapView = ({
         } else if (numPrice > 0 && numRentPrice > 0) {
             displayType = "전세"; // 정사각형
         } else if (numPrice === 0 && numRentPrice > 0) {
-            displayType = "월세"; // 정삼각형
+            displayType = "월세"; // 육각형 (이전: 정삼각형)
         } else {
             displayType = article.tradeType; // 기본값은 원래 tradeType
         }
@@ -210,42 +222,13 @@ const MapView = ({
             // 정사각형 - iOS 스타일 둥근 모서리 추가
             return `<svg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="4" width="42" height="42" rx="10" ry="10" fill="${color}" stroke="white" stroke-width="2" opacity="${opacity}"/><text x="25" y="32" font-size="24" text-anchor="middle" fill="white">${emoji}</text></svg>`;
         } else if (displayType === "월세") {
-            // 정삼각형 - 둥근 모서리를 위해 path 사용
-            return `<svg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg"><defs><filter id="round-triangle"><feGaussianBlur in="SourceGraphic" stdDeviation="1.3" result="blur"/><feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 19 -9" result="rounded"/><feComposite in="SourceGraphic" in2="rounded" operator="atop"/></filter></defs><polygon points="25,4 46,42 4,42" fill="${color}" stroke="white" stroke-width="2" filter="url(#round-triangle)" opacity="${opacity}"/><text x="25" y="35" font-size="24" text-anchor="middle" fill="white">${emoji}</text></svg>`;
+            // 육각형 - 사각형과 동일한 둥근 모서리 스타일 적용
+            return `<svg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg"><path d="M25,4 L42,14 L42,36 L25,46 L8,36 L8,14 Z" rx="10" ry="10" fill="${color}" stroke="white" stroke-width="2" opacity="${opacity}"/><text x="25" y="32" font-size="24" text-anchor="middle" fill="white">${emoji}</text></svg>`;
         } else {
             // 원형 (매매 또는 기본값)
             return `<svg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg"><circle cx="25" cy="25" r="23" fill="${color}" stroke="white" stroke-width="2" opacity="${opacity}"/><text x="25" y="32" font-size="24" text-anchor="middle" fill="white">${emoji}</text></svg>`;
         }
     }, [selectedArticle]);
-
-    // 현재 마우스 오버된 마커의 위치를 화면 좌표로 업데이트하는 함수
-    const updateHoveredMarkerPosition = useCallback(() => {
-        if (!hoveredArticle || !mapInstance.current || !mapRef.current) return;
-        
-        // 현재 hoveredArticle의 위치 찾기
-        const article = articles.find(a => a.id === hoveredArticle.id);
-        if (!article || !article.latitude || !article.longitude) return;
-        
-        const lat = typeof article.latitude === 'number' ? article.latitude : parseFloat(article.latitude);
-        const lng = typeof article.longitude === 'number' ? article.longitude : parseFloat(article.longitude);
-        
-        if (isNaN(lat) || isNaN(lng)) return;
-        
-        const position = new (window as any).kakao.maps.LatLng(lat, lng);
-        const projection = mapInstance.current.getProjection();
-        
-        if (projection) {
-            const point = projection.pointFromCoords(position);
-            const mapRect = mapRef.current.getBoundingClientRect();
-            
-            // 마커 위치를 화면 좌표로 변환
-            const screenX = mapRect.left + point.x;
-            const screenY = mapRect.top + point.y - 10;
-            
-            console.log('Updating marker position:', { screenX, screenY });
-            setAnchorPosition({ top: screenY, left: screenX });
-        }
-    }, [hoveredArticle, articles, mapInstance, mapRef]);
 
     // 현재 지도 경계 내에 있는 매물만 필터링하는 함수
     const filterVisibleArticles = useCallback((articles: ArticleResponse[]) => {
@@ -263,6 +246,13 @@ const MapView = ({
             return mapBounds.contain(position);
         });
     }, [mapBounds]);
+
+    // 마커 생성 부분에서 문자열 데이터 정제 함수 추가
+    const sanitizeString = (str: string): string => {
+        if (!str) return '';
+        // 잠재적으로 문제가 될 수 있는 제어 문자나 유효하지 않은 문자 제거
+        return str.replace(/[\u0000-\u001F\u007F-\u009F\u00AD\u0600-\u0604\u070F\u17B4\u17B5\u200B-\u200F\u2028-\u202F\u2060-\u206F\uFEFF\uFFF0-\uFFFF]/g, '');
+    };
 
     // 마커 업데이트 (articles 변경 시)
     useEffect(() => {
@@ -291,12 +281,39 @@ const MapView = ({
                 const markerPosition = new (window as any).kakao.maps.LatLng(lat, lng);
                 
                 try {
+                    // article의 모든 문자열 필드 정제
+                    const sanitizedArticle = {
+                        ...article,
+                        articleName: sanitizeString(article.articleName),
+                        articleDesc: sanitizeString(article.articleDesc),
+                        address1SiDo: sanitizeString(article.address1SiDo),
+                        address2SiGunGu: sanitizeString(article.address2SiGunGu),
+                        address3DongEupMyeon: sanitizeString(article.address3DongEupMyeon),
+                        tradeType: sanitizeString(article.tradeType),
+                        buildingType: sanitizeString(article.buildingType)
+                    };
+                    
                     // 마커 이미지 생성 - 거래 유형에 따라 다른 도형 사용
-                    const svgString = getMarkerSvg(article);
+                    const svgString = getMarkerSvg(sanitizedArticle);
                     // 개행 문자와 공백 제거로 URI 인코딩 오류 방지
                     const cleanedSvg = svgString.replace(/\n\s*/g, '');
+                    
+                    // SVG를 안전하게 인코딩하여 데이터 URL 생성
+                    let svgUrl;
+                    try {
+                        // UTF-8로 인코딩하여 ASCII 범위 밖의 문자로 인한 오류 방지
+                        const encodedSvg = encodeURIComponent(cleanedSvg)
+                            .replace(/'/g, '%27')
+                            .replace(/"/g, '%22');
+                        svgUrl = 'data:image/svg+xml,' + encodedSvg;
+                    } catch (encodeError) {
+                        console.error('Error encoding SVG:', encodeError);
+                        // 인코딩 실패 시 기본 마커 URL 사용
+                        svgUrl = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png';
+                    }
+                    
                     const markerImage = new (window as any).kakao.maps.MarkerImage(
-                        `data:image/svg+xml;base64,${btoa(cleanedSvg)}`,
+                        svgUrl,
                         new (window as any).kakao.maps.Size(50, 50),
                         { offset: new (window as any).kakao.maps.Point(25, 25) }
                     );
@@ -306,50 +323,17 @@ const MapView = ({
                         position: markerPosition,
                         image: markerImage, // 생성된 마커 이미지 설정
                         map: null, // 클러스터러에 추가될 것이므로 map 속성은 null로 설정
-                        title: article.articleName
+                        title: sanitizedArticle.articleName
                     });
 
-                    // 마커에 이벤트 등록
-                    (window as any).kakao.maps.event.addListener(marker, 'mouseover', () => {
-                        setHoveredArticle(article);
-                        
-                        // 마커 위치를 화면 좌표로 변환
-                        if (mapInstance.current && mapRef.current) {
-                            const position = marker.getPosition();
-                            const projection = mapInstance.current.getProjection();
-                            if (projection) {
-                                const point = projection.pointFromCoords(position);
-                                const mapRect = mapRef.current.getBoundingClientRect();
-                                
-                                // 마커 위치를 화면 좌표로 변환
-                                const screenX = mapRect.left + point.x;
-                                const screenY = mapRect.top + point.y - 10; // 마커 위에 표시하기 위해 10px 위로
-                                
-                                console.log('Initial marker position:', { screenX, screenY });
-                                setAnchorPosition({ top: screenY, left: screenX });
-                            }
-                        }
-                    });
-
-                    (window as any).kakao.maps.event.addListener(marker, 'mouseout', () => {
-                        setHoveredArticle(null);
-                        setAnchorPosition(null);
-                    });
-
+                    // 마커 클릭 이벤트 추가
                     (window as any).kakao.maps.event.addListener(marker, 'click', () => {
-                        // 마커 클릭 시 해당 매물의 상세 정보를 보여줍니다
-                        onArticleClick(article);
-                        
-                        // 선택된 마커로 지도 이동
-                        if (mapInstance.current && markerPosition) {
-                            mapInstance.current.setCenter(markerPosition);
-                            mapInstance.current.setLevel(3);
-                        }
+                        onArticleClick(sanitizedArticle);
                     });
 
                     newMarkers.push(marker);
                 } catch (error) {
-                    console.error('Error creating marker for article:', article.id, error);
+                    console.error(`Error creating marker for article: ${article.id}`, error);
                 }
             });
 
@@ -370,23 +354,41 @@ const MapView = ({
         }
     }, [articles, selectedArticle, isMapLoaded, clusterer, infoWindow, onArticleClick, getMarkerSvg]);
 
-    // 선택된 매물이 변경될 때 해당 위치로 이동
+    // 선택된 매물이 변경될 때 해당 위치로 이동하고, 이전 위치 저장하기
     useEffect(() => {
-        if (!isMapLoaded || !mapInstance.current || !selectedArticle || !selectedArticle.latitude || !selectedArticle.longitude) return;
+        if (!isMapLoaded || !mapInstance.current) return;
         
-        try {
-            const lat = typeof selectedArticle.latitude === 'number' ? selectedArticle.latitude : parseFloat(selectedArticle.latitude);
-            const lng = typeof selectedArticle.longitude === 'number' ? selectedArticle.longitude : parseFloat(selectedArticle.longitude);
+        if (selectedArticle && selectedArticle.latitude && selectedArticle.longitude) {
+            // 상세보기가 열릴 때, 현재 지도 위치와 줌 레벨 저장
+            if (!isPreviousPositionSaved) {
+                setLastMapCenter(mapInstance.current.getCenter());
+                setLastMapLevel(mapInstance.current.getLevel());
+                setIsPreviousPositionSaved(true);
+            }
             
-            if (isNaN(lat) || isNaN(lng)) return;
-            
-            const position = new (window as any).kakao.maps.LatLng(lat, lng);
-            mapInstance.current.setCenter(position);
-            mapInstance.current.setLevel(3); // 맵 줌 레벨 3으로 설정
-        } catch (error) {
-            console.error('Error focusing on selected article:', error);
+            try {
+                const lat = typeof selectedArticle.latitude === 'number' ? selectedArticle.latitude : parseFloat(selectedArticle.latitude);
+                const lng = typeof selectedArticle.longitude === 'number' ? selectedArticle.longitude : parseFloat(selectedArticle.longitude);
+                
+                if (isNaN(lat) || isNaN(lng)) return;
+                
+                const position = new (window as any).kakao.maps.LatLng(lat, lng);
+                mapInstance.current.setCenter(position);
+                mapInstance.current.setLevel(3); // 맵 줌 레벨 3으로 설정
+            } catch (error) {
+                console.error('Error focusing on selected article:', error);
+            }
+        } else if (selectedArticle === null && isPreviousPositionSaved && lastMapCenter && lastMapLevel !== null) {
+            // 상세보기가 닫힐 때, 저장된 위치로 복원
+            try {
+                mapInstance.current.setCenter(lastMapCenter);
+                mapInstance.current.setLevel(lastMapLevel);
+                setIsPreviousPositionSaved(false);
+            } catch (error) {
+                console.error('Error restoring previous map position:', error);
+            }
         }
-    }, [selectedArticle, isMapLoaded]);
+    }, [selectedArticle, isMapLoaded, isPreviousPositionSaved, lastMapCenter, lastMapLevel]);
 
     // 선택된 지역이 변경될 때 지도 중심 이동
     useEffect(() => {
@@ -440,45 +442,28 @@ const MapView = ({
         }
     }, [isMapLoaded, selectedRegions, allRegions]);
 
-    // 지도 이동/줌 이벤트 처리
-    useEffect(() => {
-        if (!isMapLoaded || !mapInstance.current) return;
-        
-        // 지도 이동/줌 시 팝오버 위치 업데이트
-        const moveHandler = () => {
-            if (hoveredArticle) {
-                updateHoveredMarkerPosition();
-            }
-        };
-        
-        (window as any).kakao.maps.event.addListener(mapInstance.current, 'drag', moveHandler);
-        (window as any).kakao.maps.event.addListener(mapInstance.current, 'zoom_changed', moveHandler);
-        
-        return () => {
-            if (mapInstance.current) {
-                (window as any).kakao.maps.event.removeListener(mapInstance.current, 'drag', moveHandler);
-                (window as any).kakao.maps.event.removeListener(mapInstance.current, 'zoom_changed', moveHandler);
-            }
-        };
-    }, [isMapLoaded, hoveredArticle, updateHoveredMarkerPosition]);
-
     // 마커 렌더링 (지도가 로드되고 articles가 있을 때)
     useEffect(() => {
-        if (!map || !clusterer || !articles.length || !mapBounds) return;
+        if (!map || !clusterer || !mapBounds) return;
         
         console.log('Rendering markers for', articles.length, 'articles');
         
         // 기존 마커 모두 제거
         clusterer.clear();
         
+        // 매물이 없는 경우 마커를 표시하지 않고 종료
+        if (articles.length === 0) {
+            return;
+        }
+        
         // 현재 지도 영역에 보이는 매물만 필터링
         const visibleArticles = filterVisibleArticles(articles);
         console.log('Visible articles:', visibleArticles.length, '/', articles.length);
         
-        // 마커와 인포윈도우 생성
-        const markers: any[] = [];
-        const markerInfoMap = new Map();
+        // 위치별 매물 그룹화
+        const articlesByLocation = new Map<string, ArticleResponse[]>();
         
+        // 같은 위치에 있는 매물들을 그룹화
         visibleArticles.forEach(article => {
             if (!article.latitude || !article.longitude) return;
             
@@ -487,14 +472,85 @@ const MapView = ({
             
             if (isNaN(lat) || isNaN(lng)) return;
             
+            // 소수점 6자리까지만 고려 (약 10cm 정밀도)
+            const locationKey = `${lat.toFixed(6)},${lng.toFixed(6)}`;
+            
+            if (!articlesByLocation.has(locationKey)) {
+                articlesByLocation.set(locationKey, []);
+            }
+            
+            articlesByLocation.get(locationKey)?.push(article);
+        });
+        
+        // 마커와 인포윈도우 생성
+        const markers: any[] = [];
+        const markerInfoMap = new Map();
+        
+        // 그룹화된 위치별로 마커 생성
+        articlesByLocation.forEach((articlesAtLocation, locationKey) => {
+            const [latStr, lngStr] = locationKey.split(',');
+            const lat = parseFloat(latStr);
+            const lng = parseFloat(lngStr);
             const position = new (window as any).kakao.maps.LatLng(lat, lng);
             
             try {
-                // 마커 아이콘 생성 (SVG로 생성하고 Base64 인코딩)
-                const svgString = getMarkerSvg(article);
+                // 대표 매물 선택 (대표 매물의 스타일 기준으로 마커 생성)
+                const representativeArticle = articlesAtLocation[0];
+                let svgString = '';
+                
+                if (articlesAtLocation.length > 1) {
+                    // 겹친 매물이 있는 경우 수를 표시하는 마커 생성
+                    const color = getTypeColor(representativeArticle.buildingType);
+                    const emoji = getTypeEmoji(representativeArticle.buildingType);
+                    const isSelected = selectedArticle && articlesAtLocation.some(article => article.id === selectedArticle.id);
+                    const opacity = isSelected ? 0.7 : 1.0;
+                    
+                    // 거래 유형에 따른 도형 선택
+                    if (representativeArticle.tradeType === "전세") {
+                        // 정사각형
+                        svgString = `<svg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="4" y="4" width="42" height="42" rx="10" ry="10" fill="${color}" stroke="white" stroke-width="2" opacity="${opacity}"/>
+                            <text x="25" y="28" font-size="16" text-anchor="middle" fill="white">${emoji}</text>
+                            <circle cx="38" cy="12" r="10" fill="rgba(0,0,0,0.5)" stroke="white" stroke-width="1"/>
+                            <text x="38" y="16" font-size="12" text-anchor="middle" fill="white">${articlesAtLocation.length}</text>
+                        </svg>`;
+                    } else if (representativeArticle.tradeType === "월세") {
+                        // 육각형
+                        svgString = `<svg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M25,4 L42,14 L42,36 L25,46 L8,36 L8,14 Z" rx="10" ry="10" fill="${color}" stroke="white" stroke-width="2" opacity="${opacity}"/>
+                            <text x="25" y="30" font-size="16" text-anchor="middle" fill="white">${emoji}</text>
+                            <circle cx="38" cy="12" r="10" fill="rgba(0,0,0,0.5)" stroke="white" stroke-width="1"/>
+                            <text x="38" y="16" font-size="12" text-anchor="middle" fill="white">${articlesAtLocation.length}</text>
+                        </svg>`;
+                    } else {
+                        // 원형 (매매 또는 기본값)
+                        svgString = `<svg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="25" cy="25" r="23" fill="${color}" stroke="white" stroke-width="2" opacity="${opacity}"/>
+                            <text x="25" y="30" font-size="16" text-anchor="middle" fill="white">${emoji}</text>
+                            <circle cx="38" cy="12" r="10" fill="rgba(0,0,0,0.5)" stroke="white" stroke-width="1"/>
+                            <text x="38" y="16" font-size="12" text-anchor="middle" fill="white">${articlesAtLocation.length}</text>
+                        </svg>`;
+                    }
+                } else {
+                    // 단일 매물의 경우 기존 마커 사용
+                    svgString = getMarkerSvg(representativeArticle);
+                }
+                
                 // URI malformed 에러 방지를 위한 안전한 인코딩
-                const encodedSvg = encodeURIComponent(svgString.replace(/\n\s*/g, ''));
-                const svgUrl = 'data:image/svg+xml;charset=utf-8,' + encodedSvg;
+                const cleanedSvg = svgString.replace(/\n\s*/g, '');
+                let svgUrl;
+                
+                try {
+                    // SVG 안전하게 인코딩
+                    const encodedSvg = encodeURIComponent(cleanedSvg)
+                        .replace(/'/g, '%27')
+                        .replace(/"/g, '%22');
+                    svgUrl = 'data:image/svg+xml,' + encodedSvg;
+                } catch (encodeError) {
+                    console.error('Error encoding SVG for location:', locationKey, encodeError);
+                    // 기본 마커 이미지 사용
+                    svgUrl = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png';
+                }
                 
                 const marker = new (window as any).kakao.maps.Marker({
                     position: position,
@@ -504,53 +560,31 @@ const MapView = ({
                         { offset: new (window as any).kakao.maps.Point(25, 25) }
                     ),
                     clickable: true,
-                    title: article.articleName
+                    title: articlesAtLocation.length > 1 ? `${articlesAtLocation.length}개의 매물` : representativeArticle.articleName
                 });
                 
                 // 마커 정보 저장 (추후 이벤트에서 사용)
-                markerInfoMap.set(marker, article);
+                markerInfoMap.set(marker, articlesAtLocation);
                 
                 // 마커 클릭 이벤트 추가
                 (window as any).kakao.maps.event.addListener(marker, 'click', () => {
-                    onArticleClick(article);
-                });
-                
-                // 마커 마우스오버 이벤트 추가
-                (window as any).kakao.maps.event.addListener(marker, 'mouseover', () => {
-                    setHoveredArticle(article);
-                    setPopoverArticle(article);
-                });
-                
-                // 마커 마우스아웃 이벤트 추가
-                (window as any).kakao.maps.event.addListener(marker, 'mouseout', () => {
-                    setHoveredArticle(null);
-                    setPopoverArticle(null);
+                    onArticleClick(representativeArticle);
                 });
                 
                 markers.push(marker);
             } catch (error) {
-                console.error('Error creating marker for article:', article.id, error);
+                console.error('Error creating marker for location:', locationKey, error);
             }
         });
         
         // 생성한 마커를 클러스터러에 추가
         clusterer.addMarkers(markers);
         
-        // 지도 범위 조정 (마커가 모두 보이게) - 초기 로드 또는 필터 변경 시에만 적용
-        if (markers.length > 0 && !fixedInitialView) {
-            const bounds = new (window as any).kakao.maps.LatLngBounds();
-            markers.forEach(marker => {
-                bounds.extend(marker.getPosition());
-            });
-            map.setBounds(bounds);
-        }
         
         return () => {
             // 이벤트 리스너 제거 및 마커 정보 맵 초기화
             markers.forEach(marker => {
                 (window as any).kakao.maps.event.removeListener(marker, 'click');
-                (window as any).kakao.maps.event.removeListener(marker, 'mouseover');
-                (window as any).kakao.maps.event.removeListener(marker, 'mouseout');
             });
             markerInfoMap.clear();
         };
@@ -565,30 +599,6 @@ const MapView = ({
             )}
             <Box sx={{ width: '100%', height: '100%', position: 'relative' }}>
                 <div ref={mapRef} style={{ width: '100%', height: '100%' }} />
-                <Popover
-                    open={Boolean(hoveredArticle) && Boolean(anchorPosition)}
-                    anchorReference="anchorPosition"
-                    anchorPosition={anchorPosition || { top: 0, left: 0 }}
-                    onClose={() => {
-                        setHoveredArticle(null);
-                        setAnchorPosition(null);
-                    }}
-                    anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-                    transformOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-                    sx={{ 
-                        pointerEvents: 'none',
-                        zIndex: 9999,
-                        '& .MuiPaper-root': {
-                            maxWidth: 'none',
-                            opacity: 0.8
-                        }
-                    }}
-                    disableRestoreFocus
-                >
-                    {hoveredArticle && (
-                        <MarkerPopup article={hoveredArticle} />
-                    )}
-                </Popover>
             </Box>
         </>
     );
