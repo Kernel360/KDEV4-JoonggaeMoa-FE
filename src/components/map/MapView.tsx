@@ -112,12 +112,18 @@ const MapView = ({
                     initialCenter?.lat || 37.5665, 
                     initialCenter?.lng || 126.9780
                 ),
-                level: initialZoom || 8
+                level: initialZoom || 8,
+                scrollwheel: true // 휠 확대/축소 허용
             };
             
             const kakaoMap = new (window as any).kakao.maps.Map(container, options);
             mapInstance.current = kakaoMap;
             setMap(kakaoMap);
+
+            // 휠 이벤트 전파 방지
+            container.addEventListener('wheel', (e) => {
+                e.stopPropagation();
+            }, { passive: false });
 
             // 초기 지도 경계 설정
             const bounds = kakaoMap.getBounds();
@@ -597,8 +603,25 @@ const MapView = ({
                     {mapErrorMessage}
                 </Alert>
             )}
-            <Box sx={{ width: '100%', height: '100%', position: 'relative' }}>
-                <div ref={mapRef} style={{ width: '100%', height: '100%' }} />
+            <Box sx={{ 
+                width: '100%', 
+                height: '100%', 
+                position: 'relative',
+                overflow: 'hidden', // 스크롤 방지
+                touchAction: 'none' // 터치 동작 방지 (모바일에서 스크롤 방지)
+            }}>
+                <div 
+                    ref={mapRef} 
+                    style={{ 
+                        width: '100%', 
+                        height: '100%',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        userSelect: 'none', // 텍스트 선택 방지
+                        touchAction: 'none' // 터치 동작 방지
+                    }} 
+                />
             </Box>
         </>
     );

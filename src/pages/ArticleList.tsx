@@ -753,7 +753,15 @@ const ArticleList = () => {
     };
 
     return (
-        <Box sx={{ width: '100%', height: '103vh', display: 'flex', flexDirection: 'column' }}>
+        <Box 
+            sx={{ 
+                width: '100%', 
+                height: '100vh', 
+                display: 'flex', 
+                flexDirection: 'column', 
+                overflow: 'hidden'
+            }}
+        >
             <AppBar position="static" color="default" elevation={1}>
                 <Toolbar>
                     <IconButton edge="start" color="inherit" onClick={handleBack}>
@@ -953,7 +961,14 @@ const ArticleList = () => {
                 </Toolbar>
             </AppBar>
             
-            <Box sx={{ position: 'relative', flex: 1, overflow: 'hidden' }}>
+            <Box 
+                sx={{ 
+                    position: 'relative', 
+                    flex: 1, 
+                    overflow: 'hidden',
+                    touchAction: 'none' // 모바일 터치 동작 방지
+                }}
+            >
                 {/* Map component */}
                 {showMap && (
                     <Box
@@ -961,6 +976,9 @@ const ArticleList = () => {
                             width: "100%",
                             height: "100%",
                             position: "absolute",
+                            touchAction: "none", // 터치 이벤트를 맵에서만 처리하도록 설정
+                            pointerEvents: "auto", // 포인터 이벤트 활성화
+                            overflow: 'hidden' // 스크롤 방지
                         }}
                     >
                         <MapView
@@ -1306,13 +1324,6 @@ const ArticleList = () => {
                     </Box>
                 </Box>
             </Drawer>
-
-            <Box sx={{ p: 2, textAlign: "center", mt: 4 }}>
-                <Typography variant="caption" color="textSecondary">
-                    © 2025 중개모아. All rights reserved.
-                </Typography>
-            </Box>
-            
         </Box>
     )
 }
