@@ -241,6 +241,13 @@ const ConsultationDetail = () => {
         event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent<ConsultationStatus>
     ) => {
         const { name, value } = event.target
+        
+        // 날짜 입력의 경우 연도를 4자리로 제한
+        if (name === 'date') {
+            const year = value.split('-')[0];
+            if (year.length > 4) return;
+        }
+        
         setEditFormData(prev => ({
             ...prev,
             [name]: value

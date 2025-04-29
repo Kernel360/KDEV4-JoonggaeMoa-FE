@@ -612,9 +612,17 @@ const MessageCreate = () => {
                                             type="date"
                                             label="날짜"
                                             value={scheduledDate}
-                                            onChange={(e) => setScheduledDate(e.target.value)}
+                                            onChange={(e) => {
+                                                const year = e.target.value.split('-')[0];
+                                                if (year.length <= 4) {
+                                                    setScheduledDate(e.target.value);
+                                                }
+                                            }}
                                             InputLabelProps={{ shrink: true }}
                                             error={timeError}
+                                            inputProps={{
+                                                max: "9999-12-31"
+                                            }}
                                             sx={{
                                                 '& .MuiOutlinedInput-root': {
                                                     borderRadius: 1,

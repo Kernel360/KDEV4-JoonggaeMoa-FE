@@ -1216,9 +1216,17 @@ const ConsultationList = () => {
                                     type="date"
                                     required
                                     value={scheduledDate}
-                                    onChange={(e) => setScheduledDate(e.target.value)}
+                                    onChange={(e) => {
+                                        const year = e.target.value.split('-')[0];
+                                        if (year.length <= 4) {
+                                            setScheduledDate(e.target.value);
+                                        }
+                                    }}
                                     InputLabelProps={{
                                         shrink: true,
+                                    }}
+                                    inputProps={{
+                                        max: "9999-12-31"
                                     }}
                                 />
                             </Grid>
