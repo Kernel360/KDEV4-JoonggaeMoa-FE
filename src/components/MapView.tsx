@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Box, Alert } from '@mui/material';
-import type { ArticleResponse } from '../../types/article';
-import { getTypeColor, getTypeEmoji } from '../../utils/articleUtils';
+import type { ArticleResponse } from '../types/article';
+import { getTypeColor, getTypeEmoji } from '../utils/articleUtils';
 
 interface Region {
     id: number;

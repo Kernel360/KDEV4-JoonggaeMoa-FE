@@ -22,7 +22,7 @@ import {
 import React, { useEffect, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import ArticleDetail from "../components/ArticleDetail"
-import MapView from '../components/map/MapView'
+import MapView from '../components/MapView'
 import { articleApi } from "../services/articleApi"
 import { regionApi } from "../services/regionApi"
 import type { ArticleResponse, ComplexResponse } from "../types/article"
@@ -30,9 +30,9 @@ import FilterListIcon from '@mui/icons-material/FilterList';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import ViewMapIcon from '@mui/icons-material/Map';
-import RegionSelector from '../components/region/RegionSelector'
-import { Region, SelectedRegions } from '../utils/regions/regionUtils'
-import { getCityOptions, getDistrictOptions, getNeighborhoodOptions, KOREA_REGIONS } from '../utils/regions/regionData'
+import RegionSelector from '../components/RegionSelector'
+import { Region, SelectedRegions } from '../utils/regionUtils'
+import { getCityOptions, getDistrictOptions, getNeighborhoodOptions, KOREA_REGIONS } from '../utils/regionData'
 import { formatDate, formatPrice, getTradeTypeColor, getTypeColor, getTypeEmoji, isZeroPrice, convertKoreanPriceToNumber } from '../utils/articleUtils'
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 

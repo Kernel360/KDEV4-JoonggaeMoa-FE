@@ -1,6 +1,6 @@
-import { withImageSize } from '../../utils/articleUtils';
+import { withImageSize } from '../utils/articleUtils';
 import { Box, Typography } from '@mui/material';
-import { getTypeColor, getTypeEmoji } from '../../utils/articleUtils';
+import { getTypeColor, getTypeEmoji } from '../utils/articleUtils';
 import { useState } from 'react';
 
 interface ArticleImageProps {
