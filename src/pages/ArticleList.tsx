@@ -1011,7 +1011,7 @@ const ArticleList = () => {
                         bgcolor: 'background.paper',
                         boxShadow: '4px 0px 10px rgba(0, 0, 0, 0.1)',
                         transition: 'left 0.3s ease-in-out',
-                        opacity: 0.9
+                        opacity: 0.95
                     }}
                 >
                     <List>
@@ -1068,7 +1068,7 @@ const ArticleList = () => {
                         transform: detailVisible ? 'translateX(0)' : 'translateX(100%)',
                         boxShadow: '-4px 0px 10px rgba(0, 0, 0, 0.1)',
                         borderLeft: '1px solid rgba(0, 0, 0, 0.12)',
-                        opacity: 0.9
+                        opacity: 0.95
                     }}
                 >
                     {selectedArticle && (

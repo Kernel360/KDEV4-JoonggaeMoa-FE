@@ -192,179 +192,196 @@ const ArticleDetail = ({ article, complex, onClose }: ArticleDetailProps) => {
             {/* 컨텐츠 부분 */}
             <Box sx={{ p: 3, flexGrow: 1, overflow: 'auto' }}>
                 <Grid container spacing={3}>
-                    {/* 이미지 섹션 */}
-                    <Grid item xs={12} md={6}>
-                        <Card sx={{ height: '100%' }}>
-                            {article.imageUrl ? (
-                                <CardMedia
-                                    component="img"
-                                    height="300"
-                                    image={article.imageUrl}
-                                    alt={article.articleName}
-                                />
-                            ) : (
-                                <Box
-                                    sx={{
-                                        height: 300,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        bgcolor: 'grey.100'
-                                    }}
-                                >
-                                    <Typography color="text.secondary">
-                                        이미지 없음
-                                    </Typography>
-                                </Box>
-                            )}
-                        </Card>
-                    </Grid>
+                    {/* 상단: 이미지 섹션, 가격 정보, 주소 섹션 (전체 너비) */}
+                    <Grid item xs={12}>
+                        <Grid container spacing={3}>
+                            {/* 이미지 섹션 */}
+                            <Grid item xs={12} md={5}>
+                                <Card sx={{ height: '100%' }}>
+                                    {article.imageUrl ? (
+                                        <CardMedia
+                                            component="img"
+                                            height="300"
+                                            image={article.imageUrl}
+                                            alt={article.articleName}
+                                        />
+                                    ) : (
+                                        <Box
+                                            sx={{
+                                                height: 300,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                bgcolor: 'grey.100'
+                                            }}
+                                        >
+                                            <Typography color="text.secondary">
+                                                이미지 없음
+                                            </Typography>
+                                        </Box>
+                                    )}
+                                </Card>
+                            </Grid>
 
-                    {/* 기본 정보 섹션 */}
-                    <Grid item xs={12} md={6}>
-                        <Stack spacing={2}>
-                            {/* 가격 정보 */}
-                            <Paper sx={{ p: 2 }}>
-                                <Typography variant="h5" fontWeight="bold" gutterBottom>
-                                    {article.tradeType === "매매" ? "매매가" : "보증금"} {isZeroPrice(article.priceSale) ? "X" : formatPrice(article.priceSale)}
-                                </Typography>
-                                {(article.tradeType === "전세" || article.tradeType === "월세" || article.tradeType === "단기임대") && article.priceRent > 0 && (
-                                    <Typography variant="h6" color="text.secondary">
-                                        월세 {formatPrice(article.priceRent)}
-                                    </Typography>
-                                )}
-                            </Paper>
-
-                            {/* 거래 유형 및 건물 유형 */}
-                            <Box sx={{ display: 'flex', gap: 1 }}>
-                                <Chip
-                                    label={article.tradeType}
-                                    color={getTradeTypeColor(article.tradeType) as "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning"}
-                                    size="small"
-                                />
-                                <Chip
-                                    label={article.buildingType}
-                                    color="default"
-                                    size="small"
-                                />
-                            </Box>
-
-                            {/* 주소 정보 */}
-                            <Box>
-                                <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                                    <LocationOnIcon sx={{ verticalAlign: 'middle', mr: 0.5 }} />
-                                    주소
-                                </Typography>
-                                <Typography variant="body1" paragraph>
-                                    {article.addressFullRoad || article.addressFullLot}
-                                </Typography>
-                                <Button
-                                    variant="outlined"
-                                    startIcon={<DirectionsIcon />}
-                                    onClick={handleOpenMap}
-                                    size="small"
-                                >
-                                    지도에서 보기
-                                </Button>
-                            </Box>
-
-                            {/* 상세 정보 */}
-                            <Box>
-                                <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                                    상세 정보
-                                </Typography>
-                                <Grid container spacing={1}>
-                                    <Grid item xs={6}>
-                                        <Typography variant="body2" color="text.secondary">
-                                            층수
-                                        </Typography>
-                                        <Typography variant="body1">
-                                            {article.floors || '-'}
-                                        </Typography>
-                                    </Grid>
-                                    <Grid item xs={6}>
-                                        <Typography variant="body2" color="text.secondary">
-                                            방향
-                                        </Typography>
-                                        <Typography variant="body1">
-                                            {article.direction || '-'}
-                                        </Typography>
-                                    </Grid>
-                                    <Grid item xs={6}>
-                                        <Typography variant="body2" color="text.secondary">
-                                            공급면적
-                                        </Typography>
-                                        <Typography variant="body1">
-                                            {article.areaSupply ? `${article.areaSupply}㎡` : '-'}
-                                        </Typography>
-                                    </Grid>
-                                    <Grid item xs={6}>
-                                        <Typography variant="body2" color="text.secondary">
-                                            전용면적
-                                        </Typography>
-                                        <Typography variant="body1">
-                                            {article.areaExclusive ? `${article.areaExclusive}㎡` : '-'}
-                                        </Typography>
-                                    </Grid>
-                                    <Grid item xs={6}>
-                                        <Typography variant="body2" color="text.secondary">
-                                            사용승인일
-                                        </Typography>
-                                        <Typography variant="body1">
-                                            {article.confirmedAt ? formatDate(article.confirmedAt) : '-'}
-                                        </Typography>
-                                    </Grid>
-                                </Grid>
-                            </Box>
-
-                            {/* 매물 설명 */}
-                            {article.articleDesc && (
-                                <Box>
-                                    <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                                        매물 설명
-                                    </Typography>
-                                    <Typography variant="body1" sx={{ whiteSpace: 'pre-line' }}>
-                                        {article.articleDesc}
-                                    </Typography>
-                                </Box>
-                            )}
-
-                            {/* 단지 정보 */}
-                            {complex && (
-                                <Box>
-                                    <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                                        <ApartmentIcon sx={{ verticalAlign: 'middle', mr: 0.5 }} />
-                                        단지 정보
-                                    </Typography>
+                            {/* 가격 정보, 주소 섹션 */}
+                            <Grid item xs={12} md={7}>
+                                <Stack spacing={2}>
+                                    {/* 가격 정보 */}
                                     <Paper sx={{ p: 2 }}>
-                                        <Typography variant="body1" gutterBottom>
-                                            {complex.name}
+                                        <Typography variant="h5" fontWeight="bold" gutterBottom>
+                                            {article.tradeType === "매매" ? "매매가" : "보증금"} {isZeroPrice(article.priceSale) ? "X" : formatPrice(article.priceSale)}
                                         </Typography>
-                                        <Typography variant="body2" color="text.secondary">
-                                            {complex.type}
-                                        </Typography>
-                                        {complex.approvedAt && (
-                                            <Typography variant="body2" color="text.secondary">
-                                                사용승인일: {complex.approvedAt}
+                                        {(article.tradeType === "전세" || article.tradeType === "월세" || article.tradeType === "단기임대") && article.priceRent > 0 && (
+                                            <Typography variant="h6" color="text.secondary">
+                                                월세 {formatPrice(article.priceRent)}
                                             </Typography>
                                         )}
                                     </Paper>
-                                </Box>
-                            )}
 
-                            {/* 중개사 정보 */}
-                            <Box>
-                                <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                                    중개사 정보
-                                </Typography>
-                                <Typography variant="body1">
-                                    {article.agency || '-'}
-                                </Typography>
-                                <Typography variant="body2" color="text.secondary">
-                                    {article.companyName || '-'}
-                                </Typography>
-                            </Box>
-                        </Stack>
+                                    {/* 거래 유형 및 건물 유형 */}
+                                    <Box sx={{ display: 'flex', gap: 1 }}>
+                                        <Chip
+                                            label={article.tradeType}
+                                            color={getTradeTypeColor(article.tradeType) as "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning"}
+                                            size="small"
+                                        />
+                                        <Chip
+                                            label={article.buildingType}
+                                            color="default"
+                                            size="small"
+                                        />
+                                    </Box>
+
+                                    {/* 주소 정보 */}
+                                    <Box>
+                                        <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                                            <LocationOnIcon sx={{ verticalAlign: 'middle', mr: 0.5 }} />
+                                            주소
+                                        </Typography>
+                                        <Typography variant="body1" paragraph>
+                                            {article.addressFullRoad || article.addressFullLot}
+                                        </Typography>
+                                        <Button
+                                            variant="outlined"
+                                            startIcon={<DirectionsIcon />}
+                                            onClick={handleOpenMap}
+                                            size="small"
+                                        >
+                                            지도에서 보기
+                                        </Button>
+                                    </Box>
+                                </Stack>
+                            </Grid>
+                        </Grid>
+                    </Grid>
+
+                    {/* 중간 섹션: 2열 레이아웃 - 상세 정보 (왼쪽) / 매물 설명 + 중개사 정보 (오른쪽) */}
+                    <Grid item xs={12}>
+                        <Grid container spacing={3}>
+                            {/* 왼쪽 열: 상세 정보 */}
+                            <Grid item xs={12} md={6}>
+                                <Paper sx={{ p: 3, height: '100%' }}>
+                                    <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                                        상세 정보
+                                    </Typography>
+                                    <Grid container spacing={2}>
+                                        <Grid item xs={6}>
+                                            <Typography variant="body2" color="text.secondary">
+                                                층수
+                                            </Typography>
+                                            <Typography variant="body1">
+                                                {article.floors || '-'}
+                                            </Typography>
+                                        </Grid>
+                                        <Grid item xs={6}>
+                                            <Typography variant="body2" color="text.secondary">
+                                                방향
+                                            </Typography>
+                                            <Typography variant="body1">
+                                                {article.direction || '-'}
+                                            </Typography>
+                                        </Grid>
+                                        <Grid item xs={6}>
+                                            <Typography variant="body2" color="text.secondary">
+                                                공급면적
+                                            </Typography>
+                                            <Typography variant="body1">
+                                                {article.areaSupply ? `${article.areaSupply}㎡` : '-'}
+                                            </Typography>
+                                        </Grid>
+                                        <Grid item xs={6}>
+                                            <Typography variant="body2" color="text.secondary">
+                                                전용면적
+                                            </Typography>
+                                            <Typography variant="body1">
+                                                {article.areaExclusive ? `${article.areaExclusive}㎡` : '-'}
+                                            </Typography>
+                                        </Grid>
+                                        <Grid item xs={6}>
+                                            <Typography variant="body2" color="text.secondary">
+                                                사용승인일
+                                            </Typography>
+                                            <Typography variant="body1">
+                                                {article.confirmedAt ? formatDate(article.confirmedAt) : '-'}
+                                            </Typography>
+                                        </Grid>
+                                    </Grid>
+
+                                    {/* 단지 정보 */}
+                                    {complex && (
+                                        <Box sx={{ mt: 4 }}>
+                                            <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                                                <ApartmentIcon sx={{ verticalAlign: 'middle', mr: 0.5 }} />
+                                                단지 정보
+                                            </Typography>
+                                            <Paper sx={{ p: 2 }}>
+                                                <Typography variant="body1" gutterBottom>
+                                                    {complex.name}
+                                                </Typography>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    {complex.type}
+                                                </Typography>
+                                                {complex.approvedAt && (
+                                                    <Typography variant="body2" color="text.secondary">
+                                                        사용승인일: {complex.approvedAt}
+                                                    </Typography>
+                                                )}
+                                            </Paper>
+                                        </Box>
+                                    )}
+                                </Paper>
+                            </Grid>
+
+                            {/* 오른쪽 열: 매물 설명 + 중개사 정보 */}
+                            <Grid item xs={12} md={6}>
+                                <Paper sx={{ p: 3, height: '100%' }}>
+                                    {/* 매물 설명 */}
+                                    <Box mb={4}>
+                                        <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                                            매물 설명
+                                        </Typography>
+                                        <Typography variant="body1" sx={{ whiteSpace: 'pre-line' }}>
+                                            {article.articleDesc || '등록된 매물 설명이 없습니다.'}
+                                        </Typography>
+                                    </Box>
+
+                                    <Divider sx={{ my: 3 }} />
+
+                                    {/* 중개사 정보 */}
+                                    <Box>
+                                        <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                                            중개사 정보
+                                        </Typography>
+                                        <Typography variant="body1">
+                                            {article.agency || '-'}
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary">
+                                            {article.companyName || '-'}
+                                        </Typography>
+                                    </Box>
+                                </Paper>
+                            </Grid>
+                        </Grid>
                     </Grid>
 
                     {/* 지도 섹션 */}
