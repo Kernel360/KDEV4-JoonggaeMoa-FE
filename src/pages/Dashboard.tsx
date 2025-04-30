@@ -248,64 +248,6 @@ const Dashboard = () => {
         handleMenuClose();
     }
     
-    const handleNotificationNavigation = async (notification: Notification) => {
-        console.log("Notification being handled:", notification);
-        try {
-            const token = localStorage.getItem('accessToken');
-            if (!token) {
-                navigate('/');
-                return;
-            }
-    
-            await api.patch("/api/notification/read", null, {
-                params: {
-                    notificationId: notification.id,
-                },
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            });
-            
-            // Update local state to mark notification as read
-            setNotifications(prev => 
-                prev.map(n => 
-                    n.id === notification.id ? { ...n, isRead: true } : n
-                )
-            );
-            
-            // Update unread count
-            setUnreadCount(prev => Math.max(0, prev - 1));
-            
-            handleNotificationClose();
-            
-            // Navigate based on type
-            switch (notification.type) {
-                case 'SURVEY':
-                    handleSurveyManagement();  
-                    break;
-                case 'ARTICLE':
-                    handleArticleManagement();
-                    break;
-                case 'CONSULTATION':
-                    handleConsultationManagement();
-                    break;
-                case 'MESSAGE':
-                    handleMessageManagement();
-                    break;
-                case 'CONTRACT':
-                    handleContractManagement();
-                    break;
-                default:
-                    navigate('/dashboard');
-            }
-        } catch (error: any) {
-            console.error("Error marking notification as read:", error);
-            if (error.response && error.response.status === 401) {
-                console.log("Authentication error, redirecting to login");
-                navigate('/');
-            }
-        }
-    };
 
     const fetchContracts = async () => {
         try {
@@ -371,7 +313,7 @@ const Dashboard = () => {
         // 초기 알림 데이터 로드
         const fetchNotifications = async () => {
             try {
-                const response = await api.get("/api/notification");
+                const response = await api.get("/api/notifications");
                 if (response.data.success) {
                     const allNotifications = response.data.data.map(notification => ({
                         ...notification,
