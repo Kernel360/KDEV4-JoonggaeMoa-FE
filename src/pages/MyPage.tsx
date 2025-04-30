@@ -57,19 +57,20 @@ const MyPage = () => {
         const { name, value } = e.target
         
         if (name === 'phone') {
-            // Remove all non-digit characters
-            const digits = value.replace(/\D/g, '')
+            // Remove all non-numeric characters
+            const numericValue = value.replace(/\D/g, '')
             
             // Format the phone number
-            let formattedPhone = digits
-            if (digits.length >= 3) {
-                formattedPhone = digits.slice(0, 3) + '-' + digits.slice(3)
-                if (digits.length >= 7) {
-                    formattedPhone = formattedPhone.slice(0, 8) + '-' + digits.slice(7, 11)
+            if (numericValue.length <= 11) {
+                let formattedPhone = numericValue
+                if (numericValue.length > 3) {
+                    formattedPhone = numericValue.slice(0, 3) + '-' + numericValue.slice(3)
                 }
+                if (numericValue.length > 7) {
+                    formattedPhone = formattedPhone.slice(0, 8) + '-' + formattedPhone.slice(8)
+                }
+                setEditData((prev) => (prev ? { ...prev, [name]: formattedPhone } : null))
             }
-            
-            setEditData((prev) => (prev ? { ...prev, [name]: formattedPhone } : null))
         } else {
             setEditData((prev) => (prev ? { ...prev, [name]: value } : null))
         }
