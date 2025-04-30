@@ -245,7 +245,14 @@ const SurveySubmit: React.FC = () => {
             return;
         }
 
-        const formattedDateTime = dateTimeValue.replace('T', ' ');
+        // Format the date to yyyy-MM-dd HH:mm
+        const year = selectedDate.getFullYear();
+        const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+        const day = String(selectedDate.getDate()).padStart(2, '0');
+        const hours = String(selectedDate.getHours()).padStart(2, '0');
+        const minutes = String(selectedDate.getMinutes()).padStart(2, '0');
+        const formattedDateTime = `${year}-${month}-${day} ${hours}:${minutes}`;
+        
         setConsultAt(formattedDateTime);
         setSubmitError(null);
     };
