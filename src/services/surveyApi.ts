@@ -49,7 +49,7 @@ export const submitSurveyAnswer = async (
 
 // 모든 설문 답변 조회
 export const getAllSurveyAnswers = async (): Promise<AxiosResponse<ApiResponse<AnswerResponse[]>>> => {
-    return api.get(`/api/surveys/answer`)
+    return api.get(`/api/surveys/answers`)
 }
 
 // 고객용 설문 조회 API 추가
@@ -62,7 +62,7 @@ export const submitSurveyAnswerForCustomer = async (
     surveyId: string,
     answerData: AnswerRequest,
 ): Promise<AxiosResponse<ApiResponse<void>>> => {
-    return api.post(`/api/customers/surveys/${surveyId}/submit`, answerData)
+    return api.post(`/api/customers/surveys/${surveyId}`, answerData)
 }
 
 // Export both individual functions and the object for backward compatibility
@@ -82,7 +82,7 @@ export const surveyApi = {
     getSurveyById,
     submitSurveyAnswer,
     getAllSurveyAnswers: (page: number = 0, size: number = 10) => {
-        return api.get('/api/surveys/answer', {
+        return api.get('/api/surveys/answers', {
             params: {
                 page,
                 size,

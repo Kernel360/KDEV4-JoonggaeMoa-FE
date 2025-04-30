@@ -194,11 +194,28 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         setAnchorEl(null);
     };
 
-    const handleLogout = () => {
-        closeSSEConnection();
-        logout();
-        navigate("/");
-        handleMenuClose();
+    const handleLogout = async () => {
+        try {
+            const token = localStorage.getItem('accessToken');
+            if (token) {
+                await api.post("/api/agents/me/logout", null, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
+            }
+            closeSSEConnection();
+            logout();
+            navigate("/");
+            handleMenuClose();
+        } catch (error) {
+            console.error("Logout error:", error);
+            // Even if the API call fails, we should still clear local state
+            closeSSEConnection();
+            logout();
+            navigate("/");
+            handleMenuClose();
+        }
     };
     
     const handleNotificationNavigation = async (notification: Notification) => {
@@ -250,7 +267,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         // 프로필 정보를 가져오는 함수
         const fetchProfile = async () => {
             try {
-                const response = await api.get("/api/agents"); // API 요청
+                const response = await api.get("/api/agents/me"); // API 요청
                 if (response.data.success && response.data.data) {
                     setProfile({
                         name: response.data.data.name,

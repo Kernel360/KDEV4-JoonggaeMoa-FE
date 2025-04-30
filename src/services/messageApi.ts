@@ -61,7 +61,7 @@ export const messageApi = {
     getMessages: async (
         params?: MessagePaginationParams,
     ): Promise<AxiosResponse<ApiResponse<PageResponse<MessageResponse>>>> => {
-        return api.get("/api/messages", { params })
+        return api.get("/api/all-messages", { params })
     },
 
     // 메시지 예약/전송
@@ -73,12 +73,7 @@ export const messageApi = {
     getReservedMessages: async (
         params?: MessagePaginationParams,
     ): Promise<AxiosResponse<ApiResponse<PageResponse<ReservedMessageResponse>>>> => {
-        return api.get("/api/reserved-messages", { params })
-    },
-
-    // 메시지 상세 조회
-    getReservedMessageById: async (reservedMessageId: number): Promise<AxiosResponse<ApiResponse<ReservedMessageResponse>>> => {
-        return api.get(`/api/reserved-messages/${reservedMessageId}`)
+        return api.get("/api/messages", { params })
     },
 
     // 메시지 수정
@@ -88,6 +83,6 @@ export const messageApi = {
 
     // 메시지 삭제
     deleteMessage: async (reservedMessageId: number): Promise<AxiosResponse<ApiResponse<void>>> => {
-        return api.delete(`/api/reserved-messages/${reservedMessageId}`)
+        return api.delete(`/api/messages/${reservedMessageId}`)
     },
 }
