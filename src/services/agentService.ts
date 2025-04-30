@@ -23,7 +23,7 @@ export interface AgentUpdateRequest {
 }
 
 export const getAgent = async (): Promise<AgentInfo> => {
-    const response = await api.get("/api/agents")
+    const response = await api.get("/api/agents/me")
     return response.data.data
 }
 
@@ -37,5 +37,5 @@ export const updateAgent = async (data: AgentUpdateRequest): Promise<void> => {
         ...data
     }
     
-    await api.patch("/api/agents", mergedData)
+    await api.patch("/api/agents/me", mergedData)
 } 
