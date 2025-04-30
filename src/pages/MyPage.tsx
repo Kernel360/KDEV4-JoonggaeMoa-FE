@@ -270,6 +270,7 @@ const MyPage = () => {
                                         onChange={handleEditChange}
                                         size="small"
                                         required
+                                        disabled
                                         sx={{ mb: 1 }}
                                     />
                                 </Grid>
