@@ -41,7 +41,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     const [eventSource, setEventSource] = useState<EventSource | null>(null);
     const navigate = useNavigate();
 
-    const excludedPaths = ['/signup', '/surveys/submit/:surveyId', '/inquiry', '/inquiry/:id', 'login']; 
+    const excludedPaths = ['/','/signup', '/surveys/submit/:surveyId', '/inquiry', '/inquiry/:id', 'login']; 
     const shouldExclude = excludedPaths.includes(location.pathname);
 
     useEffect(() => {
@@ -137,8 +137,19 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
         }
     };
 
+    const getClientId = (): string => {
+        const key = 'sse-client-id';
+        let clientId = localStorage.getItem(key);
+        if (!clientId) {
+            clientId = window.crypto.randomUUID();
+            localStorage.setItem(key, clientId);
+        }
+        return clientId;
+    };
+
     const setupSSEConnection = (agentId: number) => {
-        const source = new EventSource(`${api.defaults.baseURL}/api/notification/subscribe?agentId=${agentId}`, {
+        const clientId = getClientId();
+        const source = new EventSource(`${api.defaults.baseURL}/api/notification/subscribe?agentId=${agentId}&clientId=${clientId}`, {
             withCredentials: true
         });
 
@@ -149,8 +160,23 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
         setEventSource(source);
 
         source.addEventListener("notification", (event: MessageEvent) => {
+            const data = event.data;
+
+            if (typeof data === 'string' && !data.trim().startsWith('{') && data === 'connection') {
+                toast.success("로그인 성공", {
+                    position: "top-right",
+                    autoClose: 3000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                    theme: "colored"
+                });
+                return;
+            }
+
             try {
-                const rawNotification = JSON.parse(event.data);
+                const rawNotification = JSON.parse(data);
                 const newNotification = {
                     ...rawNotification,
                     isRead: rawNotification.read
