@@ -45,6 +45,7 @@ import { useNotification } from "../context/NotificationContext";
 import { formatDistanceToNow } from 'date-fns';
 import Footer from './Footer';
 
+
 // 커스텀 테마 생성
 const theme = createTheme({
     typography: {
@@ -148,6 +149,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    
 
     // Add these missing notification handler functions
     const handleNotificationClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -308,7 +310,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         // Change initializeNotifications to fetchNotifications
         fetchNotifications();
 
-    }, [fetchNotifications]);
+    }, [fetchNotifications, location.pathname]);
+
+
 
     return (
         <ThemeProvider theme={theme}>
