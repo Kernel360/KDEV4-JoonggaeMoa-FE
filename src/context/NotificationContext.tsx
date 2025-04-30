@@ -72,6 +72,19 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
         fetchNotifications();
     }, [fetchNotifications]);
 
+    useEffect(() => {
+        const token = localStorage.getItem('accessToken');
+        const agentId = localStorage.getItem('agentId');
+
+        if (token && agentId && !shouldExclude) {
+            setupSSEConnection(Number(agentId));
+        }
+
+        return () => {
+            closeSSEConnection();
+        };
+    }, [shouldExclude]);
+
     const addNotification = (notification: Notification) => {
         if (notification.type !== 'CONNECTION') {
             setNotifications(prev => [...prev, notification]);
@@ -164,23 +177,26 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
             const data = event.data;
 
             if (typeof data === 'string' && !data.trim().startsWith('{') && data === 'connection') {
-                toast.success("로그인 성공", {
-                    position: "top-right",
-                    autoClose: 3000,
-                    hideProgressBar: false,
-                    closeOnClick: true,
-                    pauseOnHover: true,
-                    draggable: true,
-                    theme: "colored"
-                });
+                // toast.success("로그인 성공", {
+                //     position: "top-right",
+                //     autoClose: 3000,
+                //     hideProgressBar: false,
+                //     closeOnClick: true,
+                //     pauseOnHover: true,
+                //     draggable: true,
+                //     theme: "colored"
+                // });
                 return;
             }
 
             try {
                 const rawNotification = JSON.parse(data);
                 const newNotification = {
-                    ...rawNotification,
-                    isRead: rawNotification.read
+                    id: rawNotification.id,
+                    type: rawNotification.type,
+                    content: rawNotification.content,
+                    isRead: rawNotification.read ?? false,  // 명시적으로 false로 설정
+                    createdAt: rawNotification.createdAt
                 };
                 addNotification(newNotification);
             } catch (error) {
@@ -196,6 +212,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
         return () => {
             source.close();
+            console.log("SSE connection closed");
         };
     };
 

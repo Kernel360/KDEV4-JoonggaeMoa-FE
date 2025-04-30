@@ -56,7 +56,7 @@ function Login() {
 
                 if (accessToken && agentId) {
                     login(accessToken, agentId)
-                    setupSSEConnection(agentId)
+                    //setupSSEConnection(agentId)
                     navigate("/dashboard")
                 } else {
                     throw new Error("No access token or agentId received")

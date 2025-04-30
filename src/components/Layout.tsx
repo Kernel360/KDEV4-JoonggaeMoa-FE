@@ -228,7 +228,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             }
             
             if(notification.isRead === false) {
-                console.log("Marking notification as read:", notification.id)
+                
                 markAsRead(notification.id);
             }
     
