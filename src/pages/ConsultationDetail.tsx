@@ -284,13 +284,57 @@ const ConsultationDetail = () => {
         try {
             if (isNewConsultation) {
                 const createData: ConsultationCreateRequest = {
-                    customerId: customerId,
+                    customerId: customerId!,
                     date: format(new Date(editFormData.date || ""), "yyyy-MM-dd HH:mm"),
                     purpose: editFormData.purpose,
                     memo: editFormData.memo,
                     consultationStatus: editFormData.consultationStatus
                 }
-                await consultationApi.createConsultation(createData)
+                const response = await consultationApi.createConsultation(createData)
+                if (response.data.success) {
+                    // 새 상담이 생성되면 상담 목록을 새로고침
+                    await fetchConsultationHistory()
+                    
+                    // 모든 페이지를 검색하여 새로 생성된 상담을 찾음
+                    let foundNewConsultation = false
+                    let currentPage = 0
+                    
+                    while (!foundNewConsultation) {
+                        const historyResponse = await consultationApi.getConsultationHistoryByConsultationId(
+                            parseInt(consultationId!, 10),
+                            currentPage,
+                            pageSize
+                        )
+                        
+                        if (!historyResponse.data?.data || historyResponse.data.data.consultations.content.length === 0) {
+                            break
+                        }
+                        
+                        // 현재 페이지에서 새 상담을 찾음
+                        const newConsultation = historyResponse.data.data.consultations.content.find(
+                            consultation => 
+                                consultation.date === format(new Date(editFormData.date || ""), "yyyy-MM-dd HH:mm") &&
+                                consultation.purpose === editFormData.purpose &&
+                                consultation.memo === editFormData.memo
+                        )
+                        
+                        if (newConsultation) {
+                            // 새 상담 정보로 수정 폼 업데이트
+                            setEditFormData({
+                                consultationId: newConsultation.consultationId,
+                                date: newConsultation.date,
+                                consultationStatus: newConsultation.consultationStatus,
+                                purpose: newConsultation.purpose,
+                                memo: newConsultation.memo,
+                            })
+                            setIsNewConsultation(false)
+                            foundNewConsultation = true
+                            break
+                        }
+                        
+                        currentPage++
+                    }
+                }
                 setSnackbar({
                     open: true,
                     message: "새로운 상담이 등록되었습니다.",
@@ -310,7 +354,6 @@ const ConsultationDetail = () => {
                     severity: "success"
                 })
             }
-            await fetchConsultationHistory()
         } catch (err) {
             console.error("Error saving consultation:", err)
             setSnackbar({
