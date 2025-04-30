@@ -268,39 +268,6 @@ const Dashboard = () => {
     useEffect(() => {
         fetchContracts();
     }, []);
-    
-
-    useEffect(() => {
-        // 프로필 정보를 가져오는 함수
-        const fetchProfile = async () => {
-            try {
-                const response = await api.get("/api/agents"); // API 요청
-                if (response.data.success && response.data.data) {
-                    setProfile({
-                        name: response.data.data.name,
-                        email: response.data.data.email,
-                    });
-                } else {
-                    setError("프로필 정보를 불러오는데 실패했습니다.");
-                }
-            } catch (err) {
-                console.error("Error fetching profile:", err);
-                setError("프로필 정보를 불러오는데 실패했습니다.");
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchProfile();
-        
-        // 주기적으로 프로필 정보 업데이트 (5분마다)
-        const profileInterval = setInterval(fetchProfile, 5 * 60 * 1000);
-        
-        // 컴포넌트 언마운트 시 인터벌 정리
-        return () => {
-            clearInterval(profileInterval);
-        };
-    }, []);
 
     useEffect(() => {
         const agentId = localStorage.getItem('agentId');
