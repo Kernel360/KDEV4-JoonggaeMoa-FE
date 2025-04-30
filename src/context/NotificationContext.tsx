@@ -50,7 +50,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
         }
         const fetchNotifications = async () => {
             try {
-                const response = await api.get("/api/notification");
+                const response = await api.get("/api/notifications");
                 if (response.data.success) {
                     const allNotifications = response.data.data.map((notification: any) => ({
                         ...notification,
@@ -122,9 +122,8 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
     const markAsRead = async (notificationId: number) => {
         try {
-            await api.patch("/api/notification/read", null, {
-                params: { notificationId },
-            });
+            // API 엔드포인트 변경
+            await api.patch(`/api/notifications/${notificationId}`);
 
             setNotifications(prev =>
                 prev.map(n => n.id === notificationId ? { ...n, isRead: true } : n)
@@ -149,7 +148,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
     const setupSSEConnection = (agentId: number) => {
         const clientId = getClientId();
-        const source = new EventSource(`${api.defaults.baseURL}/api/notification/subscribe?agentId=${agentId}&clientId=${clientId}`, {
+        const source = new EventSource(`${api.defaults.baseURL}/api/notifications/subscribe?agentId=${agentId}&clientId=${clientId}`, {
             withCredentials: true
         });
 
