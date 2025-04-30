@@ -34,6 +34,7 @@ const MessageTemplateCreate = () => {
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState(false)
     const [searchTerm, setSearchTerm] = useState("")
+    const [byteCount, setByteCount] = useState(0)
 
     // 템플릿 목록 상태 변경
     const [templates, setTemplates] = useState<MessageTemplateResponse[]>([])
@@ -43,6 +44,22 @@ const MessageTemplateCreate = () => {
     const [templateTitle, setTemplateTitle] = useState("")
     const [templateContent, setTemplateContent] = useState("")
     const [previewContent, setPreviewContent] = useState("")
+
+    function getByteLength(str: string): number {
+        // Count bytes properly for Korean characters (UTF-8)
+        let byteLength = 0
+        for (let i = 0; i < str.length; i++) {
+            const charCode = str.charCodeAt(i)
+            if (charCode <= 0x007f) {
+                byteLength += 1
+            } else if (charCode <= 0x07ff) {
+                byteLength += 2
+            } else {
+                byteLength += 3
+            }
+        }
+        return byteLength
+    }
 
     useEffect(() => {
         // 페이지 로드 시 템플릿 목록 조회
@@ -77,6 +94,7 @@ const MessageTemplateCreate = () => {
         setSelectedTemplate(template)
         setTemplateTitle(template.title)
         setTemplateContent(template.content)
+        setByteCount(getByteLength(template.content))
         updatePreview(template.content)
     }
 
@@ -102,6 +120,7 @@ const MessageTemplateCreate = () => {
         setSelectedTemplate(emptyTemplate)
         setTemplateTitle("")
         setTemplateContent("")
+        setByteCount(0)
         updatePreview("")
     }
 
@@ -114,8 +133,13 @@ const MessageTemplateCreate = () => {
 
     const handleContentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newContent = e.target.value
-        setTemplateContent(newContent)
-        updatePreview(newContent)
+        const newByteCount = getByteLength(newContent)
+        
+        if (newByteCount <= 90) {
+            setTemplateContent(newContent)
+            setByteCount(newByteCount)
+            updatePreview(newContent)
+        }
     }
 
     const handleSave = async () => {
@@ -126,6 +150,11 @@ const MessageTemplateCreate = () => {
 
         if (!templateContent.trim()) {
             setError("템플릿 내용을 입력해주세요.")
+            return
+        }
+
+        if (byteCount > 90) {
+            setError("템플릿 내용은 최대 90바이트까지 입력 가능합니다.")
             return
         }
 
@@ -411,10 +440,12 @@ const MessageTemplateCreate = () => {
                                 onChange={handleContentChange}
                                 placeholder="템플릿 내용을 입력하세요. (고객명은 ${이름}으로 입력하세요.)"
                                 sx={{ mb: 3 }}
+                                error={byteCount > 90}
+                                helperText={byteCount > 90 ? "최대 90바이트까지 입력 가능합니다." : ""}
                             />
                             <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-                                <Typography variant="caption" color="textSecondary">
-                                    {templateContent.length}/90자
+                                <Typography variant="caption" color={byteCount > 90 ? "error" : "textSecondary"}>
+                                    {byteCount}/90 바이트
                                 </Typography>
                             </Box>
 
