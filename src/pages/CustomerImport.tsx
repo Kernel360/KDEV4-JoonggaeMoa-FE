@@ -62,7 +62,19 @@ const CustomerImport = () => {
                 // Redirect after successful upload
                 navigate("/customer-management")
             } else {
-                setError(response.data.error?.message || "파일 업로드에 실패했습니다.")
+                if(response.data.error?.code == "4092"){
+                    setError("이미 등록된 고객 정보가 있습니다.")
+                }
+                else if(response.data.error?.code == "4093"){
+                    setError("이미 등록된 이메일 정보가 있습니다.")
+        
+                }
+                else if(response.data.error?.code == "4002"){
+                    setError("지원하는 파일 형식이 아닙니다.")
+                }
+                else{
+                    setError("파일 업로드에 실패했습니다.")
+                }
             }
         } catch (err: any) {
             console.error("Error uploading file:", err)
@@ -107,7 +119,7 @@ const CustomerImport = () => {
                         <Button
                             variant="outlined"
                             onClick={handleDownloadFormat}
-                            sx={{ borderColor: "#3f51b5", color: "#3f51b5" }}
+                            sx={{ borderColor: "#007ea7", color: "#007ea7" }}
                         >
                             엑셀 형식 다운로드
                         </Button>
@@ -139,8 +151,8 @@ const CustomerImport = () => {
                                 component="span"
                                 startIcon={<CloudUpload />}
                                 sx={{
-                                    bgcolor: "#3f51b5",
-                                    "&:hover": { bgcolor: "#303f9f" },
+                                    bgcolor: "#007ea7",
+                                    "&:hover": { bgcolor: "#007ea7" },
                                     mb: 2,
                                 }}
                             >
@@ -148,10 +160,10 @@ const CustomerImport = () => {
                             </Button>
                         </label>
                         <Typography variant="body2" color="textSecondary">
-                            {file ? `선택된 파일: ${file.name}` : "엑셀 또는 CSV 파일을 선택해주세요"}
+                            {file ? `선택된 파일: ${file.name}` : "엑셀 파일을 선택해주세요"}
                         </Typography>
                         <Typography variant="caption" color="textSecondary" sx={{ display: "block", mt: 1 }}>
-                            지원 형식: .xlsx
+                            지원 형식: .xlsx, .xls
                         </Typography>
                     </Box>
 
