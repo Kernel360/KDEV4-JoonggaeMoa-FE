@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import api from '../services/api';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
@@ -18,6 +18,7 @@ interface NotificationContextType {
     markAsRead: (notificationId: number) => Promise<void>;
     setupSSEConnection: (agentId: number) => void;
     closeSSEConnection: () => void;
+    fetchNotifications: () => Promise<void>;
 }
 
 const NotificationContext = createContext<NotificationContextType>({
@@ -27,6 +28,7 @@ const NotificationContext = createContext<NotificationContextType>({
     markAsRead: async () => {},
     setupSSEConnection: () => {},
     closeSSEConnection: () => {},
+    fetchNotifications: async () => {},
 });
 
 export const useNotification = () => useContext(NotificationContext);
@@ -44,31 +46,44 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     const excludedPaths = ['/','/signup', '/surveys/submit/:surveyId', '/inquiry', '/inquiry/:id', 'login']; 
     const shouldExclude = excludedPaths.includes(location.pathname);
 
-    useEffect(() => {
-        if(shouldExclude) {
-           return; 
-        }
-        const fetchNotifications = async () => {
-            try {
-                const response = await api.get("/api/notifications");
-                if (response.data.success) {
-                    const allNotifications = response.data.data.map((notification: any) => ({
-                        ...notification,
-                        isRead: notification.read,
-                        createdAt: notification.createdAt
-                    }));
+    const fetchNotifications = useCallback(async () => {
+        try {
+            const token = localStorage.getItem('accessToken');
+            if (!token || shouldExclude) return;
 
-                    setNotifications(allNotifications);
-                    const unread = allNotifications.filter((n: Notification) => !n.isRead).length;
-                    setUnreadCount(unread);
-                }
-            } catch (err) {
-                console.error("Error fetching notifications:", err);
+            const response = await api.get("/api/notifications");
+            if (response.data.success) {
+                const allNotifications = response.data.data.map((notification: any) => ({
+                    ...notification,
+                    isRead: notification.read,
+                    createdAt: notification.createdAt
+                }));
+
+                setNotifications(allNotifications);
+                const unread = allNotifications.filter((n: Notification) => !n.isRead).length;
+                setUnreadCount(unread);
             }
-        };
+        } catch (err) {
+            console.error("Error fetching notifications:", err);
+        }
+    }, [shouldExclude]);
 
+    useEffect(() => {
         fetchNotifications();
-    }, []);
+    }, [fetchNotifications]);
+
+    useEffect(() => {
+        const token = localStorage.getItem('accessToken');
+        const agentId = localStorage.getItem('agentId');
+
+        if (token && agentId && !shouldExclude) {
+            setupSSEConnection(Number(agentId));
+        }
+
+        return () => {
+            closeSSEConnection();
+        };
+    }, [shouldExclude]);
 
     const addNotification = (notification: Notification) => {
         if (notification.type !== 'CONNECTION') {
@@ -162,23 +177,26 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
             const data = event.data;
 
             if (typeof data === 'string' && !data.trim().startsWith('{') && data === 'connection') {
-                toast.success("로그인 성공", {
-                    position: "top-right",
-                    autoClose: 3000,
-                    hideProgressBar: false,
-                    closeOnClick: true,
-                    pauseOnHover: true,
-                    draggable: true,
-                    theme: "colored"
-                });
+                // toast.success("로그인 성공", {
+                //     position: "top-right",
+                //     autoClose: 3000,
+                //     hideProgressBar: false,
+                //     closeOnClick: true,
+                //     pauseOnHover: true,
+                //     draggable: true,
+                //     theme: "colored"
+                // });
                 return;
             }
 
             try {
                 const rawNotification = JSON.parse(data);
                 const newNotification = {
-                    ...rawNotification,
-                    isRead: rawNotification.read
+                    id: rawNotification.id,
+                    type: rawNotification.type,
+                    content: rawNotification.content,
+                    isRead: rawNotification.read ?? false,  // 명시적으로 false로 설정
+                    createdAt: rawNotification.createdAt
                 };
                 addNotification(newNotification);
             } catch (error) {
@@ -194,6 +212,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
         return () => {
             source.close();
+            console.log("SSE connection closed");
         };
     };
 
@@ -215,7 +234,8 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
                 addNotification,
                 markAsRead,
                 setupSSEConnection,
-                closeSSEConnection
+                closeSSEConnection,
+                fetchNotifications
             }}
         >
             {children}
