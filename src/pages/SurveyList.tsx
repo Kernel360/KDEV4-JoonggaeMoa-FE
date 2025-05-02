@@ -1,8 +1,6 @@
 "use client"
 
-import type React from "react"
-
-import { useState, useEffect, useRef } from "react"
+import React, { useState, useEffect } from 'react';
 import {
     Box,
     Container,
@@ -26,210 +24,155 @@ import {
     Alert,
     TextField,
     InputAdornment,
-} from "@mui/material"
-// Add ContentCopy icon import
-import { Add, Edit, Delete, ArrowBack, Search, ContentCopy, Assessment } from "@mui/icons-material"
-import { useNavigate } from "react-router-dom"
-import { surveyApi } from "../services/surveyApi"
-import type { SurveyResponse } from "../types/survey"
+    Pagination,
+} from '@mui/material';
+import { Add, Edit, Delete, ArrowBack, Search, ContentCopy, Assessment } from "@mui/icons-material";
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
+import { SurveyResponse } from '../types/survey';
+import { format } from 'date-fns';
+import { ko } from 'date-fns/locale';
 
-const SurveyList = () => {
-    const navigate = useNavigate()
-    const [surveys, setSurveys] = useState<SurveyResponse[]>([])  // Ensure it's initialized as an empty array
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
-    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-    const [surveyToDelete, setSurveyToDelete] = useState<string | null>(null)
-    const [deleteLoading, setDeleteLoading] = useState(false)
-    const [successMessage, setSuccessMessage] = useState<string | null>(null)
-    const [searchTerm, setSearchTerm] = useState("")
-    const [copyUrlSuccess, setCopyUrlSuccess] = useState(false)
-    
-    // Add these new states and refs
-    const [page, setPage] = useState(0)
-    const [hasMore, setHasMore] = useState(true)
-    const [isLoadingMore, setIsLoadingMore] = useState(false)
-    const observerRef = useRef<IntersectionObserver | null>(null)
-    const loadingRef = useRef<HTMLDivElement | null>(null)
+const SurveyList: React.FC = () => {
+    const navigate = useNavigate();
+    const { isAuthenticated } = useAuth();
+    const [surveys, setSurveys] = useState<SurveyResponse[]>([]);
+    const [page, setPage] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [surveyToDelete, setSurveyToDelete] = useState<string | null>(null);
+    const [deleteLoading, setDeleteLoading] = useState(false);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [copyUrlSuccess, setCopyUrlSuccess] = useState(false);
+    const [newSurvey, setNewSurvey] = useState({
+        title: '',
+        description: '',
+    });
 
-    useEffect(() => {
-        fetchSurveys()
-    }, [])
-
-    useEffect(() => {
-        if (loading) return
-
-        const observer = new IntersectionObserver(
-            entries => {
-                if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
-                    setPage(prev => {
-                        const nextPage = prev + 1
-                        fetchSurveys(nextPage)
-                        return nextPage
-                    })
-                }
-            },
-            { threshold: 1.0 }
-        )
-
-        observerRef.current = observer
-
-        if (loadingRef.current) {
-            observer.observe(loadingRef.current)
-        }
-
-        return () => {
-            if (observerRef.current) {
-                observerRef.current.disconnect()
-            }
-        }
-    }, [loading, hasMore, isLoadingMore])
-
-    const fetchSurveys = async (pageNum: number = 0) => {
+    const fetchSurveys = async () => {
         try {
-            if (pageNum === 0) {
-                setLoading(true)
-            } else {
-                setIsLoadingMore(true)
-            }
-            
-            const response = await surveyApi.getSurveys(Number(pageNum))  // Ensure pageNum is a number
-            console.log('Survey response:', response)  // Add this for debugging
-            
-            if (response.data.success && response.data.data) {
-                const newSurveys = response.data.data.content || []
-                if (pageNum === 0) {
-                    setSurveys(newSurveys)
-                } else {
-                    setSurveys(prev => [...prev, ...newSurveys])
-                }
-                setHasMore(!response.data.data.last)
-                setError(null)  // Clear any existing error when successful
-            } else {
-                setError("설문 목록을 불러오는데 실패했습니다.")
+            setLoading(true);
+            const response = await api.get(`/api/surveys?page=${page}&size=10&sort=createdAt,desc`);
+            if (response.data.success) {
+                setSurveys(response.data.data.content);
+                setTotalPages(response.data.data.totalPages);
             }
         } catch (err) {
-            console.error("Error fetching surveys:", err)
-            setError("설문 목록을 불러오는데 실패했습니다.")
+            setError('설문 목록을 불러오는데 실패했습니다.');
         } finally {
-            setLoading(false)
-            setIsLoadingMore(false)
+            setLoading(false);
         }
-    }
+    };
+
+    useEffect(() => {
+        fetchSurveys();
+    }, [page]);
 
     const handleDeleteClick = (event: React.MouseEvent, surveyId: string) => {
-        event.stopPropagation()
-        setSurveyToDelete(surveyId)
-        setDeleteDialogOpen(true)
-    }
+        event.stopPropagation();
+        setSurveyToDelete(surveyId);
+        setDeleteDialogOpen(true);
+    };
 
     const handleDeleteConfirm = async () => {
-        if (surveyToDelete === null) return
+        if (surveyToDelete === null) return;
 
         try {
-            setDeleteLoading(true)
-            const response = await surveyApi.deleteSurvey(surveyToDelete)
+            setDeleteLoading(true);
+            const response = await api.delete(`/api/surveys/${surveyToDelete}`);
 
             if (response.data.success) {
-                setSuccessMessage("설문이 성공적으로 삭제되었습니다.")
-                // 목록에서 삭제된 설문 제거
-                setSurveys(surveys.filter((survey) => survey.id !== surveyToDelete))
+                setSuccessMessage("설문이 성공적으로 삭제되었습니다.");
+                fetchSurveys();
             } else {
-                setError("설문 삭제에 실패했습니다.")
+                setError("설문 삭제에 실패했습니다.");
             }
         } catch (err) {
-            console.error("Error deleting survey:", err)
-            setError("설문 삭제에 실패했습니다.")
+            console.error("Error deleting survey:", err);
+            setError("설문 삭제에 실패했습니다.");
         } finally {
-            setDeleteLoading(false)
-            setDeleteDialogOpen(false)
-            setSurveyToDelete(null)
+            setDeleteLoading(false);
+            setDeleteDialogOpen(false);
+            setSurveyToDelete(null);
         }
-    }
+    };
 
-    // Add handleCopyUrl function after handleDeleteConfirm
-    // URL 형식 수정 - 고객용 URL 경로 변경
     const handleCopyUrl = (event: React.MouseEvent, surveyId: string) => {
-        event.stopPropagation()
-        const surveyUrl = `${window.location.origin}/surveys/submit/${surveyId}`
+        event.stopPropagation();
+        const surveyUrl = `${window.location.origin}/surveys/submit/${surveyId}`;
 
-        if(navigator.clipboard && window.isSecureContext){
+        if (navigator.clipboard && window.isSecureContext) {
             navigator.clipboard
-            .writeText(surveyUrl)
-            .then(() => {
-                setCopyUrlSuccess(true)
-                setTimeout(() => setCopyUrlSuccess(false), 3000)
-            })
-            .catch((err) => {
-                console.error("URL 복사 실패:", err)
-                setError("URL을 클립보드에 복사하는데 실패했습니다.")
-            })
+                .writeText(surveyUrl)
+                .then(() => {
+                    setCopyUrlSuccess(true);
+                    setTimeout(() => setCopyUrlSuccess(false), 3000);
+                })
+                .catch((err) => {
+                    console.error("URL 복사 실패:", err);
+                    setError("URL을 클립보드에 복사하는데 실패했습니다.");
+                });
 
             return;
         }
 
-        copy(surveyUrl)
-    }
+        copy(surveyUrl);
+    };
 
-    const copy =  (textToCopy : string) => {
+    const copy = (textToCopy: string) => {
         const textArea = document.createElement("textarea");
-               textArea.value = textToCopy;
-                   
-               // Move textarea out of the viewport so it's not visible
-               textArea.style.position = "absolute";
-               textArea.style.left = "-999999px";
-                   
-               document.body.prepend(textArea);
-               textArea.select();
-       
-               try {
-                   document.execCommand('copy');
-                   setCopyUrlSuccess(true)
-               } catch (error) {
-                   console.error(error);
-               } finally {
-                   textArea.remove();
-               }
-       }
+        textArea.value = textToCopy;
+        
+        // Move textarea out of the viewport so it's not visible
+        textArea.style.position = "absolute";
+        textArea.style.left = "-999999px";
+        
+        document.body.prepend(textArea);
+        textArea.select();
 
-    const handleCreateSurvey = () => {
-        navigate("/survey/create")
-    }
+        try {
+            document.execCommand('copy');
+            setCopyUrlSuccess(true);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            textArea.remove();
+        }
+    };
+
+    const handleCreateSurvey = async () => {
+        try {
+            const response = await api.post('/api/surveys', newSurvey);
+            if (response.data.success) {
+                setDeleteDialogOpen(false);
+                setNewSurvey({ title: '', description: '' });
+                fetchSurveys();
+            }
+        } catch (err) {
+            setError('설문 생성에 실패했습니다.');
+        }
+    };
 
     const handleViewSurvey = (surveyId: string) => {
-        navigate(`/survey/${surveyId}`)
-    }
+        navigate(`/survey/${surveyId}`);
+    };
 
     const handleEditSurvey = (event: React.MouseEvent, surveyId: string) => {
-        event.stopPropagation()
-        navigate(`/survey/edit/${surveyId}`)
-    }
+        event.stopPropagation();
+        navigate(`/survey/edit/${surveyId}`);
+    };
 
     const handleViewAnswers = () => {
-        navigate("/survey/answers")
-    }
+        navigate("/survey/answers");
+    };
 
-    // 검색어로 필터링
-    const filteredSurveys = Array.isArray(surveys) 
+    const filteredSurveys = Array.isArray(surveys)
         ? surveys.filter((survey) => survey.title.toLowerCase().includes(searchTerm.toLowerCase()))
-        : []
-
-    // 날짜 포맷팅 함수
-    const formatDate = (dateString: string | undefined) => {
-        if (!dateString) return "-"
-        try {
-            const date = new Date(dateString)
-            const year = date.getFullYear()
-            const month = String(date.getMonth() + 1).padStart(2, "0")
-            const day = String(date.getDate()).padStart(2, "0")
-            const hours = String(date.getHours()).padStart(2, "0")
-            const minutes = String(date.getMinutes()).padStart(2, "0")
-            return `${year}-${month}-${day} ${hours}:${minutes}`
-        } catch (error) {
-            console.error("Error formatting date:", error)
-            return dateString
-        }
-    }
+        : [];
 
     return (
         <Box sx={{ flexGrow: 1, minHeight: "100vh" }}>
@@ -269,17 +212,19 @@ const SurveyList = () => {
                         >
                             응답 확인
                         </Button>
-                        <Button
-                            variant="contained"
-                            startIcon={<Add />}
-                            sx={{
-                                bgcolor: "#007ea7",
-                                "&:hover": { bgcolor: "#003459" },
-                            }}
-                            onClick={handleCreateSurvey}
-                        >
-                            새 설문 만들기
-                        </Button>
+                        {isAuthenticated && (
+                            <Button
+                                variant="contained"
+                                startIcon={<Add />}
+                                sx={{
+                                    bgcolor: "#007ea7",
+                                    "&:hover": { bgcolor: "#003459" },
+                                }}
+                                onClick={() => navigate("/survey/create")}
+                            >
+                                새 설문 만들기
+                            </Button>
+                        )}
                     </Box>
                 </Box>
 
@@ -313,7 +258,7 @@ const SurveyList = () => {
                             sx={{ mt: 2 }} 
                             onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                                 e.preventDefault();
-                                fetchSurveys(0);
+                                fetchSurveys();
                             }}
                         >
                             다시 시도
@@ -379,8 +324,8 @@ const SurveyList = () => {
                                             <TableCell sx={{ maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                                 {survey.description}
                                             </TableCell>
-                                            <TableCell>{survey.questionList.length}</TableCell>
-                                            <TableCell>{formatDate(survey.createdAt)}</TableCell>
+                                            <TableCell>{survey.count}</TableCell>
+                                            <TableCell>{format(new Date(survey.createdAt), 'yyyy-MM-dd HH:mm', { locale: ko })}</TableCell>
                                             <TableCell align="right">
                                                 <IconButton
                                                     size="small"
@@ -404,16 +349,24 @@ const SurveyList = () => {
                                 )}
                             </TableBody>
                         </Table>
-                        {hasMore && (
-                            <Box ref={loadingRef} sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
-                                {isLoadingMore && <CircularProgress size={24} />}
-                            </Box>
-                        )}
                     </TableContainer>
                 )}
+
+                <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
+                    <Pagination
+                        count={totalPages}
+                        page={page + 1}
+                        onChange={(_, value) => setPage(value - 1)}
+                        sx={{
+                            '& .Mui-selected': {
+                                backgroundColor: '#003459 !important',
+                                color: 'white'
+                            }
+                        }}
+                    />
+                </Box>
             </Container>
 
-            {/* 삭제 확인 다이얼로그 */}
             <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
                 <DialogTitle>설문 삭제</DialogTitle>
                 <DialogContent>
@@ -429,29 +382,26 @@ const SurveyList = () => {
                 </DialogActions>
             </Dialog>
 
-            {/* 성공 메시지 스낵바 */}
             <Snackbar open={!!successMessage} autoHideDuration={6000} onClose={() => setSuccessMessage(null)}>
                 <Alert onClose={() => setSuccessMessage(null)} severity="success" sx={{ width: "100%" }}>
                     {successMessage}
                 </Alert>
             </Snackbar>
 
-            {/* 에러 메시지 스낵바 */}
             <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError(null)}>
                 <Alert onClose={() => setError(null)} severity="error" sx={{ width: "100%" }}>
                     {error}
                 </Alert>
             </Snackbar>
 
-            {/* Add a new Snackbar for the copy URL success message */}
             <Snackbar open={!!copyUrlSuccess} autoHideDuration={3000} onClose={() => setCopyUrlSuccess(false)}>
                 <Alert onClose={() => setCopyUrlSuccess(false)} severity="success" sx={{ width: "100%" }}>
                     설문 URL이 클립보드에 복사되었습니다.
                 </Alert>
             </Snackbar>
         </Box>
-    )
-}
+    );
+};
 
-export default SurveyList
+export default SurveyList;
 

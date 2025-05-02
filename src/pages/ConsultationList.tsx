@@ -40,7 +40,7 @@ import { consultationApi } from "../services/consultationApi"
 import { customerApi } from "../services/customerApi"
 import { ConsultationStatus, ConsultationType } from "../types/consultation"
 import type { ConsultationResponse, ConsultationMonthInfo } from "../types/consultation"
-import type { CustomerResponse } from "../types/customer"
+import type { CustomerListResponse } from "../services/customerApi"
 
 // 상담 상태별 칩 색상 및 텍스트 - 새로운 상태 값에 맞게 업데이트
 const statusConfig = {
@@ -138,9 +138,9 @@ const ConsultationList = () => {
 
     // 상담 등록 모달 관련 상태
     const [createModalOpen, setCreateModalOpen] = useState(false)
-    const [customers, setCustomers] = useState<CustomerResponse[]>([])
+    const [customers, setCustomers] = useState<CustomerListResponse[]>([])
     const [customersLoading, setCustomersLoading] = useState(false)
-    const [selectedCustomer, setSelectedCustomer] = useState<CustomerResponse | null>(null)
+    const [selectedCustomer, setSelectedCustomer] = useState<CustomerListResponse | null>(null)
     const [scheduledDate, setScheduledDate] = useState("")
     const [scheduledTime, setScheduledTime] = useState("")
     const [createLoading, setCreateLoading] = useState(false)
@@ -325,8 +325,8 @@ const ConsultationList = () => {
     };
 
     // 상담 상세 페이지로 이동
-    const handleViewConsultation = (consultationId: number, customerId: number) => {
-        navigate(`/consultation/${consultationId}?customerId=${customerId}`);
+    const handleViewConsultation = (consultationId: number) => {
+        navigate(`/consultation/${consultationId}`);
     }
 
     // 상태 변경 메뉴 열기
@@ -881,7 +881,7 @@ const ConsultationList = () => {
                                                 statusFilteredConsultations.map((consultation) => (
                                                     <TableRow 
                                                         key={consultation.consultationId}
-                                                        onClick={() => handleViewConsultation(consultation.consultationId, consultation.customerId)}
+                                                        onClick={() => handleViewConsultation(consultation.consultationId)}
                                                         sx={{ 
                                                             cursor: 'pointer',
                                                             borderBottom: '1px solid #e9ecef',
@@ -998,7 +998,7 @@ const ConsultationList = () => {
                                             dateFilteredConsultations.map((consultation) => (
                                                 <TableRow 
                                                     key={consultation.consultationId}
-                                                    onClick={() => handleViewConsultation(consultation.consultationId, consultation.customerId)}
+                                                    onClick={() => handleViewConsultation(consultation.consultationId)}
                                                     sx={{ 
                                                         cursor: 'pointer',
                                                         borderBottom: '1px solid #e9ecef',

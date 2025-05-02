@@ -27,7 +27,7 @@ import {
 import { ArrowBack, Add, Delete, DragIndicator } from "@mui/icons-material"
 import { useNavigate, useParams } from "react-router-dom"
 import { surveyApi } from "../services/surveyApi"
-import type { SurveyUpdateRequest, QuestionUpdateRequest } from "../types/survey"
+import type { SurveyUpdateRequest, QuestionUpdateRequest, SurveyDetailResponse } from "../types/survey"
 import { QuestionType as QuestionTypeEnum } from "../types/survey"
 
 const SurveyEdit = () => {
@@ -68,7 +68,7 @@ const SurveyEdit = () => {
                 setDescription(survey.description || "")
 
                 // 질문 목록 설정
-                const questionList: QuestionUpdateRequest[] = survey.questionList.map((q) => ({
+                const questionList: QuestionUpdateRequest[] = survey.questions.map((q) => ({
                     id: q.id,
                     content: q.content,
                     type: q.type,

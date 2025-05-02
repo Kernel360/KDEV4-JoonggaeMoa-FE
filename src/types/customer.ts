@@ -27,9 +27,6 @@ export interface CustomerResponse {
     isVip: boolean
     memo: string
     consent: boolean
-    createdAt: string
-    updatedAt: string
-    interestArea?: string
     interestProperty?: string
     interestLocation?: string
     assetStatus?: string

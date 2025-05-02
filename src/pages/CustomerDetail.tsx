@@ -145,8 +145,9 @@ const CustomerDetail = () => {
             const response = await customerApi.getCustomerById(customerId)
 
             if (response.data.success && response.data.data) {
-                setCustomer(response.data.data.customer)
-                setHistory(response.data.data.history)
+                const { history, ...customerData } = response.data.data
+                setCustomer(customerData)
+                setHistory(history)
             } else {
                 setError("고객 정보를 불러오는데 실패했습니다.")
             }

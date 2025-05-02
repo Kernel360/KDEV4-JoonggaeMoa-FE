@@ -164,43 +164,53 @@ const SurveyAnswers = () => {
     const filteredAnswers = answers.filter((answer) => {
         const searchLower = searchTerm.toLowerCase()
         return (
-            answer.customer.name.toLowerCase().includes(searchLower) ||
-            answer.customer.email.toLowerCase().includes(searchLower) ||
-            answer.customer.phone.toLowerCase().includes(searchLower) ||
-            answer.survey.title.toLowerCase().includes(searchLower)
+            answer.customerName.toLowerCase().includes(searchLower) ||
+            answer.customerEmail.toLowerCase().includes(searchLower) ||
+            answer.customerPhone.toLowerCase().includes(searchLower) ||
+            answer.surveyTitle.toLowerCase().includes(searchLower)
         )
     })
 
     // 설문별로 그룹화
     const groupedBySurvey = filteredAnswers.reduce(
         (acc, answer) => {
-            const surveyId = answer.survey.id
+            const surveyId = answer.customerId
             if (!acc[surveyId]) {
                 acc[surveyId] = {
-                    survey: answer.survey,
+                    survey: {
+                        id: answer.customerId,
+                        title: answer.surveyTitle,
+                        description: answer.surveyDescription
+                    },
                     answers: [],
                 }
             }
             acc[surveyId].answers.push(answer)
             return acc
         },
-        {} as Record<number, { survey: AnswerResponse["survey"]; answers: AnswerResponse[] }>,
+        {} as Record<number, { survey: { id: number; title: string; description: string }; answers: AnswerResponse[] }>,
     )
 
     // 고객별로 그룹화
     const groupedByCustomer = filteredAnswers.reduce(
         (acc, answer) => {
-            const customerId = answer.customer.id
+            const customerId = answer.customerId
             if (!acc[customerId]) {
                 acc[customerId] = {
-                    customer: answer.customer,
+                    customer: {
+                        id: answer.customerId,
+                        name: answer.customerName,
+                        email: answer.customerEmail,
+                        phone: answer.customerPhone,
+                        consent: answer.customerConsent
+                    },
                     answers: [],
                 }
             }
             acc[customerId].answers.push(answer)
             return acc
         },
-        {} as Record<number, { customer: AnswerResponse["customer"]; answers: AnswerResponse[] }>,
+        {} as Record<number, { customer: { id: number; name: string; email: string; phone: string; consent: boolean }; answers: AnswerResponse[] }>,
     )
 
     // 고객 상세 페이지로 이동
@@ -329,15 +339,15 @@ const SurveyAnswers = () => {
                                         <TableBody>
                                             {filteredAnswers.map((answer, index) => (
                                                 <TableRow
-                                                    key={`${answer.customer.id}-${answer.survey.id}-${index}`}
+                                                    key={`${answer.customerId}-${index}`}
                                                     hover
                                                     onClick={() => handleViewDetail(answer)}
                                                     sx={{ cursor: "pointer" }}
                                                 >
-                                                    <TableCell>{answer.customer.name}</TableCell>
-                                                    <TableCell>{answer.customer.email}</TableCell>
-                                                    <TableCell>{answer.customer.phone}</TableCell>
-                                                    <TableCell>{answer.survey.title}</TableCell>
+                                                    <TableCell>{answer.customerName}</TableCell>
+                                                    <TableCell>{answer.customerEmail}</TableCell>
+                                                    <TableCell>{answer.customerPhone}</TableCell>
+                                                    <TableCell>{answer.surveyTitle}</TableCell>
                                                     <TableCell>{formatDate(answer.createdAt)}</TableCell>
                                                 </TableRow>
                                             ))}
@@ -413,14 +423,15 @@ const SurveyAnswers = () => {
                                                     <TableBody>
                                                         {group.answers.map((answer, index) => (
                                                             <TableRow
-                                                                key={`${answer.customer.id}-${index}`}
+                                                                key={`${answer.customerId}-${index}`}
                                                                 hover
                                                                 onClick={() => handleViewDetail(answer)}
                                                                 sx={{ cursor: "pointer" }}
                                                             >
-                                                                <TableCell>{answer.customer.name}</TableCell>
-                                                                <TableCell>{answer.customer.email}</TableCell>
-                                                                <TableCell>{answer.customer.phone}</TableCell>
+                                                                <TableCell>{answer.customerName}</TableCell>
+                                                                <TableCell>{answer.customerEmail}</TableCell>
+                                                                <TableCell>{answer.customerPhone}</TableCell>
+                                                                <TableCell>{answer.surveyTitle}</TableCell>
                                                                 <TableCell>{formatDate(answer.createdAt)}</TableCell>
                                                             </TableRow>
                                                         ))}
@@ -472,10 +483,10 @@ const SurveyAnswers = () => {
                                                 설문 정보
                                             </Typography>
                                             <Typography variant="h6" gutterBottom>
-                                                {selectedAnswer.survey.title}
+                                                {selectedAnswer.surveyTitle}
                                             </Typography>
                                             <Typography variant="body2" color="text.secondary">
-                                                {selectedAnswer.survey.description || "설명 없음"}
+                                                {selectedAnswer.surveyDescription || "설명 없음"}
                                             </Typography>
                                         </CardContent>
                                     </Card>
@@ -493,20 +504,20 @@ const SurveyAnswers = () => {
                                                     variant="outlined"
                                                     size="small"
                                                     startIcon={<Person />}
-                                                    onClick={() => handleViewCustomerDetail(selectedAnswer.customer.id.toString())}
+                                                    onClick={() => handleViewCustomerDetail(selectedAnswer.customerId.toString())}
                                                 >
                                                     고객 상세
                                                 </Button>
                                             </Box>
                                             <List dense>
                                                 <ListItem>
-                                                    <ListItemText primary="이름" secondary={selectedAnswer.customer.name} />
+                                                    <ListItemText primary="이름" secondary={selectedAnswer.customerName} />
                                                 </ListItem>
                                                 <ListItem>
-                                                    <ListItemText primary="이메일" secondary={selectedAnswer.customer.email} />
+                                                    <ListItemText primary="이메일" secondary={selectedAnswer.customerEmail} />
                                                 </ListItem>
                                                 <ListItem>
-                                                    <ListItemText primary="연락처" secondary={selectedAnswer.customer.phone} />
+                                                    <ListItemText primary="연락처" secondary={selectedAnswer.customerPhone} />
                                                 </ListItem>
                                             </List>
                                         </CardContent>
@@ -527,7 +538,7 @@ const SurveyAnswers = () => {
                                                 <ListItem>
                                                     <ListItemText
                                                         primary="마케팅 동의"
-                                                        secondary={selectedAnswer.customer.consent ? "동의함" : "동의하지 않음"}
+                                                        secondary={selectedAnswer.customerConsent ? "동의함" : "동의하지 않음"}
                                                     />
                                                 </ListItem>
                                             </List>
@@ -540,18 +551,18 @@ const SurveyAnswers = () => {
                                     <Typography variant="subtitle1" sx={{ fontWeight: "bold", mb: 2 }}>
                                         응답 내용
                                     </Typography>
-                                    {selectedAnswer.answer.map((item: QuestionAnswerResponse, index: number) => (
+                                    {selectedAnswer.questionAnswers.map((item, index) => (
                                         <Card key={index} variant="outlined" sx={{ mb: 2, boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
                                             <CardContent>
                                                 <Typography variant="subtitle2" sx={{ fontWeight: "bold", mb: 1 }}>
-                                                    {index + 1}. {selectedAnswer.survey.questionList.find(q => q.id === parseInt(item.question))?.content || item.question}
+                                                    {index + 1}. {item.question}
                                                 </Typography>
                                                 <Divider sx={{ my: 1 }} />
-                                                {item.answer.length > 0 ? (
+                                                {item.answers.length > 0 ? (
                                                     <Box sx={{ pl: 2 }}>
-                                                        {item.answer.map((ans, i) => (
+                                                        {item.answers.map((ans, i) => (
                                                             <Typography key={i} variant="body2" sx={{ mb: 0.5 }}>
-                                                                {item.answer.length > 1 ? `• ${ans}` : ans}
+                                                                {item.answers.length > 1 ? `• ${ans}` : ans}
                                                             </Typography>
                                                         ))}
                                                     </Box>

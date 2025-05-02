@@ -30,11 +30,11 @@ import {
 import { Search, Add, FileUpload, ArrowBack, Delete } from "@mui/icons-material"
 import { useNavigate } from "react-router-dom"
 import { customerApi } from "../services/customerApi"
-import type { CustomerResponse } from "../services/customerApi"
+import type { CustomerListResponse } from "../services/customerApi"
 
 const CustomerManagement: React.FC = () => {
     const navigate = useNavigate()
-    const [customers, setCustomers] = useState<CustomerResponse[]>([])
+    const [customers, setCustomers] = useState<CustomerListResponse[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [page, setPage] = useState(0) // 페이지 번호 0부터 시작

@@ -26,11 +26,11 @@ export interface QuestionUpdateRequest {
 
 // 질문 응답
 export interface QuestionResponse {
-    id: number
-    content: string
-    type: string
-    isRequired: boolean
-    options: string[]
+    id: number;
+    content: string;
+    type: string;
+    isRequired: boolean;
+    options: string[];
 }
 
 export interface PageResponse<T> {
@@ -60,11 +60,20 @@ export interface SurveyUpdateRequest {
 
 // 설문 응답
 export interface SurveyResponse {
-    id: string
-    title: string
-    description: string
-    questionList: QuestionResponse[]
-    createdAt: string // Format: "2025-04-16 20:02:46.337844"
+    id: string;
+    title: string;
+    description: string;
+    count: number;
+    createdAt: string;
+}
+
+// 설문 상세 응답
+export interface SurveyDetailResponse {
+    id: string;
+    title: string;
+    description: string;
+    questions: QuestionResponse[];
+    createdAt: string;
 }
 
 // 고객 정보
@@ -78,8 +87,8 @@ export interface CustomerResponse {
 
 // 질문 답변
 export interface QuestionAnswerResponse {
-    question: string
-    answer: string[]
+    question: string;
+    answers: string[];
 }
 
 // 설문 답변 요청
@@ -96,9 +105,49 @@ export interface AnswerRequest {
 
 // 설문 답변 응답
 export interface AnswerResponse {
-    customer: CustomerResponse
-    survey: SurveyResponse
-    answer: QuestionAnswerResponse[]
-    createdAt?: string // Format: "2025-04-16 20:02:46.337844"
+    customerId: number;
+    customerName: string;
+    customerPhone: string;
+    customerEmail: string;
+    customerConsent: boolean;
+    surveyTitle: string;
+    surveyDescription: string;
+    createdAt: string;
+    questionAnswers: QuestionAnswerResponse[];
+}
+
+export interface Survey {
+    id: number;
+    title: string;
+    description: string;
+    questions: SurveyQuestion[];
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface SurveyQuestion {
+    id: number;
+    content: string;
+    type: 'TEXT' | 'MULTIPLE_CHOICE' | 'SINGLE_CHOICE';
+    options: string[];
+    required: boolean;
+}
+
+export interface SurveyAnswerRequest {
+    customerName: string;
+    customerPhone: string;
+    customerEmail: string;
+    customerConsent: boolean;
+    answers: {
+        questionId: number;
+        answer: string | string[];
+    }[];
+}
+
+export interface PageInfo {
+    pageNumber: number;
+    pageSize: number;
+    totalPages: number;
+    totalElements: number;
 }
 

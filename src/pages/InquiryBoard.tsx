@@ -22,7 +22,7 @@ import {
 } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
-import { Inquiry, InquiryRequest } from '../types/inquiry';
+import { InquiryResponse, InquiryRequest } from '../types/inquiry';
 import { useNavigate } from 'react-router-dom';
 import ChatbotDialog from '../components/ChatbotDialog';
 import ChatIcon from '@mui/icons-material/Chat';
@@ -30,7 +30,7 @@ import ChatIcon from '@mui/icons-material/Chat';
 const InquiryBoard: React.FC = () => {
     const navigate = useNavigate();
     
-    const [inquiries, setInquiries] = useState<Inquiry[]>([]);
+    const [inquiries, setInquiries] = useState<InquiryResponse[]>([]);
     const [page, setPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [loading, setLoading] = useState(false);
@@ -253,7 +253,7 @@ const InquiryBoard: React.FC = () => {
                                             padding: '12px 16px',
                                             fontSize: '0.875rem',
                                             color: '#00171f'
-                                        }}>{inquiry.answers.length}</TableCell>
+                                        }}>{inquiry.count}</TableCell>
                                     </TableRow>
                                 ))
                             )}

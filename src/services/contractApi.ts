@@ -1,7 +1,7 @@
 import api from "./api"
 import type { AxiosResponse } from "axios"
 import type { ApiResponse } from "./customerApi"
-import type { CreateContractRequest, UpdateContractRequest, ContractResponse } from "../types/contract"
+import type { CreateContractRequest, UpdateContractRequest, ContractResponse, ExpiredContractResponse } from "../types/contract"
 
 // 계약 생성
 export const createContract = async (
@@ -48,5 +48,9 @@ export const contractApi = {
         })
     },
     getContractById,
+    getExpiredContracts: async (): Promise<ExpiredContractResponse> => {
+        const response = await api.get<ApiResponse<ExpiredContractResponse>>('/api/dashboard/expired-contract');
+        return response.data.data;
+    },
 }
 
