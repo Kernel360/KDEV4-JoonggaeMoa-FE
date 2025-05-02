@@ -21,7 +21,7 @@ import {
 } from "@mui/material"
 import { ArrowBack } from "@mui/icons-material"
 import { useNavigate, useParams } from "react-router-dom"
-import { customerApi, type UpdateCustomerRequest } from "../services/customerApi"
+import { customerApi, type UpdateCustomerRequest, type CustomerHistoryResponse } from "../services/customerApi"
 import dayjs from "dayjs"
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers"
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs"
@@ -59,7 +59,7 @@ const CustomerEdit = () => {
             const response = await customerApi.getCustomerById(customerId)
 
             if (response.data.success && response.data.data) {
-                const customer = response.data.data.customer
+                const customer = response.data.data
                 setFormData({
                     name: customer.name,
                     birthday: customer.birthday || "",
