@@ -66,17 +66,25 @@ export interface CustomerResponse {
     isVip: boolean
     memo: string
     consent: boolean
-    createdAt: string
-    updatedAt: string
     interestProperty?: string
     interestLocation?: string
     assetStatus?: string
-    history: History[]
 }
 
 // 고객 히스토리 응답 타입
 export interface CustomerHistoryResponse {
-    customer: CustomerResponse;
+    id: number;
+    name: string;
+    birthday: string;
+    phone: string;
+    email: string;
+    job: string;
+    isVip: boolean;
+    memo: string;
+    consent: boolean;
+    interestProperty?: string;
+    interestLocation?: string;
+    assetStatus?: string;
     history: History[];
 }
 
@@ -92,6 +100,17 @@ export interface PageResponse<T>{
     first: boolean
     last: boolean
     empty: boolean
+}
+
+// 고객 목록 응답 타입
+export interface CustomerListResponse {
+    id: number;
+    name: string;
+    birthday: string;
+    phone: string;
+    email: string;
+    job: string;
+    isVip: boolean;
 }
 
 // 고객 생성
@@ -126,12 +145,8 @@ export const updateCustomer = async (
     return api.patch(`/api/customers/${customerId}`, customerData)
 }
 
-// // 모든 고객 조회
-// export const getCustomers = async (p0: { page: number; size: number; sort: string }): Promise<AxiosResponse<ApiResponse<CustomerResponse[]>>> => {
-//     return api.get(`/api/customers`)
-// }
 // 모든 고객 조회 (페이지네이션 적용)
-export const getCustomers = async (page: number = 0, size: number = 10): Promise<AxiosResponse<ApiResponse<PageResponse<CustomerResponse>>>> => {
+export const getCustomers = async (page: number = 0, size: number = 10): Promise<AxiosResponse<ApiResponse<PageResponse<CustomerListResponse>>>> => {
     return api.get(`/api/customers?page=${page}&size=${size}&sort=id,asc`)
 }
 

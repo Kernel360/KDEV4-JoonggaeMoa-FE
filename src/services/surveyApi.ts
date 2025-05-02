@@ -6,6 +6,7 @@ import type {
     SurveyResponse,
     AnswerRequest,
     AnswerResponse,
+    SurveyDetailResponse,
 } from "../types/survey"
 import type { ApiResponse } from "../types/api"
 import type { PageResponse } from "../types/survey" // PageResponse 타입 임포트
@@ -35,7 +36,7 @@ export const getSurveys = async (): Promise<AxiosResponse<ApiResponse<SurveyResp
 }
 
 // 설문 상세 조회
-export const getSurveyById = async (surveyId: string): Promise<AxiosResponse<ApiResponse<SurveyResponse>>> => {
+export const getSurveyById = async (surveyId: string): Promise<AxiosResponse<ApiResponse<SurveyDetailResponse>>> => {
     return api.get(`/api/surveys/${surveyId}`)
 }
 
@@ -53,7 +54,7 @@ export const getAllSurveyAnswers = async (): Promise<AxiosResponse<ApiResponse<A
 }
 
 // 고객용 설문 조회 API 추가
-export const getSurveyForCustomer = async (surveyId: string): Promise<AxiosResponse<ApiResponse<SurveyResponse>>> => {
+export const getSurveyForCustomer = async (surveyId: string): Promise<AxiosResponse<ApiResponse<SurveyDetailResponse>>> => {
     return api.get(`/api/customers/surveys/${surveyId}`)
 }
 

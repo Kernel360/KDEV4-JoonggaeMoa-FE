@@ -29,3 +29,14 @@ export interface ContractResponse {
   expiredAt: string; // LocalDate -> ISO 문자열 형식 (YYYY-MM-DD)
   url: string; // 계약서 파일 URL
 }
+
+export interface ExpiredContract {
+    id: string;
+    landlordName: string;
+    tenantName: string;
+    expiredAt: string; // LocalDate will be received as string from API
+}
+
+export interface ExpiredContractResponse {
+    expiredContracts: ExpiredContract[];
+}

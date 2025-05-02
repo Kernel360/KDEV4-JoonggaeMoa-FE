@@ -24,7 +24,7 @@ import {
 } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
-import { Inquiry, InquiryConsultationRequest } from '../types/inquiry';
+import { InquiryDetailResponse, InquiryConsultationRequest } from '../types/inquiry';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -34,7 +34,7 @@ const InquiryDetail: React.FC = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const { isAuthenticated } = useAuth();
-    const [inquiry, setInquiry] = useState<Inquiry | null>(null);
+    const [inquiry, setInquiry] = useState<InquiryDetailResponse | null>(null);
     const [answer, setAnswer] = useState('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);

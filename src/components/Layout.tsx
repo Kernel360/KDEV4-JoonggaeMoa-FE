@@ -45,7 +45,6 @@ import { useNotification } from "../context/NotificationContext";
 import { formatDistanceToNow } from 'date-fns';
 import Footer from './Footer';
 
-
 // 커스텀 테마 생성
 const theme = createTheme({
     typography: {
@@ -138,18 +137,17 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     const [notificationError, setNotificationError] = useState<string | null>(null);
     const [notificationAnchorEl, setNotificationAnchorEl] = useState<null | HTMLElement>(null);
     // Get notifications from context
-    const { notifications, unreadCount, markAsRead, fetchNotifications } = useNotification();
+    const { notifications, unreadCount, markAsRead } = useNotification();
     
     const { logout } = useAuth();
     const { closeSSEConnection } = useNotification();  // Add this line
     const navigate = useNavigate();
     const location = useLocation();
     const [sidebarOpen, setSidebarOpen] = useState(true);
-    const [profile, setProfile] = useState<{ name: string; email: string } | null>(null);
+    const [profile, setProfile] = useState<{ name: string;} | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-    
 
     // Add these missing notification handler functions
     const handleNotificationClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -230,7 +228,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             }
             
             if(notification.isRead === false) {
-                
                 markAsRead(notification.id);
             }
     
@@ -270,11 +267,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         // 프로필 정보를 가져오는 함수
         const fetchProfile = async () => {
             try {
-                const response = await api.get("/api/agents/me"); // API 요청
+                const response = await api.get("/api/agents/me/profile"); // API 요청
                 if (response.data.success && response.data.data) {
                     setProfile({
                         name: response.data.data.name,
-                        email: response.data.data.email,
                     });
                 } else {
                     setError("프로필 정보를 불러오는데 실패했습니다.");
@@ -307,12 +303,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             return;
         }    
 
-        // Change initializeNotifications to fetchNotifications
-        fetchNotifications();
-
-    }, [fetchNotifications, location.pathname]);
-
-
+    }, []);
 
     return (
         <ThemeProvider theme={theme}>

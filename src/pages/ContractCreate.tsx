@@ -23,7 +23,7 @@ import { ArrowBack, CloudUpload } from "@mui/icons-material"
 import { useNavigate } from "react-router-dom"
 import { contractApi } from "../services/contractApi"
 import { customerApi } from "../services/customerApi"
-import type { CustomerResponse } from "../types/customer"
+import type { CustomerListResponse } from "../services/customerApi"
 
 const ContractCreate = () => {
     const navigate = useNavigate()
@@ -32,10 +32,10 @@ const ContractCreate = () => {
     const [success, setSuccess] = useState(false)
 
     // 고객 관련 상태
-    const [customers, setCustomers] = useState<CustomerResponse[]>([])
+    const [customers, setCustomers] = useState<CustomerListResponse[]>([])
     const [customerLoading, setCustomerLoading] = useState(true)
-    const [selectedLandlord, setSelectedLandlord] = useState<CustomerResponse | null>(null)
-    const [selectedTenant, setSelectedTenant] = useState<CustomerResponse | null>(null)
+    const [selectedLandlord, setSelectedLandlord] = useState<CustomerListResponse | null>(null)
+    const [selectedTenant, setSelectedTenant] = useState<CustomerListResponse | null>(null)
     const [searchTerm, setSearchTerm] = useState("")
     
     // 페이지네이션 관련 상태

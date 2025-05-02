@@ -1,21 +1,29 @@
-export interface InquiryAnswer {
+export interface InquiryAnswerResponse {
     agentId: number;
     agentName: string;
     agentOffice: string;
     agentRegion: string;
     content: string;
     createdAt: string;
-    updatedAt: string;
 }
 
-export interface Inquiry {
+export interface InquiryDetailResponse {
     id: number;
     name: string;
     title: string;
     content: string | null;
     createdAt: string;
     updatedAt: string;
-    answers: InquiryAnswer[];
+    answers: InquiryAnswerResponse[];
+}
+
+export interface InquiryResponse {
+    id: number;
+    name: string;
+    title: string;
+    content: string | null;
+    createdAt: string;
+    count: number;
 }
 
 export interface InquiryRequest {

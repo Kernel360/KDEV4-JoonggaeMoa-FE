@@ -41,7 +41,7 @@ import {
 } from "@mui/icons-material"
 import { useNavigate, useParams, Link as RouterLink, useLocation } from "react-router-dom"
 import { consultationApi } from "../services/consultationApi"
-import { ConsultationStatus, ConsultationResponse, ConsultationHistoryDto, ConsultationCreateRequest, ConsultationUpdateRequest } from "../types/consultation"
+import { ConsultationStatus, ConsultationResponse, ConsultationHistoryDto, ConsultationCreateRequest, ConsultationUpdateRequest, ConsultationDetailType } from "../types/consultation"
 import { format } from 'date-fns'
 
 // 상담 상태별 칩 색상 및 텍스트 - 새로운 상태 값에 맞게 업데이트
@@ -59,15 +59,15 @@ const ConsultationDetail = () => {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [consultationHistory, setConsultationHistory] = useState<ConsultationHistoryDto | null>(null)
-    const [selectedConsultation, setSelectedConsultation] = useState<ConsultationResponse | null>(null)
+    const [selectedConsultation, setSelectedConsultation] = useState<ConsultationDetailType | null>(null)
     const [isNewConsultation, setIsNewConsultation] = useState(true)
     const [currentPage, setCurrentPage] = useState(0)
     const [pageSize] = useState(5)
-    const [editFormData, setEditFormData] = useState<Partial<ConsultationResponse>>({
+    const [editFormData, setEditFormData] = useState<Partial<ConsultationCreateRequest & ConsultationDetailType>>({
         date: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
         consultationStatus: ConsultationStatus.WAITING,
     })
-    const [originalConsultationData, setOriginalConsultationData] = useState<Partial<ConsultationResponse> | null>(null)
+    const [originalConsultationData, setOriginalConsultationData] = useState<Partial<ConsultationDetailType> | null>(null)
     const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: "success" | "error" }>({
         open: false,
         message: "",
@@ -75,7 +75,7 @@ const ConsultationDetail = () => {
     })
     const [viewMode, setViewMode] = useState<'history' | 'detail'>('history')
     const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
-    const [consultationToEdit, setConsultationToEdit] = useState<ConsultationResponse | null>(null)
+    const [consultationToEdit, setConsultationToEdit] = useState<ConsultationDetailType | null>(null)
     const [confirmNewConsultationDialogOpen, setConfirmNewConsultationDialogOpen] = useState(false)
     const [currentlyEditingConsultationId, setCurrentlyEditingConsultationId] = useState<number | null>(null)
     const [initialConsultationId, setInitialConsultationId] = useState<number | null>(null)
@@ -85,28 +85,10 @@ const ConsultationDetail = () => {
     const [customerId, setCustomerId] = useState<number | null>(null)
 
     useEffect(() => {
-        // Get customerId from query parameters
-        const searchParams = new URLSearchParams(location.search)
-        const customerIdParam = searchParams.get('customerId')
-        
-        if (customerIdParam) {
-            const parsedCustomerId = parseInt(customerIdParam, 10)
-            if (!isNaN(parsedCustomerId)) {
-                setCustomerId(parsedCustomerId)
-            }
-        }
-        
         if (consultationId) {
-            fetchConsultationById(parseInt(consultationId, 10))
-        }
-    }, [consultationId, location.search])
-
-    // Effect to load consultation history when customerId is available
-    useEffect(() => {
-        if (customerId) {
             fetchConsultationHistory()
         }
-    }, [customerId, currentPage])
+    }, [consultationId, currentPage])
 
     const fetchConsultationHistory = async () => {
         try {
@@ -201,7 +183,7 @@ const ConsultationDetail = () => {
         }
     }
 
-    const handleConsultationSelect = (consultation: ConsultationResponse) => {
+    const handleConsultationSelect = (consultation: ConsultationDetailType) => {
         setSelectedConsultation(consultation)
         setViewMode('detail')
     }
@@ -216,7 +198,7 @@ const ConsultationDetail = () => {
         } else {
             setIsNewConsultation(true)
             setEditFormData({
-                customerId: customerId,
+                customerId: customerId!,
                 date: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
                 consultationStatus: ConsultationStatus.WAITING,
             })
@@ -229,7 +211,7 @@ const ConsultationDetail = () => {
         if (confirmed) {
             setIsNewConsultation(true)
             setEditFormData({
-                customerId: customerId,
+                customerId: customerId!,
                 date: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
                 consultationStatus: ConsultationStatus.WAITING,
             })
@@ -497,7 +479,7 @@ const ConsultationDetail = () => {
         }
     }
 
-    const handleEditClick = (consultation: ConsultationResponse) => {
+    const handleEditClick = (consultation: ConsultationDetailType) => {
         if (editFormData.purpose || editFormData.memo) {
             setConsultationToEdit(consultation)
             setConfirmDialogOpen(true)
@@ -506,12 +488,12 @@ const ConsultationDetail = () => {
         }
     }
 
-    const handleStartEdit = (consultation: ConsultationResponse) => {
+    const handleStartEdit = (consultation: ConsultationDetailType) => {
         setSelectedConsultation(consultation)
         setIsNewConsultation(false)
         
         // Store the original consultation data
-        const consultationData = {
+        const consultationData: Partial<ConsultationDetailType> = {
             consultationId: consultation.consultationId,
             date: consultation.date,
             consultationStatus: consultation.consultationStatus,
@@ -579,7 +561,7 @@ const ConsultationDetail = () => {
                                     </Typography>
                                     <IconButton
                                         component={RouterLink}
-                                        to={`/customer-management/${consultationHistory?.customer.id}`}
+                                        to={`/customer-management/${consultationHistory?.customerId}`}
                                         color="primary"
                                         size="small"
                                     >
@@ -595,7 +577,7 @@ const ConsultationDetail = () => {
                                                         이름
                                                     </Typography>
                                                     <Typography variant="body1" sx={{ color: '#007ea7', mt: 0.5, fontWeight: 'bold' }}>
-                                                        {consultationHistory?.customer.name}
+                                                        {consultationHistory?.customerName}
                                                     </Typography>
                                                 </Grid>
                                                 <Grid item xs={6}>
@@ -603,7 +585,7 @@ const ConsultationDetail = () => {
                                                         이메일
                                                     </Typography>
                                                     <Typography variant="body1" sx={{ color: '#111827', mt: 0.5 }}>
-                                                        {consultationHistory?.customer.email}
+                                                        {consultationHistory?.customerEmail}
                                                     </Typography>
                                                 </Grid>
                                                 <Grid item xs={6}>
@@ -611,7 +593,7 @@ const ConsultationDetail = () => {
                                                         전화번호
                                                     </Typography>
                                                     <Typography variant="body1" sx={{ color: '#111827', mt: 0.5 }}>
-                                                        {consultationHistory?.customer.phone}
+                                                        {consultationHistory?.customerPhone}
                                                     </Typography>
                                                 </Grid>
                                                 <Grid item xs={6}>
@@ -619,7 +601,7 @@ const ConsultationDetail = () => {
                                                         직업
                                                     </Typography>
                                                     <Typography variant="body1" sx={{ color: '#111827', mt: 0.5 }}>
-                                                        {consultationHistory?.customer.job || "-"}
+                                                        {consultationHistory?.customerJob || "-"}
                                                     </Typography>
                                                 </Grid>
                                             </Grid>
@@ -634,7 +616,7 @@ const ConsultationDetail = () => {
                                                         관심매물
                                                     </Typography>
                                                     <Typography variant="body1" sx={{ color: '#111827', mt: 0.5 }}>
-                                                        {consultationHistory?.customer.interestProperty || "-"}
+                                                        {consultationHistory?.interestProperty || "-"}
                                                     </Typography>
                                                 </Grid>
                                                 <Grid item xs={6}>
@@ -642,7 +624,7 @@ const ConsultationDetail = () => {
                                                         관심지역
                                                     </Typography>
                                                     <Typography variant="body1" sx={{ color: '#111827', mt: 0.5 }}>
-                                                        {consultationHistory?.customer.interestLocation || "-"}
+                                                        {consultationHistory?.interestLocation || "-"}
                                                     </Typography>
                                                 </Grid>
                                                 <Grid item xs={6}>
@@ -650,7 +632,7 @@ const ConsultationDetail = () => {
                                                         자산상태
                                                     </Typography>
                                                     <Typography variant="body1" sx={{ color: '#111827', mt: 0.5 }}>
-                                                        {consultationHistory?.customer.assetStatus || "-"}
+                                                        {consultationHistory?.assetStatus || "-"}
                                                     </Typography>
                                                 </Grid>
                                             </Grid>

@@ -60,13 +60,14 @@ import type {
     RealEstateTypeSummary,
     TradeTypeSummary
 } from "../types/dashboard"
-import { format, differenceInMonths, isSameMonth, isToday, parseISO, addMonths, differenceInDays } from 'date-fns';
+import { format, differenceInMonths, isSameMonth, isToday, parseISO, addMonths, differenceInDays, startOfDay } from 'date-fns';
 
 import { TooltipModel } from "@toast-ui/chart/types/components/tooltip"
 import { TooltipTheme } from "@toast-ui/chart/types/theme"
 
 import { toast } from 'react-toastify';
 import Layout from "../components/Layout"
+import { contractApi } from "../services/contractApi"
 
 
 // 커스텀 테마 생성
@@ -120,9 +121,7 @@ interface Contract {
     id: string;
     landlordName: string;
     tenantName: string;
-    createdAt: string;
     expiredAt: string;
-    url: string;
 }
 
 // Add this helper function before the Dashboard component
@@ -253,10 +252,8 @@ const Dashboard = () => {
         try {
             setContractsLoading(true);
             setContractsError(null);
-            const response = await api.get("/api/contracts");
-            if (response.data.success) {
-                setContracts(response.data.data.content);
-            }
+            const response = await contractApi.getExpiredContracts();
+            setContracts(response.expiredContracts);
         } catch (err) {
             console.error("Error fetching contracts:", err);
             setContractsError("계약 정보를 불러오는데 실패했습니다.");
@@ -264,10 +261,6 @@ const Dashboard = () => {
             setContractsLoading(false);
         }
     };
-
-    useEffect(() => {
-        fetchContracts();
-    }, []);
 
     useEffect(() => {
         const agentId = localStorage.getItem('agentId');
@@ -315,7 +308,8 @@ const Dashboard = () => {
                     fetchTradeTypeData(tradeTypePeriod),
                     fetchCustomerSummary(),
                     fetchContractSummary(),
-                    fetchConsultationSummary()
+                    fetchConsultationSummary(),
+                    fetchContracts()
                 ]);
                 
                 setError(null);
@@ -463,15 +457,15 @@ const Dashboard = () => {
         if (!contracts) return [];
         
         return contracts.filter(contract => {
-            const expiredDate = parseISO(contract.expiredAt);
-            const today = new Date();
+            const expiredDate = startOfDay(parseISO(contract.expiredAt));
+            const today = startOfDay(new Date());
             const daysDiff = differenceInDays(expiredDate, today);
             
             switch (period) {
                 case 'today':
-                    return isToday(expiredDate);
+                    return daysDiff === 0;
                 case '1-2month':
-                    return !isToday(expiredDate) && daysDiff >= 1 && daysDiff <= 60;
+                    return daysDiff >= 1 && daysDiff <= 60;
                 case '3month':
                     return daysDiff > 60 && daysDiff <= 90;
                 case '4-6month':
@@ -913,26 +907,7 @@ const Dashboard = () => {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {getContractsByPeriod().filter(contract => {
-                                            const expiredDate = parseISO(contract.expiredAt);
-                                            switch (selectedPeriod) {
-                                                case 'today':
-                                                    return isToday(expiredDate);
-                                                case '1-2month':
-                                                    return !isToday(expiredDate) && (
-                                                        isSameMonth(expiredDate, new Date()) ||
-                                                        isSameMonth(expiredDate, addMonths(new Date(), 1))
-                                                    );
-                                                case '3month':
-                                                    const daysDiff3 = differenceInDays(expiredDate, new Date());
-                                                    return daysDiff3 > 60 && daysDiff3 <= 90;
-                                                case '4-6month':
-                                                    const daysDiff6 = differenceInDays(expiredDate, new Date());
-                                                    return daysDiff6 > 90 && daysDiff6 <= 180;
-                                                default:
-                                                    return false;
-                                            }
-                                        }).length === 0 ? (
+                                        {getContractsByPeriod().length === 0 ? (
                                             <tr>
                                                 <td colSpan={4} style={{ 
                                                     padding: '24px',

@@ -16,26 +16,22 @@ export enum ConsultationType {
 }
 
 export interface ConsultationCreateRequest {
-    customerId: number
-    date: string // "yyyy-MM-dd HH:mm" 형식
-    purpose?: string
-    interestProperty?: string
-    interestLocation?: string
-    contractType?: string
-    assetStatus?: string
-    memo?: string
-    consultationStatus?: string
+    customerId: number;
+    date: string; // "yyyy-MM-dd HH:mm" 형식
+    purpose?: string;
+    interestProperty?: string;
+    interestLocation?: string;
+    contractType?: string;
+    assetStatus?: string;
+    memo?: string;
+    consultationStatus?: string;
 }
 
 export interface ConsultationUpdateRequest {
-    date?: string // "yyyy-MM-dd HH:mm" 형식
-    purpose?: string
-    interestProperty?: string
-    interestLocation?: string
-    contractType?: string
-    assetStatus?: string
-    memo?: string
-    consultationStatus?: string
+    purpose: string;
+    memo: string;
+    consultationStatus: ConsultationStatus;
+    date: string;
 }
 
 // 상담 결과 요청
@@ -107,9 +103,32 @@ export interface ConsultationMonthInfo {
 }
 
 export interface ConsultationHistoryDto {
-    customer: CustomerResponse;
-    consultations: Page<ConsultationResponse>;
+    customerId: number;
+    customerName: string;
+    customerPhone: string;
+    customerEmail: string;
+    customerJob: string;
+    interestProperty: string;
+    interestLocation: string;
+    assetStatus: string;
+    consultations: {
+        content: ConsultationDetail[];
+        totalPages: number;
+        totalElements: number;
+        size: number;
+        number: number;
+    };
 }
+
+export interface ConsultationDetail {
+    consultationId: number;
+    date: string;
+    purpose: string;
+    memo: string;
+    consultationStatus: ConsultationStatus;
+}
+
+export type ConsultationDetailType = ConsultationDetail;
 
 export interface CustomerResponse {
     id: number;

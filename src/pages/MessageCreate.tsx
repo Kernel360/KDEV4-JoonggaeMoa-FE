@@ -33,7 +33,7 @@ import { useNavigate } from "react-router-dom"
 import { messageApi } from "../services/messageApi"
 import { messageTemplateApi } from "../services/messageTemplateApi"
 import { customerApi } from "../services/customerApi"
-import type { CustomerResponse } from "../services/customerApi"
+import type { CustomerListResponse } from "../services/customerApi"
 import type { MessageTemplateResponse } from "../services/messageTemplateApi"
 
 function getByteLength(str: string): number {
@@ -87,7 +87,7 @@ const MessageCreate = () => {
     const [success, setSuccess] = useState(false)
 
     // 고객 관련 상태
-    const [customers, setCustomers] = useState<CustomerResponse[]>([])
+    const [customers, setCustomers] = useState<CustomerListResponse[]>([])
     const [selectedCustomers, setSelectedCustomers] = useState<number[]>([])
     const [customerLoading, setCustomerLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState("")

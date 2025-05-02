@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from 'react';
 import {
     Box,
     Container,
@@ -25,88 +25,107 @@ import {
     Radio,
     FormGroup,
     Checkbox,
+    TextField,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    ListItem,
+    ListItemText,
 } from "@mui/material"
-// Add ContentCopy icon import
-import { ArrowBack, Edit, Delete, ContentCopy } from "@mui/icons-material"
+import { ArrowBack, Edit, Delete, ContentCopy, Add } from "@mui/icons-material"
 import { useNavigate, useParams } from "react-router-dom"
-import { surveyApi } from "../services/surveyApi"
-import type { SurveyResponse } from "../types/survey"
+import { useAuth } from '../context/AuthContext'
+import api from '../services/api'
+import { SurveyDetailResponse } from '../types/survey'
+import { format } from 'date-fns'
+import { ko } from 'date-fns/locale'
 
-const SurveyDetail = () => {
+const SurveyDetail: React.FC = () => {
     const navigate = useNavigate()
     const { id } = useParams<{ id: string }>()
-    const [survey, setSurvey] = useState<SurveyResponse | null>(null)
-    const [loading, setLoading] = useState(true)
+    const { isAuthenticated } = useAuth()
+    const [survey, setSurvey] = useState<SurveyDetailResponse | null>(null)
+    const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
-
-    // 삭제 관련 상태
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
     const [deleteLoading, setDeleteLoading] = useState(false)
-    const [deleteError, setDeleteError] = useState<string | null>(null)
-    const [deleteSuccess, setDeleteSuccess] = useState(false)
+    const [successMessage, setSuccessMessage] = useState<string | null>(null)
+    const [editMode, setEditMode] = useState(false)
+    const [editedSurvey, setEditedSurvey] = useState({
+        title: '',
+        description: '',
+    })
 
     // Add copyUrlSuccess state
     const [copyUrlSuccess, setCopyUrlSuccess] = useState(false)
 
-    useEffect(() => {
-        if (id) {
-            fetchSurveyDetails(id)
-        }
-    }, [id])
-
-    const fetchSurveyDetails = async (surveyId: string) => {
+    const fetchSurvey = async () => {
         try {
             setLoading(true)
-            const response = await surveyApi.getSurveyById(surveyId)
-
-            if (response.data.success && response.data.data) {
+            const response = await api.get(`/api/surveys/${id}`)
+            if (response.data.success) {
                 setSurvey(response.data.data)
-            } else {
-                setError("설문 정보를 불러오는데 실패했습니다.")
+                setEditedSurvey({
+                    title: response.data.data.title,
+                    description: response.data.data.description,
+                })
             }
         } catch (err) {
-            console.error("Error fetching survey details:", err)
-            setError("설문 정보를 불러오는데 실패했습니다.")
+            setError('설문 정보를 불러오는데 실패했습니다.')
         } finally {
             setLoading(false)
         }
     }
 
-    // 삭제 다이얼로그 열기
+    useEffect(() => {
+        fetchSurvey()
+    }, [id])
+
     const handleDeleteClick = () => {
         setDeleteDialogOpen(true)
     }
 
-    // 삭제 다이얼로그 닫기
-    const handleDeleteClose = () => {
-        setDeleteDialogOpen(false)
-    }
-
-    // 설문 삭제 처리
     const handleDeleteConfirm = async () => {
-        if (!id) return
-
         try {
             setDeleteLoading(true)
-            setDeleteError(null)
-
-            const response = await surveyApi.deleteSurvey(id)
+            const response = await api.delete(`/api/surveys/${id}`)
 
             if (response.data.success) {
-                setDeleteSuccess(true)
-                handleDeleteClose()
-
-                // 삭제 성공 후 목록 페이지로 이동
-                navigate("/survey")
+                setSuccessMessage('설문이 성공적으로 삭제되었습니다.')
+                navigate('/survey')
             } else {
-                setDeleteError(response.data.error?.message || "설문 삭제에 실패했습니다.")
+                setError('설문 삭제에 실패했습니다.')
             }
-        } catch (err: any) {
-            console.error("Error deleting survey:", err)
-            setDeleteError(err.response?.data?.error?.message || "설문 삭제에 실패했습니다.")
+        } catch (err) {
+            setError('설문 삭제에 실패했습니다.')
         } finally {
             setDeleteLoading(false)
+            setDeleteDialogOpen(false)
         }
+    }
+
+    const handleSaveClick = async () => {
+        try {
+            const response = await api.put(`/api/surveys/${id}`, editedSurvey)
+            if (response.data.success) {
+                setSurvey(response.data.data)
+                setEditMode(false)
+                setSuccessMessage('설문이 성공적으로 수정되었습니다.')
+            }
+        } catch (err) {
+            setError('설문 수정에 실패했습니다.')
+        }
+    }
+
+    const handleCancelClick = () => {
+        setEditMode(false)
+        setEditedSurvey({
+            title: survey?.title || '',
+            description: survey?.description || '',
+        })
     }
 
     // http, https 구분
@@ -156,28 +175,38 @@ const SurveyDetail = () => {
        }
 
     // 질문 타입에 따른 UI 렌더링
-    const renderQuestionOptions = (question: SurveyResponse["questionList"][0]) => {
+    const renderQuestionOptions = (question: SurveyDetailResponse["questions"][0]) => {
         switch (question.type) {
-            case "RADIO":
-                return (
-                    <RadioGroup>
-                        {question.options.map((option, index) => (
-                            <FormControlLabel key={index} value={option} control={<Radio disabled />} label={option} />
-                        ))}
-                    </RadioGroup>
-                )
-            case "CHECKBOX":
+            case "SINGLE_CHOICE":
                 return (
                     <FormGroup>
-                        {question.options.map((option, index) => (
-                            <FormControlLabel key={index} control={<Checkbox disabled />} label={option} />
+                        {question.options.map((option, optionIndex) => (
+                            <FormControlLabel
+                                key={optionIndex}
+                                control={<Radio disabled />}
+                                label={option}
+                            />
                         ))}
                     </FormGroup>
-                )
+                );
+            case "MULTIPLE_CHOICE":
+                return (
+                    <FormGroup>
+                        {question.options.map((option, optionIndex) => (
+                            <FormControlLabel
+                                key={optionIndex}
+                                control={<Checkbox disabled />}
+                                label={option}
+                            />
+                        ))}
+                    </FormGroup>
+                );
+            case "TEXT":
+                return <TextField fullWidth disabled />;
             default:
-                return null
+                return null;
         }
-    }
+    };
 
     // 날짜 포맷팅 함수
     const formatDate = (dateString: string | undefined) => {
@@ -231,12 +260,71 @@ const SurveyDetail = () => {
                             설문 상세 정보
                         </Typography>
                         <Box sx={{ flexGrow: 1 }} />
-                        <Button startIcon={<Edit />} sx={{ mr: 1, color: "#555" }} onClick={() => navigate(`/survey/edit/${id}`)}>
-                            수정
-                        </Button>
-                        <Button startIcon={<Delete />} color="error" onClick={handleDeleteClick}>
-                            삭제
-                        </Button>
+                        {isAuthenticated && (
+                            <Box sx={{ display: 'flex', gap: 2 }}>
+                                {!editMode ? (
+                                    <>
+                                        <Button
+                                            variant="outlined"
+                                            startIcon={<Edit />}
+                                            onClick={() => navigate(`/survey/edit/${id}`)}
+                                            sx={{
+                                                borderColor: '#007ea7',
+                                                color: '#007ea7',
+                                                '&:hover': {
+                                                    borderColor: '#003459',
+                                                    backgroundColor: 'rgba(0, 126, 167, 0.04)'
+                                                }
+                                            }}
+                                        >
+                                            수정
+                                        </Button>
+                                        <Button
+                                            variant="outlined"
+                                            startIcon={<Delete />}
+                                            onClick={handleDeleteClick}
+                                            sx={{
+                                                borderColor: '#dc3545',
+                                                color: '#dc3545',
+                                                '&:hover': {
+                                                    borderColor: '#dc3545',
+                                                    backgroundColor: 'rgba(220, 53, 69, 0.04)'
+                                                }
+                                            }}
+                                        >
+                                            삭제
+                                        </Button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Button
+                                            variant="outlined"
+                                            onClick={handleCancelClick}
+                                            sx={{
+                                                borderColor: '#6c757d',
+                                                color: '#6c757d',
+                                                '&:hover': {
+                                                    borderColor: '#495057',
+                                                    backgroundColor: 'rgba(108, 117, 125, 0.04)'
+                                                }
+                                            }}
+                                        >
+                                            취소
+                                        </Button>
+                                        <Button
+                                            variant="contained"
+                                            onClick={handleSaveClick}
+                                            sx={{
+                                                bgcolor: '#007ea7',
+                                                '&:hover': { bgcolor: '#003459' }
+                                            }}
+                                        >
+                                            저장
+                                        </Button>
+                                    </>
+                                )}
+                            </Box>
+                        )}
                     </Box>
 
                     {/* Add a section to display and copy the survey URL after the survey title and description */}
@@ -313,66 +401,127 @@ const SurveyDetail = () => {
                         질문 목록
                     </Typography>
 
-                    <List>
-                        {survey.questionList.map((question, index) => (
-                            <Paper
-                                key={question.id}
-                                elevation={0}
-                                sx={{
-                                    p: 3,
-                                    mb: 3,
-                                    bgcolor: "#f9f9f9",
-                                    borderRadius: 2,
-                                    boxShadow: 1,
-                                }}
-                            >
-                                <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                                    <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
-                                        {index + 1}. {question.content}
-                                    </Typography>
-                                    {question.isRequired && (
-                                        <Chip
-                                            label="필수"
-                                            size="small"
-                                            color="primary"
-                                            sx={{ ml: 2, bgcolor: "#e3f2fd", color: "#1976d2" }}
-                                        />
-                                    )}
-                                </Box>
-                                <Box sx={{ ml: 2 }}>{renderQuestionOptions(question)}</Box>
-                            </Paper>
-                        ))}
-                    </List>
+                    <TableContainer>
+                        <Table>
+                            <TableHead>
+                                <TableRow sx={{ backgroundColor: '#e9ecef' }}>
+                                    <TableCell>질문</TableCell>
+                                    <TableCell>유형</TableCell>
+                                    <TableCell>필수 여부</TableCell>
+                                    <TableCell>선택지</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {survey.questions.map((question, index) => (
+                                    <TableRow key={index}>
+                                        <TableCell sx={{ maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                            {question.content}
+                                        </TableCell>
+                                        <TableCell>
+                                            {question.type === 'RADIO' ? '객관식 (단일 선택)' :
+                                             question.type === 'CHECKBOX' ? '객관식 (다중 선택)' :
+                                             '주관식'}
+                                        </TableCell>
+                                        <TableCell>
+                                            {question.isRequired ? (
+                                                <Chip label="필수" color="primary" size="small" />
+                                            ) : (
+                                                <Chip label="선택" variant="outlined" size="small" />
+                                            )}
+                                        </TableCell>
+                                        <TableCell>
+                                                <List dense>
+                                                    {question.options.map((option, optionIndex) => (
+                                                        <ListItem key={optionIndex} sx={{ py: 0.5 }}>
+                                                            {question.type === 'RADIO' ? (
+                                                                <Radio size="small" disabled />
+                                                            ) : (
+                                                                <Checkbox size="small" disabled />
+                                                            )}
+                                                            <ListItemText primary={option} />
+                                                        </ListItem>
+                                                    ))}
+                                                </List>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
                 </Paper>
             </Container>
 
             {/* 삭제 확인 다이얼로그 */}
-            <Dialog open={deleteDialogOpen} onClose={handleDeleteClose}>
-                <DialogTitle>설문 삭제</DialogTitle>
-                <DialogContent>
-                    <DialogContentText>{survey.title} 설문을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.</DialogContentText>
+            <Dialog
+                open={deleteDialogOpen}
+                onClose={() => setDeleteDialogOpen(false)}
+                maxWidth="sm"
+                fullWidth
+                PaperProps={{
+                    sx: {
+                        borderRadius: 2,
+                        bgcolor: '#ffffff'
+                    }
+                }}
+            >
+                <DialogTitle sx={{ 
+                    borderBottom: '2px solid #dc3545', 
+                    color: '#dc3545',
+                    fontWeight: 'bold',
+                    fontSize: '1.5rem',
+                    pb: 2
+                }}>
+                    설문 삭제
+                </DialogTitle>
+                <DialogContent sx={{ mt: 2 }}>
+                    <Typography>
+                        이 설문을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+                    </Typography>
                 </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleDeleteClose} disabled={deleteLoading}>
+                <DialogActions sx={{ p: 3, borderTop: '1px solid #e9ecef' }}>
+                    <Button
+                        onClick={() => setDeleteDialogOpen(false)}
+                        variant="outlined"
+                        sx={{
+                            borderColor: '#6c757d',
+                            color: '#6c757d',
+                            '&:hover': {
+                                borderColor: '#495057',
+                                backgroundColor: 'rgba(108, 117, 125, 0.04)'
+                            }
+                        }}
+                    >
                         취소
                     </Button>
-                    <Button onClick={handleDeleteConfirm} color="error" disabled={deleteLoading}>
-                        {deleteLoading ? <CircularProgress size={24} /> : "삭제"}
+                    <Button
+                        onClick={handleDeleteConfirm}
+                        variant="contained"
+                        disabled={deleteLoading}
+                        sx={{
+                            bgcolor: '#dc3545',
+                            '&:hover': { bgcolor: '#c82333' },
+                            '&.Mui-disabled': {
+                                bgcolor: '#e9ecef',
+                                color: '#6c757d'
+                            }
+                        }}
+                    >
+                        {deleteLoading ? <CircularProgress size={24} /> : '삭제'}
                     </Button>
                 </DialogActions>
             </Dialog>
 
             {/* 성공 메시지 스낵바 */}
-            <Snackbar open={deleteSuccess} autoHideDuration={6000} onClose={() => setDeleteSuccess(false)}>
-                <Alert onClose={() => setDeleteSuccess(false)} severity="success" sx={{ width: "100%" }}>
-                    설문이 성공적으로 삭제되었습니다. 설문 목록 페이지로 이동합니다.
+            <Snackbar open={!!successMessage} autoHideDuration={6000} onClose={() => setSuccessMessage(null)}>
+                <Alert onClose={() => setSuccessMessage(null)} severity="success" sx={{ width: "100%" }}>
+                    {successMessage}
                 </Alert>
             </Snackbar>
 
             {/* 에러 메시지 스낵바 */}
-            <Snackbar open={!!deleteError} autoHideDuration={6000} onClose={() => setDeleteError(null)}>
-                <Alert onClose={() => setDeleteError(null)} severity="error" sx={{ width: "100%" }}>
-                    {deleteError}
+            <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError(null)}>
+                <Alert onClose={() => setError(null)} severity="error" sx={{ width: "100%" }}>
+                    {error}
                 </Alert>
             </Snackbar>
 
@@ -387,4 +536,5 @@ const SurveyDetail = () => {
 }
 
 export default SurveyDetail
+
 

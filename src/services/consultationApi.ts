@@ -70,7 +70,13 @@ export const getConsultationHistoryByConsultationId = async (
     page: number = 0,
     size: number = 5
 ): Promise<AxiosResponse<ApiResponse<ConsultationHistoryDto>>> => {
-    return await api.get(`/api/consultations/${consultationId}/customers?page=${page}&size=${size}&sort=date,desc`)
+    return await api.get(`/api/consultations/${consultationId}/customers`, {
+        params: {
+            page,
+            size,
+            sort: 'date,desc'
+        }
+    })
 }
 
 // 오늘 예정된 상담 조회

@@ -2,7 +2,6 @@ import axios from "axios"
 import api from "./api"
 
 export interface AgentInfo {
-    id: number
     username: string
     name: string
     phone: string

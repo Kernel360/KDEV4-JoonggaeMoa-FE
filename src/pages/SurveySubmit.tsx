@@ -29,7 +29,7 @@ import {
 } from "@mui/material"
 // 고객용 API 함수 import로 변경
 import { getSurveyForCustomer, submitSurveyAnswerForCustomer } from "../services/surveyApi"
-import { QuestionType, type QuestionResponse, type SurveyResponse, AnswerRequest } from "../types/survey"
+import { QuestionType, type QuestionResponse, type SurveyResponse, type SurveyDetailResponse, AnswerRequest } from "../types/survey"
 import { CheckCircle } from "@mui/icons-material"
 
 const SurveySubmit: React.FC = () => {
@@ -40,7 +40,7 @@ const SurveySubmit: React.FC = () => {
     const [submitting, setSubmitting] = useState<boolean>(false)
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState<boolean>(false)
-    const [survey, setSurvey] = useState<SurveyResponse | null>(null)
+    const [survey, setSurvey] = useState<SurveyDetailResponse | null>(null)
     const [validationAlert, setValidationAlert] = useState<boolean>(false)
     const [missingRequiredQuestions, setMissingRequiredQuestions] = useState<string[]>([])
 
@@ -117,7 +117,7 @@ const SurveySubmit: React.FC = () => {
                 newErrors.questions = {}
             }
             
-            const question = survey?.questionList.find(q => q.id === questionId)
+            const question = survey?.questions.find(q => q.id === questionId)
             if (question?.isRequired) {
                 // 빈 배열이거나 모든 요소가 빈 문자열인 경우
                 if (!value || 
@@ -202,7 +202,7 @@ const SurveySubmit: React.FC = () => {
             const answersCopy = { ...prev }
 
             // 질문 찾기
-            const question = survey?.questionList.find((q) => q.id === questionId)
+            const question = survey?.questions.find((q) => q.id === questionId)
             if (!question) return prev
 
             // 질문 타입에 따라 처리
@@ -267,13 +267,16 @@ const SurveySubmit: React.FC = () => {
                 setLoading(true)
                 const response = await getSurveyForCustomer(surveyId)
                 if (response.data.success && response.data.data) {
-                    setSurvey(response.data.data)
+                    const surveyData = response.data.data
+                    setSurvey(surveyData)
 
                     // 답변 상태 초기화
                     const initialAnswers: { [key: number]: string[] } = {}
-                    response.data.data.questionList.forEach((question) => {
-                        initialAnswers[question.id] = []
-                    })
+                    if (surveyData.questions && Array.isArray(surveyData.questions)) {
+                        surveyData.questions.forEach((question) => {
+                            initialAnswers[question.id] = []
+                        })
+                    }
                     setAnswers(initialAnswers)
                 } else {
                     setError("설문을 불러오는데 실패했습니다.")
@@ -300,48 +303,47 @@ const SurveySubmit: React.FC = () => {
             questions?: { [key: number]: string }
         } = {}
 
-        // 고객 정보 검사
+        // 이름 검증
         if (!name.trim()) {
             errors.name = "이름을 입력해주세요."
         }
 
+        // 이메일 검증
         if (!email.trim()) {
             errors.email = "이메일을 입력해주세요."
-        } else if (!/\S+@\S+\.\S+/.test(email)) {
-            errors.email = "올바른 이메일 형식이 아닙니다."
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            errors.email = "올바른 이메일 형식을 입력해주세요."
         }
 
+        // 전화번호 검증
         if (!phone.trim()) {
             errors.phone = "전화번호를 입력해주세요."
         } else if (!/^\d{3}-\d{4}-\d{4}$/.test(phone)) {
-            errors.phone = "올바른 전화번호 형식이 아닙니다. (예: 010-1234-5678)"
+            errors.phone = "올바른 전화번호 형식을 입력해주세요. (예: 010-1234-5678)"
         }
 
+        // 동의 여부 검증
         if (!consent) {
             errors.consent = "개인정보 수집 및 이용에 동의해주세요."
         }
 
-        // 필수 질문 응답 검사
-        const questionErrors: { [key: number]: string } = {}
+        // 필수 질문 검증
         const missingQuestions: string[] = []
         
-        survey?.questionList.forEach((question) => {
+        survey?.questions.forEach((question) => {
             if (question.isRequired) {
                 const hasAnswer = answers[question.id] && 
-                                 answers[question.id].length > 0 && 
-                                 answers[question.id].some(answer => answer.trim() !== "");
-                
+                    answers[question.id].some(answer => answer.trim() !== "")
                 if (!hasAnswer) {
-                    questionErrors[question.id] = "필수 응답 항목입니다."
                     missingQuestions.push(question.content)
                 }
             }
         })
 
-        if (Object.keys(questionErrors).length > 0) {
-            errors.questions = questionErrors
+        if (missingQuestions.length > 0) {
             setMissingRequiredQuestions(missingQuestions)
             setValidationAlert(true)
+            return false
         }
 
         setFormErrors(errors)
@@ -368,7 +370,12 @@ const SurveySubmit: React.FC = () => {
             }
 
             // Validate answers
-            const unansweredQuestions = survey.questionList.filter(q => !answers[q.id] || answers[q.id].length === 0)
+            if (!survey.questions || !Array.isArray(survey.questions)) {
+                setSubmitError('설문 질문이 올바르게 로드되지 않았습니다.')
+                return
+            }
+
+            const unansweredQuestions = survey.questions.filter(q => !answers[q.id] || answers[q.id].length === 0)
             if (unansweredQuestions.length > 0) {
                 setSubmitError('모든 질문에 답변해주세요.')
                 return
@@ -385,8 +392,8 @@ const SurveySubmit: React.FC = () => {
                 email,
                 phone,
                 consent,
-                questions: survey.questionList.map(q => q.id),
-                answers: survey.questionList.map(q => answers[q.id] || []),
+                questions: survey.questions.map(q => q.id),
+                answers: survey.questions.map(q => answers[q.id] || []),
                 applyConsultation,
                 consultAt: applyConsultation ? consultAt : undefined
             }
@@ -404,9 +411,11 @@ const SurveySubmit: React.FC = () => {
 
                 // 답변 초기화
                 const initialAnswers: { [key: number]: string[] } = {}
-                survey!.questionList.forEach((question) => {
-                    initialAnswers[question.id] = []
-                })
+                if (survey.questions && Array.isArray(survey.questions)) {
+                    survey.questions.forEach((question) => {
+                        initialAnswers[question.id] = []
+                    })
+                }
                 setAnswers(initialAnswers)
 
                 // 오류 초기화
@@ -681,7 +690,7 @@ const SurveySubmit: React.FC = () => {
                     </Card>
                 )}
 
-                {survey && (
+                {survey && survey.questions && Array.isArray(survey.questions) && (
                     <Card sx={{ mb: 4 }}>
                         <CardContent>
                             <Typography variant="h6" gutterBottom>
@@ -690,7 +699,7 @@ const SurveySubmit: React.FC = () => {
 
                             <Divider sx={{ mb: 3 }} />
 
-                            {survey.questionList.map(renderQuestion)}
+                            {survey.questions.map(renderQuestion)}
                         </CardContent>
                     </Card>
                 )}
