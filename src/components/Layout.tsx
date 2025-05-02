@@ -137,7 +137,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     const [notificationError, setNotificationError] = useState<string | null>(null);
     const [notificationAnchorEl, setNotificationAnchorEl] = useState<null | HTMLElement>(null);
     // Get notifications from context
-    const { notifications, unreadCount, markAsRead } = useNotification();
+    const { notifications, unreadCount, markAsRead, fetchNotifications } = useNotification();
     
     const { logout } = useAuth();
     const { closeSSEConnection } = useNotification();  // Add this line
@@ -303,7 +303,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             return;
         }    
 
-    }, []);
+        fetchNotifications();
+
+    }, [fetchNotifications, location.pathname]);
 
     return (
         <ThemeProvider theme={theme}>
