@@ -113,6 +113,56 @@ export interface CustomerListResponse {
     isVip: boolean;
 }
 
+// 고객 무한 스크롤 응답 타입
+export interface CustomerInfiniteResponse {
+    content: {
+        id: number;
+        name: string;
+        phone: string;
+    }[];
+    pageable: {
+        pageNumber: number;
+        pageSize: number;
+        sort: {
+            empty: boolean;
+            unsorted: boolean;
+            sorted: boolean;
+        };
+        offset: number;
+        unpaged: boolean;
+        paged: boolean;
+    };
+    first: boolean;
+    last: boolean;
+    size: number;
+    number: number;
+    sort: {
+        empty: boolean;
+        unsorted: boolean;
+        sorted: boolean;
+    };
+    numberOfElements: number;
+    empty: boolean;
+}
+
+// 고객 무한 스크롤 조회
+export const getInfiniteCustomers = async (
+    cursor?: number,
+    keyword?: string
+): Promise<AxiosResponse<ApiResponse<CustomerInfiniteResponse>>> => {
+    const params = new URLSearchParams();
+    
+    if (cursor) {
+        params.append('cursor', cursor.toString());
+    }
+    
+    if (keyword) {
+        params.append('keyword', keyword);
+    }
+
+    return api.get(`/api/customers/infinite?${params.toString()}`);
+}
+
 // 고객 생성
 export const createCustomer = async (
     customerData: CreateCustomerRequest,
@@ -146,8 +196,24 @@ export const updateCustomer = async (
 }
 
 // 모든 고객 조회 (페이지네이션 적용)
-export const getCustomers = async (page: number = 0, size: number = 10): Promise<AxiosResponse<ApiResponse<PageResponse<CustomerListResponse>>>> => {
-    return api.get(`/api/customers?page=${page}&size=${size}&sort=id,asc`)
+export const getCustomers = async (
+    page: number = 0,
+    size: number = 10,
+    sortField: string = 'createdAt',
+    sortDirection: string = 'desc',
+    keyword?: string
+): Promise<AxiosResponse<ApiResponse<PageResponse<CustomerListResponse>>>> => {
+    const params = new URLSearchParams({
+        page: page.toString(),
+        size: size.toString(),
+        sort: `${sortField},${sortDirection}`
+    });
+    
+    if (keyword) {
+        params.append('keyword', keyword);
+    }
+
+    return api.get(`/api/customers?${params.toString()}`);
 }
 
 // 고객 상세 조회
@@ -163,6 +229,7 @@ export const customerApi = {
     updateCustomer,
     getCustomers,
     getCustomerById,
+    getInfiniteCustomers,
     
     // Add new method for downloading excel format
     getExcelFormat: () => {

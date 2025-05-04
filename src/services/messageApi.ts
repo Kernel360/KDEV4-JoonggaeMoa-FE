@@ -50,9 +50,20 @@ export interface PageResponse<T> {
 }
 
 export interface MessagePaginationParams {
-    lastMessageId?: number
-    page?: number
-    size?: number
+    page: number
+    size: number
+    searchType?: "name" | "phone"
+    keyword?: string
+}
+
+export interface MessagePageResponse {
+    content: ReservedMessageResponse[]
+    totalElements: number
+    totalPages: number
+    number: number
+    size: number
+    first: boolean
+    last: boolean
 }
 
 // 메시지 API 함수들
@@ -70,10 +81,16 @@ export const messageApi = {
     },
 
     // 예약된 메시지 목록 조회
-    getReservedMessages: async (
-        params?: MessagePaginationParams,
-    ): Promise<AxiosResponse<ApiResponse<PageResponse<ReservedMessageResponse>>>> => {
-        return api.get("/api/messages", { params })
+    getReservedMessages: async (params: MessagePaginationParams) => {
+        const response = await api.get<ApiResponse<MessagePageResponse>>("/api/all-messages", {
+            params: {
+                page: params.page,
+                size: params.size,
+                "search-type": params.searchType,
+                keyword: params.keyword
+            }
+        })
+        return response
     },
 
     // 메시지 수정

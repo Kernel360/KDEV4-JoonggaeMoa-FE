@@ -23,7 +23,7 @@ import { ArrowBack, CloudUpload } from "@mui/icons-material"
 import { useNavigate } from "react-router-dom"
 import { contractApi } from "../services/contractApi"
 import { customerApi } from "../services/customerApi"
-import type { CustomerListResponse } from "../services/customerApi"
+import type { CustomerListResponse, CustomerInfiniteResponse } from "../services/customerApi"
 
 const ContractCreate = () => {
     const navigate = useNavigate()
@@ -32,14 +32,15 @@ const ContractCreate = () => {
     const [success, setSuccess] = useState(false)
 
     // 고객 관련 상태
-    const [customers, setCustomers] = useState<CustomerListResponse[]>([])
+    const [customers, setCustomers] = useState<{id: number; name: string; phone: string}[]>([])
     const [customerLoading, setCustomerLoading] = useState(true)
-    const [selectedLandlord, setSelectedLandlord] = useState<CustomerListResponse | null>(null)
-    const [selectedTenant, setSelectedTenant] = useState<CustomerListResponse | null>(null)
+    const [selectedLandlord, setSelectedLandlord] = useState<{id: number; name: string; phone: string} | null>(null)
+    const [selectedTenant, setSelectedTenant] = useState<{id: number; name: string; phone: string} | null>(null)
     const [searchTerm, setSearchTerm] = useState("")
+    const [currentSearchTerm, setCurrentSearchTerm] = useState("") // 실제 검색에 사용되는 term
     
-    // 페이지네이션 관련 상태
-    const [page, setPage] = useState(0)
+    // 무한 스크롤 관련 상태
+    const [cursor, setCursor] = useState<number | undefined>(undefined)
     const [hasMore, setHasMore] = useState(true)
     const [isLoadingMore, setIsLoadingMore] = useState(false)
     const observer = useRef<IntersectionObserver | null>(null)
@@ -66,33 +67,37 @@ const ContractCreate = () => {
     // 검색어가 변경될 때마다 고객 목록 초기화
     useEffect(() => {
         setCustomers([])
-        setPage(0)
+        setCursor(undefined)
         setHasMore(true)
         fetchCustomers()
-    }, [searchTerm])
+    }, [currentSearchTerm]) // searchTerm 대신 currentSearchTerm 사용
 
-    const fetchCustomers = async (pageNum = 0) => {
+    const fetchCustomers = async (cursorId?: number) => {
         try {
-            if (pageNum === 0) {
+            if (cursorId === undefined) {
                 setCustomerLoading(true)
             } else {
                 setIsLoadingMore(true)
             }
             
-            const response = await customerApi.getCustomers(pageNum, 20)
+            const response = await customerApi.getInfiniteCustomers(cursorId, currentSearchTerm)
             
             if (response.data.success && response.data.data) {
                 const newCustomers = response.data.data.content
                 
-                if (pageNum === 0) {
+                if (cursorId === undefined) {
                     setCustomers(newCustomers)
                 } else {
                     setCustomers(prev => [...prev, ...newCustomers])
                 }
                 
-                // 페이지네이션 정보 업데이트
+                // 마지막 고객의 ID를 커서로 설정
+                if (newCustomers.length > 0) {
+                    setCursor(newCustomers[newCustomers.length - 1].id)
+                }
+                
+                // 더 이상 데이터가 없으면 hasMore를 false로 설정
                 setHasMore(!response.data.data.last)
-                setPage(pageNum)
             } else {
                 setError("고객 목록을 불러오는데 실패했습니다.")
             }
@@ -107,19 +112,19 @@ const ContractCreate = () => {
 
     // 무한 스크롤을 위한 콜백 함수
     const lastCustomerRef = useCallback((node: HTMLDivElement | null) => {
-        if (customerLoading) return
+        if (customerLoading || isLoadingMore) return
         
         if (observer.current) observer.current.disconnect()
         
         observer.current = new IntersectionObserver(entries => {
-            if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
-                fetchCustomers(page + 1)
+            if (entries[0].isIntersecting && hasMore) {
+                fetchCustomers(cursor)
             }
         })
         
         if (node) observer.current.observe(node)
         lastCustomerElementRef.current = node
-    }, [customerLoading, hasMore, isLoadingMore, page])
+    }, [customerLoading, hasMore, isLoadingMore, cursor])
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
@@ -212,8 +217,17 @@ const ContractCreate = () => {
         }
     }
 
-    // 검색어로 고객 필터링 (이제 서버에서 처리되므로 클라이언트 필터링은 제거)
-    const filteredCustomers = customers
+    const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchTerm(event.target.value)
+    }
+
+    const handleSearchSubmit = (event: React.FormEvent) => {
+        event.preventDefault()
+        setCurrentSearchTerm(searchTerm)
+        setCustomers([])
+        setCursor(undefined)
+        setHasMore(true)
+    }
 
     return (
         <Box sx={{ flexGrow: 1, minHeight: "100vh" }}>
@@ -263,14 +277,28 @@ const ContractCreate = () => {
                                 </Typography>
 
                                 {/* 검색창 */}
-                                <TextField
-                                    fullWidth
-                                    size="small"
-                                    placeholder="고객명 또는 전화번호로 검색"
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    sx={{ mb: 2 }}
-                                />
+                                <form onSubmit={handleSearchSubmit}>
+                                    <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+                                        <TextField
+                                            fullWidth
+                                            size="small"
+                                            placeholder="고객명 또는 전화번호로 검색"
+                                            value={searchTerm}
+                                            onChange={handleSearchChange}
+                                        />
+                                        <Button 
+                                            type="submit" 
+                                            variant="contained" 
+                                            sx={{ 
+                                                bgcolor: "#007ea7", 
+                                                "&:hover": { bgcolor: "#003459" },
+                                                whiteSpace: 'nowrap'
+                                            }}
+                                        >
+                                            검색
+                                        </Button>
+                                    </Box>
+                                </form>
 
                                 {/* 고객 목록 */}
                                 <Box sx={{ border: "1px solid #eee", borderRadius: 1, mb: 2 }}>
@@ -279,11 +307,11 @@ const ContractCreate = () => {
                                             <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
                                                 <CircularProgress size={24} />
                                             </Box>
-                                        ) : filteredCustomers.length > 0 ? (
-                                            filteredCustomers.map((customer, index) => (
+                                        ) : customers.length > 0 ? (
+                                            customers.map((customer, index) => (
                                                 <Box
                                                     key={customer.id}
-                                                    ref={index === filteredCustomers.length - 1 ? lastCustomerRef : null}
+                                                    ref={index === customers.length - 1 ? lastCustomerRef : null}
                                                     sx={{
                                                         display: "flex",
                                                         alignItems: "center",
@@ -355,7 +383,7 @@ const ContractCreate = () => {
                                         ) : (
                                             <Box sx={{ p: 2, textAlign: "center" }}>
                                                 <Typography variant="body2" color="textSecondary">
-                                                    {searchTerm ? "검색 결과가 없습니다." : "고객이 없습니다."}
+                                                    {currentSearchTerm ? "검색 결과가 없습니다." : "고객이 없습니다."}
                                                 </Typography>
                                             </Box>
                                         )}

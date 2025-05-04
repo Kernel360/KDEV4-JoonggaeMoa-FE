@@ -31,6 +31,7 @@ import {
     InputLabel,
     Select,
     MenuItem,
+    Pagination,
 } from "@mui/material"
 import { Add, Search, ArrowBack, Delete, Edit } from "@mui/icons-material"
 import { useNavigate } from "react-router-dom"
@@ -43,71 +44,30 @@ const ContractList = () => {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [searchTerm, setSearchTerm] = useState("")
+    const [currentSearchTerm, setCurrentSearchTerm] = useState("")
     const [statusFilter, setStatusFilter] = useState("all")
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
     const [contractToDelete, setContractToDelete] = useState<string | null>(null)
     const [deleteLoading, setDeleteLoading] = useState(false)
     const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
-    // Add new state variables for pagination
+    // 페이지네이션 관련 상태
     const [page, setPage] = useState(0)
-    const [hasMore, setHasMore] = useState(true)
-    const [isLoadingMore, setIsLoadingMore] = useState(false)
-    const observerRef = useRef<IntersectionObserver | null>(null)
-    const loadingRef = useRef<HTMLTableCellElement>(null)
+    const [totalPageCount, setTotalPageCount] = useState(0)
+    const rowsPerPage = 10
 
     useEffect(() => {
-        fetchContracts()
-    }, [])
+        fetchContracts(page, rowsPerPage, currentSearchTerm)
+    }, [page, currentSearchTerm])
 
-    // Add intersection observer effect
-    useEffect(() => {
-        if (loading) return
-
-        const observer = new IntersectionObserver(
-            entries => {
-                if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
-                    setPage(prev => {
-                        const nextPage = prev + 1
-                        fetchContracts(nextPage)
-                        return nextPage
-                    })
-                }
-            },
-            { threshold: 1.0 }
-        )
-
-        observerRef.current = observer
-
-        if (loadingRef.current) {
-            observer.observe(loadingRef.current)
-        }
-
-        return () => {
-            if (observerRef.current) {
-                observerRef.current.disconnect()
-            }
-        }
-    }, [loading, hasMore, isLoadingMore])
-
-    // Modify fetchContracts to handle pagination
-    const fetchContracts = async (pageNum: number = 0) => {
+    const fetchContracts = async (page: number, rowsPerPage: number, searchTerm: string) => {
         try {
-            if (pageNum === 0) {
-                setLoading(true)
-            } else {
-                setIsLoadingMore(true)
-            }
+            setLoading(true)
+            const response = await contractApi.getAllContracts(page, rowsPerPage, searchTerm)
             
-            const response = await contractApi.getAllContracts(pageNum)
             if (response.data.success && response.data.data) {
-                const newContracts = response.data.data.content || []
-                if (pageNum === 0) {
-                    setContracts(newContracts)
-                } else {
-                    setContracts(prev => [...prev, ...newContracts])
-                }
-                setHasMore(!response.data.data.last)
+                setContracts(response.data.data.content)
+                setTotalPageCount(response.data.data.totalPages)
             } else {
                 setError("계약 목록을 불러오는데 실패했습니다.")
             }
@@ -116,8 +76,22 @@ const ContractList = () => {
             setError("계약 목록을 불러오는데 실패했습니다.")
         } finally {
             setLoading(false)
-            setIsLoadingMore(false)
         }
+    }
+
+    const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchTerm(event.target.value)
+    }
+
+    const handleSearchSubmit = (event: React.FormEvent) => {
+        event.preventDefault()
+        setCurrentSearchTerm(searchTerm)
+        setPage(0)
+        fetchContracts(0, rowsPerPage, searchTerm)
+    }
+
+    const handlePageChange = (event: React.MouseEvent<HTMLButtonElement> | null, newPage: number) => {
+        setPage(newPage - 1)
     }
 
     const handleDeleteClick = (event: React.MouseEvent, contractId: string) => {
@@ -194,19 +168,6 @@ const ContractList = () => {
         }
     }
 
-    // 검색어와 상태 필터로 계약 필터링
-    const filteredContracts = contracts.filter((contract) => {
-        // 검색어 필터링 (임대인, 임차인 이름으로 검색)
-        const searchMatch =
-            contract.landlordName.toString().includes(searchTerm) || contract.tenantName.toString().includes(searchTerm)
-
-        // 상태 필터링
-        const status = getContractStatus(contract.expiredAt)
-        const statusMatch = statusFilter === "all" || status === statusFilter
-
-        return searchMatch && statusMatch
-    })
-
     return (
         <Box sx={{ flexGrow: 1, minHeight: "100vh" }}>
             <Container
@@ -241,14 +202,14 @@ const ContractList = () => {
                 </Box>
 
                 <Paper elevation={0} sx={{ mb: 3, p: 3, borderRadius: 2, bgcolor: "#ffffff", boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)' }}>
-                    <Box sx={{ display: "flex", gap: 2 }}>
+                    <Box component="form" onSubmit={handleSearchSubmit} sx={{ display: "flex", gap: 2 }}>
                         <TextField
                             placeholder="임대인 또는 임차인 이름으로 검색"
                             variant="outlined"
                             size="small"
                             fullWidth
                             value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onChange={handleSearchChange}
                             InputProps={{
                                 startAdornment: (
                                     <InputAdornment position="start">
@@ -257,6 +218,16 @@ const ContractList = () => {
                                 ),
                             }}
                         />
+                        <Button
+                            type="submit"
+                            variant="contained"
+                            sx={{
+                                bgcolor: "#007ea7",
+                                "&:hover": { bgcolor: "#003459" },
+                            }}
+                        >
+                            검색
+                        </Button>
                         <FormControl size="small" sx={{ minWidth: 150 }}>
                             <InputLabel>계약 상태</InputLabel>
                             <Select value={statusFilter} label="계약 상태" onChange={(e) => setStatusFilter(e.target.value)}>
@@ -279,173 +250,179 @@ const ContractList = () => {
                         <Button 
                             variant="contained" 
                             sx={{ mt: 2 }} 
-                            onClick={(e: React.MouseEvent<HTMLButtonElement>) => fetchContracts(0)}
+                            onClick={() => fetchContracts(0, rowsPerPage, currentSearchTerm)}
                         >
                             다시 시도
                         </Button>
                     </Paper>
                 ) : (
-                    <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2, overflow: "hidden", boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)' }}>
-                        <Table>
-                            <TableHead>
-                                <TableRow sx={{ 
-                                    backgroundColor: '#e9ecef',
-                                    borderBottom: '1px solid #e9ecef'
-                                }}>
-                                    <TableCell sx={{ 
-                                        padding: '12px 16px',
-                                        textAlign: 'left',
-                                        fontSize: '0.875rem',
-                                        fontWeight: 500,
-                                        color: '#003459'
+                    <>
+                        <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2, overflow: "hidden", boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)' }}>
+                            <Table>
+                                <TableHead>
+                                    <TableRow sx={{ 
+                                        backgroundColor: '#e9ecef',
+                                        borderBottom: '1px solid #e9ecef'
                                     }}>
-                                        계약번호
-                                    </TableCell>
-                                    <TableCell sx={{ 
-                                        padding: '12px 16px',
-                                        textAlign: 'left',
-                                        fontSize: '0.875rem',
-                                        fontWeight: 500,
-                                        color: '#003459'
-                                    }}>
-                                        임대인 이름
-                                    </TableCell>
-                                    <TableCell sx={{ 
-                                        padding: '12px 16px',
-                                        textAlign: 'left',
-                                        fontSize: '0.875rem',
-                                        fontWeight: 500,
-                                        color: '#003459'
-                                    }}>
-                                        임차인 이름
-                                    </TableCell>
-                                    <TableCell sx={{ 
-                                        padding: '12px 16px',
-                                        textAlign: 'left',
-                                        fontSize: '0.875rem',
-                                        fontWeight: 500,
-                                        color: '#003459'
-                                    }}>
-                                        계약일
-                                    </TableCell>
-                                    <TableCell sx={{ 
-                                        padding: '12px 16px',
-                                        textAlign: 'left',
-                                        fontSize: '0.875rem',
-                                        fontWeight: 500,
-                                        color: '#003459'
-                                    }}>
-                                        만료일
-                                    </TableCell>
-                                    <TableCell sx={{ 
-                                        padding: '12px 16px',
-                                        textAlign: 'left',
-                                        fontSize: '0.875rem',
-                                        fontWeight: 500,
-                                        color: '#003459'
-                                    }}>
-                                        상태
-                                    </TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {filteredContracts.length > 0 ? (
-                                    <>
-                                        {filteredContracts.map((contract) => {
-                                            const status = getContractStatus(contract.expiredAt)
-                                            return (
-                                                <TableRow
-                                                    key={contract.id}
-                                                    hover
-                                                    onClick={() => handleViewContract(contract.id)}
-                                                    sx={{ 
-                                                        cursor: "pointer",
-                                                        borderBottom: '1px solid #e9ecef',
-                                                        backgroundColor: 'transparent',
-                                                        transition: 'background-color 0.2s',
-                                                        '&:hover': {
-                                                            backgroundColor: '#f8f9fa'
-                                                        }
-                                                    }}
-                                                >
-                                                    <TableCell sx={{ 
-                                                        padding: '12px 16px',
-                                                        fontSize: '0.875rem',
-                                                        color: '#00171f'
-                                                    }}>
-                                                        {contract.id.slice(0,8)} {contract.id.length > 8 && '...'}
-                                                    </TableCell>
-                                                    <TableCell sx={{ 
-                                                        padding: '12px 16px',
-                                                        fontSize: '0.875rem',
-                                                        color: '#00171f'
-                                                    }}>
-                                                        {contract.landlordName}
-                                                    </TableCell>
-                                                    <TableCell sx={{ 
-                                                        padding: '12px 16px',
-                                                        fontSize: '0.875rem',
-                                                        color: '#00171f'
-                                                    }}>
-                                                        {contract.tenantName}
-                                                    </TableCell>
-                                                    <TableCell sx={{ 
-                                                        padding: '12px 16px',
-                                                        fontSize: '0.875rem',
-                                                        color: '#00171f'
-                                                    }}>
-                                                        {formatDate(contract.startedAt)}
-                                                    </TableCell>
-                                                    <TableCell sx={{ 
-                                                        padding: '12px 16px',
-                                                        fontSize: '0.875rem',
-                                                        color: '#00171f'
-                                                    }}>
-                                                        {formatDate(contract.expiredAt)}
-                                                    </TableCell>
-                                                    <TableCell sx={{ 
-                                                        padding: '12px 16px',
-                                                        fontSize: '0.875rem',
-                                                        color: '#00171f'
-                                                    }}>
-                                                        <Chip
-                                                            label={statusConfig[status as keyof typeof statusConfig].label}
-                                                            size="small"
-                                                            sx={{
-                                                                bgcolor: statusConfig[status as keyof typeof statusConfig].color,
-                                                                color: statusConfig[status as keyof typeof statusConfig].textColor,
-                                                            }}
-                                                        />
-                                                    </TableCell>
-                                                </TableRow>
-                                            )
-                                        })}
-                                        <TableRow>
-                                            <TableCell 
-                                                colSpan={7} 
-                                                ref={loadingRef}
-                                                sx={{ border: 'none', height: '20px' }}
-                                            >
-                                                {isLoadingMore && (
-                                                    <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
-                                                        <CircularProgress size={24} />
-                                                    </Box>
-                                                )}
-                                            </TableCell>
-                                        </TableRow>
-                                    </>
-                                ) : (
-                                    <TableRow>
-                                        <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
-                                            <Typography variant="body1">
-                                                {searchTerm || statusFilter !== "all" ? "검색 결과가 없습니다." : "등록된 계약이 없습니다."}
-                                            </Typography>
+                                        <TableCell sx={{ 
+                                            padding: '12px 16px',
+                                            textAlign: 'left',
+                                            fontSize: '0.875rem',
+                                            fontWeight: 500,
+                                            color: '#003459'
+                                        }}>
+                                            계약번호
+                                        </TableCell>
+                                        <TableCell sx={{ 
+                                            padding: '12px 16px',
+                                            textAlign: 'left',
+                                            fontSize: '0.875rem',
+                                            fontWeight: 500,
+                                            color: '#003459'
+                                        }}>
+                                            임대인 이름
+                                        </TableCell>
+                                        <TableCell sx={{ 
+                                            padding: '12px 16px',
+                                            textAlign: 'left',
+                                            fontSize: '0.875rem',
+                                            fontWeight: 500,
+                                            color: '#003459'
+                                        }}>
+                                            임차인 이름
+                                        </TableCell>
+                                        <TableCell sx={{ 
+                                            padding: '12px 16px',
+                                            textAlign: 'left',
+                                            fontSize: '0.875rem',
+                                            fontWeight: 500,
+                                            color: '#003459'
+                                        }}>
+                                            계약일
+                                        </TableCell>
+                                        <TableCell sx={{ 
+                                            padding: '12px 16px',
+                                            textAlign: 'left',
+                                            fontSize: '0.875rem',
+                                            fontWeight: 500,
+                                            color: '#003459'
+                                        }}>
+                                            만료일
+                                        </TableCell>
+                                        <TableCell sx={{ 
+                                            padding: '12px 16px',
+                                            textAlign: 'left',
+                                            fontSize: '0.875rem',
+                                            fontWeight: 500,
+                                            color: '#003459'
+                                        }}>
+                                            상태
                                         </TableCell>
                                     </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
+                                </TableHead>
+                                <TableBody>
+                                    {contracts.length > 0 ? (
+                                        <>
+                                            {contracts.map((contract) => {
+                                                const status = getContractStatus(contract.expiredAt)
+                                                return (
+                                                    <TableRow
+                                                        key={contract.id}
+                                                        hover
+                                                        onClick={() => handleViewContract(contract.id)}
+                                                        sx={{ 
+                                                            cursor: "pointer",
+                                                            borderBottom: '1px solid #e9ecef',
+                                                            backgroundColor: 'transparent',
+                                                            transition: 'background-color 0.2s',
+                                                            '&:hover': {
+                                                                backgroundColor: '#f8f9fa'
+                                                            }
+                                                        }}
+                                                    >
+                                                        <TableCell sx={{ 
+                                                            padding: '12px 16px',
+                                                            fontSize: '0.875rem',
+                                                            color: '#00171f'
+                                                        }}>
+                                                            {contract.id.slice(0,8)} {contract.id.length > 8 && '...'}
+                                                        </TableCell>
+                                                        <TableCell sx={{ 
+                                                            padding: '12px 16px',
+                                                            fontSize: '0.875rem',
+                                                            color: '#00171f'
+                                                        }}>
+                                                            {contract.landlordName}
+                                                        </TableCell>
+                                                        <TableCell sx={{ 
+                                                            padding: '12px 16px',
+                                                            fontSize: '0.875rem',
+                                                            color: '#00171f'
+                                                        }}>
+                                                            {contract.tenantName}
+                                                        </TableCell>
+                                                        <TableCell sx={{ 
+                                                            padding: '12px 16px',
+                                                            fontSize: '0.875rem',
+                                                            color: '#00171f'
+                                                        }}>
+                                                            {formatDate(contract.startedAt)}
+                                                        </TableCell>
+                                                        <TableCell sx={{ 
+                                                            padding: '12px 16px',
+                                                            fontSize: '0.875rem',
+                                                            color: '#00171f'
+                                                        }}>
+                                                            {formatDate(contract.expiredAt)}
+                                                        </TableCell>
+                                                        <TableCell sx={{ 
+                                                            padding: '12px 16px',
+                                                            fontSize: '0.875rem',
+                                                            color: '#00171f'
+                                                        }}>
+                                                            <Chip
+                                                                label={statusConfig[status as keyof typeof statusConfig].label}
+                                                                size="small"
+                                                                sx={{
+                                                                    bgcolor: statusConfig[status as keyof typeof statusConfig].color,
+                                                                    color: statusConfig[status as keyof typeof statusConfig].textColor,
+                                                                }}
+                                                            />
+                                                        </TableCell>
+                                                    </TableRow>
+                                                )
+                                            })}
+                                        </>
+                                    ) : (
+                                        <TableRow>
+                                            <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
+                                                <Typography variant="body1">
+                                                    {currentSearchTerm ? "검색 결과가 없습니다." : "등록된 계약이 없습니다."}
+                                                </Typography>
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+
+                        {/* 페이지네이션 */}
+                        <Box sx={{ 
+                            display: "flex", 
+                            justifyContent: "center", 
+                            mt: 3,
+                            mb: 2
+                        }}>
+                            <Pagination
+                                count={totalPageCount}
+                                page={page + 1}
+                                onChange={handlePageChange}
+                                color="primary"
+                                showFirstButton
+                                showLastButton
+                            />
+                        </Box>
+                    </>
                 )}
             </Container>
 

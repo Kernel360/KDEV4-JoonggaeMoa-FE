@@ -161,11 +161,6 @@ const SurveyList: React.FC = () => {
         navigate(`/survey/${surveyId}`);
     };
 
-    const handleEditSurvey = (event: React.MouseEvent, surveyId: string) => {
-        event.stopPropagation();
-        navigate(`/survey/edit/${surveyId}`);
-    };
-
     const handleViewAnswers = () => {
         navigate("/survey/answers");
     };
@@ -227,24 +222,6 @@ const SurveyList: React.FC = () => {
                         )}
                     </Box>
                 </Box>
-
-                <Paper elevation={0} sx={{ mb: 3, p: 3, borderRadius: 2, boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
-                    <TextField
-                        placeholder="설문 제목으로 검색"
-                        variant="outlined"
-                        size="small"
-                        fullWidth
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        InputProps={{
-                            startAdornment: (
-                                <InputAdornment position="start">
-                                    <Search />
-                                </InputAdornment>
-                            ),
-                        }}
-                    />
-                </Paper>
 
                 {loading ? (
                     <Box sx={{ display: "flex", justifyContent: "center", my: 5 }}>
