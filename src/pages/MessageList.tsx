@@ -29,11 +29,13 @@ import {
     DialogActions,
     Snackbar,
     Alert,
+    TablePagination,
+    MenuItem,
 } from "@mui/material"
 import { Search, Add, ArrowBack, History, Edit, Delete } from "@mui/icons-material"
 import { useNavigate } from "react-router-dom"
 import { messageApi } from "../services/messageApi"
-import type { ReservedMessageResponse } from "../services/messageApi"
+import type { ReservedMessageResponse, MessagePageResponse } from "../services/messageApi"
 
 const MessageList = () => {
     const navigate = useNavigate()
@@ -41,11 +43,10 @@ const MessageList = () => {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [searchTerm, setSearchTerm] = useState("")
-    const [lastMessageId, setLastMessageId] = useState<number | undefined>(undefined)
-    const [hasMore, setHasMore] = useState(true)
-    const [loadingMore, setLoadingMore] = useState(false)
-    const observer = useRef<IntersectionObserver>()
+    const [searchType, setSearchType] = useState<"name" | "phone">("name")
     const [page, setPage] = useState(0)
+    const [rowsPerPage, setRowsPerPage] = useState(10)
+    const [totalElements, setTotalElements] = useState(0)
     const [selectedMessage, setSelectedMessage] = useState<ReservedMessageResponse | null>(null)
     const [editDialogOpen, setEditDialogOpen] = useState(false)
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -60,31 +61,19 @@ const MessageList = () => {
     const MAX_BYTES = 90
 
     const fetchReservedMessages = useCallback(
-        async (reset = false) => {
+        async () => {
             try {
-                if (reset) {
-                    setLoading(true)
-                    setLastMessageId(undefined)
-                } else {
-                    setLoadingMore(true)
-                }
-
+                setLoading(true)
                 const response = await messageApi.getReservedMessages({
-                    page: reset ? 0 : page,
-                    size: 10,
+                    page,
+                    size: rowsPerPage,
+                    searchType,
+                    keyword: searchTerm
                 })
 
                 if (response.data.success && response.data.data) {
-                    const newData = response.data.data.content || []
-
-                    setMessages((prevMessages) => {
-                        if (reset) return newData
-                        return [...prevMessages, ...newData]
-                    })
-
-                    // Update pagination info
-                    setHasMore(!response.data.data.last)
-                    setPage(response.data.data.number)
+                    setMessages(response.data.data.content || [])
+                    setTotalElements(response.data.data.totalElements)
                 } else {
                     console.error("API Error:", response.data)
                     setError("예약된 메시지 목록을 불러오는데 실패했습니다.")
@@ -94,15 +83,29 @@ const MessageList = () => {
                 setError("예약된 메시지 목록을 불러오는데 실패했습니다.")
             } finally {
                 setLoading(false)
-                setLoadingMore(false)
             }
         },
-        [page],
+        [page, rowsPerPage, searchType, searchTerm],
     )
 
     useEffect(() => {
-        fetchReservedMessages(true)
-    }, [])
+        fetchReservedMessages()
+    }, [page, rowsPerPage])
+
+    const handleSearch = (e: React.FormEvent) => {
+        e.preventDefault()
+        setPage(0)
+        fetchReservedMessages()
+    }
+
+    const handleChangePage = (event: unknown, newPage: number) => {
+        setPage(newPage)
+    }
+
+    const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setRowsPerPage(parseInt(event.target.value, 10))
+        setPage(0)
+    }
 
     // 날짜 포맷팅 함수
     const formatDate = (dateString: string | undefined) => {
@@ -137,37 +140,6 @@ const MessageList = () => {
             return dateString
         }
     }
-
-    // 검색어로 필터링
-    const filteredMessages = Array.isArray(messages)
-        ? messages.filter(
-            (message) =>
-                message.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                message.content?.toLowerCase().includes(searchTerm.toLowerCase()),
-        )
-        : []
-
-    // lastMessageElementRef 수정 - 화면에 마지막 요소가 보일 때 다음 페이지 로드
-    const lastMessageElementRef = useCallback(
-        (node) => {
-            if (loading || loadingMore) return
-            if (observer.current) observer.current.disconnect()
-
-            observer.current = new IntersectionObserver(
-                (entries) => {
-                    if (entries[0].isIntersecting && hasMore) {
-                        fetchReservedMessages(false)
-                    }
-                },
-                {
-                    rootMargin: "100px", // Load earlier before user reaches the bottom
-                },
-            )
-
-            if (node) observer.current.observe(node)
-        },
-        [loading, loadingMore, hasMore, fetchReservedMessages],
-    )
 
     // Handle message row click to show details
     const handleMessageClick = (message: ReservedMessageResponse) => {
@@ -226,7 +198,7 @@ const MessageList = () => {
             if (response.data.success) {
                 setSuccessMessage("메시지가 성공적으로 수정되었습니다.")
                 setEditDialogOpen(false)
-                fetchReservedMessages(true)
+                fetchReservedMessages()
             } else {
                 setErrorMessage(response.data.error?.message || "메시지 수정에 실패했습니다.")
             }
@@ -258,7 +230,7 @@ const MessageList = () => {
                 setDeleteDialogOpen(false)
                 setSelectedMessage(null)
                 // 삭제 후 메시지 목록 다시 불러오기
-                fetchReservedMessages(true)
+                fetchReservedMessages()
             } else {
                 setErrorMessage("메시지 삭제에 실패했습니다.")
             }
@@ -339,31 +311,55 @@ const MessageList = () => {
                 </Box>
 
                 <Paper elevation={0} sx={{ mb: 3, p: 3, borderRadius: 2, boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
-                    <TextField
-                        placeholder="고객명 또는 내용으로 검색"
-                        variant="outlined"
-                        size="small"
-                        fullWidth
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        InputProps={{
-                            startAdornment: (
-                                <InputAdornment position="start">
-                                    <Search />
-                                </InputAdornment>
-                            ),
-                        }}
-                    />
+                    <form onSubmit={handleSearch}>
+                        <Box sx={{ display: 'flex', gap: 2 }}>
+                            <TextField
+                                select
+                                value={searchType}
+                                onChange={(e) => setSearchType(e.target.value as "name" | "phone")}
+                                size="small"
+                                sx={{ width: 120 }}
+                            >
+                                <MenuItem value="name">고객명</MenuItem>
+                                <MenuItem value="phone">전화번호</MenuItem>
+                            </TextField>
+                            <TextField
+                                placeholder="검색어를 입력하세요"
+                                variant="outlined"
+                                size="small"
+                                fullWidth
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <Search />
+                                        </InputAdornment>
+                                    ),
+                                }}
+                            />
+                            <Button
+                                type="submit"
+                                variant="contained"
+                                sx={{
+                                    bgcolor: "#007ea7",
+                                    "&:hover": { bgcolor: "#003459" },
+                                }}
+                            >
+                                검색
+                            </Button>
+                        </Box>
+                    </form>
                 </Paper>
 
-                {loading && !loadingMore ? (
+                {loading ? (
                     <Box sx={{ display: "flex", justifyContent: "center", my: 5 }}>
                         <CircularProgress />
                     </Box>
                 ) : error ? (
                     <Paper elevation={0} sx={{ p: 3, textAlign: "center", borderRadius: 2 }}>
                         <Typography color="error">{error}</Typography>
-                        <Button variant="contained" sx={{ mt: 2 }} onClick={() => fetchReservedMessages(true)}>
+                        <Button variant="contained" sx={{ mt: 2 }} onClick={() => fetchReservedMessages()}>
                             다시 시도
                         </Button>
                     </Paper>
@@ -413,14 +409,13 @@ const MessageList = () => {
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {filteredMessages.length > 0 ? (
-                                    filteredMessages.map((message, index) => (
+                                {messages.length > 0 ? (
+                                    messages.map((message, index) => (
                                         <React.Fragment key={message.id || index}>
                                             <TableRow
                                                 hover
                                                 onClick={() => handleMessageClick(message)}
                                                 sx={{ cursor: "pointer" }}
-                                                ref={filteredMessages.length === index + 1 && !searchTerm ? lastMessageElementRef : null}
                                             >
                                                 <TableCell>{message.customerName}</TableCell>
                                                 <TableCell>{message.customerPhone || "-"}</TableCell>
@@ -530,17 +525,22 @@ const MessageList = () => {
                                         </TableCell>
                                     </TableRow>
                                 )}
-                                {loadingMore && (
-                                    <TableRow>
-                                        <TableCell colSpan={5} align="center" sx={{ py: 2 }}>
-                                            <CircularProgress size={24} />
-                                        </TableCell>
-                                    </TableRow>
-                                )}
                             </TableBody>
                         </Table>
                     </TableContainer>
                 )}
+
+                <TablePagination
+                    component="div"
+                    count={totalElements}
+                    page={page}
+                    onPageChange={handleChangePage}
+                    rowsPerPage={rowsPerPage}
+                    onRowsPerPageChange={handleChangeRowsPerPage}
+                    rowsPerPageOptions={[10, 25, 50]}
+                    labelRowsPerPage="페이지당 행 수:"
+                    labelDisplayedRows={({ from, to, count }) => `${from}-${to} / ${count}`}
+                />
             </Container>
 
             {/* 수정 다이얼로그 */}

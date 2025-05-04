@@ -33,6 +33,9 @@ import {
     DialogTitle,
     DialogContent,
     DialogActions,
+    List,
+    ListItem,
+    ListItemText,
 } from "@mui/material"
 import { Search, Add, ArrowBack, CalendarMonth, ChevronLeft, ChevronRight } from "@mui/icons-material"
 import { useNavigate } from "react-router-dom"
@@ -121,6 +124,7 @@ const ConsultationList = () => {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [searchTerm, setSearchTerm] = useState("")
+    const [currentSearchTerm, setCurrentSearchTerm] = useState("")
 
     // 날짜별 필터링
     const [dateFilteredConsultations, setDateFilteredConsultations] = useState<ConsultationResponse[]>([])
@@ -138,9 +142,9 @@ const ConsultationList = () => {
 
     // 상담 등록 모달 관련 상태
     const [createModalOpen, setCreateModalOpen] = useState(false)
-    const [customers, setCustomers] = useState<CustomerListResponse[]>([])
+    const [customers, setCustomers] = useState<{id: number; name: string; phone: string}[]>([])
     const [customersLoading, setCustomersLoading] = useState(false)
-    const [selectedCustomer, setSelectedCustomer] = useState<CustomerListResponse | null>(null)
+    const [selectedCustomer, setSelectedCustomer] = useState<{id: number; name: string; phone: string} | null>(null)
     const [scheduledDate, setScheduledDate] = useState("")
     const [scheduledTime, setScheduledTime] = useState("")
     const [createLoading, setCreateLoading] = useState(false)
@@ -148,11 +152,11 @@ const ConsultationList = () => {
     const [createError, setCreateError] = useState<string | null>(null)
     
     // 고객 목록 페이지네이션 관련 상태
-    const [customerPage, setCustomerPage] = useState(0)
-    const [hasMoreCustomers, setHasMoreCustomers] = useState(true)
+    const [cursor, setCursor] = useState<number | undefined>(undefined)
+    const [hasMore, setHasMore] = useState(true)
     const [isLoadingMoreCustomers, setIsLoadingMoreCustomers] = useState(false)
-    const customerObserver = useRef<IntersectionObserver | null>(null)
-    const lastCustomerElementRef = useRef<HTMLDivElement | null>(null)
+    const observer = useRef<IntersectionObserver | null>(null)
+    const lastCustomerRef = useRef<HTMLDivElement | null>(null)
 
     // 상태별 상담 목록 관련 상태
     const [statusFilteredConsultations, setStatusFilteredConsultations] = useState<ConsultationResponse[]>([])
@@ -160,56 +164,80 @@ const ConsultationList = () => {
     const [statusListLoading, setStatusListLoading] = useState(false)
     const [openStatusMenuId, setOpenStatusMenuId] = useState<number | null>(null)
 
-    // 날짜 별 고객 목록 가져오기
-    const fetchCustomers = async (pageNum = 0) => {
+    const fetchCustomers = async (cursorId?: number) => {
         try {
-            if (pageNum === 0) {
+            if (cursorId === undefined) {
                 setCustomersLoading(true)
             } else {
                 setIsLoadingMoreCustomers(true)
             }
             
-            const response = await customerApi.getCustomers(pageNum, 20)
-
+            const response = await customerApi.getInfiniteCustomers(cursorId, searchTerm)
+            
             if (response.data.success && response.data.data) {
                 const newCustomers = response.data.data.content
                 
-                if (pageNum === 0) {
+                if (cursorId === undefined) {
                     setCustomers(newCustomers)
                 } else {
                     setCustomers(prev => [...prev, ...newCustomers])
                 }
                 
-                // 페이지네이션 정보 업데이트
-                setHasMoreCustomers(!response.data.data.last)
-                setCustomerPage(pageNum)
+                // 마지막 고객의 ID를 커서로 설정
+                if (newCustomers.length > 0) {
+                    setCursor(newCustomers[newCustomers.length - 1].id)
+                }
+                
+                // 더 이상 데이터가 없으면 hasMore를 false로 설정
+                setHasMore(!response.data.data.last)
             } else {
-                setCreateError("고객 목록을 불러오는데 실패했습니다.")
+                setError("고객 목록을 불러오는데 실패했습니다.")
             }
         } catch (err) {
             console.error("Error fetching customers:", err)
-            setCreateError("고객 목록을 불러오는데 실패했습니다.")
+            setError("고객 목록을 불러오는데 실패했습니다.")
         } finally {
             setCustomersLoading(false)
             setIsLoadingMoreCustomers(false)
         }
     }
 
+    // 검색어가 변경될 때마다 고객 목록 초기화
+    useEffect(() => {
+        setCustomers([])
+        setCursor(undefined)
+        setHasMore(true)
+        fetchCustomers()
+    }, [searchTerm])
+
     // 무한 스크롤을 위한 콜백 함수
-    const lastCustomerRef = useCallback((node: HTMLDivElement | null) => {
-        if (customersLoading) return
+    const lastCustomerRefCallback = useCallback((node: HTMLDivElement | null) => {
+        if (customersLoading || isLoadingMoreCustomers) return
         
-        if (customerObserver.current) customerObserver.current.disconnect()
+        if (observer.current) observer.current.disconnect()
         
-        customerObserver.current = new IntersectionObserver(entries => {
-            if (entries[0].isIntersecting && hasMoreCustomers && !isLoadingMoreCustomers) {
-                fetchCustomers(customerPage + 1)
+        observer.current = new IntersectionObserver(entries => {
+            if (entries[0].isIntersecting && hasMore) {
+                fetchCustomers(cursor)
             }
         })
         
-        if (node) customerObserver.current.observe(node)
-        lastCustomerElementRef.current = node
-    }, [customersLoading, hasMoreCustomers, isLoadingMoreCustomers, customerPage])
+        if (node) observer.current.observe(node)
+        lastCustomerRef.current = node
+    }, [customersLoading, hasMore, isLoadingMoreCustomers, cursor])
+
+    const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchTerm(event.target.value)
+    }
+
+    const handleSearchSubmit = (event: React.FormEvent) => {
+        event.preventDefault()
+        setCurrentSearchTerm(searchTerm)
+        setCustomers([])
+        setCursor(undefined)
+        setHasMore(true)
+        fetchCustomers()
+    }
 
     // 이전 달로 이동
     const goToPreviousMonth = () => {
@@ -449,9 +477,10 @@ const ConsultationList = () => {
     // 상담 등록 모달 열기
     const handleCreateModalOpen = () => {
         setCreateModalOpen(true)
-        setCustomerPage(0)
-        setHasMoreCustomers(true)
-        fetchCustomers(0)
+        setCustomers([])
+        setCursor(undefined)
+        setHasMore(true)
+        fetchCustomers()
         // 오늘 날짜로 초기화
         const today = new Date()
         setScheduledDate(formatDateToYYYYMMDD(today))
@@ -825,7 +854,14 @@ const ConsultationList = () => {
 
                     {/* 상담 목록 테이블 - 캘린더 오른쪽에 배치 */}
                     <Grid item xs={12} md={6}>
-                        <Paper elevation={0} sx={{ p: 3, borderRadius: 2, height: '100%', boxShadow: '0 4px 8px -1px rgba(0, 0, 0, 0.2), 0 2px 6px -1px rgba(0, 0, 0, 0.15)' }}>
+                        <Paper elevation={0} sx={{ 
+                            p: 3, 
+                            borderRadius: 2, 
+                            height: '100%', 
+                            boxShadow: '0 4px 8px -1px rgba(0, 0, 0, 0.2), 0 2px 6px -1px rgba(0, 0, 0, 0.15)',
+                            display: 'flex',
+                            flexDirection: 'column'
+                        }}>
                             <Typography variant="h6" sx={{ mb: 2 }}>
                                 {selectedStatus 
                                     ? `${statusConfig[selectedStatus].label} 상담 목록` 
@@ -833,37 +869,53 @@ const ConsultationList = () => {
                                         ? `${selectedDate.getMonth() + 1}월 ${selectedDate.getDate()}일 상담 목록` 
                                         : '상담 목록'}
                             </Typography>
-                            <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2, overflow: "hidden" }}>
-                                <Table>
-                                <TableHead>
+                            <TableContainer 
+                                component={Paper} 
+                                elevation={0} 
+                                sx={{ 
+                                    borderRadius: 2, 
+                                    overflow: "auto",
+                                    flex: 1,
+                                    maxHeight: 'calc(100% - 60px)', // 타이틀 높이를 뺀 높이
+                                    '& .MuiTable-root': {
+                                        minWidth: '100%',
+                                        tableLayout: 'fixed'
+                                    }
+                                }}
+                            >
+                                <Table stickyHeader>
+                                    <TableHead>
                                         <TableRow sx={{ 
                                             backgroundColor: '#e9ecef',
                                             borderBottom: '1px solid #e9ecef'
                                         }}>
                                             <TableCell sx={{ 
                                                 padding: '12px 16px',
-                                                textAlign: 'left',
+                                                textAlign: 'center',
                                                 fontSize: '0.875rem',
                                                 fontWeight: 500,
-                                                color: '#003459'
+                                                color: '#003459',
+                                                width: '30%'
                                             }}>
                                                 고객명
                                             </TableCell>
                                             <TableCell sx={{ 
                                                 padding: '12px 16px',
-                                                textAlign: 'left',
+                                                textAlign: 'center',
                                                 fontSize: '0.875rem',
                                                 fontWeight: 500,
-                                                color: '#003459'
+                                                color: '#003459',
+                                                width: '40%'
                                             }}>
                                                 상담 시간
                                             </TableCell>
                                             <TableCell sx={{ 
                                                 padding: '12px 16px',
-                                                textAlign: 'left',
+                                                textAlign: 'center',
                                                 fontSize: '0.875rem',
                                                 fontWeight: 500,
-                                                color: '#003459'
+                                                color: '#003459',
+                                                width: '20%'
                                             }}>
                                                 상태
                                             </TableCell>
@@ -895,7 +947,11 @@ const ConsultationList = () => {
                                                         <TableCell sx={{ 
                                                             padding: '12px 16px',
                                                             fontSize: '0.875rem',
-                                                            color: '#00171f'
+                                                            color: '#00171f',
+                                                            maxWidth: '20%',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis',
+                                                            whiteSpace: 'nowrap'
                                                         }}>
                                                             {consultation.customerName}
                                                         </TableCell>
@@ -1012,7 +1068,11 @@ const ConsultationList = () => {
                                                     <TableCell sx={{ 
                                                         padding: '12px 16px',
                                                         fontSize: '0.875rem',
-                                                        color: '#00171f'
+                                                        color: '#00171f',
+                                                        maxWidth: '20%',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        whiteSpace: 'nowrap'
                                                     }}>
                                                         {consultation.customerName}
                                                     </TableCell>
@@ -1158,90 +1218,185 @@ const ConsultationList = () => {
             </Menu>
 
             {/* 상담 등록 모달 */}
-            <Dialog open={createModalOpen} onClose={handleCreateModalClose} maxWidth="sm" fullWidth>
+            <Dialog 
+                open={createModalOpen} 
+                onClose={handleCreateModalClose} 
+                maxWidth="md" 
+                fullWidth
+                PaperProps={{
+                    sx: {
+                        maxHeight: '70vh',
+                        height: '80vh',
+                        '@media (max-width: 900px)': {
+                            maxHeight: '90vh',
+                            height: '90vh'
+                        }
+                    }
+                }}
+            >
                 <DialogTitle>상담 등록</DialogTitle>
-                <DialogContent>
-                    <Box sx={{ mt: 2 }}>
-                        <Grid container spacing={3}>
-                            <Grid item xs={12}>
-                                <Autocomplete
-                                    options={customers}
-                                    loading={customersLoading}
-                                    getOptionLabel={(option) => `${option.name} (${option.phone})`}
-                                    value={selectedCustomer}
-                                    onChange={(event, newValue) => {
-                                        setSelectedCustomer(newValue)
-                                    }}
-                                    renderInput={(params) => (
-                                        <TextField
-                                            {...params}
-                                            label="고객 선택"
-                                            required
-                                            InputProps={{
-                                                ...params.InputProps,
-                                                endAdornment: (
-                                                    <>
-                                                        {customersLoading ? <CircularProgress color="inherit" size={20} /> : null}
-                                                        {params.InputProps.endAdornment}
-                                                    </>
-                                                ),
-                                            }}
-                                        />
-                                    )}
-                                    ListboxProps={{
-                                        style: { maxHeight: '300px' }
-                                    }}
-                                    ListboxComponent={(props) => (
-                                        <Box component="ul" {...props} sx={{ p: 0, m: 0 }}>
-                                            {props.children}
-                                            {isLoadingMoreCustomers && (
-                                                <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
-                                                    <CircularProgress size={24} />
-                                                </Box>
-                                            )}
-                                            {props.children && Array.isArray(props.children) && props.children.length > 0 && (
-                                                <Box 
-                                                    ref={lastCustomerRef} 
-                                                    sx={{ height: '20px' }}
-                                                />
-                                            )}
+                <DialogContent sx={{ 
+                    height: 'calc(100% - 120px)', 
+                    overflow: 'hidden',
+                    '@media (max-width: 900px)': {
+                        overflow: 'auto'
+                    }
+                }}>
+                    <Box sx={{ height: '100%' }}>
+                        <Grid container spacing={3} sx={{ height: '100%' }}>
+                            {/* 왼쪽: 고객 검색 및 리스트 */}
+                            <Grid item xs={12} md={6} sx={{ 
+                                height: '100%',
+                                '@media (max-width: 900px)': {
+                                    height: 'auto',
+                                    minHeight: '300px'
+                                }
+                            }}>
+                                <Paper elevation={0} sx={{ 
+                                    p: 2, 
+                                    borderRadius: 2, 
+                                    height: '100%', 
+                                    border: '1px solid #e0e0e0', 
+                                    display: 'flex', 
+                                    flexDirection: 'column',
+                                    '@media (max-width: 900px)': {
+                                        height: 'auto'
+                                    }
+                                }}>
+                                    <form onSubmit={handleSearchSubmit}>
+                                        <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+                                            <TextField
+                                                fullWidth
+                                                size="small"
+                                                placeholder="고객명 또는 전화번호로 검색"
+                                                value={searchTerm}
+                                                onChange={handleSearchChange}
+                                            />
+                                            <Button 
+                                                type="submit" 
+                                                variant="contained" 
+                                                sx={{ 
+                                                    bgcolor: "#007ea7", 
+                                                    "&:hover": { bgcolor: "#003459" },
+                                                    whiteSpace: 'nowrap'
+                                                }}
+                                            >
+                                                검색
+                                            </Button>
                                         </Box>
-                                    )}
-                                />
-                            </Grid>
-                            <Grid item xs={12} sm={6}>
-                                <TextField
-                                    fullWidth
-                                    label="상담 날짜"
-                                    type="date"
-                                    required
-                                    value={scheduledDate}
-                                    onChange={(e) => {
-                                        const year = e.target.value.split('-')[0];
-                                        if (year.length <= 4) {
-                                            setScheduledDate(e.target.value);
+                                    </form>
+                                    <Box sx={{ 
+                                        flex: 1, 
+                                        overflow: 'auto',
+                                        '@media (max-width: 900px)': {
+                                            flex: 'none',
+                                            maxHeight: '300px'
                                         }
-                                    }}
-                                    InputLabelProps={{
-                                        shrink: true,
-                                    }}
-                                    inputProps={{
-                                        max: "9999-12-31"
-                                    }}
-                                />
+                                    }}>
+                                        {customersLoading ? (
+                                            <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+                                                <CircularProgress size={24} />
+                                            </Box>
+                                        ) : customers.length === 0 ? (
+                                            <Box sx={{ display: 'flex', justifyContent: 'center', p: 2, color: 'text.secondary' }}>
+                                                {currentSearchTerm ? '검색 결과가 없습니다.' : '고객을 검색해주세요.'}
+                                            </Box>
+                                        ) : (
+                                            <List>
+                                                {customers.map((customer) => (
+                                                    <ListItem
+                                                        key={customer.id}
+                                                        button
+                                                        selected={selectedCustomer?.id === customer.id}
+                                                        onClick={() => setSelectedCustomer(customer)}
+                                                        sx={{
+                                                            '&.Mui-selected': {
+                                                                bgcolor: 'rgba(0, 126, 167, 0.08)',
+                                                                '&:hover': {
+                                                                    bgcolor: 'rgba(0, 126, 167, 0.12)',
+                                                                },
+                                                            },
+                                                        }}
+                                                    >
+                                                        <ListItemText
+                                                            primary={customer.name}
+                                                            secondary={customer.phone}
+                                                        />
+                                                    </ListItem>
+                                                ))}
+                                                {isLoadingMoreCustomers && (
+                                                    <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+                                                        <CircularProgress size={24} />
+                                                    </Box>
+                                                )}
+                                                {hasMore && (
+                                                    <Box 
+                                                        ref={lastCustomerRefCallback} 
+                                                        sx={{ height: '20px' }}
+                                                    />
+                                                )}
+                                            </List>
+                                        )}
+                                    </Box>
+                                </Paper>
                             </Grid>
-                            <Grid item xs={12} sm={6}>
-                                <TextField
-                                    fullWidth
-                                    label="상담 시간"
-                                    type="time"
-                                    required
-                                    value={scheduledTime}
-                                    onChange={(e) => setScheduledTime(e.target.value)}
-                                    InputLabelProps={{
-                                        shrink: true,
-                                    }}
-                                />
+
+                            {/* 오른쪽: 상담 날짜/시간 설정 */}
+                            <Grid item xs={12} md={6} sx={{ 
+                                height: '100%',
+                                '@media (max-width: 900px)': {
+                                    height: 'auto'
+                                }
+                            }}>
+                                <Paper elevation={0} sx={{ 
+                                    p: 2, 
+                                    borderRadius: 2, 
+                                    height: '100%', 
+                                    border: '1px solid #e0e0e0',
+                                    '@media (max-width: 900px)': {
+                                        height: 'auto'
+                                    }
+                                }}>
+                                    <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'bold' }}>
+                                        상담 일정
+                                    </Typography>
+                                    <Grid container spacing={2}>
+                                        <Grid item xs={12}>
+                                            <TextField
+                                                fullWidth
+                                                label="상담 날짜"
+                                                type="date"
+                                                required
+                                                value={scheduledDate}
+                                                onChange={(e) => {
+                                                    const year = e.target.value.split('-')[0];
+                                                    if (year.length <= 4) {
+                                                        setScheduledDate(e.target.value);
+                                                    }
+                                                }}
+                                                InputLabelProps={{
+                                                    shrink: true,
+                                                }}
+                                                inputProps={{
+                                                    max: "9999-12-31"
+                                                }}
+                                            />
+                                        </Grid>
+                                        <Grid item xs={12}>
+                                            <TextField
+                                                fullWidth
+                                                label="상담 시간"
+                                                type="time"
+                                                required
+                                                value={scheduledTime}
+                                                onChange={(e) => setScheduledTime(e.target.value)}
+                                                InputLabelProps={{
+                                                    shrink: true,
+                                                }}
+                                            />
+                                        </Grid>
+                                    </Grid>
+                                </Paper>
                             </Grid>
                         </Grid>
                     </Box>
@@ -1254,6 +1409,10 @@ const ConsultationList = () => {
                         onClick={handleCreateConsultation}
                         variant="contained"
                         disabled={createLoading || !selectedCustomer || !scheduledDate || !scheduledTime}
+                        sx={{ 
+                            bgcolor: "#007ea7", 
+                            "&:hover": { bgcolor: "#003459" }
+                        }}
                     >
                         {createLoading ? <CircularProgress size={24} /> : "등록"}
                     </Button>

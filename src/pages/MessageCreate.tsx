@@ -87,17 +87,18 @@ const MessageCreate = () => {
     const [success, setSuccess] = useState(false)
 
     // 고객 관련 상태
-    const [customers, setCustomers] = useState<CustomerListResponse[]>([])
+    const [customers, setCustomers] = useState<{id: number; name: string; phone: string}[]>([])
     const [selectedCustomers, setSelectedCustomers] = useState<number[]>([])
     const [customerLoading, setCustomerLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState("")
+    const [currentSearchTerm, setCurrentSearchTerm] = useState("")
     
-    // 고객 목록 페이지네이션 관련 상태
-    const [customerPage, setCustomerPage] = useState(0)
-    const [hasMoreCustomers, setHasMoreCustomers] = useState(true)
+    // 무한 스크롤 관련 상태
+    const [cursor, setCursor] = useState<number | undefined>(undefined)
+    const [hasMore, setHasMore] = useState(true)
     const [isLoadingMoreCustomers, setIsLoadingMoreCustomers] = useState(false)
-    const customerObserver = useRef<IntersectionObserver | null>(null)
-    const lastCustomerElementRef = useRef<HTMLDivElement | null>(null)
+    const observer = useRef<IntersectionObserver | null>(null)
+    const lastCustomerRef = useRef<HTMLDivElement | null>(null)
 
     // 메시지 관련 상태
     const [content, setContent] = useState("")
@@ -113,7 +114,7 @@ const MessageCreate = () => {
     const [byteCount, setByteCount] = useState(0)
 
     useEffect(() => {
-        fetchCustomers(0)
+        fetchCustomers()
         fetchTemplates()
 
         // 현재 시간에서 30분 후로 초기화
@@ -132,29 +133,33 @@ const MessageCreate = () => {
         }
     }, [scheduledDate, scheduledTime])
 
-    // 날짜 별 고객 목록 가져오기
-    const fetchCustomers = async (pageNum = 0) => {
+    // 고객 목록 가져오기
+    const fetchCustomers = async (cursorId?: number) => {
         try {
-            if (pageNum === 0) {
+            if (cursorId === undefined) {
                 setCustomerLoading(true)
             } else {
                 setIsLoadingMoreCustomers(true)
             }
             
-            const response = await customerApi.getCustomers(pageNum, 20)
+            const response = await customerApi.getInfiniteCustomers(cursorId, currentSearchTerm)
             
             if (response.data.success && response.data.data) {
                 const newCustomers = response.data.data.content
                 
-                if (pageNum === 0) {
+                if (cursorId === undefined) {
                     setCustomers(newCustomers)
                 } else {
                     setCustomers(prev => [...prev, ...newCustomers])
                 }
                 
-                // 페이지네이션 정보 업데이트
-                setHasMoreCustomers(!response.data.data.last)
-                setCustomerPage(pageNum)
+                // 마지막 고객의 ID를 커서로 설정
+                if (newCustomers.length > 0) {
+                    setCursor(newCustomers[newCustomers.length - 1].id)
+                }
+                
+                // 더 이상 데이터가 없으면 hasMore를 false로 설정
+                setHasMore(!response.data.data.last)
             } else {
                 setError("고객 목록을 불러오는데 실패했습니다.")
             }
@@ -166,22 +171,43 @@ const MessageCreate = () => {
             setIsLoadingMoreCustomers(false)
         }
     }
-    
+
+    // 검색어가 변경될 때마다 고객 목록 초기화
+    useEffect(() => {
+        setCustomers([])
+        setCursor(undefined)
+        setHasMore(true)
+        fetchCustomers()
+    }, [currentSearchTerm])
+
     // 무한 스크롤을 위한 콜백 함수
-    const lastCustomerRef = useCallback((node: HTMLDivElement | null) => {
-        if (customerLoading) return
+    const lastCustomerRefCallback = useCallback((node: HTMLDivElement | null) => {
+        if (customerLoading || isLoadingMoreCustomers) return
         
-        if (customerObserver.current) customerObserver.current.disconnect()
+        if (observer.current) observer.current.disconnect()
         
-        customerObserver.current = new IntersectionObserver(entries => {
-            if (entries[0].isIntersecting && hasMoreCustomers && !isLoadingMoreCustomers) {
-                fetchCustomers(customerPage + 1)
+        observer.current = new IntersectionObserver(entries => {
+            if (entries[0].isIntersecting && hasMore) {
+                fetchCustomers(cursor)
             }
         })
         
-        if (node) customerObserver.current.observe(node)
-        lastCustomerElementRef.current = node
-    }, [customerLoading, hasMoreCustomers, isLoadingMoreCustomers, customerPage])
+        if (node) observer.current.observe(node)
+        lastCustomerRef.current = node
+    }, [customerLoading, hasMore, isLoadingMoreCustomers, cursor])
+
+    const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchTerm(event.target.value)
+    }
+
+    const handleSearchSubmit = (event: React.FormEvent) => {
+        event.preventDefault()
+        setCurrentSearchTerm(searchTerm)
+        setCustomers([])
+        setCursor(undefined)
+        setHasMore(true)
+        fetchCustomers()
+    }
 
     const fetchTemplates = async () => {
         try {
@@ -300,24 +326,6 @@ const MessageCreate = () => {
         }
     }
 
-    // 검색어로 고객 필터링
-    const filteredCustomers = customers ? customers.filter(
-        (customer) =>
-            customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (customer.phone && customer.phone.includes(searchTerm)),
-    ) : []
-
-    const [messageContent, setMessageContent] = useState("")
-    const [byteLength, setByteLength] = useState(0)
-
-    useEffect(() => {
-        setByteLength(getByteLength(messageContent))
-    }, [messageContent])
-
-    const handleMessageContentChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setMessageContent(event.target.value)
-    }
-
     // 현재 시간 + 10분 이후의 시간으로 재설정하는 함수
     const resetToThirtyMinutesLater = () => {
         const { date, time } = getThirtyMinutesLater()
@@ -363,32 +371,50 @@ const MessageCreate = () => {
                                 </Typography>
 
                                 {/* 검색창 */}
-                                <TextField
-                                    fullWidth
-                                    size="small"
-                                    placeholder="고객명 또는 전화번호로 검색"
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    sx={{ 
-                                        mb: 2,
-                                        '& .MuiOutlinedInput-root': {
-                                            borderRadius: 1,
-                                            '&:hover fieldset': {
-                                                borderColor: '#007ea7',
-                                            },
-                                            '&.Mui-focused fieldset': {
-                                                borderColor: '#007ea7',
+                                <Box component="div" sx={{ display: 'flex', gap: 1, mb: 2 }}>
+                                    <TextField
+                                        fullWidth
+                                        size="small"
+                                        placeholder="고객명 또는 전화번호로 검색"
+                                        value={searchTerm}
+                                        onChange={handleSearchChange}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault()
+                                                handleSearchSubmit(e)
                                             }
-                                        }
-                                    }}
-                                    InputProps={{
-                                        startAdornment: (
-                                            <InputAdornment position="start">
-                                                <Search fontSize="small" sx={{ color: '#666' }} />
-                                            </InputAdornment>
-                                        ),
-                                    }}
-                                />
+                                        }}
+                                        sx={{ 
+                                            '& .MuiOutlinedInput-root': {
+                                                borderRadius: 1,
+                                                '&:hover fieldset': {
+                                                    borderColor: '#007ea7',
+                                                },
+                                                '&.Mui-focused fieldset': {
+                                                    borderColor: '#007ea7',
+                                                }
+                                            }
+                                        }}
+                                        InputProps={{
+                                            startAdornment: (
+                                                <InputAdornment position="start">
+                                                    <Search fontSize="small" sx={{ color: '#666' }} />
+                                                </InputAdornment>
+                                            ),
+                                        }}
+                                    />
+                                    <Button 
+                                        variant="contained" 
+                                        onClick={handleSearchSubmit}
+                                        sx={{ 
+                                            bgcolor: "#007ea7", 
+                                            "&:hover": { bgcolor: "#003459" },
+                                            whiteSpace: 'nowrap'
+                                        }}
+                                    >
+                                        검색
+                                    </Button>
+                                </Box>
 
                                 {/* 고객 목록 */}
                                 <Box 
@@ -405,12 +431,12 @@ const MessageCreate = () => {
                                         <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
                                             <CircularProgress size={24} sx={{ color: '#007ea7' }} />
                                         </Box>
-                                    ) : filteredCustomers.length > 0 ? (
-                                        filteredCustomers.map((customer, index) => (
+                                    ) : customers.length > 0 ? (
+                                        customers.map((customer, index) => (
                                             <Box
                                                 component="div"
                                                 key={customer.id}
-                                                ref={index === filteredCustomers.length - 1 ? lastCustomerRef : null}
+                                                ref={index === customers.length - 1 ? lastCustomerRefCallback : null}
                                                 sx={{
                                                     display: "flex",
                                                     alignItems: "center",
@@ -454,7 +480,7 @@ const MessageCreate = () => {
                                     ) : (
                                         <Box sx={{ p: 3, textAlign: "center" }}>
                                             <Typography variant="body2" color="text.secondary">
-                                                검색 결과가 없습니다.
+                                                {currentSearchTerm ? "검색 결과가 없습니다." : "고객을 검색해주세요."}
                                             </Typography>
                                         </Box>
                                     )}

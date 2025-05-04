@@ -26,6 +26,7 @@ import {
     DialogContentText,
     DialogTitle,
     CircularProgress,
+    Pagination,
 } from "@mui/material"
 import { Search, Add, FileUpload, ArrowBack, Delete } from "@mui/icons-material"
 import { useNavigate } from "react-router-dom"
@@ -37,30 +38,23 @@ const CustomerManagement: React.FC = () => {
     const [customers, setCustomers] = useState<CustomerListResponse[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
-    const [page, setPage] = useState(0) // 페이지 번호 0부터 시작
-    const [totalPageCount, setTotalPageCount] = useState(0) // 총 페이지 state
+    const [page, setPage] = useState(0)
+    const [totalPageCount, setTotalPageCount] = useState(0)
     const [searchTerm, setSearchTerm] = useState("")
+    const [currentSearchTerm, setCurrentSearchTerm] = useState("")
     const [openDialog, setOpenDialog] = useState(false)
     const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null)
-    const [hasMore, setHasMore] = useState(false) // 더 불러올 데이터가 있는지 여부
+    const [sort, setSort] = useState({ field: 'createdAt', direction: 'desc' })
 
     const rowsPerPage = 10
-    const observer = useRef<IntersectionObserver | null>(null) // Intersection Observer ref
 
-    const fetchCustomers = useCallback(async () => {
+    const fetchCustomers = useCallback(async (page: number, rowsPerPage: number, searchTerm: string) => {
         try {
             setLoading(true);
-            const response = await customerApi.getCustomers(page, rowsPerPage);
+            const response = await customerApi.getCustomers(page, rowsPerPage, sort.field, sort.direction, searchTerm);
             if (response.data.success && response.data.data) {
-                const newCustomers = response.data.data.content;
-                setCustomers((prevCustomers) => {
-                    const combined = [...prevCustomers, ...newCustomers];
-                    // ID를 기준으로 중복 제거
-                    const uniqueCustomers = Array.from(new Map(combined.map(customer => [customer.id, customer])).values());
-                    return uniqueCustomers;
-                });
+                setCustomers(response.data.data.content);
                 setTotalPageCount(response.data.data.totalPages);
-                setHasMore(!response.data.data.last);
             } else {
                 setError("고객 정보를 불러오는데 실패했습니다.");
             }
@@ -70,16 +64,25 @@ const CustomerManagement: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    }, [page, rowsPerPage]);
+    }, [sort.field, sort.direction]);
 
     useEffect(() => {
-        fetchCustomers()
-    }, [fetchCustomers]) // fetchCustomers 함수가 변경될 때마다 호출
+        fetchCustomers(page, rowsPerPage, currentSearchTerm)
+    }, [page, currentSearchTerm])
 
     const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setSearchTerm(event.target.value)
-        setPage(0) // 검색 시 첫 페이지부터 다시 로드
-        setCustomers([]) // 기존 고객 데이터 초기화
+    }
+
+    const handleSearchSubmit = (event: React.FormEvent) => {
+        event.preventDefault()
+        setCurrentSearchTerm(searchTerm)
+        setPage(0)
+        fetchCustomers(0, rowsPerPage, searchTerm)
+    }
+
+    const handlePageChange = (event: React.MouseEvent<HTMLButtonElement> | null, newPage: number) => {
+        setPage(newPage - 1);
     }
 
     const handleDeleteCustomer = (id: number) => {
@@ -110,19 +113,6 @@ const CustomerManagement: React.FC = () => {
         setOpenDialog(false)
         setSelectedCustomerId(null)
     }
-
-    const lastCustomerRef = useCallback((node: HTMLTableRowElement) => {
-        if (loading) return
-        if (observer.current) observer.current.disconnect()
-
-        observer.current = new IntersectionObserver((entries) => {
-            if (entries[0].isIntersecting && hasMore) {
-                setPage((prevPage) => prevPage + 1)
-            }
-        })
-
-        if (node) observer.current.observe(node)
-    }, [loading, hasMore, fetchCustomers])
 
     return (
         <Box sx={{ flexGrow: 1, minHeight: "100vh" }}>
@@ -186,19 +176,10 @@ const CustomerManagement: React.FC = () => {
                 </Box>
 
                 {/* 검색 영역 */}
-                <Paper 
-                    elevation={0} 
-                    sx={{ 
-                        mb: 3, 
-                        p: 3, 
-                        borderRadius: 2,
-                        bgcolor: "white",
-                        boxShadow: 2,
-                    }}
-                >
-                    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <Paper elevation={0} sx={{ mb: 3, p: 3, borderRadius: 2, bgcolor: "#ffffff", boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)' }}>
+                    <Box component="form" onSubmit={handleSearchSubmit} sx={{ display: "flex", gap: 2 }}>
                         <TextField
-                            placeholder="고객명, 연락처로 검색"
+                            placeholder="고객 이름으로 검색"
                             variant="outlined"
                             size="small"
                             fullWidth
@@ -207,20 +188,21 @@ const CustomerManagement: React.FC = () => {
                             InputProps={{
                                 startAdornment: (
                                     <InputAdornment position="start">
-                                        <Search sx={{ color: "text.secondary" }} />
+                                        <Search />
                                     </InputAdornment>
                                 ),
-                                sx: {
-                                    borderRadius: 2,
-                                    "& fieldset": {
-                                        borderColor: "grey.300",
-                                    },
-                                    "&:hover fieldset": {
-                                        borderColor: "primary.main",
-                                    },
-                                },
                             }}
                         />
+                        <Button
+                            type="submit"
+                            variant="contained"
+                            sx={{
+                                bgcolor: "#007ea7",
+                                "&:hover": { bgcolor: "#003459" },
+                            }}
+                        >
+                            검색
+                        </Button>
                     </Box>
                 </Paper>
 
@@ -321,7 +303,6 @@ const CustomerManagement: React.FC = () => {
                                                     bgcolor: "action.hover",
                                                 },
                                             }}
-                                            ref={index === customers.length - 1 ? lastCustomerRef : null}
                                         >
                                             <TableCell>
                                                 <Typography variant="body2" sx={{ fontWeight: 500, color: '#00171f', fontSize: '0.875rem' }}>
@@ -386,6 +367,14 @@ const CustomerManagement: React.FC = () => {
                             <Typography variant="body2" color="text.secondary">
                                 총 {customers.length}명의 고객
                             </Typography>
+                            <Pagination
+                                count={totalPageCount}
+                                page={page + 1}
+                                onChange={handlePageChange}
+                                color="primary"
+                                showFirstButton
+                                showLastButton
+                            />
                         </Box>
                     </Paper>
                 )}
