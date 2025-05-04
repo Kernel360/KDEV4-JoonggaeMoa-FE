@@ -1,5 +1,5 @@
 import { Box, Chip } from '@mui/material';
-import { getTypeColor, getTradeTypeColor } from '../utils/articleUtils';
+import { getTypeColor, getTradeTypeColor } from '../utils/articleDisplay';
 
 interface ArticleTypeBadgeProps {
     articleType: string;

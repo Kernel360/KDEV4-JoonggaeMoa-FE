@@ -1,10 +1,14 @@
 import axios, { type AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from "axios"
 
-const { VITE_API_BASE_URL } = import.meta.env;
+// 환경 변수에서 API URL 가져오기
+const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 
 // Create axios instance with base URL
 const api = axios.create({
     baseURL: VITE_API_BASE_URL,
+    headers: {
+        'Content-Type': 'application/json',
+    },
     // withCredentials: true,
 })
 

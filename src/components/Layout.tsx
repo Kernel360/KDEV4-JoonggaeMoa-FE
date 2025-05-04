@@ -1,48 +1,42 @@
-import React, { useState, useEffect, ReactNode } from "react";
 import {
+    Assignment,
+    Business,
+    ChevronLeft,
+    Dashboard as DashboardIcon,
+    Email,
+    Forum,
+    InsertDriveFile,
+    KeyboardArrowDown,
+    Logout,
+    Notifications,
+    People,
+    Person,
+    QuestionAnswer
+} from "@mui/icons-material";
+import {
+    Alert,
+    Avatar,
+    Badge,
     Box,
-    Typography,
+    Button,
+    createTheme,
+    IconButton,
     List,
     ListItem,
     ListItemIcon,
     ListItemText,
-    IconButton,
-    Badge,
-    Button,
-    createTheme,
-    ThemeProvider,
     Menu,
     MenuItem,
-    Avatar,
-    CircularProgress,
     Snackbar,
-    Alert,
+    ThemeProvider,
+    Typography
 } from "@mui/material";
-import {
-    Business,
-    People,
-    Forum,
-    Email,
-    Home,
-    Person,
-    Notifications,
-    Assignment,
-    InsertDriveFile,
-    Search,
-    Dashboard as DashboardIcon,
-    Settings,
-    Menu as MenuIcon,
-    ChevronLeft,
-    Logout,
-    QuestionAnswer,
-    KeyboardArrowDown
-} from "@mui/icons-material";
-import { useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import api from "../services/api";
-import { toast } from 'react-toastify';
-import { useNotification } from "../context/NotificationContext";
 import { formatDistanceToNow } from 'date-fns';
+import React, { ReactNode, useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { useNotification } from "../context/NotificationContext";
+import api from "../services/api";
 import Footer from './Footer';
 
 // 커스텀 테마 생성
@@ -148,6 +142,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+
+    // Check if current path starts with /article
+    const isArticlePage = location.pathname.startsWith('/article');
 
     // Add these missing notification handler functions
     const handleNotificationClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -306,6 +303,21 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         fetchNotifications();
 
     }, [fetchNotifications, location.pathname]);
+
+    // If we're on an article page, render only the children without layout elements
+    if (isArticlePage) {
+        return (
+            <ThemeProvider theme={theme}>
+                {children}
+                {/* Error Snackbar */}
+                <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError(null)}>
+                    <Alert onClose={() => setError(null)} severity="error" sx={{ width: "100%" }}>
+                        {error}
+                    </Alert>
+                </Snackbar>
+            </ThemeProvider>
+        );
+    }
 
     return (
         <ThemeProvider theme={theme}>

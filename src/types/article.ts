@@ -105,8 +105,66 @@ export interface ArticleListParams {
     maxPrice?: number;
 }
 
-// 새로 추가할 Tag 타입
 export interface Tag {
     id: number;
     name: string;
 }
+
+export interface ClusterInfo {
+    lat: number;
+    lng: number;
+    count: number;
+    precision?: number;
+    weight?: number;
+    radius?: number;
+    color?: string;
+    isMerged?: boolean;
+    mainRealEstateType?: RealEstateType;
+    typeDistribution?: Record<string, number>;
+}
+
+// API 응답 타입 확장
+export interface ApiSuccess<T> {
+    success: true;
+    data: T;
+    error: null;
+}
+
+export interface ApiError {
+    success: false;
+    data: null;
+    error: {
+        code: number;
+        message: string;
+    };
+}
+
+export type ApiResponse<T> = ApiSuccess<T> | ApiError;
+
+// HATEOAS 응답 형식
+export interface HateoasResponse<T> {
+    _embedded: {
+        articles?: T[];
+        articleResponseList?: T[];
+    };
+    _links?: Record<string, any>;
+    page?: any;
+}
+
+// 페이지 객체 응답 형식
+export interface PageResponse<T> {
+    content: T[];
+    totalElements: number;
+    totalPages: number;
+    size: number;
+    number: number;
+    last: boolean;
+}
+
+// 다양한 API 응답 형식
+export type ArticleApiResponse = 
+    | ApiResponse<ArticleResponse[]> 
+    | ApiResponse<PageResponse<ArticleResponse>> 
+    | HateoasResponse<ArticleResponse> 
+    | PageResponse<ArticleResponse> 
+    | ArticleResponse[];

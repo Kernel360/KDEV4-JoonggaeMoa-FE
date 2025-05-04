@@ -1,5 +1,5 @@
 import { Box, Typography } from '@mui/material';
-import { formatPrice, isZeroPrice } from '../utils/articleUtils';
+import { formatPrice, isZeroPrice } from '../utils/articlePrice';
 
 interface ArticlePriceProps {
     tradeType: string;
@@ -15,16 +15,30 @@ const ArticlePrice = ({ tradeType, priceSale, priceRent, priceRoomMin, priceRoom
             {tradeType === "단기임대" ? (
                 <Typography variant="subtitle1" fontWeight="bold">
                     {priceRoomMin && priceRoomMax 
-                        ? `단기임대 ${formatPrice(priceRoomMin)}원 ~ ${formatPrice(priceRoomMax)}원` 
+                        ? `단기임대 ${formatPrice(priceRoomMin)} ~ ${formatPrice(priceRoomMax)}원` 
                         : `단기임대 가격 정보 없음`}
                 </Typography>
             ) : isZeroPrice(priceSale) ? (
-                <Typography variant="subtitle1" fontWeight="bold">월세 {formatPrice(priceRent)}</Typography>
+                <Typography variant="subtitle1" fontWeight="bold">월세 {formatPrice(priceRent)}원</Typography>
             ) : (
                 <>
-                    <Typography variant="subtitle1" fontWeight="bold">
-                        {tradeType === "매매" ? `매매가 ${formatPrice(priceSale)}원` : `보증금 ${formatPrice(priceSale)}원 / 월세 ${formatPrice(priceRent)}원`}
-                    </Typography>
+                    {tradeType === "매매" ? (
+                        <Typography variant="subtitle1" fontWeight="bold">
+                            매매가 {formatPrice(priceSale)}원
+                        </Typography>
+                    ) : (
+                        <>
+                            <Typography variant="subtitle1" fontWeight="bold">
+                                보증금 {formatPrice(priceSale)}원
+                            </Typography>
+                            
+                            {!isZeroPrice(priceRent) && (
+                                <Typography variant="subtitle1" fontWeight="bold" color="error.main">
+                                    월세 {formatPrice(priceRent)}원
+                                </Typography>
+                            )}
+                        </>
+                    )}
                 </>
             )}
         </Box>
