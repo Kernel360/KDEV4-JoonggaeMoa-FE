@@ -1,7 +1,7 @@
-import { withImageSize } from '../utils/articleUtils';
 import { Box, Typography } from '@mui/material';
-import { getTypeColor, getTypeEmoji } from '../utils/articleUtils';
 import { useState } from 'react';
+import { getTypeColor, getTypeEmoji } from '../utils/articleDisplay';
+import { withImageSize } from '../utils/articleFormat';
 
 interface ArticleImageProps {
     imageUrl?: string;

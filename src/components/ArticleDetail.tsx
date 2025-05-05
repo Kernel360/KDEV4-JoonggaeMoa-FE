@@ -1,9 +1,13 @@
+import ApartmentIcon from '@mui/icons-material/Apartment';
+import CloseIcon from '@mui/icons-material/Close';
+import DirectionsIcon from '@mui/icons-material/Directions';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import {
     Box,
     Button,
     Card,
     CardMedia,
-    Chip,
     Divider,
     Grid,
     IconButton,
@@ -11,25 +15,48 @@ import {
     Stack,
     Typography
 } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
-import DirectionsIcon from '@mui/icons-material/Directions';
-import ApartmentIcon from '@mui/icons-material/Apartment';
+import { useEffect, useRef, useState } from 'react';
 import { ArticleResponse, ComplexResponse } from '../types/article';
-import { formatDate, formatPrice, getTradeTypeColor, getTypeColor, getTypeEmoji, isZeroPrice } from '../utils/articleUtils';
-import { useRef, useEffect } from 'react';
+import { getTypeColor, getTypeEmoji } from '../utils/articleDisplay';
+import { formatDate } from '../utils/articleFormat';
+import { formatPrice, isZeroPrice } from '../utils/articlePrice';
+import ArticleTypeBadge from './ArticleTypeBadge';
 
 interface ArticleDetailProps {
-    article: ArticleResponse;
-    complex?: ComplexResponse;
+    article: ArticleResponse | null;
+    complex?: ComplexResponse | null;
     onClose: () => void;
 }
 
 const ArticleDetail = ({ article, complex, onClose }: ArticleDetailProps) => {
     const mapRef = useRef<HTMLDivElement>(null);
     const mapInstance = useRef<any>(null);
+    const [showAnimation, setShowAnimation] = useState(false);
+    const [isClosing, setIsClosing] = useState(false);
 
     useEffect(() => {
+        // article이 있으면 애니메이션 시작
+        if (article) {
+            setIsClosing(false);
+            setShowAnimation(true);
+        } else {
+            setShowAnimation(false);
+        }
+    }, [article]);
+
+    const handleClose = () => {
+        // 닫기 애니메이션 시작
+        setIsClosing(true);
+        
+        // 애니메이션 완료 후 onClose 호출
+        setTimeout(() => {
+            onClose();
+        }, 500);
+    };
+
+    useEffect(() => {
+        if (!article) return;
+        
         // window.kakao.maps를 any로 가져와 TS 타입 검사를 우회
         const maps: any = (window as any).kakao?.maps;
         if (!maps || !mapRef.current) return;
@@ -63,7 +90,8 @@ const ArticleDetail = ({ article, complex, onClose }: ArticleDetailProps) => {
                 scrollwheel: false,
                 disableDoubleClickZoom: true,
                 mapTypeControl: false,
-                zoomControl: false
+                zoomControl: false,
+                scaleControl: false
             };
 
             // 지도 초기화 함수
@@ -83,6 +111,14 @@ const ArticleDetail = ({ article, complex, onClose }: ArticleDetailProps) => {
                     
                     // 지도 크기 재설정
                     map.relayout();
+                    
+                    // 스케일 컨트롤 비활성화 (줌 레벨 표시 제거)
+                    if (maps.ScaleControl) {
+                        const scaleControl = map.getScaleControl();
+                        if (scaleControl) {
+                            scaleControl.setMap(null);
+                        }
+                    }
                     
                     // 지도가 완전히 로드된 후 다시 한번 relayout 호출
                     setTimeout(() => {
@@ -130,10 +166,13 @@ const ArticleDetail = ({ article, complex, onClose }: ArticleDetailProps) => {
     }, [article]);
 
     const handleOpenMap = () => {
+        if (!article) return;
         if (article.latitude && article.longitude) {
             window.open(`https://map.naver.com/v5/search/${encodeURIComponent(article.addressFullRoad || article.addressFullLot)}`, '_blank');
         }
     };
+
+    if (!article) return null;
 
     return (
         <Box 
@@ -143,7 +182,17 @@ const ArticleDetail = ({ article, complex, onClose }: ArticleDetailProps) => {
                 display: 'flex', 
                 flexDirection: 'column',
                 bgcolor: 'background.paper',
-                overflow: 'auto'
+                overflow: 'auto',
+                opacity: isClosing ? 0 : showAnimation ? 1 : 0,
+                position: 'fixed',
+                top: 0,
+                right: 0,
+                left: 0,
+                bottom: 0,
+                zIndex: 1000,
+                transform: isClosing ? 'translateX(100%)' : showAnimation ? 'translateX(0)' : 'translateX(100%)',
+                transition: 'transform 0.5s ease-in-out, opacity 0.5s ease-in-out',
+                boxShadow: '-5px 0 15px rgba(0, 0, 0, 0.1)'
             }}
         >
             {/* 헤더 부분 */}
@@ -179,7 +228,7 @@ const ArticleDetail = ({ article, complex, onClose }: ArticleDetailProps) => {
                     </Box>
                     <IconButton
                         aria-label="close"
-                        onClick={onClose}
+                        onClick={handleClose}
                         sx={{
                             color: (theme) => theme.palette.grey[500],
                         }}
@@ -240,15 +289,9 @@ const ArticleDetail = ({ article, complex, onClose }: ArticleDetailProps) => {
 
                                     {/* 거래 유형 및 건물 유형 */}
                                     <Box sx={{ display: 'flex', gap: 1 }}>
-                                        <Chip
-                                            label={article.tradeType}
-                                            color={getTradeTypeColor(article.tradeType) as "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning"}
-                                            size="small"
-                                        />
-                                        <Chip
-                                            label={article.buildingType}
-                                            color="default"
-                                            size="small"
+                                        <ArticleTypeBadge
+                                            articleType={article.buildingType}
+                                            tradeType={article.tradeType}
                                         />
                                     </Box>
 
@@ -264,10 +307,11 @@ const ArticleDetail = ({ article, complex, onClose }: ArticleDetailProps) => {
                                         <Button
                                             variant="outlined"
                                             startIcon={<DirectionsIcon />}
+                                            endIcon={<OpenInNewIcon />}
                                             onClick={handleOpenMap}
                                             size="small"
                                         >
-                                            지도에서 보기
+                                            네이버 지도
                                         </Button>
                                     </Box>
                                 </Stack>
@@ -414,11 +458,6 @@ const ArticleDetail = ({ article, complex, onClose }: ArticleDetailProps) => {
                         </Box>
                     </Grid>
                 </Grid>
-            </Box>
-
-            {/* 푸터 부분 */}
-            <Box sx={{ p: 2, borderTop: '1px solid rgba(0, 0, 0, 0.12)', display: 'flex', justifyContent: 'flex-end' }}>
-                <Button onClick={onClose}>닫기</Button>
             </Box>
         </Box>
     );

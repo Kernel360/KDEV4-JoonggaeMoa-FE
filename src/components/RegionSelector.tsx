@@ -1,5 +1,5 @@
+import { Autocomplete, Chip, CircularProgress, FormControl, InputLabel, MenuItem, Select, TextField } from '@mui/material';
 import React, { useEffect } from 'react';
-import { Box, Chip, FormControl, InputLabel, MenuItem, Select, CircularProgress } from '@mui/material';
 import { Region, filterCities, filterDistricts, filterNeighborhoods } from '../utils/regionUtils';
 
 interface RegionSelectorProps {
@@ -147,35 +147,38 @@ const RegionSelector: React.FC<RegionSelectorProps> = ({
 
             {selectedCity && selectedDistrict && (
                 <FormControl fullWidth margin="normal">
-                    <InputLabel id="neighborhood-select-label">
-                        동/읍/면 선택 {neighborhoodsLoading && <CircularProgress size={20} sx={{ ml: 1 }} />}
-                    </InputLabel>
-                    <Select
-                        labelId="neighborhood-select-label"
-                        id="neighborhood-select"
+                    <Autocomplete
                         multiple
+                        id="neighborhood-select"
+                        options={neighborhoods}
                         value={selectedNeighborhood}
                         disabled={neighborhoodsLoading}
-                        onChange={(e) => onNeighborhoodChange(e.target.value as string[])}
-                        renderValue={(selected) => (
-                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                {selected.map((value) => (
-                                    <Chip key={value} label={value} />
-                                ))}
-                            </Box>
+                        onChange={(_, newValue) => onNeighborhoodChange(newValue)}
+                        renderInput={(params) => (
+                            <TextField 
+                                {...params} 
+                                label="동/읍/면 선택" 
+                                InputProps={{
+                                    ...params.InputProps,
+                                    endAdornment: (
+                                        <>
+                                            {neighborhoodsLoading ? <CircularProgress size={20} /> : null}
+                                            {params.InputProps.endAdornment}
+                                        </>
+                                    ),
+                                }}
+                            />
                         )}
-                    >
-                        {neighborhoods.length === 0 && !neighborhoodsLoading && (
-                            <MenuItem disabled>
-                                <em>동/읍/면 정보가 없습니다</em>
-                            </MenuItem>
-                        )}
-                        {neighborhoods.map((neighborhood) => (
-                            <MenuItem key={neighborhood} value={neighborhood}>
-                                {neighborhood}
-                            </MenuItem>
-                        ))}
-                    </Select>
+                        renderTags={(value, getTagProps) =>
+                            value.map((option, index) => (
+                                <Chip
+                                    label={option}
+                                    {...getTagProps({ index })}
+                                    size="small"
+                                />
+                            ))
+                        }
+                    />
                 </FormControl>
             )}
         </>
