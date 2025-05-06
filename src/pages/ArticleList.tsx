@@ -834,15 +834,44 @@ const ArticleList: React.FC = () => {
         params.swLng = effectiveBounds.sw.lng;
 
         // 검색 타입 결정 (bounds, region, default)
-        if (effectiveBounds.ne.lat && effectiveBounds.ne.lng && effectiveBounds.sw.lat && effectiveBounds.sw.lng) {
-            params.type = 'bounds';
-        } else if (regionFilterApplied && params.regionPrefix) {
+        // 지역 필터가 적용된 경우 먼저 region 타입 적용
+        if (regionFilterApplied && params.regionPrefix) {
             params.type = 'region';
-        } else {
+        }
+        // 지도 바운드가 적용된 경우 bounds 타입 적용
+        else if (effectiveBounds.ne.lat && effectiveBounds.ne.lng && effectiveBounds.sw.lat && effectiveBounds.sw.lng) {
+            params.type = 'bounds';
+        }
+        // 그 외 모든 경우 default 타입 적용 (일반 필터링)
+        else {
             params.type = 'default';
         }
         
-        console.log(`검색 타입: ${params.type}`);
+        // 기타 필터가 적용된 경우 default 타입으로 강제 변경
+        // 백엔드에서 bounds, region 타입일 때 필터를 무시할 수 있으므로
+        const hasAdditionalFilters = (
+            (typeFilter && typeFilter.length > 0) ||
+            (tradeTypeFilter && tradeTypeFilter.length > 0) ||
+            minSalePrice > 0 ||
+            maxSalePrice > 0 ||
+            minRentPrice > 0 ||
+            maxRentPrice > 0
+        );
+        
+        // 추가 필터가 있고 타입이 bounds이거나 region인 경우 default 타입으로 변경
+        if (hasAdditionalFilters && (params.type === 'bounds' || params.type === 'region')) {
+            console.log(`필터가 적용되어 검색 타입을 default로 변경: 이전=${params.type}, 필터=`, {
+                typeFilter,
+                tradeTypeFilter,
+                minSalePrice,
+                maxSalePrice,
+                minRentPrice,
+                maxRentPrice
+            });
+            params.type = 'default';
+        }
+        
+        console.log(`최종 검색 타입: ${params.type} (지역필터=${regionFilterApplied}, 추가필터=${hasAdditionalFilters})`);
 
         try {
             // API 호출 직전 최종 파라미터 로깅
@@ -1103,9 +1132,16 @@ const ArticleList: React.FC = () => {
             console.log("초기 로딩 중, 필터 변경으로 인한 데이터 갱신 건너뜀");
             return;
         }
-        
-        console.log("필터 변경으로 인한 데이터 다시 로드");
-        fetchArticles(0, mapBounds, false);
+
+        // 일정 시간 후에 데이터 갱신 (여러 필터가 동시에 변경되는 경우 중복 요청 방지)
+        const timer = setTimeout(() => {
+            console.log("필터 변경으로 인한 데이터 다시 로드");
+            // 필터링 로직 적용을 위해 type 파라미터 조정은 fetchArticles 내부에서 처리됨
+            fetchArticles(0, mapBounds, false);
+        }, 300); // 300ms 디바운스
+
+        // 클린업 함수로 타이머 제거
+        return () => clearTimeout(timer);
     }, [typeFilter, tradeTypeFilter, minSalePrice, maxSalePrice, minRentPrice, maxRentPrice, sortField, sortOrder]);
 
     // 초기 데이터 로딩
@@ -1147,11 +1183,27 @@ const ArticleList: React.FC = () => {
     };
 
     const handleRegionFilterChange = () => {
+        console.log("지역 필터 변경 감지");
         setShowMapBoundList(true);
         setCurrentPage(0);
         setHasMore(true);
         setAllPaginatedArticles([]);
         setVisibleMapArticles([]);
+        
+        // 현재 선택된 지역 필터 정보 로깅
+        let regionFilterInfo = '';
+        if (selectedNeighborhood.length > 0) {
+            regionFilterInfo = selectedNeighborhood[0];
+        } else if (selectedDistrict) {
+            regionFilterInfo = selectedDistrict;
+        } else if (selectedCity) {
+            regionFilterInfo = selectedCity;
+        }
+
+        console.log(`지역 필터 적용: ${regionFilterInfo || '없음'}`);
+        
+        // 지역 필터 적용 여부에 따라 백엔드에서 다른 검색 방식 사용
+        // fetchArticles 함수에서 params.type = 'region' 으로 자동 설정
         fetchArticles(0, mapBounds, false);
     };
 
@@ -1399,17 +1451,48 @@ const ArticleList: React.FC = () => {
     }, [showMapBoundList, visibleMapArticles, allPaginatedArticles]);
 
     const handleFilterChange = (filters: any) => {
-        if (filters.typeFilter !== undefined) setTypeFilter(filters.typeFilter);
-        if (filters.tradeTypeFilter !== undefined) setTradeTypeFilter(filters.tradeTypeFilter);
-        if (filters.minSalePrice !== undefined) setMinSalePrice(filters.minSalePrice);
-        if (filters.maxSalePrice !== undefined) setMaxSalePrice(filters.maxSalePrice);
-        if (filters.minRentPrice !== undefined) setMinRentPrice(filters.minRentPrice);
-        if (filters.maxRentPrice !== undefined) setMaxRentPrice(filters.maxRentPrice);
-        if (filters.sortField !== undefined) setSortField(filters.sortField);
-        if (filters.sortOrder !== undefined) setSortOrder(filters.sortOrder);
+        console.log("필터 변경:", filters);
+        let hasChanges = false;
+
+        if (filters.typeFilter !== undefined) {
+            setTypeFilter(filters.typeFilter);
+            hasChanges = true;
+        }
+        if (filters.tradeTypeFilter !== undefined) {
+            setTradeTypeFilter(filters.tradeTypeFilter);
+            hasChanges = true;
+        }
+        if (filters.minSalePrice !== undefined) {
+            setMinSalePrice(filters.minSalePrice);
+            hasChanges = true;
+        }
+        if (filters.maxSalePrice !== undefined) {
+            setMaxSalePrice(filters.maxSalePrice);
+            hasChanges = true;
+        }
+        if (filters.minRentPrice !== undefined) {
+            setMinRentPrice(filters.minRentPrice);
+            hasChanges = true;
+        }
+        if (filters.maxRentPrice !== undefined) {
+            setMaxRentPrice(filters.maxRentPrice);
+            hasChanges = true;
+        }
+        if (filters.sortField !== undefined) {
+            setSortField(filters.sortField);
+            hasChanges = true;
+        }
+        if (filters.sortOrder !== undefined) {
+            setSortOrder(filters.sortOrder);
+            hasChanges = true;
+        }
         
         // 필터 변경 즉시 데이터 갱신
-        fetchArticles(0, mapBounds, false);
+        if (hasChanges) {
+            console.log("필터가 변경되어 즉시 데이터 갱신 실행");
+            // 현재 지도 바운드와 필터 상태 기반으로 검색
+            fetchArticles(0, mapBounds, false);
+        }
     };
 
     const [listVisibility, setListVisibility] = useState<'visible' | 'hidden'>('visible');
