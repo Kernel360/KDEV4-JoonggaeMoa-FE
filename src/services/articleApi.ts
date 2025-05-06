@@ -8,6 +8,7 @@ import { generateClusterId, calculatePrecisionByZoom } from "../utils/clusterUti
 // 모든 매물 조회 (페이지네이션)
 export const getAllArticles = async (
     params: ArticleListParams & {
+        type?: 'bounds' | 'region' | 'default';
         sortBy?: string;
         direction?: 'asc' | 'desc';
         realEstateType?: string[];

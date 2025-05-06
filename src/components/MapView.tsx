@@ -510,8 +510,18 @@ const MapView = ({
                 // 클러스터 겹침 방지 알고리즘
                 const MIN_CLUSTER_DISTANCE = 50; // 픽셀 단위, 클러스터간 최소 거리
                 
-                // 기본값으로 초기 클러스터 설정
-                let processedClusters = initialProcessedClusters;
+                // 현재 줌 레벨 가져오기
+                const currentZoomLevel = map.getLevel();
+                
+                // 줌 레벨에 따른 클러스터 필터링
+                let processedClusters;
+                if (currentZoomLevel <= 6) { // 카카오맵에서는 작은 값이 더 확대된 상태
+                    processedClusters = initialProcessedClusters;
+                } else {
+                    // 줌 레벨 6 초과에서는 카운트 50 이하 클러스터 제외
+                    processedClusters = initialProcessedClusters.filter(cluster => cluster.count > 50);
+                    console.log(`줌 레벨 ${currentZoomLevel}에서 클러스터 필터링: ${initialProcessedClusters.length}개 -> ${processedClusters.length}개`);
+                }
                 
                 try {
                     // 픽셀 거리 계산 함수
@@ -597,7 +607,7 @@ const MapView = ({
                     };
 
                     // 클러스터 위치 조정 시도
-                    processedClusters = adjustClusterPositions(initialProcessedClusters);
+                    processedClusters = adjustClusterPositions(processedClusters);
                 } catch (err) {
                     console.error("Failed to adjust cluster positions, using original clusters:", err);
                     // 오류 발생 시 원본 클러스터 사용
