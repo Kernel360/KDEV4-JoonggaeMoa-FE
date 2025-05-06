@@ -96,6 +96,7 @@ export interface ArticleListParams {
     size?: number;
     sort?: string;
     excludeIds?: number[];
+    type?: 'bounds' | 'region' | 'default';
     realEstateType?: RealEstateType[];
     tradeType?: TradeType[];
     name?: string;

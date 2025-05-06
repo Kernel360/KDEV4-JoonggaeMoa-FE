@@ -833,6 +833,17 @@ const ArticleList: React.FC = () => {
         params.swLat = effectiveBounds.sw.lat;
         params.swLng = effectiveBounds.sw.lng;
 
+        // 검색 타입 결정 (bounds, region, default)
+        if (effectiveBounds.ne.lat && effectiveBounds.ne.lng && effectiveBounds.sw.lat && effectiveBounds.sw.lng) {
+            params.type = 'bounds';
+        } else if (regionFilterApplied && params.regionPrefix) {
+            params.type = 'region';
+        } else {
+            params.type = 'default';
+        }
+        
+        console.log(`검색 타입: ${params.type}`);
+
         try {
             // API 호출 직전 최종 파라미터 로깅
             console.log("최종 API 요청 파라미터:", JSON.stringify(params));
