@@ -22,6 +22,7 @@ interface ArticleListMapProps {
     onClusterClick: (cluster: ClusterInfo) => void;
     onBoundsChanged: (bounds: { ne: { lat: number; lng: number }; sw: { lat: number; lng: number } }, zoom: number) => void;
     mapRef?: React.RefObject<any>;
+    isListHidden?: boolean;
 }
 
 const ArticleListMap: React.FC<ArticleListMapProps> = ({
@@ -36,7 +37,8 @@ const ArticleListMap: React.FC<ArticleListMapProps> = ({
     onArticleClick,
     onClusterClick,
     onBoundsChanged,
-    mapRef
+    mapRef,
+    isListHidden
 }) => {
     // 유효한 좌표가 있는 매물만 필터링 (메모이제이션 적용)
     const validArticles = React.useMemo(() => {
@@ -74,6 +76,7 @@ const ArticleListMap: React.FC<ArticleListMapProps> = ({
                 clusterMode={clusterMode}
                 clusters={clusters}
                 mapRef={effectiveMapRef}
+                isListHidden={isListHidden}
             />
         </Box>
     );

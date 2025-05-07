@@ -1,27 +1,20 @@
 import { Alert, Box, Button, Typography } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
-import type { ArticleResponse, ClusterInfo, RealEstateType } from '../types/article';
-import { createArticleMarkerSvg } from '../utils/articleDisplay';
-import { YEOKSAM_CENTER, MAP_ZOOM_LEVELS } from '../constants/mapConstants';
-import { validateCoordinates, createCoordinates } from "../utils/articleFormat";
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
+import MyLocationIcon from '@mui/icons-material/MyLocation';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import type { ArticleResponse, ClusterInfo, RealEstateType } from '../types/article';
+import { createArticleMarkerSvg } from '../utils/articleDisplay';
+import { validateCoordinates, createCoordinates } from "../utils/articleFormat";
+import SameLocationArticleList from './SameLocationArticleList';
+import { YEOKSAM_CENTER, MAP_ZOOM_LEVELS, PROPERTY_TYPE_STYLES, HEATMAP_COLORS } from '../utils/mapUtils';
+import type { Region } from '../utils/regionUtils';
 
 declare global {
     interface Window {
         _customMarkers: any[];
     }
-}
-
-interface Region {
-    id: number;
-    cortarNo: string;
-    centerLat: number;
-    centerLon: number;
-    
-    cortarName: string;
-    areaFull?: string;
-    cortarType: string | null;
 }
 
 interface MapViewProps {
@@ -53,6 +46,10 @@ interface MapViewProps {
     })[];
     onClusterClick?: (cluster: ClusterInfo) => void;
     mapRef?: React.MutableRefObject<any>;
+    /**
+     * 리스트 숨김 상태
+     */
+    isListHidden?: boolean;
 }
 
 // debounce 함수 구현
@@ -72,21 +69,6 @@ const debounce = <F extends (...args: any[]) => any>(
     };
 };
 
-// 매물 유형별 아이콘 및 색상 매핑 정의
-const PROPERTY_TYPE_STYLES = {
-    "아파트": { icon: "🏢", color: "#3F51B5" }, // 파란색
-    "오피스텔": { icon: "🏬", color: "#673AB7" }, // 보라색
-    "빌라": { icon: "🏘️", color: "#4CAF50" }, // 녹색
-    "전원주택": { icon: "🏡", color: "#8BC34A" }, // 연두색
-    "단독/다가구": { icon: "🏠", color: "#009688" }, // 청록색
-    "상가주택": { icon: "🏪", color: "#FF5722" }, // 주황색
-    "한옥주택": { icon: "🏯", color: "#795548" }, // 갈색
-    "상가": { icon: "🏪", color: "#FF9800" }, // 주황색
-    "사무실": { icon: "🏢", color: "#607D8B" }, // 회색
-    // 기본값 (매물 유형이 없거나 매칭되지 않을 경우)
-    "default": { icon: "📍", color: "#F44336" } // 빨간색
-};
-
 // 유형에 맞는 스타일 가져오기 (없으면 기본값 반환)
 const getPropertyTypeStyle = (type?: string) => {
     if (!type || !(type in PROPERTY_TYPE_STYLES)) {
@@ -94,20 +76,6 @@ const getPropertyTypeStyle = (type?: string) => {
     }
     return PROPERTY_TYPE_STYLES[type as keyof typeof PROPERTY_TYPE_STYLES];
 };
-
-// 클러스터 히트맵 색상 배열 (낮은 밀도에서 높은 밀도로)
-const HEATMAP_COLORS = [
-    '#00FF00', // 녹색 (낮은 밀도)
-    '#ADFF2F', // 연두색
-    '#FFFF00', // 노란색
-    '#FFA500', // 주황색
-    '#FF4500', // 붉은 주황색
-    '#FF0000', // 빨간색
-    '#DC143C', // 크림슨
-    '#8B0000', // 어두운 빨간색
-    '#800080', // 보라색
-    '#4B0082'  // 남색 (높은 밀도)
-];
 
 // 매물 수에 따른 히트맵 색상 가져오기
 const getHeatmapColorByCount = (count: number): string => {
@@ -150,7 +118,8 @@ const MapView = ({
     clusterMode,
     clusters,
     onClusterClick,
-    mapRef
+    mapRef,
+    isListHidden
 }: MapViewProps) => {
     const mapRefInternal = useRef<HTMLDivElement>(null);
     const mapInstance = useRef<any>(null);
@@ -160,6 +129,13 @@ const MapView = ({
     const [mapBounds, setMapBounds] = useState<any>(null);
     const [currentZoomLevel, setCurrentZoomLevel] = useState<number>(initialZoom || MAP_ZOOM_LEVELS.DEFAULT);
     const KAKAO_APP_KEY = import.meta.env.VITE_KAKAO_APP_KEY;
+    
+    // 동일 좌표 매물 그룹 관련 상태
+    const [sameLocationArticles, setSameLocationArticles] = useState<ArticleResponse[]>([]);
+    const [sameLocationPopupOpen, setSameLocationPopupOpen] = useState<boolean>(false);
+    const [currentLocation, setCurrentLocation] = useState<{lat: number, lng: number} | null>(null);
+    const [isLocating, setIsLocating] = useState<boolean>(false);
+    const [myLocationMarker, setMyLocationMarker] = useState<any>(null);
     
     // 카카오맵 스크립트 로드
     useEffect(() => {
@@ -713,7 +689,7 @@ const MapView = ({
             }
         } 
         // 클러스터 모드가 비활성화되고 매물 데이터가 있으면 매물 핀 표시
-        else if (!clusterMode && articles && articles.length > 0) {
+        else if (articles?.length > 0) {
             // 개별 매물 표시 모드
             // 유효한 좌표가 있는 매물만 필터링
             const beforeFilterCount = articles.length;
@@ -730,22 +706,39 @@ const MapView = ({
                 return;
             }
             
-            // 매물 마커 생성
+            // 동일한 좌표에 있는 매물들을 그룹화
+            const locationGroups: Record<string, ArticleResponse[]> = {};
+            
             validArticles.forEach(article => {
+                const locationKey = `${article.latitude},${article.longitude}`;
+                if (!locationGroups[locationKey]) {
+                    locationGroups[locationKey] = [];
+                }
+                locationGroups[locationKey].push(article);
+            });
+            
+            // 각 위치 그룹별로 마커 생성
+            Object.entries(locationGroups).forEach(([locationKey, articleGroup]) => {
                 try {
-                    // 매물 위치 좌표 변환 - 유틸리티 함수 사용
-                    const coordinates = createCoordinates(article.latitude, article.longitude);
+                    const [latStr, lngStr] = locationKey.split(',');
+                    const lat = parseFloat(latStr);
+                    const lng = parseFloat(lngStr);
                     
                     // 좌표가 유효하지 않은 경우 건너뛰기
-                    if (!coordinates) {
-                        console.error(`Invalid coordinates for article ${article.id}: lat=${article.latitude}, lng=${article.longitude}`);
+                    if (isNaN(lat) || isNaN(lng)) {
+                        console.error(`Invalid location key: ${locationKey}`);
                         return;
                     }
+                    
+                    // 그룹 내 첫 번째 매물의 유형으로 마커 생성
+                    const representativeArticle = articleGroup[0];
+                    const isSelectedLocation = selectedArticle && 
+                        selectedArticle.latitude === lat && 
+                        selectedArticle.longitude === lng;
                     
                     // 마커 DOM 엘리먼트 생성
                     const element = document.createElement('div');
                     
-                    // 개별 매물은 원래 색상 사용 (히트맵 색상 제거)
                     element.innerHTML = `
                         <div 
                             style="
@@ -754,10 +747,16 @@ const MapView = ({
                                 height: 40px;
                                 transform: translate(-50%, -50%);
                                 cursor: pointer;
-                                z-index: ${selectedArticle && selectedArticle.id === article.id ? 5 : 1};
+                                z-index: ${isSelectedLocation ? 5 : 1};
                             "
                         >
-                            ${createArticleMarkerSvg(article.buildingType, selectedArticle && selectedArticle.id === article.id)}
+                            ${createArticleMarkerSvg(
+                                representativeArticle.buildingType, 
+                                isSelectedLocation,
+                                undefined,
+                                undefined,
+                                articleGroup.length // 그룹 내 매물 수를 전달
+                            )}
                         </div>
                     `;
 
@@ -765,16 +764,27 @@ const MapView = ({
                     element.firstElementChild?.addEventListener('click', (e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        console.log("Article clicked:", article.id);
-                        onArticleClick(article);
+                        
+                        // 동일 위치에 매물이 여러 개인 경우
+                        if (articleGroup.length > 1) {
+                            console.log(`${articleGroup.length}개의 동일 위치 매물 그룹 클릭됨`);
+                            // 동일 위치 매물 목록 표시
+                            setSameLocationArticles(articleGroup);
+                            setCurrentLocation({ lat, lng });
+                            setSameLocationPopupOpen(true);
+                        } else {
+                            // 단일 매물인 경우 바로 선택
+                            console.log("Article clicked:", representativeArticle.id);
+                            onArticleClick(representativeArticle);
+                        }
                     });
 
                     // kakao LatLng 객체 생성
                     let position;
                     try {
-                        position = new (window as any).kakao.maps.LatLng(coordinates.lat, coordinates.lng);
+                        position = new (window as any).kakao.maps.LatLng(lat, lng);
                     } catch (err) {
-                        console.error(`Failed to create LatLng for article ${article.id}: ${err}`);
+                        console.error(`Failed to create LatLng for location ${locationKey}: ${err}`);
                         return;
                     }
 
@@ -784,15 +794,15 @@ const MapView = ({
                             position: position,
                             content: element,
                             map: map,
-                            zIndex: selectedArticle && selectedArticle.id === article.id ? 5 : 1
+                            zIndex: isSelectedLocation ? 5 : 1
                         });
 
                         window._customMarkers.push(marker);
                     } catch (err) {
-                        console.error(`Failed to create marker for article ${article.id}: ${err}`);
+                        console.error(`Failed to create marker for location ${locationKey}: ${err}`);
                     }
                 } catch (err) {
-                    console.error("Error creating article marker:", err, "Article:", article);
+                    console.error("Error creating location group marker:", err);
                 }
             });
 
@@ -931,72 +941,285 @@ const MapView = ({
         // 새 모드에 맞는 마커 즉시 생성 (다음 렌더링에서 실행)
     }, [isMapLoaded, clusterMode]);
 
+    // 동일 위치 매물 팝업 닫기 핸들러
+    const handleCloseLocationPopup = () => {
+        setSameLocationPopupOpen(false);
+    };
+
+    // 부모 컨테이너에 클래스 추가 효과
+    useEffect(() => {
+        // 가장 가까운 article-list-container 클래스를 가진 부모 요소 찾기
+        const findParentContainer = () => {
+            if (!mapRefInternal.current) return null;
+            let parent = mapRefInternal.current.parentElement;
+            while (parent) {
+                if (parent.classList.contains('article-list-container')) {
+                    return parent;
+                }
+                parent = parent.parentElement;
+            }
+            return null;
+        };
+
+        const parentContainer = findParentContainer();
+        if (parentContainer) {
+            if (sameLocationPopupOpen) {
+                parentContainer.classList.add('same-location-open');
+            } else {
+                parentContainer.classList.remove('same-location-open');
+            }
+        }
+
+        return () => {
+            if (parentContainer) {
+                parentContainer.classList.remove('same-location-open');
+            }
+        };
+    }, [sameLocationPopupOpen]);
+
+    // 현재 위치 가져오기 및 지도 이동 함수
+    const handleCurrentLocation = () => {
+        if (!mapInstance.current || !isMapLoaded) return;
+        
+        setIsLocating(true);
+        
+        // 기존 내 위치 마커가 있다면 제거
+        if (myLocationMarker) {
+            myLocationMarker.setMap(null);
+            setMyLocationMarker(null);
+        }
+        
+        // 브라우저의 Geolocation API를 사용하여 현재 위치 가져오기
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const { latitude, longitude } = position.coords;
+                    
+                    // 카카오맵 LatLng 객체 생성
+                    const currentLocation = new (window as any).kakao.maps.LatLng(latitude, longitude);
+                    
+                    // 지도 중심 이동
+                    mapInstance.current.setCenter(currentLocation);
+                    
+                    // 줌 레벨 조정 (적절한 줌 레벨로 설정, 예: 3)
+                    mapInstance.current.setLevel(3);
+                    setCurrentZoomLevel(3);
+                    
+                    // 현재 위치 마커 생성 (애니메이션 효과)
+                    const markerContainer = document.createElement('div');
+                    
+                    // 스타일 직접 설정
+                    markerContainer.style.position = 'absolute';
+                    markerContainer.style.width = '30px';
+                    markerContainer.style.height = '30px';
+                    markerContainer.style.margin = '0';
+                    markerContainer.style.padding = '0';
+                    markerContainer.style.display = 'flex';
+                    markerContainer.style.justifyContent = 'center';
+                    markerContainer.style.alignItems = 'center';
+                    markerContainer.style.zIndex = '10';
+                    
+                    // 핀과 펄스 효과를 담을 내부 컨테이너
+                    const innerContainer = document.createElement('div');
+                    innerContainer.style.position = 'relative';
+                    innerContainer.style.width = '30px';
+                    innerContainer.style.height = '30px';
+                    innerContainer.style.display = 'flex';
+                    innerContainer.style.justifyContent = 'center';
+                    innerContainer.style.alignItems = 'center';
+                    
+                    // 애니메이션 키프레임 스타일
+                    const styleElement = document.createElement('style');
+                    styleElement.textContent = `
+                        @keyframes drop-marker {
+                            0% { transform: translateY(-200px); opacity: 0; }
+                            40% { transform: translateY(-10px); opacity: 1; }
+                            60% { transform: translateY(0); opacity: 1; }
+                            80% { transform: translateY(-5px); opacity: 1; }
+                            100% { transform: translateY(0); opacity: 1; }
+                        }
+                        
+                        @keyframes pulse {
+                            0% { transform: scale(1); opacity: 0.7; }
+                            50% { transform: scale(1.5); opacity: 0.3; }
+                            100% { transform: scale(1); opacity: 0.7; }
+                        }
+                        
+                        .marker-animation {
+                            animation: drop-marker 0.5s ease-out forwards;
+                        }
+                        
+                        .pulse-circle {
+                            position: absolute;
+                            width: 100%;
+                            height: 100%;
+                            border-radius: 50%;
+                            background-color: rgba(33, 150, 243, 0.3);
+                            animation: pulse 2s infinite;
+                            z-index: 9;
+                        }
+                    `;
+                    document.head.appendChild(styleElement);
+                    
+                    // 펄스 효과 원
+                    const pulseCircle = document.createElement('div');
+                    pulseCircle.className = 'pulse-circle';
+                    
+                    // 위치 핀 SVG
+                    const pinSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                    pinSvg.setAttribute('width', '30');
+                    pinSvg.setAttribute('height', '30');
+                    pinSvg.setAttribute('viewBox', '0 0 24 24');
+                    pinSvg.style.zIndex = '11';
+                    pinSvg.style.position = 'relative';
+                    
+                    const pinPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    pinPath.setAttribute('d', 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z');
+                    pinPath.setAttribute('fill', '#2196F3');
+                    
+                    pinSvg.appendChild(pinPath);
+                    
+                    // 요소 조립
+                    innerContainer.appendChild(pulseCircle);
+                    innerContainer.appendChild(pinSvg);
+                    innerContainer.className = 'marker-animation';
+                    
+                    markerContainer.appendChild(innerContainer);
+                    
+                    // 마커 생성 - 정확히 중앙에 위치하도록 앵커 설정
+                    const marker = new (window as any).kakao.maps.CustomOverlay({
+                        position: currentLocation,
+                        content: markerContainer,
+                        map: mapInstance.current,
+                        zIndex: 10,
+                        xAnchor: 0.5,
+                        yAnchor: 0.5
+                    });
+                    
+                    // 마커 저장
+                    setMyLocationMarker(marker);
+                    
+                    setIsLocating(false);
+                },
+                (error) => {
+                    console.error('Geolocation error:', error);
+                    setIsLocating(false);
+                    alert('현재 위치를 가져올 수 없습니다. 위치 권한을 확인해주세요.');
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 5000,
+                    maximumAge: 0
+                }
+            );
+        } else {
+            setIsLocating(false);
+            alert('이 브라우저에서는 위치 정보를 지원하지 않습니다.');
+        }
+    };
+
+    // 언마운트 시 마커 제거
+    useEffect(() => {
+        return () => {
+            if (myLocationMarker) {
+                myLocationMarker.setMap(null);
+            }
+        };
+    }, [myLocationMarker]);
+
     return (
-        <>
+        <Box sx={{ 
+            position: 'relative', 
+            width: '100%',
+            height: '100%',
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column'
+        }}>
+            {/* 지도 컨테이너 */}
+            <Box 
+                ref={mapRefInternal}
+                sx={{
+                    width: '100%',
+                    height: '100%',
+                    flex: 1
+                }}
+            />
+            
+            {/* 줌 컨트롤 버튼 */}
+            <Box sx={{
+                position: 'absolute',
+                right: '10px',
+                bottom: '20px',
+                zIndex: 10,
+                backgroundColor: 'white',
+                borderRadius: '4px',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+                display: 'flex',
+                flexDirection: 'column'
+            }}>
+                <Button 
+                    onClick={handleZoomIn}
+                    sx={{ minWidth: '36px', height: '36px', p: 0, borderRadius: '4px 4px 0 0' }}
+                >
+                    <AddIcon />
+                </Button>
+                <Box sx={{ height: '1px', bgcolor: 'divider', width: '100%' }} />
+                <Button 
+                    onClick={handleZoomOut}
+                    sx={{ minWidth: '36px', height: '36px', p: 0, borderRadius: '0 0 4px 4px' }}
+                >
+                    <RemoveIcon />
+                </Button>
+            </Box>
+            
+            {/* 현재 위치 버튼 */}
+            <Box sx={{
+                position: 'absolute',
+                right: '10px',
+                bottom: '100px',
+                zIndex: 10,
+                backgroundColor: 'white',
+                borderRadius: '4px',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+                display: 'flex',
+                flexDirection: 'column'
+            }}>
+                <Button 
+                    onClick={handleCurrentLocation}
+                    disabled={isLocating}
+                    sx={{ 
+                        minWidth: '36px', 
+                        height: '36px', 
+                        p: 0, 
+                        borderRadius: '4px',
+                        '&:hover': {
+                            backgroundColor: 'rgba(0, 0, 0, 0.04)'
+                        }
+                    }}
+                >
+                    <MyLocationIcon color={isLocating ? "disabled" : "primary"} />
+                </Button>
+            </Box>
+            
+            {/* 에러 메시지 */}
             {mapErrorMessage && (
-                <Alert severity="error" sx={{ mb: 2 }}>
+                <Alert severity="error" sx={{ position: 'absolute', top: '10px', left: '10px', zIndex: 10 }}>
                     {mapErrorMessage}
                 </Alert>
             )}
-            <Box sx={{ 
-                width: '100%', 
-                height: '100%', 
-                position: 'relative',
-                overflow: 'hidden'
-            }}>
-                <div 
-                    ref={mapRefInternal} 
-                    style={{ 
-                        width: '100%', 
-                        height: '100%',
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        userSelect: 'none',
-                        touchAction: 'none'
-                    }} 
-                />
-                
-                {/* 확대/축소 컨트롤 */}
-                <Box 
-                    sx={{
-                        position: 'absolute',
-                        right: 16,
-                        bottom: 16,
-                        zIndex: 10,
-                        backgroundColor: 'white',
-                        borderRadius: 1,
-                        boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        overflow: 'hidden'
-                    }}
-                >
-                    <Button 
-                        onClick={handleZoomIn}
-                        sx={{ 
-                            minWidth: '40px', 
-                            height: '40px', 
-                            borderRadius: 0,
-                            borderBottom: '1px solid #eee' 
-                        }}
-                    >
-                        <AddIcon />
-                    </Button>
-                    <Button 
-                        onClick={handleZoomOut}
-                        sx={{ 
-                            minWidth: '40px', 
-                            height: '40px',
-                            borderRadius: 0
-                        }}
-                    >
-                        <RemoveIcon />
-                    </Button>
-                </Box>
-            </Box>
-        </>
+
+            {/* 동일 위치 매물 리스트 - 상위에 위치시켜 오버레이 효과 생성 */}
+            <SameLocationArticleList 
+                articles={sameLocationArticles}
+                isOpen={sameLocationPopupOpen}
+                onClose={handleCloseLocationPopup}
+                onArticleClick={onArticleClick}
+                selectedArticle={selectedArticle}
+                location={currentLocation || { lat: 0, lng: 0 }}
+                isListHidden={isListHidden}
+            />
+        </Box>
     );
 };
 

@@ -20,11 +20,18 @@ export const getAllArticles = async (
         neLng?: number;
         swLat?: number;
         swLng?: number;
+        includeComplex?: boolean; // 단지 정보 포함 여부
     } = {}
 ): Promise<AxiosResponse<any>> => {
     try {
+        // 기본적으로 단지 정보 포함
+        const requestParams = {
+            ...params,
+            includeComplex: params.includeComplex !== false // 명시적으로 false로 지정하지 않으면 단지 정보 포함
+        };
+        
         return await api.get('/api/articles', {
-            params,
+            params: requestParams,
             paramsSerializer: params => {
                 return qs.stringify(params, { arrayFormat: 'repeat' })
             }
@@ -155,7 +162,12 @@ export const getArticlesByCoordinates = async (
 
 export const getArticleById = async (id: number): Promise<AxiosResponse<ApiResponse<ArticleResponse>>> => {
     try {
-        return await api.get(`/api/articles/${id}`);
+        // 단지 정보를 포함한 응답을 요청하기 위해 includeComplex 파라미터를 추가
+        return await api.get(`/api/articles/${id}`, {
+            params: {
+                includeComplex: true
+            }
+        });
     } catch (error) {
         console.error(`매물 ID: ${id} 조회 실패:`, error);
         throw error;

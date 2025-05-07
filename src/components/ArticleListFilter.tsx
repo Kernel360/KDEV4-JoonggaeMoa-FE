@@ -14,10 +14,9 @@ import {
     type ChipProps
 } from "@mui/material";
 import React, { useState } from "react";
-import { RealEstateType, TradeType } from "../types/article";
+import { RealEstateType, TradeType, REAL_ESTATE_OPTIONS, TRADE_TYPE_OPTIONS } from "../types/article";
 import { getTypeColor } from "../utils/articleDisplay";
 import { convertKoreanPriceToNumber } from "../utils/articlePrice";
-import { REAL_ESTATE_OPTIONS, TRADE_TYPE_OPTIONS } from '../constants/articleConstants';
 
 interface ArticleListFilterProps {
     typeFilter: RealEstateType[];

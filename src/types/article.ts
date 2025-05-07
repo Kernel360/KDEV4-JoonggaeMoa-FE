@@ -12,6 +12,22 @@ export type RealEstateType =
 
 export type TradeType = "매매" | "전세" | "월세";
 
+// 매물 유형 상수
+export const REAL_ESTATE_OPTIONS: RealEstateType[] = [
+    "아파트",
+    "오피스텔",
+    "빌라",
+    "전원주택",
+    "단독/다가구",
+    "상가주택",
+    "한옥주택",
+    "상가",
+    "사무실"
+];
+
+// 거래 유형 상수
+export const TRADE_TYPE_OPTIONS: TradeType[] = ["매매", "전세", "월세"];
+
 export interface ArticleResponse {
     id: number;
     articleCode: string;
@@ -41,6 +57,7 @@ export interface ArticleResponse {
     address2SiGunGu: string;
     address3DongEupMyeon: string;
     complexId?: number;
+    complexResponse?: ComplexResponse;
     articleType: string;
     cortarName?: string;
     buildingName?: string;
@@ -51,9 +68,24 @@ export interface ArticleResponse {
 
 export interface ComplexResponse {
     id: number;
-    name: string;
-    type: string;
-    approvedAt: string;
+    complexCode: string;
+    complexName: string;
+    countDong: number;
+    countHousehold: number;
+    confirmedAt: string;
+    countDeal: number;
+    countLease: number;
+    countRent: number;
+    countRentShortTerm: number;
+    countArticles: number;
+    sizeMin: string;
+    sizeMax: string;
+    priceSaleInitialMin: number;
+    priceSaleInitialMax: number;
+    tourExists: boolean;
+    isSeismic: boolean;
+    countElevator: number;
+    regionId?: number;
 }
 
 export interface RegionResponse {
