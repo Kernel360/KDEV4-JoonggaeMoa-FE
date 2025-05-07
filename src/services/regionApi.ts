@@ -34,7 +34,27 @@ export const getChildRegions = async (cortarNoPrefix: string): Promise<AxiosResp
     });
 }
 
+/**
+ * 행정구역 경계 데이터(GeoJSON) 가져오기
+ * @param type 행정구역 타입 ('dong' 또는 'gu')
+ * @returns 행정구역 경계 데이터
+ */
+export const getRegionBoundaries = async (type: 'dong' | 'gu'): Promise<any> => {
+    // 실제 API 연결 시 아래 주석 해제
+    // return api.get(`/api/region-boundaries/${type}`);
+    
+    // 임시로 외부 데이터 사용 (프로덕션에서는 자체 API 사용 권장)
+    const url = type === 'dong' 
+        ? 'https://raw.githubusercontent.com/vuski/admdongkor/master/ver20230101/HangJeongDong_ver20230101.geojson'
+        : 'https://raw.githubusercontent.com/southkorea/seoul-maps/master/kostat/2013/json/seoul_municipalities_geo.json';
+    
+    console.log(`행정구역 경계 데이터 API 호출: ${url}`);
+    const response = await fetch(url);
+    return response.json();
+}
+
 export const regionApi = {
     getRegions,
-    getChildRegions
+    getChildRegions,
+    getRegionBoundaries
 }
