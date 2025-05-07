@@ -1,4 +1,5 @@
-import { ClusterInfo } from "../types/article";
+import { ClusterInfo, RealEstateType } from "../types/article";
+import { getTypeColor } from "./articleDisplay";
 
 /**
  * 좌표와 정밀도를 기반으로 클러스터 ID를 생성합니다.
@@ -69,31 +70,10 @@ export const getClusterColor = (cluster: ClusterInfo): string => {
     // 기본 색상은 '#FF5722' (주황색)
     // 매물이 많을수록 더 진한 색으로 표시
     const intensity = Math.min(1.0, cluster.count / 100); // 최대 100개까지 강도 증가
-    const baseColor = cluster.mainRealEstateType ? getColorByType(cluster.mainRealEstateType) : '#FF5722';
+    const baseColor = cluster.mainRealEstateType ? getTypeColor(cluster.mainRealEstateType) : '#FF5722';
     
     // 투명도를 이용해 강도 조절
     return baseColor;
-};
-
-/**
- * 매물 유형에 따른 색상 코드를 반환합니다.
- * 
- * @param type 매물 유형
- * @returns 색상 코드 (hex)
- */
-const getColorByType = (type: string): string => {
-    switch (type) {
-        case '아파트': return '#2196f3';
-        case '오피스텔': return '#4caf50';
-        case '전원주택': return "#00bcd4";
-        case '빌라': return '#ff9800';
-        case '단독/다가구': return '#9c27b0';
-        case '상가주택': return '#f44336';
-        case '한옥주택': return '#795548';
-        case '상가': return '#f44336';
-        case '사무실': return '#607d8b';
-        default: return '#FF5722';
-    }
 };
 
 /**

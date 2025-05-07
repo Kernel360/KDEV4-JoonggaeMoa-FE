@@ -65,7 +65,7 @@ export const getTypeEmoji = (type: RealEstateType | string): string => {
     }
 };
 
-export const createArticleMarkerSvg = (buildingType: string, isSelected: boolean = false, customColor?: string, customOpacity?: number): string => {
+export const createArticleMarkerSvg = (buildingType: string, isSelected: boolean = false, customColor?: string, customOpacity?: number, groupCount?: number): string => {
     const color = customColor || getTypeColor(buildingType);
     const emoji = getTypeEmoji(buildingType);
     
@@ -76,11 +76,20 @@ export const createArticleMarkerSvg = (buildingType: string, isSelected: boolean
     const fontSize = isSelected ? 16 : 14;
     const opacity = customOpacity !== undefined ? customOpacity : 1.0;
     
+    // 동일 좌표 매물 그룹에 대한 카운트 버블 추가
+    const countBubble = groupCount && groupCount > 1 ? `
+        <g>
+            <circle cx="27" cy="13" r="8" fill="#FF0000" opacity="0.8" />
+            <text x="27" y="16" font-size="10" text-anchor="middle" fill="white" font-weight="bold">${groupCount}</text>
+        </g>
+    ` : '';
+    
     return `
         <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
             <circle cx="20" cy="20" r="${circleRadius}" fill="${color}" stroke="${strokeColor}" stroke-width="${strokeWidth}" opacity="${opacity}"/>
             <text x="20" y="25" font-size="${fontSize}" text-anchor="middle" fill="white">${emoji}</text>
             ${isSelected ? '<circle cx="20" cy="20" r="24" fill="none" stroke="#FF5722" stroke-width="2" stroke-dasharray="4,2" opacity="0.8"/>' : ''}
+            ${countBubble}
         </svg>
     `;
 }; 

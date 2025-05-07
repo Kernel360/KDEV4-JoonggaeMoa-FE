@@ -13,7 +13,12 @@ import {
     IconButton,
     Paper,
     Stack,
-    Typography
+    Typography,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableRow
 } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
 import { ArticleResponse, ComplexResponse } from '../types/article';
@@ -170,6 +175,58 @@ const ArticleDetail = ({ article, complex, onClose }: ArticleDetailProps) => {
         if (article.latitude && article.longitude) {
             window.open(`https://map.naver.com/v5/search/${encodeURIComponent(article.addressFullRoad || article.addressFullLot)}`, '_blank');
         }
+    };
+
+    // 단지 정보 컴포넌트 추가
+    const ComplexInfoSection = ({ complex }: { complex: ComplexResponse }) => {
+        return (
+            <Paper elevation={0} sx={{ p: 2, border: '1px solid rgba(0, 0, 0, 0.12)', borderRadius: 2, mb: 3 }}>
+                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <ApartmentIcon /> 단지 정보
+                </Typography>
+                
+                <TableContainer component={Box} sx={{ mt: 2 }}>
+                    <Table size="small">
+                        <TableBody>
+                            <TableRow>
+                                <TableCell component="th" sx={{ width: '40%', borderBottom: 'none', py: 1 }}>단지명</TableCell>
+                                <TableCell sx={{ borderBottom: 'none', py: 1 }}>{complex.complexName}</TableCell>
+                            </TableRow>
+                            <TableRow>
+                                <TableCell component="th" sx={{ width: '40%', borderBottom: 'none', py: 1 }}>총 동 수</TableCell>
+                                <TableCell sx={{ borderBottom: 'none', py: 1 }}>{complex.countDong}동</TableCell>
+                            </TableRow>
+                            <TableRow>
+                                <TableCell component="th" sx={{ borderBottom: 'none', py: 1 }}>총 세대 수</TableCell>
+                                <TableCell sx={{ borderBottom: 'none', py: 1 }}>{complex.countHousehold}세대</TableCell>
+                            </TableRow>
+                            <TableRow>
+                                <TableCell component="th" sx={{ borderBottom: 'none', py: 1 }}>사용 승인일</TableCell>
+                                <TableCell sx={{ borderBottom: 'none', py: 1 }}>{formatDate(complex.confirmedAt)}</TableCell>
+                            </TableRow>
+                            <TableRow>
+                                <TableCell component="th" sx={{ borderBottom: 'none', py: 1 }}>면적 범위</TableCell>
+                                <TableCell sx={{ borderBottom: 'none', py: 1 }}>{complex.sizeMin}㎡ ~ {complex.sizeMax}㎡</TableCell>
+                            </TableRow>
+                            <TableRow>
+                                <TableCell component="th" sx={{ borderBottom: 'none', py: 1 }}>총 엘리베이터 수</TableCell>
+                                <TableCell sx={{ borderBottom: 'none', py: 1 }}>{complex.countElevator}대</TableCell>
+                            </TableRow>
+                            <TableRow>
+                                <TableCell component="th" sx={{ borderBottom: 'none', py: 1 }}>내진 설계 여부</TableCell>
+                                <TableCell sx={{ borderBottom: 'none', py: 1 }}>{complex.isSeismic ? '적용' : '미적용'}</TableCell>
+                            </TableRow>
+                            <TableRow>
+                                <TableCell component="th" sx={{ borderBottom: 'none', py: 1 }}>현재 매물 현황</TableCell>
+                                <TableCell sx={{ borderBottom: 'none', py: 1 }}>
+                                    매매 {complex.countDeal}건, 전세 {complex.countLease}건, 월세 {complex.countRent}건
+                                </TableCell>
+                            </TableRow>
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            </Paper>
+        );
     };
 
     if (!article) return null;
@@ -370,29 +427,6 @@ const ArticleDetail = ({ article, complex, onClose }: ArticleDetailProps) => {
                                             </Typography>
                                         </Grid>
                                     </Grid>
-
-                                    {/* 단지 정보 */}
-                                    {complex && (
-                                        <Box sx={{ mt: 4 }}>
-                                            <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                                                <ApartmentIcon sx={{ verticalAlign: 'middle', mr: 0.5 }} />
-                                                단지 정보
-                                            </Typography>
-                                            <Paper sx={{ p: 2 }}>
-                                                <Typography variant="body1" gutterBottom>
-                                                    {complex.name}
-                                                </Typography>
-                                                <Typography variant="body2" color="text.secondary">
-                                                    {complex.type}
-                                                </Typography>
-                                                {complex.approvedAt && (
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        사용승인일: {complex.approvedAt}
-                                                    </Typography>
-                                                )}
-                                            </Paper>
-                                        </Box>
-                                    )}
                                 </Paper>
                             </Grid>
 
@@ -457,6 +491,13 @@ const ArticleDetail = ({ article, complex, onClose }: ArticleDetailProps) => {
                             />
                         </Box>
                     </Grid>
+
+                    {/* 아파트 단지 정보 추가 (아파트인 경우만) */}
+                    {article.buildingType === '아파트' && article.complexResponse && (
+                        <Grid item xs={12}>
+                            <ComplexInfoSection complex={article.complexResponse} />
+                        </Grid>
+                    )}
                 </Grid>
             </Box>
         </Box>

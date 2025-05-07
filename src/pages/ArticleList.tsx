@@ -22,22 +22,25 @@ import {
     Select,
     TextField,
     Toolbar,
-    Typography
+    Typography,
+    useMediaQuery,
+    useTheme
 } from "@mui/material"
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import ArticleDetail from "../components/ArticleDetail"
 import ArticleListMap from '../components/ArticleListMap'
 import ArticleListView from '../components/ArticleListView'
-import { REAL_ESTATE_OPTIONS, TRADE_TYPE_OPTIONS } from '../constants/articleConstants'
-import { DEFAULT_MAP_BOUNDS, MAP_ZOOM_LEVELS, YEOKSAM_CENTER } from '../constants/mapConstants'
+import { YEOKSAM_CENTER, MAP_ZOOM_LEVELS, DEFAULT_MAP_BOUNDS } from '../utils/mapUtils'
 import { articleApi } from "../services/articleApi"
 import { regionApi } from "../services/regionApi"
 import type { ArticleResponse, ClusterInfo, ComplexResponse, RealEstateType, TradeType } from "../types/article"
+import { REAL_ESTATE_OPTIONS, TRADE_TYPE_OPTIONS } from '../types/article'
 import { validateCoordinates, createCoordinates, parseCoordinate } from "../utils/articleFormat"
 import { getCityOptions, getDistrictOptions, KOREA_REGIONS } from '../utils/regionData'
 import type { Region } from '../utils/regionUtils'
 import { generateClusterId, calculatePrecisionByZoom, getClusterColor } from '../utils/clusterUtils'
+import { filterArticlesInBounds } from '../utils/mapUtils'
 
 // 확장된 API 응답 타입들
 interface PageContent<T> {
@@ -71,6 +74,8 @@ interface ClusterDetailInfo {
 const ArticleList: React.FC = () => {
     const clusterCache = useRef(new Map<string, ClusterInfo[]>());
     const mapRef = useRef<any>(null);
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     
     // mapRef가 실제로 할당되었는지 확인하는 함수
     const ensureMapRef = useCallback(() => {
@@ -1566,23 +1571,42 @@ const ArticleList: React.FC = () => {
                     '@media (max-width: 768px)': {
                         '.article-list-container': {
                             flexDirection: 'column !important',
-                            height: '100vh !important'
+                            height: '100vh !important',
+                            position: 'relative !important'
                         },
                         '.map-container': {
-                            flex: '1 !important',
+                            flex: '2 !important',
                             height: '50% !important',
-                            minHeight: '300px !important',
-                            width: '100% !important'
+                            minHeight: '50vh !important',
+                            width: '100% !important',
+                            transition: 'height 0.3s ease-in-out !important'
                         },
                         '.list-container': {
                             flex: '1 !important',
                             width: '100% !important',
                             minWidth: '100% !important',
                             maxWidth: '100% !important',
-                            height: '50% !important',
-                            minHeight: '300px !important',
+                            height: '25% !important',
+                            minHeight: '25vh !important',
                             borderLeft: 'none !important',
-                            borderTop: '1px solid #ddd !important'
+                            borderTop: '1px solid #ddd !important',
+                            position: 'relative !important',
+                            zIndex: '1 !important',
+                            transition: 'height 0.3s ease-in-out !important'
+                        },
+                        // 리스트가 숨겨졌을 때 지도 영역이 전체를 채우도록 함
+                        '.list-hidden .map-container': {
+                            height: 'calc(100vh - 56px) !important',
+                            minHeight: 'calc(100vh - 56px) !important'
+                        },
+                        // 동일 위치 매물 리스트가 열렸을 때 지도와 리스트의 비율 조정
+                        '.same-location-open .map-container': {
+                            flex: '2 !important',
+                            height: '50% !important'
+                        },
+                        '.same-location-open .list-container': {
+                            flex: '1 !important',
+                            height: '25% !important'
                         }
                     }
                 }}
@@ -1669,7 +1693,7 @@ const ArticleList: React.FC = () => {
             </AppBar>
 
             <Box 
-                className="article-list-container"
+                className={`article-list-container ${!showList ? 'list-hidden' : ''}`}
                 sx={{ 
                     position: 'relative',
                     flex: 1,
@@ -1683,7 +1707,11 @@ const ArticleList: React.FC = () => {
                         sx={{ 
                             flex: showList ? 3 : 1, 
                             height: '100%',
-                            transition: 'flex 0.3s ease-in-out'
+                            transition: 'flex 0.3s ease-in-out',
+                            ...(isMobile && !showList && {
+                                height: 'calc(100vh - 56px)',
+                                minHeight: 'calc(100vh - 56px)'
+                            })
                         }}
                     >
                         <ArticleListMap
@@ -1703,6 +1731,7 @@ const ArticleList: React.FC = () => {
                             onClusterClick={handleClusterClick}
                             onBoundsChanged={handleMapViewChange}
                             mapRef={mapRef}
+                            isListHidden={!showList}
                         />
                     </Box>
                 )}
@@ -1724,7 +1753,14 @@ const ArticleList: React.FC = () => {
                         visibility: listVisibility,
                         overflow: 'hidden',
                         position: 'relative',
-                        zIndex: 1
+                        zIndex: 1,
+                        '@media (max-width: 768px)': {
+                            maxWidth: '100% !important',
+                            width: '100% !important',
+                            position: 'relative !important',
+                            minHeight: '25vh !important',
+                            height: '25% !important'
+                        }
                     }}
                 >
                     {showList && (
