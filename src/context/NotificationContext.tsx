@@ -170,9 +170,9 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
     const setupSSEConnection = (agentId: number) => {
         const clientId = getClientId();
-        const source = new EventSource(`${api.defaults.baseURL}/api/notifications/subscribe?agentId=${agentId}&clientId=${clientId}`, {
-            withCredentials: true
-        });
+        const source = new EventSource(
+            `${api.defaults.baseURL}/api/notifications/subscribe?agentId=${agentId}&clientId=${clientId}`
+          );
 
         source.onopen = () => {
             console.log("SSE connection opened");
@@ -215,8 +215,12 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
         source.onerror = (err) => {
             console.error("SSE error:", err);
-            source.close();
-            setTimeout(() => setupSSEConnection(agentId), 30000);
+            if (source.readyState === EventSource.CLOSED) {
+                console.log("SSE closed, reconnecting...");
+                setTimeout(() => setupSSEConnection(agentId), 30000);
+            } else {
+                source.close(); // 네트워크 오류 등 대응
+            }
         };
 
         return () => {
