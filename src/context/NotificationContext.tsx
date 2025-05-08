@@ -54,11 +54,18 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
             const response = await api.get("/api/notifications");
             if (response.data.success) {
                 const allNotifications = response.data.data.map((notification: any) => ({
-                    ...notification,
-                    isRead: notification.read,
+                    id: notification.id,
+                    type: notification.type,
+                    content: notification.content,
+                    isRead: notification.isRead,  
                     createdAt: notification.createdAt
                 }));
-
+                
+                console.log('Transformed Notifications:', {
+                    original: response.data.data,
+                    transformed: allNotifications,
+                });
+                
                 setNotifications(allNotifications);
                 const unread = allNotifications.filter((n: Notification) => !n.isRead).length;
                 setUnreadCount(unread);
@@ -191,6 +198,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
             try {
                 const rawNotification = JSON.parse(data);
+                console.log("Raw Notification:", rawNotification);
                 const newNotification = {
                     id: rawNotification.id,
                     type: rawNotification.type,
@@ -198,6 +206,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
                     isRead: rawNotification.read ?? false,  // 명시적으로 false로 설정
                     createdAt: rawNotification.createdAt
                 };
+                console.log("New Notification:", newNotification);
                 addNotification(newNotification);
             } catch (error) {
                 console.error("Error processing notification:", error);
