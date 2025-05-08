@@ -1,22 +1,34 @@
 "use client"
 
-import type React from "react"
-
-import type { ReactNode } from "react"
+import React, { useState, useEffect, ReactNode } from "react";
 import { Navigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 import Layout from "./Layout"
-import { CircularProgress, Box } from "@mui/material"
+import { CircularProgress, Box, ThemeProvider, Snackbar, Alert, createTheme } from "@mui/material"
+import { useLocation } from "react-router-dom"
+
+const theme = createTheme({
+    palette: {
+        mode: "light",
+        primary: {
+            main: "#007bff",
+        },
+        secondary: {
+            main: "#6c757d",
+        },
+    },
+});
 
 interface ProtectedRouteProps {
     children: ReactNode
 }
 
-import { useLocation } from "react-router-dom"
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-    const { isAuthenticated, loading } = useAuth()
-    const location = useLocation()
+    const { isAuthenticated, loading } = useAuth();
+    const location = useLocation();
+    const [error, setError] = useState<string | null>(null);
+
     
     if (loading) {
         return (
@@ -42,7 +54,23 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
         return <Navigate to="/" />
     }
 
-    return <Layout>{children}</Layout>
+    if (location.pathname.startsWith('/article')) {
+        return (
+            <ThemeProvider theme={theme}>
+                {children}
+                {/* Error Snackbar */}
+                <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError(null)}>
+                    <Alert onClose={() => setError(null)} severity="error" sx={{ width: "100%" }}>
+                        {error}
+                    </Alert>
+                </Snackbar>
+            </ThemeProvider>
+        );
+    }
+    else{
+        return <Layout>{children}</Layout>
+    }
+    
 }
 
 export default ProtectedRoute
