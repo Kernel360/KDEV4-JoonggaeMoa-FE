@@ -33,7 +33,7 @@ interface ArticleDetailProps {
     onClose: () => void;
 }
 
-const ArticleDetail = ({article, complex, onClose}: ArticleDetailProps) => {
+const ArticleDetail = ({article, onClose}: ArticleDetailProps) => {
     const mapRef = useRef<HTMLDivElement>(null);
     const mapInstance = useRef<any>(null);
     const [showAnimation, setShowAnimation] = useState(false);
@@ -299,15 +299,18 @@ const ArticleDetail = ({article, complex, onClose}: ArticleDetailProps) => {
                     </IconButton>
                 </Box>
             </Box>
-
             {/* 컨텐츠 부분 */}
             <Box sx={{p: 3, flexGrow: 1, overflow: 'auto'}}>
                 <Grid container spacing={3}>
                     {/* 상단: 이미지 섹션, 가격 정보, 주소 섹션 (전체 너비) */}
-                    <Grid item xs={12}>
+                    <Grid size={12}>
                         <Grid container spacing={3}>
                             {/* 이미지 섹션 */}
-                            <Grid item xs={12} md={5}>
+                            <Grid
+                                size={{
+                                    xs: 12,
+                                    md: 5
+                                }}>
                                 <Card sx={{height: '100%'}}>
                                     {article.imageUrl ? (
                                         <CardMedia
@@ -335,7 +338,11 @@ const ArticleDetail = ({article, complex, onClose}: ArticleDetailProps) => {
                             </Grid>
 
                             {/* 가격 정보, 주소 섹션 */}
-                            <Grid item xs={12} md={7}>
+                            <Grid
+                                size={{
+                                    xs: 12,
+                                    md: 7
+                                }}>
                                 <Stack spacing={2}>
                                     {/* 가격 정보 */}
                                     <Paper sx={{p: 2}}>
@@ -382,16 +389,20 @@ const ArticleDetail = ({article, complex, onClose}: ArticleDetailProps) => {
                     </Grid>
 
                     {/* 중간 섹션: 2열 레이아웃 - 상세 정보 (왼쪽) / 매물 설명 + 중개사 정보 (오른쪽) */}
-                    <Grid item xs={12}>
+                    <Grid size={12}>
                         <Grid container spacing={3}>
                             {/* 왼쪽 열: 상세 정보 */}
-                            <Grid item xs={12} md={6}>
+                            <Grid
+                                size={{
+                                    xs: 12,
+                                    md: 6
+                                }}>
                                 <Paper sx={{p: 3, height: '100%'}}>
                                     <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
                                         상세 정보
                                     </Typography>
                                     <Grid container spacing={2}>
-                                        <Grid item xs={6}>
+                                        <Grid size={6}>
                                             <Typography variant="body2" color="text.secondary">
                                                 층수
                                             </Typography>
@@ -399,7 +410,7 @@ const ArticleDetail = ({article, complex, onClose}: ArticleDetailProps) => {
                                                 {article.floors || '-'}
                                             </Typography>
                                         </Grid>
-                                        <Grid item xs={6}>
+                                        <Grid size={6}>
                                             <Typography variant="body2" color="text.secondary">
                                                 방향
                                             </Typography>
@@ -407,7 +418,7 @@ const ArticleDetail = ({article, complex, onClose}: ArticleDetailProps) => {
                                                 {article.direction || '-'}
                                             </Typography>
                                         </Grid>
-                                        <Grid item xs={6}>
+                                        <Grid size={6}>
                                             <Typography variant="body2" color="text.secondary">
                                                 공급면적
                                             </Typography>
@@ -415,7 +426,7 @@ const ArticleDetail = ({article, complex, onClose}: ArticleDetailProps) => {
                                                 {article.areaSupply ? `${article.areaSupply}㎡` : '-'}
                                             </Typography>
                                         </Grid>
-                                        <Grid item xs={6}>
+                                        <Grid size={6}>
                                             <Typography variant="body2" color="text.secondary">
                                                 전용면적
                                             </Typography>
@@ -423,7 +434,7 @@ const ArticleDetail = ({article, complex, onClose}: ArticleDetailProps) => {
                                                 {article.areaExclusive ? `${article.areaExclusive}㎡` : '-'}
                                             </Typography>
                                         </Grid>
-                                        <Grid item xs={6}>
+                                        <Grid size={6}>
                                             <Typography variant="body2" color="text.secondary">
                                                 사용승인일
                                             </Typography>
@@ -436,7 +447,11 @@ const ArticleDetail = ({article, complex, onClose}: ArticleDetailProps) => {
                             </Grid>
 
                             {/* 오른쪽 열: 매물 설명 + 중개사 정보 */}
-                            <Grid item xs={12} md={6}>
+                            <Grid
+                                size={{
+                                    xs: 12,
+                                    md: 6
+                                }}>
                                 <Paper sx={{p: 3, height: '100%'}}>
                                     {/* 매물 설명 */}
                                     <Box mb={4}>
@@ -468,7 +483,7 @@ const ArticleDetail = ({article, complex, onClose}: ArticleDetailProps) => {
                     </Grid>
 
                     {/* 지도 섹션 */}
-                    <Grid item xs={12}>
+                    <Grid size={12}>
                         <Box sx={{mb: 2}}>
                             <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
                                 <LocationOnIcon sx={{verticalAlign: 'middle', mr: 0.5}}/>
@@ -499,7 +514,7 @@ const ArticleDetail = ({article, complex, onClose}: ArticleDetailProps) => {
 
                     {/* 아파트 단지 정보 추가 (아파트인 경우만) */}
                     {article.buildingType === '아파트' && article.complexResponse && (
-                        <Grid item xs={12}>
+                        <Grid size={12}>
                             <ComplexInfoSection complex={article.complexResponse}/>
                         </Grid>
                     )}

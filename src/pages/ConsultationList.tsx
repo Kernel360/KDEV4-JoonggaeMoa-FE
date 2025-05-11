@@ -1,5 +1,3 @@
-"use client"
-
 import type React from "react"
 import {useCallback, useEffect, useRef, useState} from "react"
 import {
@@ -17,7 +15,7 @@ import {
     Grid,
     IconButton,
     List,
-    ListItem,
+    ListItemButton,
     ListItemText,
     Menu,
     MenuItem,
@@ -655,7 +653,11 @@ const ConsultationList = () => {
 
                 {/* 요약 정보 */}
                 <Grid container spacing={3} sx={{mb: 3}}>
-                    <Grid item xs={12} sm={4}>
+                    <Grid
+                        size={{
+                            xs: 12,
+                            sm: 4
+                        }}>
                         <Paper
                             elevation={0}
                             sx={{
@@ -683,7 +685,11 @@ const ConsultationList = () => {
                             </Typography>
                         </Paper>
                     </Grid>
-                    <Grid item xs={12} sm={4}>
+                    <Grid
+                        size={{
+                            xs: 12,
+                            sm: 4
+                        }}>
                         <Paper
                             elevation={0}
                             sx={{
@@ -711,7 +717,11 @@ const ConsultationList = () => {
                             </Typography>
                         </Paper>
                     </Grid>
-                    <Grid item xs={12} sm={4}>
+                    <Grid
+                        size={{
+                            xs: 12,
+                            sm: 4
+                        }}>
                         <Paper
                             elevation={0}
                             sx={{
@@ -742,7 +752,11 @@ const ConsultationList = () => {
                 </Grid>
                 {/* 캘린더 뷰 */}
                 <Grid container spacing={3}>
-                    <Grid item xs={12} md={6}>
+                    <Grid
+                        size={{
+                            xs: 12,
+                            md: 6
+                        }}>
                         <Paper elevation={0} sx={{
                             p: 3,
                             borderRadius: 2,
@@ -856,7 +870,11 @@ const ConsultationList = () => {
                     </Grid>
 
                     {/* 상담 목록 테이블 - 캘린더 오른쪽에 배치 */}
-                    <Grid item xs={12} md={6}>
+                    <Grid
+                        size={{
+                            xs: 12,
+                            md: 6
+                        }}>
                         <Paper elevation={0} sx={{
                             p: 3,
                             borderRadius: 2,
@@ -1185,7 +1203,6 @@ const ConsultationList = () => {
                     </Grid>
                 </Grid>
             </Container>
-
             {/* 상태 변경 메뉴 */}
             <Menu
                 anchorEl={statusAnchorEl}
@@ -1221,7 +1238,6 @@ const ConsultationList = () => {
                     </MenuItem>
                 ))}
             </Menu>
-
             {/* 상담 등록 모달 */}
             <Dialog
                 open={createModalOpen}
@@ -1250,13 +1266,18 @@ const ConsultationList = () => {
                     <Box sx={{height: '100%'}}>
                         <Grid container spacing={3} sx={{height: '100%'}}>
                             {/* 왼쪽: 고객 검색 및 리스트 */}
-                            <Grid item xs={12} md={6} sx={{
-                                height: '100%',
-                                '@media (max-width: 900px)': {
-                                    height: 'auto',
-                                    minHeight: '300px'
-                                }
-                            }}>
+                            <Grid
+                                sx={{
+                                    height: '100%',
+                                    '@media (max-width: 900px)': {
+                                        height: 'auto',
+                                        minHeight: '300px'
+                                    }
+                                }}
+                                size={{
+                                    xs: 12,
+                                    md: 6
+                                }}>
                                 <Paper elevation={0} sx={{
                                     p: 2,
                                     borderRadius: 2,
@@ -1314,9 +1335,8 @@ const ConsultationList = () => {
                                         ) : (
                                             <List>
                                                 {customers.map((customer) => (
-                                                    <ListItem
+                                                    <ListItemButton
                                                         key={customer.id}
-                                                        button
                                                         selected={selectedCustomer?.id === customer.id}
                                                         onClick={() => setSelectedCustomer(customer)}
                                                         sx={{
@@ -1332,7 +1352,7 @@ const ConsultationList = () => {
                                                             primary={customer.name}
                                                             secondary={customer.phone}
                                                         />
-                                                    </ListItem>
+                                                    </ListItemButton>
                                                 ))}
                                                 {isLoadingMoreCustomers && (
                                                     <Box sx={{display: 'flex', justifyContent: 'center', p: 2}}>
@@ -1352,12 +1372,17 @@ const ConsultationList = () => {
                             </Grid>
 
                             {/* 오른쪽: 상담 날짜/시간 설정 */}
-                            <Grid item xs={12} md={6} sx={{
-                                height: '100%',
-                                '@media (max-width: 900px)': {
-                                    height: 'auto'
-                                }
-                            }}>
+                            <Grid
+                                sx={{
+                                    height: '100%',
+                                    '@media (max-width: 900px)': {
+                                        height: 'auto'
+                                    }
+                                }}
+                                size={{
+                                    xs: 12,
+                                    md: 6
+                                }}>
                                 <Paper elevation={0} sx={{
                                     p: 2,
                                     borderRadius: 2,
@@ -1371,7 +1396,7 @@ const ConsultationList = () => {
                                         상담 일정
                                     </Typography>
                                     <Grid container spacing={2}>
-                                        <Grid item xs={12}>
+                                        <Grid size={12}>
                                             <TextField
                                                 fullWidth
                                                 label="상담 날짜"
@@ -1392,7 +1417,7 @@ const ConsultationList = () => {
                                                 }}
                                             />
                                         </Grid>
-                                        <Grid item xs={12}>
+                                        <Grid size={12}>
                                             <TextField
                                                 fullWidth
                                                 label="상담 시간"
@@ -1428,28 +1453,24 @@ const ConsultationList = () => {
                     </Button>
                 </DialogActions>
             </Dialog>
-
             {/* 상태 변경 성공 메시지 */}
             <Snackbar open={statusSuccess} autoHideDuration={3000} onClose={() => setStatusSuccess(false)}>
                 <Alert onClose={() => setStatusSuccess(false)} severity="success" sx={{width: "100%"}}>
                     상담 상태가 성공적으로 변경되었습니다.
                 </Alert>
             </Snackbar>
-
             {/* 상태 변경 에러 메시지 */}
             <Snackbar open={!!statusError} autoHideDuration={3000} onClose={() => setStatusError(null)}>
                 <Alert onClose={() => setStatusError(null)} severity="error" sx={{width: "100%"}}>
                     {statusError}
                 </Alert>
             </Snackbar>
-
             {/* 상담 등록 성공 메시지 */}
             <Snackbar open={createSuccess} autoHideDuration={3000} onClose={() => setCreateSuccess(false)}>
                 <Alert onClose={() => setCreateSuccess(false)} severity="success" sx={{width: "100%"}}>
                     상담이 성공적으로 등록되었습니다.
                 </Alert>
             </Snackbar>
-
             {/* 상담 등록 에러 메시지 */}
             <Snackbar open={!!createError} autoHideDuration={3000} onClose={() => setCreateError(null)}>
                 <Alert onClose={() => setCreateError(null)} severity="error" sx={{width: "100%"}}>
@@ -1457,7 +1478,7 @@ const ConsultationList = () => {
                 </Alert>
             </Snackbar>
         </Box>
-    )
+    );
 }
 
 export default ConsultationList

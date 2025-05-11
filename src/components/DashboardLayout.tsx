@@ -1,6 +1,5 @@
-"use client"
-
-import type React, {ReactNode} from "react"
+import type React from "react"
+import type { ReactNode } from "react"
 import {Box} from "@mui/material"
 
 interface DashboardLayoutProps {

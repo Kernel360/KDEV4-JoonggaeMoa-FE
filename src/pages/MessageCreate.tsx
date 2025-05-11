@@ -1,5 +1,3 @@
-"use client"
-
 import type React from "react"
 import {useCallback, useEffect, useRef, useState} from "react"
 import type {SelectChangeEvent} from "@mui/material/Select"
@@ -351,7 +349,11 @@ const MessageCreate = () => {
 
                 <form onSubmit={handleSubmit}>
                     <Grid container spacing={3}>
-                        <Grid item xs={12} md={5}>
+                        <Grid
+                            size={{
+                                xs: 12,
+                                md: 5
+                            }}>
                             <Paper
                                 elevation={0}
                                 sx={{
@@ -505,7 +507,11 @@ const MessageCreate = () => {
                             </Paper>
                         </Grid>
 
-                        <Grid item xs={12} md={7}>
+                        <Grid
+                            size={{
+                                xs: 12,
+                                md: 7
+                            }}>
                             <Paper
                                 elevation={0}
                                 sx={{
@@ -519,7 +525,7 @@ const MessageCreate = () => {
                                 </Typography>
 
                                 <Grid container spacing={2}>
-                                    <Grid item xs={12}>
+                                    <Grid size={12}>
                                         <FormControl
                                             fullWidth
                                             size="small"
@@ -628,7 +634,11 @@ const MessageCreate = () => {
                                 </Box>
 
                                 <Grid container spacing={2}>
-                                    <Grid item xs={12} sm={6}>
+                                    <Grid
+                                        size={{
+                                            xs: 12,
+                                            sm: 6
+                                        }}>
                                         <TextField
                                             fullWidth
                                             type="date"
@@ -658,7 +668,11 @@ const MessageCreate = () => {
                                             }}
                                         />
                                     </Grid>
-                                    <Grid item xs={12} sm={6}>
+                                    <Grid
+                                        size={{
+                                            xs: 12,
+                                            sm: 6
+                                        }}>
                                         <TextField
                                             fullWidth
                                             type="time"
@@ -741,20 +755,18 @@ const MessageCreate = () => {
                     </Grid>
                 </form>
             </Container>
-
             <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError(null)}>
                 <Alert onClose={() => setError(null)} severity="error" sx={{width: "100%"}}>
                     {error}
                 </Alert>
             </Snackbar>
-
             <Snackbar open={success} autoHideDuration={6000} onClose={() => setSuccess(false)}>
                 <Alert onClose={() => setSuccess(false)} severity="success" sx={{width: "100%"}}>
                     문자가 성공적으로 예약되었습니다.
                 </Alert>
             </Snackbar>
         </Box>
-    )
+    );
 }
 
 export default MessageCreate

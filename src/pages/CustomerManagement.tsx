@@ -1,7 +1,5 @@
-"use client"
-
 import type React from "react"
-import {useCallback, useEffect, useState} from "react" // useRef, useCallback 추가
+import {useCallback, useEffect, useState} from "react"
 import {
     Box,
     Button,

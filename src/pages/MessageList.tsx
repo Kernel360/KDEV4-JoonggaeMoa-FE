@@ -1,5 +1,3 @@
-"use client"
-
 import React, {useCallback, useEffect, useState} from "react"
 import {
     Alert,
@@ -444,7 +442,7 @@ const MessageList = () => {
                                                                sx={{p: 3, bgcolor: 'rgba(0, 126, 167, 0.05)'}}>
                                                             <Box sx={{mx: 3}}>
                                                                 <Grid container spacing={2}>
-                                                                    <Grid item xs={12}>
+                                                                    <Grid size={12}>
                                                                         <Box sx={{
                                                                             display: 'flex',
                                                                             justifyContent: 'space-between',
@@ -475,7 +473,11 @@ const MessageList = () => {
                                                                             </Box>
                                                                         </Box>
                                                                     </Grid>
-                                                                    <Grid item xs={12} sm={6}>
+                                                                    <Grid
+                                                                        size={{
+                                                                            xs: 12,
+                                                                            sm: 6
+                                                                        }}>
                                                                         <Typography variant="body2"
                                                                                     color="text.secondary">
                                                                             작성 시간
@@ -484,7 +486,11 @@ const MessageList = () => {
                                                                             {formatDate(message.createdAt)}
                                                                         </Typography>
                                                                     </Grid>
-                                                                    <Grid item xs={12} sm={6}>
+                                                                    <Grid
+                                                                        size={{
+                                                                            xs: 12,
+                                                                            sm: 6
+                                                                        }}>
                                                                         <Typography variant="body2"
                                                                                     color="text.secondary">
                                                                             예약 시간
@@ -493,7 +499,11 @@ const MessageList = () => {
                                                                             {formatSendAt(message.sendAt)}
                                                                         </Typography>
                                                                     </Grid>
-                                                                    <Grid item xs={12} sm={6}>
+                                                                    <Grid
+                                                                        size={{
+                                                                            xs: 12,
+                                                                            sm: 6
+                                                                        }}>
                                                                         <Typography variant="body2"
                                                                                     color="text.secondary">
                                                                             고객명
@@ -502,7 +512,11 @@ const MessageList = () => {
                                                                             {message.customerName}
                                                                         </Typography>
                                                                     </Grid>
-                                                                    <Grid item xs={12} sm={6}>
+                                                                    <Grid
+                                                                        size={{
+                                                                            xs: 12,
+                                                                            sm: 6
+                                                                        }}>
                                                                         <Typography variant="body2"
                                                                                     color="text.secondary">
                                                                             전화번호
@@ -511,7 +525,7 @@ const MessageList = () => {
                                                                             {message.customerPhone || "-"}
                                                                         </Typography>
                                                                     </Grid>
-                                                                    <Grid item xs={12}>
+                                                                    <Grid size={12}>
                                                                         <Typography variant="body2"
                                                                                     color="text.secondary">
                                                                             메시지 내용
@@ -565,7 +579,6 @@ const MessageList = () => {
                     labelDisplayedRows={({from, to, count}) => `${from}-${to} / ${count}`}
                 />
             </Container>
-
             {/* 수정 다이얼로그 */}
             <Dialog open={editDialogOpen} onClose={handleEditClose} fullWidth maxWidth="sm">
                 <DialogTitle>메시지 수정</DialogTitle>
@@ -625,7 +638,6 @@ const MessageList = () => {
                     </Button>
                 </DialogActions>
             </Dialog>
-
             {/* 삭제 확인 다이얼로그 */}
             <Dialog open={deleteDialogOpen} onClose={handleDeleteClose}>
                 <DialogTitle>메시지 삭제</DialogTitle>
@@ -641,14 +653,12 @@ const MessageList = () => {
                     </Button>
                 </DialogActions>
             </Dialog>
-
             {/* 성공 메시지 스낵바 */}
             <Snackbar open={!!successMessage} autoHideDuration={6000} onClose={() => setSuccessMessage(null)}>
                 <Alert onClose={() => setSuccessMessage(null)} severity="success" sx={{width: "100%"}}>
                     {successMessage}
                 </Alert>
             </Snackbar>
-
             {/* 에러 메시지 스낵바 */}
             <Snackbar open={!!errorMessage} autoHideDuration={6000} onClose={() => setErrorMessage(null)}>
                 <Alert onClose={() => setErrorMessage(null)} severity="error" sx={{width: "100%"}}>
@@ -656,7 +666,7 @@ const MessageList = () => {
                 </Alert>
             </Snackbar>
         </Box>
-    )
+    );
 }
 
 export default MessageList

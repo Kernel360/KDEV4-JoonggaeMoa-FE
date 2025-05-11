@@ -1,5 +1,3 @@
-"use client"
-
 import React, {useEffect, useRef, useState} from "react"
 import {
     Box,
@@ -599,7 +597,11 @@ const Dashboard = () => {
         <Box sx={{px: 4, pb: 6}}>
             {/* 통계 */}
             <Grid container spacing={4} sx={{mb: 4, mt: 2}}>
-                <Grid item xs={12} md={4}>
+                <Grid
+                    size={{
+                        xs: 12,
+                        md: 4
+                    }}>
                     <Paper sx={{p: 4, bgcolor: '#ffffff', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'}}>
                         <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2}}>
                             <Box>
@@ -654,7 +656,11 @@ const Dashboard = () => {
                     </Paper>
                 </Grid>
 
-                <Grid item xs={12} md={4}>
+                <Grid
+                    size={{
+                        xs: 12,
+                        md: 4
+                    }}>
                     <Paper sx={{p: 4, bgcolor: '#ffffff', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'}}>
                         <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2}}>
                             <Box>
@@ -709,7 +715,11 @@ const Dashboard = () => {
                     </Paper>
                 </Grid>
 
-                <Grid item xs={12} md={4}>
+                <Grid
+                    size={{
+                        xs: 12,
+                        md: 4
+                    }}>
                     <Paper
                         sx={{
                             p: 4,
@@ -777,10 +787,9 @@ const Dashboard = () => {
                     </Paper>
                 </Grid>
             </Grid>
-
             {/* 만료 예정 계약 */}
             <Grid container spacing={3} sx={{mb: 4}}>
-                <Grid item xs={12}>
+                <Grid size={12}>
                     <Paper sx={{p: 4, bgcolor: '#ffffff', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'}}>
                         <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3}}>
                             <Typography variant="h6" sx={{color: '#00171f', fontWeight: 600}}>
@@ -925,10 +934,13 @@ const Dashboard = () => {
                     </Paper>
                 </Grid>
             </Grid>
-
             {/* Charts */}
             <Grid container spacing={3}>
-                <Grid item xs={12} md={6}>
+                <Grid
+                    size={{
+                        xs: 12,
+                        md: 6
+                    }}>
                     <Paper sx={{p: 3, boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'}}>
                         <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3}}>
                             <Typography variant="h6">매물 유형별 분포</Typography>
@@ -997,7 +1009,11 @@ const Dashboard = () => {
                     </Paper>
                 </Grid>
 
-                <Grid item xs={12} md={6}>
+                <Grid
+                    size={{
+                        xs: 12,
+                        md: 6
+                    }}>
                     <Paper sx={{p: 3, boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'}}>
                         <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3}}>
                             <Typography variant="h6">거래 유형별 분포</Typography>
@@ -1066,9 +1082,8 @@ const Dashboard = () => {
                     </Paper>
                 </Grid>
             </Grid>
-
         </Box>
-    )
+    );
 }
 
 export default Dashboard

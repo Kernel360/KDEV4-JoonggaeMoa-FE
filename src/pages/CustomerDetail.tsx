@@ -1,5 +1,3 @@
-"use client"
-
 import {useEffect, useState} from "react"
 import {
     Alert,
@@ -284,7 +282,11 @@ const CustomerDetail = () => {
                 }}
             >
                 <Grid container spacing={3}>
-                    <Grid item xs={12} md={6}>
+                    <Grid
+                        size={{
+                            xs: 12,
+                            md: 6
+                        }}>
                         <Paper
                             elevation={0}
                             sx={{
@@ -342,7 +344,11 @@ const CustomerDetail = () => {
                             </Box>
 
                             <Grid container spacing={3}>
-                                <Grid item xs={12} sm={6}>
+                                <Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 6
+                                    }}>
                                     <Typography variant="body2" color="text.secondary" sx={{mb: 1}}>
                                         이름
                                     </Typography>
@@ -350,7 +356,11 @@ const CustomerDetail = () => {
                                         {customer.name}
                                     </Typography>
                                 </Grid>
-                                <Grid item xs={12} sm={6}>
+                                <Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 6
+                                    }}>
                                     <Typography variant="body2" color="text.secondary" sx={{mb: 1}}>
                                         상태
                                     </Typography>
@@ -369,7 +379,11 @@ const CustomerDetail = () => {
                                         </Typography>
                                     </Box>
                                 </Grid>
-                                <Grid item xs={12} sm={6}>
+                                <Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 6
+                                    }}>
                                     <Typography variant="body2" color="text.secondary" sx={{mb: 1}}>
                                         연락처
                                     </Typography>
@@ -377,7 +391,11 @@ const CustomerDetail = () => {
                                         {customer.phone}
                                     </Typography>
                                 </Grid>
-                                <Grid item xs={12} sm={6}>
+                                <Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 6
+                                    }}>
                                     <Typography variant="body2" color="text.secondary" sx={{mb: 1}}>
                                         이메일
                                     </Typography>
@@ -385,7 +403,11 @@ const CustomerDetail = () => {
                                         {customer.email || "-"}
                                     </Typography>
                                 </Grid>
-                                <Grid item xs={12} sm={6}>
+                                <Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 6
+                                    }}>
                                     <Typography variant="body2" color="text.secondary" sx={{mb: 1}}>
                                         생년월일
                                     </Typography>
@@ -393,7 +415,11 @@ const CustomerDetail = () => {
                                         {customer.birthday || "-"}
                                     </Typography>
                                 </Grid>
-                                <Grid item xs={12} sm={6}>
+                                <Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 6
+                                    }}>
                                     <Typography variant="body2" color="text.secondary" sx={{mb: 1}}>
                                         직업
                                     </Typography>
@@ -401,7 +427,11 @@ const CustomerDetail = () => {
                                         {customer.job || "-"}
                                     </Typography>
                                 </Grid>
-                                <Grid item xs={12} sm={6}>
+                                <Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 6
+                                    }}>
                                     <Typography variant="body2" color="text.secondary" sx={{mb: 1}}>
                                         관심 매물
                                     </Typography>
@@ -409,7 +439,11 @@ const CustomerDetail = () => {
                                         {customer.interestProperty || "-"}
                                     </Typography>
                                 </Grid>
-                                <Grid item xs={12} sm={6}>
+                                <Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 6
+                                    }}>
                                     <Typography variant="body2" color="text.secondary" sx={{mb: 1}}>
                                         관심 지역
                                     </Typography>
@@ -417,7 +451,11 @@ const CustomerDetail = () => {
                                         {customer.interestLocation || "-"}
                                     </Typography>
                                 </Grid>
-                                <Grid item xs={12} sm={6}>
+                                <Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 6
+                                    }}>
                                     <Typography variant="body2" color="text.secondary" sx={{mb: 1}}>
                                         자산 상태
                                     </Typography>
@@ -425,7 +463,11 @@ const CustomerDetail = () => {
                                         {customer.assetStatus || "-"}
                                     </Typography>
                                 </Grid>
-                                <Grid item xs={12} sm={6}>
+                                <Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 6
+                                    }}>
                                     <Typography variant="body2" color="text.secondary" sx={{mb: 1}}>
                                         마케팅 동의
                                     </Typography>
@@ -433,7 +475,7 @@ const CustomerDetail = () => {
                                         {customer.consent ? "동의함" : "동의하지 않음"}
                                     </Typography>
                                 </Grid>
-                                <Grid item xs={12}>
+                                <Grid size={12}>
                                     <Divider sx={{my: 3}}/>
                                     <Typography variant="body2" color="text.secondary" sx={{mb: 2}}>
                                         메모
@@ -455,7 +497,11 @@ const CustomerDetail = () => {
                             </Grid>
                         </Paper>
                     </Grid>
-                    <Grid item xs={12} md={6}>
+                    <Grid
+                        size={{
+                            xs: 12,
+                            md: 6
+                        }}>
                         <Paper
                             elevation={0}
                             sx={{
@@ -602,7 +648,6 @@ const CustomerDetail = () => {
                     </Grid>
                 </Grid>
             </Container>
-
             {/* Delete Confirmation Dialog */}
             <Dialog
                 open={openDeleteDialog}
@@ -648,7 +693,6 @@ const CustomerDetail = () => {
                     </Button>
                 </DialogActions>
             </Dialog>
-
             {/* Success Snackbar */}
             <Snackbar
                 open={deleteSuccess}
@@ -667,7 +711,6 @@ const CustomerDetail = () => {
                     고객이 성공적으로 삭제되었습니다. 고객 목록 페이지로 이동합니다.
                 </Alert>
             </Snackbar>
-
             {/* Error Snackbar */}
             <Snackbar
                 open={!!deleteError}
@@ -687,7 +730,7 @@ const CustomerDetail = () => {
                 </Alert>
             </Snackbar>
         </Box>
-    )
+    );
 }
 
 export default CustomerDetail

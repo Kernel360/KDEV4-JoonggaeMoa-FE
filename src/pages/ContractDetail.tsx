@@ -1,5 +1,3 @@
-"use client"
-
 import {useEffect, useState} from "react"
 import {
     Alert,
@@ -190,7 +188,11 @@ const ContractDetail = () => {
                     </Box>
 
                     <Grid container spacing={3}>
-                        <Grid item xs={12} sm={6}>
+                        <Grid
+                            size={{
+                                xs: 12,
+                                sm: 6
+                            }}>
                             <Typography variant="subtitle2" color="textSecondary">
                                 계약번호
                             </Typography>
@@ -198,7 +200,11 @@ const ContractDetail = () => {
                                 {contract.id}
                             </Typography>
                         </Grid>
-                        <Grid item xs={12} sm={6}>
+                        <Grid
+                            size={{
+                                xs: 12,
+                                sm: 6
+                            }}>
                             <Typography variant="subtitle2" color="textSecondary">
                                 계약서 파일
                             </Typography>
@@ -212,7 +218,11 @@ const ContractDetail = () => {
                                 계약서 파일 보기
                             </Button>
                         </Grid>
-                        <Grid item xs={12} sm={6}>
+                        <Grid
+                            size={{
+                                xs: 12,
+                                sm: 6
+                            }}>
                             <Typography variant="subtitle2" color="textSecondary">
                                 계약일
                             </Typography>
@@ -220,7 +230,11 @@ const ContractDetail = () => {
                                 {formatDate(contract.startedAt)}
                             </Typography>
                         </Grid>
-                        <Grid item xs={12} sm={6}>
+                        <Grid
+                            size={{
+                                xs: 12,
+                                sm: 6
+                            }}>
                             <Typography variant="subtitle2" color="textSecondary">
                                 만료일
                             </Typography>
@@ -240,7 +254,11 @@ const ContractDetail = () => {
                         임대인 정보
                     </Typography>
                     <Grid container spacing={3} sx={{mb: 4}}>
-                        <Grid item xs={12} sm={6}>
+                        <Grid
+                            size={{
+                                xs: 12,
+                                sm: 6
+                            }}>
                             <Typography variant="subtitle2" color="textSecondary">
                                 이름
                             </Typography>
@@ -248,7 +266,11 @@ const ContractDetail = () => {
                                 {contract.landlordName || "-"}
                             </Typography>
                         </Grid>
-                        <Grid item xs={12} sm={6}>
+                        <Grid
+                            size={{
+                                xs: 12,
+                                sm: 6
+                            }}>
                             <Typography variant="subtitle2" color="textSecondary">
                                 연락처
                             </Typography>
@@ -256,7 +278,7 @@ const ContractDetail = () => {
                                 {contract.landlordPhone || "-"}
                             </Typography>
                         </Grid>
-                        <Grid item xs={12}>
+                        <Grid size={12}>
                             <Typography variant="subtitle2" color="textSecondary">
                                 이메일
                             </Typography>
@@ -272,7 +294,11 @@ const ContractDetail = () => {
                         임차인 정보
                     </Typography>
                     <Grid container spacing={3}>
-                        <Grid item xs={12} sm={6}>
+                        <Grid
+                            size={{
+                                xs: 12,
+                                sm: 6
+                            }}>
                             <Typography variant="subtitle2" color="textSecondary">
                                 이름
                             </Typography>
@@ -280,7 +306,11 @@ const ContractDetail = () => {
                                 {contract.tenantName || "-"}
                             </Typography>
                         </Grid>
-                        <Grid item xs={12} sm={6}>
+                        <Grid
+                            size={{
+                                xs: 12,
+                                sm: 6
+                            }}>
                             <Typography variant="subtitle2" color="textSecondary">
                                 연락처
                             </Typography>
@@ -288,7 +318,7 @@ const ContractDetail = () => {
                                 {contract.tenantPhone || "-"}
                             </Typography>
                         </Grid>
-                        <Grid item xs={12}>
+                        <Grid size={12}>
                             <Typography variant="subtitle2" color="textSecondary">
                                 이메일
                             </Typography>
@@ -299,7 +329,6 @@ const ContractDetail = () => {
                     </Grid>
                 </Paper>
             </Container>
-
             {/* 삭제 확인 다이얼로그 */}
             <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
                 <DialogTitle>계약 삭제</DialogTitle>
@@ -315,14 +344,12 @@ const ContractDetail = () => {
                     </Button>
                 </DialogActions>
             </Dialog>
-
             {/* 성공 메시지 스낵바 */}
             <Snackbar open={!!successMessage} autoHideDuration={6000} onClose={() => setSuccessMessage(null)}>
                 <Alert onClose={() => setSuccessMessage(null)} severity="success" sx={{width: "100%"}}>
                     {successMessage}
                 </Alert>
             </Snackbar>
-
             {/* 에러 메시지 스낵바 */}
             <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError(null)}>
                 <Alert onClose={() => setError(null)} severity="error" sx={{width: "100%"}}>
@@ -330,7 +357,7 @@ const ContractDetail = () => {
                 </Alert>
             </Snackbar>
         </Box>
-    )
+    );
 }
 
 export default ContractDetail

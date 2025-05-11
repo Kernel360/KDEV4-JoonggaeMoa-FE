@@ -1,5 +1,3 @@
-"use client"
-
 import type React from "react"
 import {useEffect, useState} from "react"
 import {useNavigate, useParams} from "react-router-dom"
@@ -25,7 +23,6 @@ import {
     TextField,
     Typography,
 } from "@mui/material"
-// 고객용 API 함수 import로 변경
 import {getSurveyForCustomer, submitSurveyAnswerForCustomer} from "../services/surveyApi"
 import {AnswerRequest, type QuestionResponse, QuestionType, type SurveyDetailResponse} from "../types/survey"
 import {CheckCircle} from "@mui/icons-material"

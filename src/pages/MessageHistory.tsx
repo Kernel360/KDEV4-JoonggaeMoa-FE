@@ -1,5 +1,3 @@
-"use client"
-
 import React, {useCallback, useEffect, useRef, useState} from "react"
 import {
     Box,
@@ -297,7 +295,7 @@ const MessageHistory = () => {
                                                                sx={{p: 3, bgcolor: 'rgba(0, 126, 167, 0.05)'}}>
                                                             <Box sx={{mx: 3}}>
                                                                 <Grid container spacing={2}>
-                                                                    <Grid item xs={12}>
+                                                                    <Grid size={12}>
                                                                         <Box sx={{
                                                                             display: 'flex',
                                                                             justifyContent: 'space-between',
@@ -322,7 +320,11 @@ const MessageHistory = () => {
                                                                             />
                                                                         </Box>
                                                                     </Grid>
-                                                                    <Grid item xs={12} sm={6}>
+                                                                    <Grid
+                                                                        size={{
+                                                                            xs: 12,
+                                                                            sm: 6
+                                                                        }}>
                                                                         <Typography variant="body2"
                                                                                     color="text.secondary">
                                                                             작성 시간
@@ -331,7 +333,11 @@ const MessageHistory = () => {
                                                                             {formatDate(message.createdAt)}
                                                                         </Typography>
                                                                     </Grid>
-                                                                    <Grid item xs={12} sm={6}>
+                                                                    <Grid
+                                                                        size={{
+                                                                            xs: 12,
+                                                                            sm: 6
+                                                                        }}>
                                                                         <Typography variant="body2"
                                                                                     color="text.secondary">
                                                                             발송 시간
@@ -340,7 +346,11 @@ const MessageHistory = () => {
                                                                             {formatSendAt(message.sendAt)}
                                                                         </Typography>
                                                                     </Grid>
-                                                                    <Grid item xs={12} sm={6}>
+                                                                    <Grid
+                                                                        size={{
+                                                                            xs: 12,
+                                                                            sm: 6
+                                                                        }}>
                                                                         <Typography variant="body2"
                                                                                     color="text.secondary">
                                                                             고객명
@@ -349,7 +359,11 @@ const MessageHistory = () => {
                                                                             {message.customerName}
                                                                         </Typography>
                                                                     </Grid>
-                                                                    <Grid item xs={12} sm={6}>
+                                                                    <Grid
+                                                                        size={{
+                                                                            xs: 12,
+                                                                            sm: 6
+                                                                        }}>
                                                                         <Typography variant="body2"
                                                                                     color="text.secondary">
                                                                             전화번호
@@ -358,7 +372,7 @@ const MessageHistory = () => {
                                                                             {message.customerPhone || "-"}
                                                                         </Typography>
                                                                     </Grid>
-                                                                    <Grid item xs={12}>
+                                                                    <Grid size={12}>
                                                                         <Typography variant="body2"
                                                                                     color="text.secondary">
                                                                             메시지 내용
@@ -408,7 +422,7 @@ const MessageHistory = () => {
                 )}
             </Container>
         </Box>
-    )
+    );
 }
 
 export default MessageHistory
