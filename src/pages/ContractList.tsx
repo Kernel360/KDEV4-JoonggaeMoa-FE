@@ -1,42 +1,41 @@
 "use client"
 
 import type React from "react"
-
-import { useState, useEffect, useRef } from "react"
+import {useEffect, useState} from "react"
 import {
+    Alert,
     Box,
+    Button,
+    Chip,
+    CircularProgress,
     Container,
-    Typography,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogContentText,
+    DialogTitle,
+    FormControl,
+    IconButton,
+    InputAdornment,
+    InputLabel,
+    MenuItem,
+    Pagination,
     Paper,
+    Select,
+    Snackbar,
     Table,
     TableBody,
     TableCell,
     TableContainer,
     TableHead,
     TableRow,
-    Button,
-    IconButton,
     TextField,
-    InputAdornment,
-    Chip,
-    CircularProgress,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogContentText,
-    DialogTitle,
-    Snackbar,
-    Alert,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
-    Pagination,
+    Typography,
 } from "@mui/material"
-import { Add, Search, ArrowBack, Delete, Edit } from "@mui/icons-material"
-import { useNavigate } from "react-router-dom"
-import { contractApi } from "../services/contractApi"
-import type { ContractResponse } from "../types/contract"
+import {Add, ArrowBack, Search} from "@mui/icons-material"
+import {useNavigate} from "react-router-dom"
+import {contractApi} from "../services/contractApi"
+import type {ContractResponse} from "../types/contract"
 
 const ContractList = () => {
     const navigate = useNavigate()
@@ -64,7 +63,7 @@ const ContractList = () => {
         try {
             setLoading(true)
             const response = await contractApi.getAllContracts(page, rowsPerPage, searchTerm)
-            
+
             if (response.data.success && response.data.data) {
                 setContracts(response.data.data.content)
                 setTotalPageCount(response.data.data.totalPages)
@@ -149,9 +148,9 @@ const ContractList = () => {
 
     // 상태별 칩 색상 및 텍스트
     const statusConfig = {
-        active: { color: "#e8f5e9", textColor: "#2e7d32", label: "유효" },
-        expiring: { color: "#fff8e1", textColor: "#f57c00", label: "만료 임박" },
-        expired: { color: "#ffebee", textColor: "#c62828", label: "만료" },
+        active: {color: "#e8f5e9", textColor: "#2e7d32", label: "유효"},
+        expiring: {color: "#fff8e1", textColor: "#f57c00", label: "만료 임박"},
+        expired: {color: "#ffebee", textColor: "#c62828", label: "만료"},
     }
 
     // 날짜 형식화 함수
@@ -169,31 +168,31 @@ const ContractList = () => {
     }
 
     return (
-        <Box sx={{ flexGrow: 1, minHeight: "100vh" }}>
+        <Box sx={{flexGrow: 1, minHeight: "100vh"}}>
             <Container
                 maxWidth="lg"
                 sx={{
                     mt: 4,
                     mb: 4,
                     mx: "auto",
-                    px: { xs: 2, sm: 3, md: 4 },
+                    px: {xs: 2, sm: 3, md: 4},
                 }}
             >
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
-                    <Box sx={{ display: "flex", alignItems: "center" }}>
-                        <IconButton onClick={() => navigate("/dashboard")} sx={{ mr: 1 }}>
-                            <ArrowBack />
+                <Box sx={{display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3}}>
+                    <Box sx={{display: "flex", alignItems: "center"}}>
+                        <IconButton onClick={() => navigate("/dashboard")} sx={{mr: 1}}>
+                            <ArrowBack/>
                         </IconButton>
-                        <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                        <Typography variant="h6" sx={{fontWeight: "bold"}}>
                             계약 관리
                         </Typography>
                     </Box>
                     <Button
                         variant="contained"
-                        startIcon={<Add />}
+                        startIcon={<Add/>}
                         sx={{
                             bgcolor: "#007ea7",
-                            "&:hover": { bgcolor: "#003459" },
+                            "&:hover": {bgcolor: "#003459"},
                         }}
                         onClick={() => navigate("/contract/create")}
                     >
@@ -201,8 +200,14 @@ const ContractList = () => {
                     </Button>
                 </Box>
 
-                <Paper elevation={0} sx={{ mb: 3, p: 3, borderRadius: 2, bgcolor: "#ffffff", boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)' }}>
-                    <Box component="form" onSubmit={handleSearchSubmit} sx={{ display: "flex", gap: 2 }}>
+                <Paper elevation={0} sx={{
+                    mb: 3,
+                    p: 3,
+                    borderRadius: 2,
+                    bgcolor: "#ffffff",
+                    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)'
+                }}>
+                    <Box component="form" onSubmit={handleSearchSubmit} sx={{display: "flex", gap: 2}}>
                         <TextField
                             placeholder="임대인 또는 임차인 이름으로 검색"
                             variant="outlined"
@@ -213,7 +218,7 @@ const ContractList = () => {
                             InputProps={{
                                 startAdornment: (
                                     <InputAdornment position="start">
-                                        <Search />
+                                        <Search/>
                                     </InputAdornment>
                                 ),
                             }}
@@ -223,14 +228,15 @@ const ContractList = () => {
                             variant="contained"
                             sx={{
                                 bgcolor: "#007ea7",
-                                "&:hover": { bgcolor: "#003459" },
+                                "&:hover": {bgcolor: "#003459"},
                             }}
                         >
                             검색
                         </Button>
-                        <FormControl size="small" sx={{ minWidth: 150 }}>
+                        <FormControl size="small" sx={{minWidth: 150}}>
                             <InputLabel>계약 상태</InputLabel>
-                            <Select value={statusFilter} label="계약 상태" onChange={(e) => setStatusFilter(e.target.value)}>
+                            <Select value={statusFilter} label="계약 상태"
+                                    onChange={(e) => setStatusFilter(e.target.value)}>
                                 <MenuItem value="all">전체</MenuItem>
                                 <MenuItem value="active">유효</MenuItem>
                                 <MenuItem value="expiring">만료 임박</MenuItem>
@@ -241,15 +247,15 @@ const ContractList = () => {
                 </Paper>
 
                 {loading ? (
-                    <Box sx={{ display: "flex", justifyContent: "center", my: 5 }}>
-                        <CircularProgress />
+                    <Box sx={{display: "flex", justifyContent: "center", my: 5}}>
+                        <CircularProgress/>
                     </Box>
                 ) : error ? (
-                    <Paper elevation={0} sx={{ p: 3, textAlign: "center" }}>
+                    <Paper elevation={0} sx={{p: 3, textAlign: "center"}}>
                         <Typography color="error">{error}</Typography>
-                        <Button 
-                            variant="contained" 
-                            sx={{ mt: 2 }} 
+                        <Button
+                            variant="contained"
+                            sx={{mt: 2}}
                             onClick={() => fetchContracts(0, rowsPerPage, currentSearchTerm)}
                         >
                             다시 시도
@@ -257,14 +263,18 @@ const ContractList = () => {
                     </Paper>
                 ) : (
                     <>
-                        <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2, overflow: "hidden", boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)' }}>
+                        <TableContainer component={Paper} elevation={0} sx={{
+                            borderRadius: 2,
+                            overflow: "hidden",
+                            boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)'
+                        }}>
                             <Table>
                                 <TableHead>
-                                    <TableRow sx={{ 
+                                    <TableRow sx={{
                                         backgroundColor: '#e9ecef',
                                         borderBottom: '1px solid #e9ecef'
                                     }}>
-                                        <TableCell sx={{ 
+                                        <TableCell sx={{
                                             padding: '12px 16px',
                                             textAlign: 'left',
                                             fontSize: '0.875rem',
@@ -273,7 +283,7 @@ const ContractList = () => {
                                         }}>
                                             계약번호
                                         </TableCell>
-                                        <TableCell sx={{ 
+                                        <TableCell sx={{
                                             padding: '12px 16px',
                                             textAlign: 'left',
                                             fontSize: '0.875rem',
@@ -282,7 +292,7 @@ const ContractList = () => {
                                         }}>
                                             임대인 이름
                                         </TableCell>
-                                        <TableCell sx={{ 
+                                        <TableCell sx={{
                                             padding: '12px 16px',
                                             textAlign: 'left',
                                             fontSize: '0.875rem',
@@ -291,7 +301,7 @@ const ContractList = () => {
                                         }}>
                                             임차인 이름
                                         </TableCell>
-                                        <TableCell sx={{ 
+                                        <TableCell sx={{
                                             padding: '12px 16px',
                                             textAlign: 'left',
                                             fontSize: '0.875rem',
@@ -300,7 +310,7 @@ const ContractList = () => {
                                         }}>
                                             계약일
                                         </TableCell>
-                                        <TableCell sx={{ 
+                                        <TableCell sx={{
                                             padding: '12px 16px',
                                             textAlign: 'left',
                                             fontSize: '0.875rem',
@@ -309,7 +319,7 @@ const ContractList = () => {
                                         }}>
                                             만료일
                                         </TableCell>
-                                        <TableCell sx={{ 
+                                        <TableCell sx={{
                                             padding: '12px 16px',
                                             textAlign: 'left',
                                             fontSize: '0.875rem',
@@ -330,7 +340,7 @@ const ContractList = () => {
                                                         key={contract.id}
                                                         hover
                                                         onClick={() => handleViewContract(contract.id)}
-                                                        sx={{ 
+                                                        sx={{
                                                             cursor: "pointer",
                                                             borderBottom: '1px solid #e9ecef',
                                                             backgroundColor: 'transparent',
@@ -340,42 +350,42 @@ const ContractList = () => {
                                                             }
                                                         }}
                                                     >
-                                                        <TableCell sx={{ 
+                                                        <TableCell sx={{
                                                             padding: '12px 16px',
                                                             fontSize: '0.875rem',
                                                             color: '#00171f'
                                                         }}>
-                                                            {contract.id.slice(0,8)} {contract.id.length > 8 && '...'}
+                                                            {contract.id.slice(0, 8)} {contract.id.length > 8 && '...'}
                                                         </TableCell>
-                                                        <TableCell sx={{ 
+                                                        <TableCell sx={{
                                                             padding: '12px 16px',
                                                             fontSize: '0.875rem',
                                                             color: '#00171f'
                                                         }}>
                                                             {contract.landlordName}
                                                         </TableCell>
-                                                        <TableCell sx={{ 
+                                                        <TableCell sx={{
                                                             padding: '12px 16px',
                                                             fontSize: '0.875rem',
                                                             color: '#00171f'
                                                         }}>
                                                             {contract.tenantName}
                                                         </TableCell>
-                                                        <TableCell sx={{ 
+                                                        <TableCell sx={{
                                                             padding: '12px 16px',
                                                             fontSize: '0.875rem',
                                                             color: '#00171f'
                                                         }}>
                                                             {formatDate(contract.startedAt)}
                                                         </TableCell>
-                                                        <TableCell sx={{ 
+                                                        <TableCell sx={{
                                                             padding: '12px 16px',
                                                             fontSize: '0.875rem',
                                                             color: '#00171f'
                                                         }}>
                                                             {formatDate(contract.expiredAt)}
                                                         </TableCell>
-                                                        <TableCell sx={{ 
+                                                        <TableCell sx={{
                                                             padding: '12px 16px',
                                                             fontSize: '0.875rem',
                                                             color: '#00171f'
@@ -395,7 +405,7 @@ const ContractList = () => {
                                         </>
                                     ) : (
                                         <TableRow>
-                                            <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
+                                            <TableCell colSpan={7} align="center" sx={{py: 3}}>
                                                 <Typography variant="body1">
                                                     {currentSearchTerm ? "검색 결과가 없습니다." : "등록된 계약이 없습니다."}
                                                 </Typography>
@@ -407,9 +417,9 @@ const ContractList = () => {
                         </TableContainer>
 
                         {/* 페이지네이션 */}
-                        <Box sx={{ 
-                            display: "flex", 
-                            justifyContent: "center", 
+                        <Box sx={{
+                            display: "flex",
+                            justifyContent: "center",
                             mt: 3,
                             mb: 2
                         }}>
@@ -437,21 +447,21 @@ const ContractList = () => {
                         취소
                     </Button>
                     <Button onClick={handleDeleteConfirm} color="error" disabled={deleteLoading}>
-                        {deleteLoading ? <CircularProgress size={24} /> : "삭제"}
+                        {deleteLoading ? <CircularProgress size={24}/> : "삭제"}
                     </Button>
                 </DialogActions>
             </Dialog>
 
             {/* 성공 메시지 스낵바 */}
             <Snackbar open={!!successMessage} autoHideDuration={6000} onClose={() => setSuccessMessage(null)}>
-                <Alert onClose={() => setSuccessMessage(null)} severity="success" sx={{ width: "100%" }}>
+                <Alert onClose={() => setSuccessMessage(null)} severity="success" sx={{width: "100%"}}>
                     {successMessage}
                 </Alert>
             </Snackbar>
 
             {/* 에러 메시지 스낵바 */}
             <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError(null)}>
-                <Alert onClose={() => setError(null)} severity="error" sx={{ width: "100%" }}>
+                <Alert onClose={() => setError(null)} severity="error" sx={{width: "100%"}}>
                     {error}
                 </Alert>
             </Snackbar>

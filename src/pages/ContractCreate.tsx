@@ -1,29 +1,26 @@
 "use client"
 
 import type React from "react"
-
-import { useState, useEffect, useRef, useCallback } from "react"
+import {useCallback, useEffect, useRef, useState} from "react"
 import {
+    Alert,
     Box,
-    Container,
-    Typography,
-    Paper,
-    TextField,
     Button,
+    Chip,
+    CircularProgress,
+    Container,
+    Divider,
     Grid,
     IconButton,
-    CircularProgress,
+    Paper,
     Snackbar,
-    Alert,
-    Divider,
-    Autocomplete,
-    Chip,
+    TextField,
+    Typography,
 } from "@mui/material"
-import { ArrowBack, CloudUpload } from "@mui/icons-material"
-import { useNavigate } from "react-router-dom"
-import { contractApi } from "../services/contractApi"
-import { customerApi } from "../services/customerApi"
-import type { CustomerListResponse, CustomerInfiniteResponse } from "../services/customerApi"
+import {ArrowBack, CloudUpload} from "@mui/icons-material"
+import {useNavigate} from "react-router-dom"
+import {contractApi} from "../services/contractApi"
+import {customerApi} from "../services/customerApi"
 
 const ContractCreate = () => {
     const navigate = useNavigate()
@@ -32,13 +29,13 @@ const ContractCreate = () => {
     const [success, setSuccess] = useState(false)
 
     // 고객 관련 상태
-    const [customers, setCustomers] = useState<{id: number; name: string; phone: string}[]>([])
+    const [customers, setCustomers] = useState<{ id: number; name: string; phone: string }[]>([])
     const [customerLoading, setCustomerLoading] = useState(true)
-    const [selectedLandlord, setSelectedLandlord] = useState<{id: number; name: string; phone: string} | null>(null)
-    const [selectedTenant, setSelectedTenant] = useState<{id: number; name: string; phone: string} | null>(null)
+    const [selectedLandlord, setSelectedLandlord] = useState<{ id: number; name: string; phone: string } | null>(null)
+    const [selectedTenant, setSelectedTenant] = useState<{ id: number; name: string; phone: string } | null>(null)
     const [searchTerm, setSearchTerm] = useState("")
     const [currentSearchTerm, setCurrentSearchTerm] = useState("") // 실제 검색에 사용되는 term
-    
+
     // 무한 스크롤 관련 상태
     const [cursor, setCursor] = useState<number | undefined>(undefined)
     const [hasMore, setHasMore] = useState(true)
@@ -79,23 +76,23 @@ const ContractCreate = () => {
             } else {
                 setIsLoadingMore(true)
             }
-            
+
             const response = await customerApi.getInfiniteCustomers(cursorId, currentSearchTerm)
-            
+
             if (response.data.success && response.data.data) {
                 const newCustomers = response.data.data.content
-                
+
                 if (cursorId === undefined) {
                     setCustomers(newCustomers)
                 } else {
                     setCustomers(prev => [...prev, ...newCustomers])
                 }
-                
+
                 // 마지막 고객의 ID를 커서로 설정
                 if (newCustomers.length > 0) {
                     setCursor(newCustomers[newCustomers.length - 1].id)
                 }
-                
+
                 // 더 이상 데이터가 없으면 hasMore를 false로 설정
                 setHasMore(!response.data.data.last)
             } else {
@@ -113,15 +110,15 @@ const ContractCreate = () => {
     // 무한 스크롤을 위한 콜백 함수
     const lastCustomerRef = useCallback((node: HTMLDivElement | null) => {
         if (customerLoading || isLoadingMore) return
-        
+
         if (observer.current) observer.current.disconnect()
-        
+
         observer.current = new IntersectionObserver(entries => {
             if (entries[0].isIntersecting && hasMore) {
                 fetchCustomers(cursor)
             }
         })
-        
+
         if (node) observer.current.observe(node)
         lastCustomerElementRef.current = node
     }, [customerLoading, hasMore, isLoadingMore, cursor])
@@ -179,7 +176,7 @@ const ContractCreate = () => {
         // Add date validation
         const contractDate = new Date(startedAt)
         const expirationDate = new Date(expiredAt)
-        
+
         if (expirationDate <= contractDate) {
             setError("날짜 정보를 올바르게 입력하세요")
             return
@@ -230,7 +227,7 @@ const ContractCreate = () => {
     }
 
     return (
-        <Box sx={{ flexGrow: 1, minHeight: "100vh" }}>
+        <Box sx={{flexGrow: 1, minHeight: "100vh"}}>
             {/* Add error alert at the top */}
             {error && (
                 <Box
@@ -256,14 +253,14 @@ const ContractCreate = () => {
                     mt: 4,
                     mb: 4,
                     mx: "auto",
-                    px: { xs: 2, sm: 3, md: 4 },
+                    px: {xs: 2, sm: 3, md: 4},
                 }}
             >
-                <Box sx={{ display: "flex", alignItems: "center", mb: 4 }}>
-                    <IconButton onClick={() => navigate("/contract")} sx={{ mr: 1 }}>
-                        <ArrowBack />
+                <Box sx={{display: "flex", alignItems: "center", mb: 4}}>
+                    <IconButton onClick={() => navigate("/contract")} sx={{mr: 1}}>
+                        <ArrowBack/>
                     </IconButton>
-                    <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                    <Typography variant="h6" sx={{fontWeight: "bold"}}>
                         신규 계약 등록
                     </Typography>
                 </Box>
@@ -271,14 +268,14 @@ const ContractCreate = () => {
                 <form onSubmit={handleSubmit}>
                     <Grid container spacing={3}>
                         <Grid item xs={12} md={5}>
-                            <Paper elevation={0} sx={{ p: 4, borderRadius: 2, height: "100%" }}>
-                                <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: "bold" }}>
+                            <Paper elevation={0} sx={{p: 4, borderRadius: 2, height: "100%"}}>
+                                <Typography variant="subtitle1" sx={{mb: 2, fontWeight: "bold"}}>
                                     고객 선택
                                 </Typography>
 
                                 {/* 검색창 */}
                                 <form onSubmit={handleSearchSubmit}>
-                                    <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+                                    <Box sx={{display: 'flex', gap: 1, mb: 2}}>
                                         <TextField
                                             fullWidth
                                             size="small"
@@ -286,12 +283,12 @@ const ContractCreate = () => {
                                             value={searchTerm}
                                             onChange={handleSearchChange}
                                         />
-                                        <Button 
-                                            type="submit" 
-                                            variant="contained" 
-                                            sx={{ 
-                                                bgcolor: "#007ea7", 
-                                                "&:hover": { bgcolor: "#003459" },
+                                        <Button
+                                            type="submit"
+                                            variant="contained"
+                                            sx={{
+                                                bgcolor: "#007ea7",
+                                                "&:hover": {bgcolor: "#003459"},
                                                 whiteSpace: 'nowrap'
                                             }}
                                         >
@@ -301,11 +298,11 @@ const ContractCreate = () => {
                                 </form>
 
                                 {/* 고객 목록 */}
-                                <Box sx={{ border: "1px solid #eee", borderRadius: 1, mb: 2 }}>
-                                    <Box sx={{ maxHeight: "500px", overflow: "auto", p: 1 }}>
+                                <Box sx={{border: "1px solid #eee", borderRadius: 1, mb: 2}}>
+                                    <Box sx={{maxHeight: "500px", overflow: "auto", p: 1}}>
                                         {customerLoading ? (
-                                            <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
-                                                <CircularProgress size={24} />
+                                            <Box sx={{display: "flex", justifyContent: "center", p: 2}}>
+                                                <CircularProgress size={24}/>
                                             </Box>
                                         ) : customers.length > 0 ? (
                                             customers.map((customer, index) => (
@@ -318,10 +315,10 @@ const ContractCreate = () => {
                                                         p: 1,
                                                         borderBottom: "1px solid #f0f0f0",
                                                         cursor: "pointer",
-                                                        bgcolor: 
-                                                            (selectedLandlord?.id === customer.id || 
-                                                             selectedTenant?.id === customer.id) 
-                                                                ? "rgba(0, 126, 167, 0.08)" 
+                                                        bgcolor:
+                                                            (selectedLandlord?.id === customer.id ||
+                                                                selectedTenant?.id === customer.id)
+                                                                ? "rgba(0, 126, 167, 0.08)"
                                                                 : "transparent",
                                                         "&:hover": {
                                                             bgcolor: "rgba(0, 126, 167, 0.05)",
@@ -346,8 +343,8 @@ const ContractCreate = () => {
                                                         }
                                                     }}
                                                 >
-                                                    <Box sx={{ flexGrow: 1 }}>
-                                                        <Typography variant="body2" sx={{ fontWeight: "bold" }}>
+                                                    <Box sx={{flexGrow: 1}}>
+                                                        <Typography variant="body2" sx={{fontWeight: "bold"}}>
                                                             {customer.name}
                                                         </Typography>
                                                         <Typography variant="caption" color="textSecondary">
@@ -356,47 +353,47 @@ const ContractCreate = () => {
                                                     </Box>
                                                     <Box>
                                                         {selectedLandlord?.id === customer.id && (
-                                                            <Chip 
-                                                                label="임대인" 
-                                                                size="small" 
-                                                                sx={{ 
-                                                                    bgcolor: "#007ea7", 
+                                                            <Chip
+                                                                label="임대인"
+                                                                size="small"
+                                                                sx={{
+                                                                    bgcolor: "#007ea7",
                                                                     color: "white",
                                                                     ml: "auto"
-                                                                }} 
+                                                                }}
                                                             />
                                                         )}
                                                         {selectedTenant?.id === customer.id && (
-                                                            <Chip 
-                                                                label="임차인" 
-                                                                size="small" 
-                                                                sx={{ 
-                                                                    bgcolor: "#003459", 
+                                                            <Chip
+                                                                label="임차인"
+                                                                size="small"
+                                                                sx={{
+                                                                    bgcolor: "#003459",
                                                                     color: "white",
                                                                     ml: "auto"
-                                                                }} 
+                                                                }}
                                                             />
                                                         )}
                                                     </Box>
                                                 </Box>
                                             ))
                                         ) : (
-                                            <Box sx={{ p: 2, textAlign: "center" }}>
+                                            <Box sx={{p: 2, textAlign: "center"}}>
                                                 <Typography variant="body2" color="textSecondary">
                                                     {currentSearchTerm ? "검색 결과가 없습니다." : "고객이 없습니다."}
                                                 </Typography>
                                             </Box>
                                         )}
-                                        
+
                                         {isLoadingMore && (
-                                            <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
-                                                <CircularProgress size={24} />
+                                            <Box sx={{display: "flex", justifyContent: "center", p: 2}}>
+                                                <CircularProgress size={24}/>
                                             </Box>
                                         )}
                                     </Box>
                                 </Box>
 
-                                <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
+                                <Box sx={{display: "flex", justifyContent: "space-between", mb: 2}}>
                                     <Typography variant="body2" color="textSecondary">
                                         {selectedLandlord ? "임대인 선택됨" : "임대인 미선택"} / {selectedTenant ? "임차인 선택됨" : "임차인 미선택"}
                                     </Typography>
@@ -405,8 +402,8 @@ const ContractCreate = () => {
                         </Grid>
 
                         <Grid item xs={12} md={7}>
-                            <Paper elevation={0} sx={{ p: 4, borderRadius: 2 }}>
-                                <Typography variant="subtitle1" sx={{ mb: 3, fontWeight: "bold", color: "#003459" }}>
+                            <Paper elevation={0} sx={{p: 4, borderRadius: 2}}>
+                                <Typography variant="subtitle1" sx={{mb: 3, fontWeight: "bold", color: "#003459"}}>
                                     계약 기본 정보
                                 </Typography>
 
@@ -455,21 +452,21 @@ const ContractCreate = () => {
                                     </Grid>
                                 </Grid>
 
-                                <Divider sx={{ my: 4 }} />
+                                <Divider sx={{my: 4}}/>
 
-                                <Typography variant="subtitle1" sx={{ mb: 3, fontWeight: "bold", color: "#003459" }}>
+                                <Typography variant="subtitle1" sx={{mb: 3, fontWeight: "bold", color: "#003459"}}>
                                     계약 당사자 정보
                                 </Typography>
 
                                 <Grid container spacing={3}>
                                     <Grid item xs={12} sm={6}>
-                                        <Box sx={{ mb: 2 }}>
+                                        <Box sx={{mb: 2}}>
                                             <Typography variant="body2" color="textSecondary" gutterBottom>
                                                 임대인
                                             </Typography>
                                             {selectedLandlord ? (
-                                                <Paper elevation={0} sx={{ p: 2, bgcolor: "rgba(0, 126, 167, 0.05)" }}>
-                                                    <Typography variant="body1" sx={{ fontWeight: "bold" }}>
+                                                <Paper elevation={0} sx={{p: 2, bgcolor: "rgba(0, 126, 167, 0.05)"}}>
+                                                    <Typography variant="body1" sx={{fontWeight: "bold"}}>
                                                         {selectedLandlord.name}
                                                     </Typography>
                                                     <Typography variant="body2" color="textSecondary">
@@ -477,7 +474,7 @@ const ContractCreate = () => {
                                                     </Typography>
                                                 </Paper>
                                             ) : (
-                                                <Paper elevation={0} sx={{ p: 2, bgcolor: "#f5f5f5" }}>
+                                                <Paper elevation={0} sx={{p: 2, bgcolor: "#f5f5f5"}}>
                                                     <Typography variant="body2" color="textSecondary">
                                                         왼쪽에서 임대인을 선택해주세요
                                                     </Typography>
@@ -486,13 +483,13 @@ const ContractCreate = () => {
                                         </Box>
                                     </Grid>
                                     <Grid item xs={12} sm={6}>
-                                        <Box sx={{ mb: 2 }}>
+                                        <Box sx={{mb: 2}}>
                                             <Typography variant="body2" color="textSecondary" gutterBottom>
                                                 임차인
                                             </Typography>
                                             {selectedTenant ? (
-                                                <Paper elevation={0} sx={{ p: 2, bgcolor: "rgba(0, 23, 31, 0.05)" }}>
-                                                    <Typography variant="body1" sx={{ fontWeight: "bold" }}>
+                                                <Paper elevation={0} sx={{p: 2, bgcolor: "rgba(0, 23, 31, 0.05)"}}>
+                                                    <Typography variant="body1" sx={{fontWeight: "bold"}}>
                                                         {selectedTenant.name}
                                                     </Typography>
                                                     <Typography variant="body2" color="textSecondary">
@@ -500,7 +497,7 @@ const ContractCreate = () => {
                                                     </Typography>
                                                 </Paper>
                                             ) : (
-                                                <Paper elevation={0} sx={{ p: 2, bgcolor: "#f5f5f5" }}>
+                                                <Paper elevation={0} sx={{p: 2, bgcolor: "#f5f5f5"}}>
                                                     <Typography variant="body2" color="textSecondary">
                                                         왼쪽에서 임차인을 선택해주세요
                                                     </Typography>
@@ -510,9 +507,9 @@ const ContractCreate = () => {
                                     </Grid>
                                 </Grid>
 
-                                <Divider sx={{ my: 4 }} />
+                                <Divider sx={{my: 4}}/>
 
-                                <Typography variant="subtitle1" sx={{ mb: 3, fontWeight: "bold", color: "#003459" }}>
+                                <Typography variant="subtitle1" sx={{mb: 3, fontWeight: "bold", color: "#003459"}}>
                                     계약서 파일
                                 </Typography>
 
@@ -527,7 +524,7 @@ const ContractCreate = () => {
                                 >
                                     <input
                                         accept=".pdf,.jpg,.jpeg,.png,.gif"
-                                        style={{ display: "none" }}
+                                        style={{display: "none"}}
                                         id="raised-button-file"
                                         type="file"
                                         onChange={handleFileChange}
@@ -536,10 +533,10 @@ const ContractCreate = () => {
                                         <Button
                                             variant="contained"
                                             component="span"
-                                            startIcon={<CloudUpload />}
+                                            startIcon={<CloudUpload/>}
                                             sx={{
                                                 bgcolor: "#007ea7",
-                                                "&:hover": { bgcolor: "#003459" },
+                                                "&:hover": {bgcolor: "#003459"},
                                                 mb: 2,
                                             }}
                                         >
@@ -549,15 +546,15 @@ const ContractCreate = () => {
                                     <Typography variant="body2" color="textSecondary">
                                         {contractFile ? `선택된 파일: ${contractFile.name}` : "PDF 파일을 선택해주세요"}
                                     </Typography>
-                                    <Typography variant="caption" color="textSecondary" sx={{ display: "block", mt: 1 }}>
+                                    <Typography variant="caption" color="textSecondary" sx={{display: "block", mt: 1}}>
                                         지원 형식: PDF, JPG, PNG, GIF (최대 10MB)
                                     </Typography>
                                 </Box>
 
-                                <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+                                <Box sx={{display: "flex", justifyContent: "center", mt: 4}}>
                                     <Button
                                         variant="outlined"
-                                        sx={{ mr: 1, borderColor: "#ddd", color: "#333" }}
+                                        sx={{mr: 1, borderColor: "#ddd", color: "#333"}}
                                         onClick={() => navigate("/contract")}
                                         disabled={loading}
                                     >
@@ -566,10 +563,10 @@ const ContractCreate = () => {
                                     <Button
                                         type="submit"
                                         variant="contained"
-                                        sx={{ bgcolor: "#007ea7", "&:hover": { bgcolor: "#003459" } }}
+                                        sx={{bgcolor: "#007ea7", "&:hover": {bgcolor: "#003459"}}}
                                         disabled={loading}
                                     >
-                                        {loading ? <CircularProgress size={24} /> : "계약 등록하기"}
+                                        {loading ? <CircularProgress size={24}/> : "계약 등록하기"}
                                     </Button>
                                 </Box>
                             </Paper>
@@ -580,7 +577,7 @@ const ContractCreate = () => {
 
             {/* Remove the error Snackbar */}
             <Snackbar open={success} autoHideDuration={6000} onClose={() => setSuccess(false)}>
-                <Alert onClose={() => setSuccess(false)} severity="success" sx={{ width: "100%" }}>
+                <Alert onClose={() => setSuccess(false)} severity="success" sx={{width: "100%"}}>
                     계약이 성공적으로 등록되었습니다.
                 </Alert>
             </Snackbar>

@@ -1,14 +1,14 @@
-import { Box, Chip } from '@mui/material';
-import { getTypeColor, getTradeTypeColor } from '../utils/articleDisplay';
+import {Box, Chip} from '@mui/material';
+import {getTradeTypeColor, getTypeColor} from '../utils/articleDisplay';
 
 interface ArticleTypeBadgeProps {
     articleType: string;
     tradeType: string;
 }
 
-const ArticleTypeBadge = ({ articleType, tradeType }: ArticleTypeBadgeProps) => {
+const ArticleTypeBadge = ({articleType, tradeType}: ArticleTypeBadgeProps) => {
     return (
-        <Box sx={{ display: 'flex', gap: 1 }}>
+        <Box sx={{display: 'flex', gap: 1}}>
             <Chip
                 label={articleType}
                 size="small"

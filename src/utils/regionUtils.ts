@@ -47,16 +47,16 @@ const isDongLevel = (cortarNo: string): boolean => {
  */
 export const filterCities = (regions: Region[]): string[] => {
     if (!regions || regions.length === 0) return [];
-    
+
     console.log('Filtering cities using cortarNo pattern...');
-    
+
     // 시도 레벨 지역만 필터링
-    const sidoRegions = regions.filter(region => 
+    const sidoRegions = regions.filter(region =>
         region.cortarNo && region.cortarNo.length === 10 && isSidoLevel(region.cortarNo)
     );
-    
+
     console.log(`Found ${sidoRegions.length} sido-level regions`);
-    
+
     // 시도 이름 중복 제거
     const citySet = new Set<string>();
     sidoRegions.forEach(region => {
@@ -64,21 +64,21 @@ export const filterCities = (regions: Region[]): string[] => {
             citySet.add(region.cortarName);
         }
     });
-    
+
     // 만약 시도 레벨 지역이 없다면 cortarType을 사용한 대체 방법
     if (citySet.size === 0) {
         console.log('No sido-level regions found by cortarNo pattern, trying cortarType...');
-        const cityTypeRegions = regions.filter(r => 
+        const cityTypeRegions = regions.filter(r =>
             r.cortarType === 'city' || r.cortarType === '시도'
         );
-        
+
         cityTypeRegions.forEach(region => {
             if (region.cortarName) {
                 citySet.add(region.cortarName);
             }
         });
     }
-    
+
     const result = Array.from(citySet);
     console.log('Cities found:', result);
     return result;
@@ -92,16 +92,16 @@ export const filterCities = (regions: Region[]): string[] => {
  */
 export const filterDistricts = (regions: Region[], selectedCity: string): string[] => {
     if (!regions || regions.length === 0 || !selectedCity) return [];
-    
+
     console.log('Filtering districts for city:', selectedCity);
-    
+
     // 선택된 시도 찾기
-    const cityRegion = regions.find(region => 
-        region.cortarName === selectedCity && 
-        region.cortarNo && 
+    const cityRegion = regions.find(region =>
+        region.cortarName === selectedCity &&
+        region.cortarNo &&
         isSidoLevel(region.cortarNo)
     );
-    
+
     if (!cityRegion || !cityRegion.cortarNo) {
         console.log('City region not found, trying alternative search...');
         // 이름으로 시도 찾기 시도
@@ -115,60 +115,60 @@ export const filterDistricts = (regions: Region[], selectedCity: string): string
             });
             console.log('Found alternative city region:', cityRegions[0]);
             const altCityRegion = cityRegions[0];
-            
+
             // 하위 구군 찾기
             const districtSet = new Set<string>();
             regions.forEach(region => {
-                if (region.cortarNo && altCityRegion.cortarNo && 
-                    region.cortarNo.startsWith(altCityRegion.cortarNo.substring(0, 2)) && 
+                if (region.cortarNo && altCityRegion.cortarNo &&
+                    region.cortarNo.startsWith(altCityRegion.cortarNo.substring(0, 2)) &&
                     isSigunguLevel(region.cortarNo)) {
                     if (region.cortarName) {
                         districtSet.add(region.cortarName);
                     }
                 }
             });
-            
+
             const result = Array.from(districtSet);
             console.log('Districts found (alternative):', result);
             return result;
         }
-        
+
         console.log('No matching city found at all');
         return [];
     }
-    
+
     // 시도 코드 추출 (앞 2자리)
     const sidoCode = cityRegion.cortarNo.substring(0, 2);
     console.log('City code:', sidoCode);
-    
+
     // 선택된 시도에 속하는 구군 레벨 지역 찾기
     const districtSet = new Set<string>();
-    
+
     regions.forEach(region => {
-        if (region.cortarNo && 
-            region.cortarNo.startsWith(sidoCode) && 
+        if (region.cortarNo &&
+            region.cortarNo.startsWith(sidoCode) &&
             isSigunguLevel(region.cortarNo)) {
             if (region.cortarName) {
                 districtSet.add(region.cortarName);
             }
         }
     });
-    
+
     // 결과가 없으면 cortarType으로 시도
     if (districtSet.size === 0) {
         console.log('No districts found by cortarNo pattern, trying cortarType...');
-        const districtTypeRegions = regions.filter(r => 
+        const districtTypeRegions = regions.filter(r =>
             (r.cortarType === 'dvsn' || r.cortarType === '구군') &&
             r.cortarName
         );
-        
+
         districtTypeRegions.forEach(region => {
             if (region.cortarName) {
                 districtSet.add(region.cortarName);
             }
         });
     }
-    
+
     const result = Array.from(districtSet);
     console.log('Districts found:', result);
     return result;
@@ -182,74 +182,74 @@ export const filterDistricts = (regions: Region[], selectedCity: string): string
  * @returns 동/읍/면 목록
  */
 export const filterNeighborhoods = (
-    regions: Region[], 
-    selectedCity: string, 
+    regions: Region[],
+    selectedCity: string,
     selectedDistrict: string
 ): string[] => {
     if (!regions || regions.length === 0 || !selectedCity || !selectedDistrict) return [];
-    
+
     console.log('Filtering neighborhoods for district:', selectedDistrict);
-    
+
     // 선택된 시도 찾기
-    const cityRegion = regions.find(region => 
-        region.cortarName === selectedCity && 
-        region.cortarNo && 
+    const cityRegion = regions.find(region =>
+        region.cortarName === selectedCity &&
+        region.cortarNo &&
         isSidoLevel(region.cortarNo)
     );
-    
+
     if (!cityRegion || !cityRegion.cortarNo) {
         console.log('City region not found for neighborhoods');
         return [];
     }
-    
+
     // 시도 코드 추출 (앞 2자리)
     const sidoCode = cityRegion.cortarNo.substring(0, 2);
-    
+
     // 선택된 구군 찾기
-    const districtRegion = regions.find(region => 
-        region.cortarName === selectedDistrict && 
-        region.cortarNo && 
-        region.cortarNo.startsWith(sidoCode) && 
+    const districtRegion = regions.find(region =>
+        region.cortarName === selectedDistrict &&
+        region.cortarNo &&
+        region.cortarNo.startsWith(sidoCode) &&
         isSigunguLevel(region.cortarNo)
     );
-    
+
     if (!districtRegion || !districtRegion.cortarNo) {
         console.log('District region not found for neighborhoods');
         return [];
     }
-    
+
     // 구군 코드 추출 (앞 5자리)
     const sigunguCode = districtRegion.cortarNo.substring(0, 5);
     console.log('Sigungu code:', sigunguCode);
-    
+
     // 선택된 구군에 속하는 동읍면 레벨 지역 찾기
     const neighborhoods: string[] = [];
-    
+
     regions.forEach(region => {
-        if (region.cortarNo && 
-            region.cortarNo.startsWith(sigunguCode) && 
+        if (region.cortarNo &&
+            region.cortarNo.startsWith(sigunguCode) &&
             isDongLevel(region.cortarNo) &&
-            region.cortarName && 
+            region.cortarName &&
             !neighborhoods.includes(region.cortarName)) {
             neighborhoods.push(region.cortarName);
         }
     });
-    
+
     // 결과가 없으면 cortarType으로 시도
     if (neighborhoods.length === 0) {
         console.log('No neighborhoods found by cortarNo pattern, trying cortarType...');
-        const dongTypeRegions = regions.filter(r => 
+        const dongTypeRegions = regions.filter(r =>
             (r.cortarType === 'sec' || r.cortarType === 'dong') &&
             r.cortarName
         );
-        
+
         dongTypeRegions.forEach(region => {
             if (region.cortarName && !neighborhoods.includes(region.cortarName)) {
                 neighborhoods.push(region.cortarName);
             }
         });
     }
-    
+
     console.log('Neighborhoods found:', neighborhoods);
     return neighborhoods;
 };
@@ -261,13 +261,13 @@ export const filterNeighborhoods = (
  * @returns 중심 좌표를 가진 지역 객체 또는 undefined
  */
 export const findCenterForSelectedRegion = (
-    regions: Region[], 
+    regions: Region[],
     selectedRegions: SelectedRegions
 ): Region | undefined => {
     if (!regions || regions.length === 0) return undefined;
-    
+
     let targetRegion: Region | undefined;
-    
+
     if (selectedRegions.neighborhoods.length > 0) {
         // 선택된 동이 있으면 해당 동의 중심점으로 이동
         const neighborhood = selectedRegions.neighborhoods[0];
@@ -279,6 +279,6 @@ export const findCenterForSelectedRegion = (
         // 선택된 시가 있으면 해당 시의 중심점으로 이동
         targetRegion = regions.find(r => r.cortarName === selectedRegions.city);
     }
-    
+
     return targetRegion;
 }; 

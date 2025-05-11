@@ -1,34 +1,32 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import {useEffect, useState} from "react"
 import {
-    Box,
-    Container,
-    Typography,
-    Paper,
-    TextField,
-    Button,
-    Grid,
-    FormControlLabel,
-    Checkbox,
-    AppBar,
-    Toolbar,
-    IconButton,
-    Snackbar,
     Alert,
+    Box,
+    Button,
+    Checkbox,
     CircularProgress,
+    Container,
+    FormControlLabel,
+    Grid,
+    IconButton,
+    Paper,
+    Snackbar,
+    TextField,
+    Typography,
 } from "@mui/material"
-import { ArrowBack } from "@mui/icons-material"
-import { useNavigate, useParams } from "react-router-dom"
-import { customerApi, type UpdateCustomerRequest, type CustomerHistoryResponse } from "../services/customerApi"
+import {ArrowBack} from "@mui/icons-material"
+import {useNavigate, useParams} from "react-router-dom"
+import {customerApi, type UpdateCustomerRequest} from "../services/customerApi"
 import dayjs from "dayjs"
-import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers"
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs"
+import {DatePicker, LocalizationProvider} from "@mui/x-date-pickers"
+import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs"
 
 const CustomerEdit = () => {
     const navigate = useNavigate()
-    const { id } = useParams<{ id: string }>()
+    const {id} = useParams<{ id: string }>()
     const [loading, setLoading] = useState(false)
     const [initialLoading, setInitialLoading] = useState(true)
     const [success, setSuccess] = useState(false)
@@ -85,12 +83,12 @@ const CustomerEdit = () => {
     }
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target
-        
+        const {name, value} = e.target
+
         if (name === 'phone') {
             // Remove all non-numeric characters
             const numericValue = value.replace(/\D/g, '')
-            
+
             // Format the phone number
             let formattedValue = numericValue
             if (numericValue.length >= 3) {
@@ -99,20 +97,20 @@ const CustomerEdit = () => {
                     formattedValue = formattedValue.slice(0, 8) + '-' + numericValue.slice(7, 11)
                 }
             }
-            
-            setFormData((prev) => ({ ...prev, [name]: formattedValue }))
+
+            setFormData((prev) => ({...prev, [name]: formattedValue}))
         } else {
-            setFormData((prev) => ({ ...prev, [name]: value }))
+            setFormData((prev) => ({...prev, [name]: value}))
         }
     }
 
     const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 
-        const { name, checked } = e.target
+        const {name, checked} = e.target
         // Ensure boolean value is set
-        setFormData((prev) => ({ 
-            ...prev, 
-            [name]: checked || false 
+        setFormData((prev) => ({
+            ...prev,
+            [name]: checked || false
         }))
     }
 
@@ -153,34 +151,34 @@ const CustomerEdit = () => {
 
     if (initialLoading) {
         return (
-            <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
-                <CircularProgress />
+            <Box sx={{display: "flex", justifyContent: "center", alignItems: "center", height: "100vh"}}>
+                <CircularProgress/>
             </Box>
         )
     }
 
     return (
-        <Box sx={{ flexGrow: 1, minHeight: "100vh" }}>
+        <Box sx={{flexGrow: 1, minHeight: "100vh"}}>
             <Container
                 maxWidth="md"
                 sx={{
                     mt: 4,
                     mb: 4,
                     mx: "auto",
-                    px: { xs: 2, sm: 3, md: 4 },
+                    px: {xs: 2, sm: 3, md: 4},
                 }}
             >
-                <Paper elevation={0} sx={{ p: 4, borderRadius: 2, bgcolor: "#ffffff" }}>
-                    <Box sx={{ display: "flex", alignItems: "center", mb: 4 }}>
-                        <IconButton onClick={() => navigate("/customer-management")} sx={{ mr: 1 }}>
-                            <ArrowBack />
+                <Paper elevation={0} sx={{p: 4, borderRadius: 2, bgcolor: "#ffffff"}}>
+                    <Box sx={{display: "flex", alignItems: "center", mb: 4}}>
+                        <IconButton onClick={() => navigate("/customer-management")} sx={{mr: 1}}>
+                            <ArrowBack/>
                         </IconButton>
-                        <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                        <Typography variant="h6" sx={{fontWeight: "bold"}}>
                             고객 정보 수정
                         </Typography>
                     </Box>
 
-                    <Typography variant="subtitle2" color="textSecondary" sx={{ mb: 3 }}>
+                    <Typography variant="subtitle2" color="textSecondary" sx={{mb: 3}}>
                         고객의 정보를 수정해주세요.
                     </Typography>
 
@@ -219,7 +217,8 @@ const CustomerEdit = () => {
                                 />
                             </Grid>
                             <Grid item xs={12} sm={6}>
-                                <TextField fullWidth label="직업" name="job" value={formData.job} onChange={handleChange} />
+                                <TextField fullWidth label="직업" name="job" value={formData.job}
+                                           onChange={handleChange}/>
                             </Grid>
                             <Grid item xs={12} sm={6}>
                                 <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="ko">
@@ -229,9 +228,9 @@ const CustomerEdit = () => {
                                         onChange={(newValue) => {
                                             if (newValue) {
                                                 const formattedDate = dayjs(newValue).format('YYYY-MM-DD')
-                                                setFormData(prev => ({ ...prev, birthday: formattedDate }))
+                                                setFormData(prev => ({...prev, birthday: formattedDate}))
                                             } else {
-                                                setFormData(prev => ({ ...prev, birthday: '' }))
+                                                setFormData(prev => ({...prev, birthday: ''}))
                                             }
                                         }}
                                         format="YYYY-MM-DD"
@@ -247,7 +246,8 @@ const CustomerEdit = () => {
                             </Grid>
                             <Grid item xs={12} sm={6}>
                                 <FormControlLabel
-                                    control={<Checkbox checked={formData.isVip} onChange={handleCheckboxChange} name="isVip" />}
+                                    control={<Checkbox checked={formData.isVip} onChange={handleCheckboxChange}
+                                                       name="isVip"/>}
                                     label="VIP 고객"
                                 />
                             </Grid>
@@ -264,7 +264,8 @@ const CustomerEdit = () => {
                             </Grid>
                             <Grid item xs={12}>
                                 <FormControlLabel
-                                    control={<Checkbox checked={formData.consent} onChange={handleCheckboxChange} name="consent" />}
+                                    control={<Checkbox checked={formData.consent} onChange={handleCheckboxChange}
+                                                       name="consent"/>}
                                     label="마케팅 정보 수신에 동의합니다."
                                 />
                             </Grid>
@@ -295,10 +296,10 @@ const CustomerEdit = () => {
                                     onChange={handleChange}
                                 />
                             </Grid>
-                            <Grid item xs={12} sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+                            <Grid item xs={12} sx={{display: "flex", justifyContent: "center", mt: 2}}>
                                 <Button
                                     variant="outlined"
-                                    sx={{ mr: 1, borderColor: "#ddd", color: "#333" }}
+                                    sx={{mr: 1, borderColor: "#ddd", color: "#333"}}
                                     onClick={() => navigate("/customer-management")}
                                     disabled={loading}
                                 >
@@ -307,10 +308,10 @@ const CustomerEdit = () => {
                                 <Button
                                     type="submit"
                                     variant="contained"
-                                    sx={{ bgcolor: "#007ea7", "&:hover": { bgcolor: "#003459" } }}
+                                    sx={{bgcolor: "#007ea7", "&:hover": {bgcolor: "#003459"}}}
                                     disabled={loading}
                                 >
-                                    {loading ? <CircularProgress size={24} /> : "고객 정보 수정하기"}
+                                    {loading ? <CircularProgress size={24}/> : "고객 정보 수정하기"}
                                 </Button>
                             </Grid>
                         </Grid>
@@ -319,13 +320,13 @@ const CustomerEdit = () => {
             </Container>
 
             <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError(null)}>
-                <Alert onClose={() => setError(null)} severity="error" sx={{ width: "100%" }}>
+                <Alert onClose={() => setError(null)} severity="error" sx={{width: "100%"}}>
                     {error}
                 </Alert>
             </Snackbar>
 
             <Snackbar open={success} autoHideDuration={6000} onClose={() => setSuccess(false)}>
-                <Alert onClose={() => setSuccess(false)} severity="success" sx={{ width: "100%" }}>
+                <Alert onClose={() => setSuccess(false)} severity="success" sx={{width: "100%"}}>
                     고객 정보가 성공적으로 수정되었습니다. 고객 목록 페이지로 이동합니다.
                 </Alert>
             </Snackbar>

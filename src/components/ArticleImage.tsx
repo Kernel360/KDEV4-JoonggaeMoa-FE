@@ -1,7 +1,7 @@
-import { Box, Typography } from '@mui/material';
-import { useState } from 'react';
-import { getTypeColor, getTypeEmoji } from '../utils/articleDisplay';
-import { withImageSize } from '../utils/articleFormat';
+import {Box, Typography} from '@mui/material';
+import {useState} from 'react';
+import {getTypeColor, getTypeEmoji} from '../utils/articleDisplay';
+import {withImageSize} from '../utils/articleFormat';
 
 interface ArticleImageProps {
     imageUrl?: string;
@@ -9,14 +9,14 @@ interface ArticleImageProps {
     name: string;
 }
 
-const ArticleImage = ({ imageUrl, articleType, name }: ArticleImageProps) => {
+const ArticleImage = ({imageUrl, articleType, name}: ArticleImageProps) => {
     const [imageError, setImageError] = useState(false);
 
     return (
-        <Box 
-            sx={{ 
-                width: '100%', 
-                height: '100%', 
+        <Box
+            sx={{
+                width: '100%',
+                height: '100%',
                 position: 'relative',
                 overflow: 'hidden',
                 backgroundColor: getTypeColor(articleType),
@@ -24,40 +24,40 @@ const ArticleImage = ({ imageUrl, articleType, name }: ArticleImageProps) => {
             }}
         >
             {!imageError && imageUrl ? (
-                <img 
-                    src={withImageSize(imageUrl, 1000)} 
-                    alt={name} 
-                    style={{ 
-                        width: '100%', 
-                        height: '100%', 
+                <img
+                    src={withImageSize(imageUrl, 1000)}
+                    alt={name}
+                    style={{
+                        width: '100%',
+                        height: '100%',
                         objectFit: 'cover',
                         display: 'block'
                     }}
                     onError={() => setImageError(true)}
                 />
             ) : (
-                <Box 
-                    sx={{ 
-                        width: '100%', 
-                        height: '100%', 
-                        display: 'flex', 
-                        alignItems: 'center', 
+                <Box
+                    sx={{
+                        width: '100%',
+                        height: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
                         justifyContent: 'center',
                         flexDirection: 'column'
                     }}
                 >
-                    <Typography 
-                        sx={{ 
-                            fontSize: '4rem', 
+                    <Typography
+                        sx={{
+                            fontSize: '4rem',
                             color: 'white',
                             lineHeight: 1
                         }}
                     >
                         {getTypeEmoji(articleType)}
                     </Typography>
-                    <Typography 
-                        sx={{ 
-                            fontSize: '1rem', 
+                    <Typography
+                        sx={{
+                            fontSize: '1rem',
                             color: 'white',
                             mt: 1
                         }}

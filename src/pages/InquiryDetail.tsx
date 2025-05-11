@@ -1,39 +1,33 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, {useEffect, useState} from 'react';
+import {useNavigate, useParams} from 'react-router-dom';
 import {
-    Box,
-    Typography,
-    Paper,
-    TextField,
-    Button,
-    CircularProgress,
-    Snackbar,
     Alert,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    FormControlLabel,
+    Box,
+    Button,
     Checkbox,
-    TableContainer,
-    Table,
-    TableHead,
-    TableBody,
-    TableRow,
-    TableCell
+    CircularProgress,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    FormControlLabel,
+    Paper,
+    Snackbar,
+    TextField,
+    Typography
 } from '@mui/material';
-import { useAuth } from '../context/AuthContext';
+import {useAuth} from '../context/AuthContext';
 import api from '../services/api';
-import { InquiryDetailResponse, InquiryConsultationRequest } from '../types/inquiry';
-import { LocalizationProvider } from '@mui/x-date-pickers';
-import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { ko } from 'date-fns/locale';
+import {InquiryConsultationRequest, InquiryDetailResponse} from '../types/inquiry';
+import {LocalizationProvider} from '@mui/x-date-pickers';
+import {DateTimePicker} from '@mui/x-date-pickers/DateTimePicker';
+import {AdapterDateFns} from '@mui/x-date-pickers/AdapterDateFns';
+import {ko} from 'date-fns/locale';
 
 const InquiryDetail: React.FC = () => {
-    const { id } = useParams();
+    const {id} = useParams();
     const navigate = useNavigate();
-    const { isAuthenticated } = useAuth();
+    const {isAuthenticated} = useAuth();
     const [inquiry, setInquiry] = useState<InquiryDetailResponse | null>(null);
     const [answer, setAnswer] = useState('');
     const [loading, setLoading] = useState(true);
@@ -53,13 +47,13 @@ const InquiryDetail: React.FC = () => {
         email: '',
         phone: '',
         consent: false,
-        consultAt: new Date().toLocaleString('sv', { 
+        consultAt: new Date().toLocaleString('sv', {
             year: 'numeric',
             month: '2-digit',
             day: '2-digit',
             hour: '2-digit',
             minute: '2-digit',
-            hour12: false 
+            hour12: false
         }).replace(',', '')
     });
 
@@ -105,7 +99,7 @@ const InquiryDetail: React.FC = () => {
         }
     };
 
-   const handleEdit = async () => {
+    const handleEdit = async () => {
         try {
             // Validate fields
             if (!editedInquiry.title.trim() || !editedInquiry.content.trim() || !password.trim()) {
@@ -120,7 +114,7 @@ const InquiryDetail: React.FC = () => {
             };
 
             console.log('Request Data:', requestData);
-            
+
             const response = await api.patch(`/api/inquiries/${id}`, requestData);
             console.log('Response:', response.data);
 
@@ -149,8 +143,8 @@ const InquiryDetail: React.FC = () => {
 
     if (loading) {
         return (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-                <CircularProgress />
+            <Box sx={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh'}}>
+                <CircularProgress/>
             </Box>
         );
     }
@@ -164,22 +158,22 @@ const InquiryDetail: React.FC = () => {
                 setError('전화번호 형식이 올바르지 않습니다.');
                 return;
             }
-    
+
             const emailRegex = /^.+@.+\..+$/.test(consultation.email);
             if (!emailRegex) {
                 setError('이메일 형식이 올바르지 않습니다.');
                 return;
             }
-    
-        
+
+
             const consultDate = new Date(consultation.consultAt);
             const now = new Date();
-            
+
             if (consultDate.getTime() <= now.getTime()) {
                 setError('상담 일시는 현재 시간 이후로 선택해주세요.');
                 return;
             }
-            
+
             const twoMonthsLater = new Date(now);
             twoMonthsLater.setMonth(twoMonthsLater.getMonth() + 2);
 
@@ -187,25 +181,25 @@ const InquiryDetail: React.FC = () => {
                 setError('상담 일시는 오늘부터 2달 이내로 선택해주세요.');
                 return;
             }
-    
+
             if (!consultation.name.trim() || !consultation.consent) {
                 setError('모든 필수 항목을 입력해주세요.');
                 return;
             }
-    
+
             const payload = {
                 ...consultation,
                 consultAt: new Date(consultation.consultAt)
-                    .toLocaleString('sv', { 
+                    .toLocaleString('sv', {
                         year: 'numeric',
                         month: '2-digit',
                         day: '2-digit',
                         hour: '2-digit',
                         minute: '2-digit',
                         hour12: false
-                    }).replace(',', '') 
+                    }).replace(',', '')
             };
-    
+
             const response = await api.post('/api/inquiries/consultations', payload);
             if (response.data.success) {
                 setOpenDialog(false);
@@ -229,38 +223,38 @@ const InquiryDetail: React.FC = () => {
 
 
     return (
-        <Box sx={{ p: 3 }}>
-            <Box sx={{ 
+        <Box sx={{p: 3}}>
+            <Box sx={{
                 maxWidth: '1200px',
                 mx: 'auto',
                 px: 4
             }}>
-                <Box sx={{ 
-                    display: 'flex', 
+                <Box sx={{
+                    display: 'flex',
                     alignItems: 'center',
                     gap: 2,
                     mb: 4,
                     pb: 2,
                     borderBottom: '2px solid #333'
                 }}>
-                    <Box 
-                        sx={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            alignItems: 'center',
                             gap: 2,
                             cursor: 'pointer',
                             flexGrow: 1
                         }}
                         onClick={() => navigate('/inquiry')}
                     >
-                        <img 
+                        <img
                             src="/로고.png"
-                            alt="중개모아 로고" 
-                            style={{ height: '50px' }} 
+                            alt="중개모아 로고"
+                            style={{height: '50px'}}
                         />
-                        <Typography 
-                            variant="h5" 
-                            sx={{ 
+                        <Typography
+                            variant="h5"
+                            sx={{
                                 color: '#333',
                                 fontWeight: 'bold',
                                 letterSpacing: '0.1em'
@@ -271,17 +265,17 @@ const InquiryDetail: React.FC = () => {
                     </Box>
                 </Box>
 
-                <Box sx={{ 
-                    display: 'flex', 
+                <Box sx={{
+                    display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     mb: 3
                 }}>
-                    <Button 
-                        variant="outlined" 
-                        onClick={() => navigate('/inquiry')} 
-                        sx={{ 
-                            borderColor: "#007ea7", 
+                    <Button
+                        variant="outlined"
+                        onClick={() => navigate('/inquiry')}
+                        sx={{
+                            borderColor: "#007ea7",
                             color: "#007ea7",
                             '&:hover': {
                                 borderColor: "#003459",
@@ -293,11 +287,11 @@ const InquiryDetail: React.FC = () => {
                         돌아가기
                     </Button>
                     {!editMode && (
-                        <Button 
-                            variant="outlined" 
+                        <Button
+                            variant="outlined"
                             onClick={() => setEditMode(true)}
-                            sx={{ 
-                                borderColor: "#007ea7", 
+                            sx={{
+                                borderColor: "#007ea7",
                                 color: "#007ea7",
                                 '&:hover': {
                                     borderColor: "#003459",
@@ -312,40 +306,40 @@ const InquiryDetail: React.FC = () => {
                 </Box>
 
                 {inquiry && (
-                    <Paper sx={{ p: 3, backgroundColor: '#fff', boxShadow: 3 }}>
+                    <Paper sx={{p: 3, backgroundColor: '#fff', boxShadow: 3}}>
                         {!editMode ? (
                             <>
-                                <Typography variant="h5" sx={{ mb: 2, color: '#333', fontWeight: 'bold' }}>
+                                <Typography variant="h5" sx={{mb: 2, color: '#333', fontWeight: 'bold'}}>
                                     {inquiry.title}
                                 </Typography>
-                                <Typography variant="subtitle2" sx={{ mb: 3, color: '#666' }}>
+                                <Typography variant="subtitle2" sx={{mb: 3, color: '#666'}}>
                                     작성자: {inquiry.name} | 작성일: {new Date(inquiry.createdAt).toLocaleString()}
                                 </Typography>
-                                <Typography variant="body1" sx={{ mb: 4, whiteSpace: 'pre-wrap', color: '#333' }}>
+                                <Typography variant="body1" sx={{mb: 4, whiteSpace: 'pre-wrap', color: '#333'}}>
                                     {inquiry.content}
                                 </Typography>
                             </>
                         ) : (
-                            <Box sx={{ mb: 4 }}>
-                                <Paper 
-                                    elevation={0} 
-                                    sx={{ 
-                                        p: 3, 
+                            <Box sx={{mb: 4}}>
+                                <Paper
+                                    elevation={0}
+                                    sx={{
+                                        p: 3,
                                         mb: 3,
                                         borderRadius: 2,
                                         bgcolor: '#f8f9fa',
                                         border: '1px solid #e9ecef'
                                     }}
                                 >
-                                    <Typography variant="subtitle1" sx={{ mb: 2, color: '#003459', fontWeight: 500 }}>
+                                    <Typography variant="subtitle1" sx={{mb: 2, color: '#003459', fontWeight: 500}}>
                                         문의글 수정
                                     </Typography>
                                     <TextField
                                         fullWidth
                                         label="제목"
                                         value={editedInquiry.title}
-                                        onChange={(e) => setEditedInquiry({ ...editedInquiry, title: e.target.value })}
-                                        sx={{ 
+                                        onChange={(e) => setEditedInquiry({...editedInquiry, title: e.target.value})}
+                                        sx={{
                                             mb: 2,
                                             '& .MuiOutlinedInput-root': {
                                                 '&.Mui-focused fieldset': {
@@ -363,8 +357,8 @@ const InquiryDetail: React.FC = () => {
                                         multiline
                                         rows={6}
                                         value={editedInquiry.content}
-                                        onChange={(e) => setEditedInquiry({ ...editedInquiry, content: e.target.value })}
-                                        sx={{ 
+                                        onChange={(e) => setEditedInquiry({...editedInquiry, content: e.target.value})}
+                                        sx={{
                                             mb: 2,
                                             '& .MuiOutlinedInput-root': {
                                                 '&.Mui-focused fieldset': {
@@ -383,7 +377,7 @@ const InquiryDetail: React.FC = () => {
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         helperText="수정을 위해 비밀번호를 입력해주세요"
-                                        sx={{ 
+                                        sx={{
                                             mb: 2,
                                             '& .MuiOutlinedInput-root': {
                                                 '&.Mui-focused fieldset': {
@@ -399,12 +393,12 @@ const InquiryDetail: React.FC = () => {
                                         }}
                                     />
                                 </Paper>
-                                <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
-                                    <Button 
-                                        variant="outlined" 
+                                <Box sx={{display: 'flex', gap: 1, justifyContent: 'flex-end'}}>
+                                    <Button
+                                        variant="outlined"
                                         onClick={() => setEditMode(false)}
                                         sx={{
-                                            borderColor: "#007ea7", 
+                                            borderColor: "#007ea7",
                                             color: "#007ea7",
                                             '&:hover': {
                                                 borderColor: "#003459",
@@ -415,12 +409,12 @@ const InquiryDetail: React.FC = () => {
                                     >
                                         취소
                                     </Button>
-                                    <Button 
-                                        variant="contained" 
+                                    <Button
+                                        variant="contained"
                                         onClick={handleEdit}
                                         sx={{
                                             bgcolor: '#007ea7',
-                                            '&:hover': { bgcolor: '#003459' },
+                                            '&:hover': {bgcolor: '#003459'},
                                             textTransform: 'none',
                                             boxShadow: 2,
                                         }}
@@ -431,14 +425,14 @@ const InquiryDetail: React.FC = () => {
                             </Box>
                         )}
 
-                        <Typography variant="h6" sx={{ mt: 4, mb: 2, color: '#333', fontWeight: 'bold' }}>
+                        <Typography variant="h6" sx={{mt: 4, mb: 2, color: '#333', fontWeight: 'bold'}}>
                             답변
                         </Typography>
                         {inquiry.answers.map((answer) => (
-                            <Paper 
+                            <Paper
                                 key={answer.agentId}
                                 elevation={0}
-                                sx={{ 
+                                sx={{
                                     p: 3,
                                     mb: 2,
                                     borderRadius: 2,
@@ -450,27 +444,27 @@ const InquiryDetail: React.FC = () => {
                                     }
                                 }}
                             >
-                                <Box sx={{ 
-                                    display: 'flex', 
+                                <Box sx={{
+                                    display: 'flex',
                                     justifyContent: 'space-between',
                                     alignItems: 'center',
                                     mb: 2,
                                     pb: 2,
                                     borderBottom: '1px solid #e9ecef'
                                 }}>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                        <Typography 
-                                            variant="subtitle1" 
-                                            sx={{ 
+                                    <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+                                        <Typography
+                                            variant="subtitle1"
+                                            sx={{
                                                 color: '#003459',
                                                 fontWeight: 600
                                             }}
                                         >
                                             {answer.agentName}
                                         </Typography>
-                                        <Typography 
-                                            variant="body2" 
-                                            sx={{ 
+                                        <Typography
+                                            variant="body2"
+                                            sx={{
                                                 color: '#666',
                                                 ml: 1
                                             }}
@@ -478,9 +472,9 @@ const InquiryDetail: React.FC = () => {
                                             {answer.agentOffice} | {answer.agentRegion}
                                         </Typography>
                                     </Box>
-                                    <Typography 
-                                        variant="body2" 
-                                        sx={{ 
+                                    <Typography
+                                        variant="body2"
+                                        sx={{
                                             color: '#666',
                                             fontSize: '0.875rem'
                                         }}
@@ -488,9 +482,9 @@ const InquiryDetail: React.FC = () => {
                                         {new Date(answer.createdAt).toLocaleString()}
                                     </Typography>
                                 </Box>
-                                <Typography 
-                                    variant="body1" 
-                                    sx={{ 
+                                <Typography
+                                    variant="body1"
+                                    sx={{
                                         color: '#333',
                                         whiteSpace: 'pre-wrap',
                                         lineHeight: 1.6,
@@ -499,7 +493,7 @@ const InquiryDetail: React.FC = () => {
                                 >
                                     {answer.content}
                                 </Typography>
-                                <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                                <Box sx={{display: 'flex', justifyContent: 'flex-end'}}>
                                     <Button
                                         variant="contained"
                                         onClick={() => {
@@ -526,7 +520,7 @@ const InquiryDetail: React.FC = () => {
                         ))}
 
                         {isAuthenticated && (
-                            <Box sx={{ mt: 3 }}>
+                            <Box sx={{mt: 3}}>
                                 <TextField
                                     fullWidth
                                     label="답변 작성"
@@ -534,7 +528,7 @@ const InquiryDetail: React.FC = () => {
                                     rows={4}
                                     value={answer}
                                     onChange={(e) => setAnswer(e.target.value)}
-                                    inputProps={{ maxLength: 255 }}
+                                    inputProps={{maxLength: 255}}
                                     helperText={`${answer.length}/255`}
                                     sx={{
                                         '& .MuiOutlinedInput-root': {
@@ -547,13 +541,13 @@ const InquiryDetail: React.FC = () => {
                                         }
                                     }}
                                 />
-                                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-                                    <Button 
-                                        variant="contained" 
+                                <Box sx={{display: 'flex', justifyContent: 'flex-end', mt: 2}}>
+                                    <Button
+                                        variant="contained"
                                         onClick={handleSubmitAnswer}
-                                        sx={{ 
+                                        sx={{
                                             bgcolor: '#007ea7',
-                                            '&:hover': { bgcolor: '#003459' },
+                                            '&:hover': {bgcolor: '#003459'},
                                             textTransform: 'none',
                                             boxShadow: 2,
                                         }}
@@ -567,15 +561,15 @@ const InquiryDetail: React.FC = () => {
                 )}
             </Box>
 
-            <Snackbar 
-                open={!!error} 
-                autoHideDuration={6000} 
+            <Snackbar
+                open={!!error}
+                autoHideDuration={6000}
                 onClose={() => setError(null)}
             >
-                <Alert 
-                    onClose={() => setError(null)} 
+                <Alert
+                    onClose={() => setError(null)}
                     severity="error"
-                    sx={{ 
+                    sx={{
                         backgroundColor: '#d32f2f',
                         color: '#fff'
                     }}
@@ -584,20 +578,20 @@ const InquiryDetail: React.FC = () => {
                 </Alert>
             </Snackbar>
 
-            <Dialog 
-                open={openDialog} 
-                onClose={() => setOpenDialog(false)} 
-                maxWidth="sm" 
+            <Dialog
+                open={openDialog}
+                onClose={() => setOpenDialog(false)}
+                maxWidth="sm"
                 fullWidth
                 PaperProps={{
-                    sx: { 
+                    sx: {
                         borderRadius: 2,
                         bgcolor: '#f8f9fa'
                     }
                 }}
             >
-                <DialogTitle sx={{ 
-                    borderBottom: '2px solid #333', 
+                <DialogTitle sx={{
+                    borderBottom: '2px solid #333',
                     color: '#333',
                     fontWeight: 'bold',
                     fontSize: '1.5rem',
@@ -605,17 +599,17 @@ const InquiryDetail: React.FC = () => {
                 }}>
                     상담 신청하기
                 </DialogTitle>
-                <DialogContent sx={{ mt: 2 }}>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <DialogContent sx={{mt: 2}}>
+                    <Box sx={{display: 'flex', flexDirection: 'column', gap: 2}}>
                         <TextField
                             fullWidth
                             label="이름"
                             margin="normal"
                             value={consultation.name}
-                            onChange={(e) => setConsultation({ ...consultation, name: e.target.value })}
+                            onChange={(e) => setConsultation({...consultation, name: e.target.value})}
                             error={!!error && !consultation.name}
                             helperText={!!error && !consultation.name ? '이름을 입력해주세요' : ''}
-                            sx={{ 
+                            sx={{
                                 '& .MuiOutlinedInput-root': {
                                     '&.Mui-focused fieldset': {
                                         borderColor: '#003459'
@@ -643,11 +637,11 @@ const InquiryDetail: React.FC = () => {
                                         value = value.slice(0, 3) + '-' + value.slice(3, 7) + '-' + value.slice(7, 11);
                                     }
                                 }
-                                setConsultation({ ...consultation, phone: value });
+                                setConsultation({...consultation, phone: value});
                             }}
                             error={!!error && (!consultation.phone || !/^010-\d{4}-\d{4}$/.test(consultation.phone))}
                             helperText={!!error && (!consultation.phone || !/^010-\d{4}-\d{4}$/.test(consultation.phone)) ? '올바른 전화번호 형식이 아닙니다' : '예) 010-1234-5678'}
-                            sx={{ 
+                            sx={{
                                 '& .MuiOutlinedInput-root': {
                                     '&.Mui-focused fieldset': {
                                         borderColor: '#003459'
@@ -664,10 +658,10 @@ const InquiryDetail: React.FC = () => {
                             type="email"
                             margin="normal"
                             value={consultation.email}
-                            onChange={(e) => setConsultation({ ...consultation, email: e.target.value })}
+                            onChange={(e) => setConsultation({...consultation, email: e.target.value})}
                             error={!!error && (!consultation.email || !/^.+@.+\..+$/.test(consultation.email))}
                             helperText={!!error && (!consultation.email || !/^.+@.+\..+$/.test(consultation.email)) ? '올바른 이메일 형식이 아닙니다' : '예) email@email.com'}
-                            sx={{ 
+                            sx={{
                                 '& .MuiOutlinedInput-root': {
                                     '&.Mui-focused fieldset': {
                                         borderColor: '#003459'
@@ -696,7 +690,7 @@ const InquiryDetail: React.FC = () => {
                                         const hours = String(koreanTime.getUTCHours()).padStart(2, '0');
                                         const minutes = String(koreanTime.getUTCMinutes()).padStart(2, '0');
                                         const formattedDate = `${year}-${month}-${day} ${hours}:${minutes}`;
-                                        setConsultation({ ...consultation, consultAt: formattedDate });
+                                        setConsultation({...consultation, consultAt: formattedDate});
                                         setError(null);
                                     }
                                 }}
@@ -707,7 +701,7 @@ const InquiryDetail: React.FC = () => {
                                     return maxDate;
                                 })()}
                                 format="yyyy-MM-dd HH:mm"
-                                sx={{ 
+                                sx={{
                                     width: '100%',
                                     '& .MuiOutlinedInput-root': {
                                         '&.Mui-focused fieldset': {
@@ -729,7 +723,7 @@ const InquiryDetail: React.FC = () => {
                             control={
                                 <Checkbox
                                     checked={consultation.consent}
-                                    onChange={(e) => setConsultation({ ...consultation, consent: e.target.checked })}
+                                    onChange={(e) => setConsultation({...consultation, consent: e.target.checked})}
                                     sx={{
                                         color: '#003459',
                                         '&.Mui-checked': {
@@ -739,19 +733,19 @@ const InquiryDetail: React.FC = () => {
                                 />
                             }
                             label="개인정보 수집 및 이용에 동의합니다"
-                            sx={{ mt: 1 }}
+                            sx={{mt: 1}}
                         />
                     </Box>
                 </DialogContent>
-                <DialogActions sx={{ 
-                    p: 3, 
+                <DialogActions sx={{
+                    p: 3,
                     borderTop: '1px solid #e0e0e0',
                     gap: 1
                 }}>
-                    <Button 
+                    <Button
                         onClick={() => setOpenDialog(false)}
                         variant="outlined"
-                        sx={{ 
+                        sx={{
                             color: '#003459',
                             borderColor: '#003459',
                             '&:hover': {
@@ -763,7 +757,7 @@ const InquiryDetail: React.FC = () => {
                         취소
                     </Button>
                     <Button
-                        onClick={handleSubmitConsultation} 
+                        onClick={handleSubmitConsultation}
                         variant="contained"
                         sx={{
                             backgroundColor: '#003459',
@@ -776,7 +770,7 @@ const InquiryDetail: React.FC = () => {
                     </Button>
                 </DialogActions>
             </Dialog>
-            
+
         </Box>
     );
 };

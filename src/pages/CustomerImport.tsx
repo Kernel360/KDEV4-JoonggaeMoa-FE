@@ -1,25 +1,23 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import {useState} from "react"
 import {
-    Box,
-    Container,
-    Typography,
-    Paper,
-    Button,
-    Grid,
-    AppBar,
-    Toolbar,
-    IconButton,
-    Divider,
     Alert,
-    Snackbar,
+    Box,
+    Button,
     CircularProgress,
+    Container,
+    Divider,
+    Grid,
+    IconButton,
+    Paper,
+    Snackbar,
+    Typography,
 } from "@mui/material"
-import { ArrowBack, CloudUpload } from "@mui/icons-material"
-import { useNavigate } from "react-router-dom"
-import { customerApi } from "../services/customerApi"
+import {ArrowBack, CloudUpload} from "@mui/icons-material"
+import {useNavigate} from "react-router-dom"
+import {customerApi} from "../services/customerApi"
 
 const CustomerImport = () => {
     const navigate = useNavigate()
@@ -62,17 +60,14 @@ const CustomerImport = () => {
                 // Redirect after successful upload
                 navigate("/customer-management")
             } else {
-                if(response.data.error?.code == "4092"){
+                if (response.data.error?.code == "4092") {
                     setError("이미 등록된 고객 정보가 있습니다.")
-                }
-                else if(response.data.error?.code == "4093"){
+                } else if (response.data.error?.code == "4093") {
                     setError("이미 등록된 이메일 정보가 있습니다.")
-        
-                }
-                else if(response.data.error?.code == "4002"){
+
+                } else if (response.data.error?.code == "4002") {
                     setError("지원하는 파일 형식이 아닙니다.")
-                }
-                else{
+                } else {
                     setError("파일 업로드에 실패했습니다.")
                 }
             }
@@ -104,28 +99,28 @@ const CustomerImport = () => {
     };
 
     return (
-        <Box sx={{ flexGrow: 1, minHeight: "100vh" }}>
-            <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
-                <Paper elevation={0} sx={{ p: 4 }}>
-                    <Box sx={{ display: "flex", alignItems: "center", mb: 4, justifyContent: "space-between" }}>
-                        <Box sx={{ display: "flex", alignItems: "center" }}>
-                            <IconButton onClick={() => navigate("/customer-management")} sx={{ mr: 1 }}>
-                                <ArrowBack />
+        <Box sx={{flexGrow: 1, minHeight: "100vh"}}>
+            <Container maxWidth="md" sx={{mt: 4, mb: 4}}>
+                <Paper elevation={0} sx={{p: 4}}>
+                    <Box sx={{display: "flex", alignItems: "center", mb: 4, justifyContent: "space-between"}}>
+                        <Box sx={{display: "flex", alignItems: "center"}}>
+                            <IconButton onClick={() => navigate("/customer-management")} sx={{mr: 1}}>
+                                <ArrowBack/>
                             </IconButton>
-                            <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                            <Typography variant="h6" sx={{fontWeight: "bold"}}>
                                 고객 정보 등록
                             </Typography>
                         </Box>
                         <Button
                             variant="outlined"
                             onClick={handleDownloadFormat}
-                            sx={{ borderColor: "#007ea7", color: "#007ea7" }}
+                            sx={{borderColor: "#007ea7", color: "#007ea7"}}
                         >
                             엑셀 형식 다운로드
                         </Button>
                     </Box>
 
-                    <Typography variant="subtitle2" color="textSecondary" sx={{ mb: 3 }}>
+                    <Typography variant="subtitle2" color="textSecondary" sx={{mb: 3}}>
                         엑셀 파일로 고객 정보를 일괄 등록합니다.
                     </Typography>
 
@@ -140,7 +135,7 @@ const CustomerImport = () => {
                     >
                         <input
                             accept=".xlsx,.xls,.csv"
-                            style={{ display: "none" }}
+                            style={{display: "none"}}
                             id="raised-button-file"
                             type="file"
                             onChange={handleFileChange}
@@ -149,10 +144,10 @@ const CustomerImport = () => {
                             <Button
                                 variant="contained"
                                 component="span"
-                                startIcon={<CloudUpload />}
+                                startIcon={<CloudUpload/>}
                                 sx={{
                                     bgcolor: "#007ea7",
-                                    "&:hover": { bgcolor: "#007ea7" },
+                                    "&:hover": {bgcolor: "#007ea7"},
                                     mb: 2,
                                 }}
                             >
@@ -162,18 +157,18 @@ const CustomerImport = () => {
                         <Typography variant="body2" color="textSecondary">
                             {file ? `선택된 파일: ${file.name}` : "엑셀 파일을 선택해주세요"}
                         </Typography>
-                        <Typography variant="caption" color="textSecondary" sx={{ display: "block", mt: 1 }}>
+                        <Typography variant="caption" color="textSecondary" sx={{display: "block", mt: 1}}>
                             지원 형식: .xlsx, .xls
                         </Typography>
                     </Box>
 
-                    <Divider sx={{ my: 3 }} />
+                    <Divider sx={{my: 3}}/>
 
                     <Grid container spacing={2} justifyContent="center">
                         <Grid item>
                             <Button
                                 variant="outlined"
-                                sx={{ borderColor: "#ddd", color: "#333" }}
+                                sx={{borderColor: "#ddd", color: "#333"}}
                                 onClick={() => navigate("/customer-management")}
                                 disabled={isUploading}
                             >
@@ -183,11 +178,11 @@ const CustomerImport = () => {
                         <Grid item>
                             <Button
                                 variant="contained"
-                                sx={{ bgcolor: "#000", "&:hover": { bgcolor: "#333" } }}
+                                sx={{bgcolor: "#000", "&:hover": {bgcolor: "#333"}}}
                                 disabled={!file || isUploading}
                                 onClick={handleUpload}
                             >
-                                {isUploading ? <CircularProgress size={24} /> : "업로드하기"}
+                                {isUploading ? <CircularProgress size={24}/> : "업로드하기"}
                             </Button>
                         </Grid>
                     </Grid>
@@ -195,13 +190,13 @@ const CustomerImport = () => {
             </Container>
 
             <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError(null)}>
-                <Alert onClose={() => setError(null)} severity="error" sx={{ width: "100%" }}>
+                <Alert onClose={() => setError(null)} severity="error" sx={{width: "100%"}}>
                     {error}
                 </Alert>
             </Snackbar>
 
             <Snackbar open={uploadSuccess} autoHideDuration={6000} onClose={() => setUploadSuccess(false)}>
-                <Alert severity="success" sx={{ width: "100%" }}>
+                <Alert severity="success" sx={{width: "100%"}}>
                     파일이 성공적으로 업로드되었습니다. 고객 목록 페이지로 이동합니다.
                 </Alert>
             </Snackbar>

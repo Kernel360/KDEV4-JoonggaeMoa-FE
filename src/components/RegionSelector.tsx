@@ -1,6 +1,15 @@
-import { Autocomplete, Chip, CircularProgress, FormControl, InputLabel, MenuItem, Select, TextField } from '@mui/material';
-import React, { useEffect } from 'react';
-import { Region, filterCities, filterDistricts, filterNeighborhoods } from '../utils/regionUtils';
+import {
+    Autocomplete,
+    Chip,
+    CircularProgress,
+    FormControl,
+    InputLabel,
+    MenuItem,
+    Select,
+    TextField
+} from '@mui/material';
+import React, {useEffect} from 'react';
+import {filterCities, filterDistricts, filterNeighborhoods, Region} from '../utils/regionUtils';
 
 interface RegionSelectorProps {
     regions: Region[];
@@ -16,14 +25,14 @@ interface RegionSelectorProps {
  * 시/도, 구/군, 동/읍/면 단위로 계층적으로 지역을 선택하는 컴포넌트
  */
 const RegionSelector: React.FC<RegionSelectorProps> = ({
-    regions,
-    selectedCity,
-    selectedDistrict,
-    selectedNeighborhood,
-    onCityChange,
-    onDistrictChange,
-    onNeighborhoodChange
-}) => {
+                                                           regions,
+                                                           selectedCity,
+                                                           selectedDistrict,
+                                                           selectedNeighborhood,
+                                                           onCityChange,
+                                                           onDistrictChange,
+                                                           onNeighborhoodChange
+                                                       }) => {
     // 디버깅: regions가 로드되었는지 확인
     useEffect(() => {
         console.log('RegionSelector - regions loaded:', regions?.length || 0);
@@ -114,7 +123,7 @@ const RegionSelector: React.FC<RegionSelectorProps> = ({
             {selectedCity && (
                 <FormControl fullWidth margin="normal">
                     <InputLabel id="district-select-label">
-                        구/군 선택 {districtsLoading && <CircularProgress size={20} sx={{ ml: 1 }} />}
+                        구/군 선택 {districtsLoading && <CircularProgress size={20} sx={{ml: 1}}/>}
                     </InputLabel>
                     <Select
                         labelId="district-select-label"
@@ -155,14 +164,14 @@ const RegionSelector: React.FC<RegionSelectorProps> = ({
                         disabled={neighborhoodsLoading}
                         onChange={(_, newValue) => onNeighborhoodChange(newValue)}
                         renderInput={(params) => (
-                            <TextField 
-                                {...params} 
-                                label="동/읍/면 선택" 
+                            <TextField
+                                {...params}
+                                label="동/읍/면 선택"
                                 InputProps={{
                                     ...params.InputProps,
                                     endAdornment: (
                                         <>
-                                            {neighborhoodsLoading ? <CircularProgress size={20} /> : null}
+                                            {neighborhoodsLoading ? <CircularProgress size={20}/> : null}
                                             {params.InputProps.endAdornment}
                                         </>
                                     ),
@@ -173,7 +182,7 @@ const RegionSelector: React.FC<RegionSelectorProps> = ({
                             value.map((option, index) => (
                                 <Chip
                                     label={option}
-                                    {...getTagProps({ index })}
+                                    {...getTagProps({index})}
                                     size="small"
                                 />
                             ))

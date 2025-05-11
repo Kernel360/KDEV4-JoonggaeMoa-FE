@@ -10,13 +10,12 @@ import {
     Popover,
     Select,
     SelectChangeEvent,
-    TextField,
-    type ChipProps
+    TextField
 } from "@mui/material";
-import React, { useState } from "react";
-import { RealEstateType, TradeType, REAL_ESTATE_OPTIONS, TRADE_TYPE_OPTIONS } from "../types/article";
-import { getTypeColor } from "../utils/articleDisplay";
-import { convertKoreanPriceToNumber } from "../utils/articlePrice";
+import React, {useState} from "react";
+import {REAL_ESTATE_OPTIONS, RealEstateType, TRADE_TYPE_OPTIONS, TradeType} from "../types/article";
+import {getTypeColor} from "../utils/articleDisplay";
+import {convertKoreanPriceToNumber} from "../utils/articlePrice";
 
 interface ArticleListFilterProps {
     typeFilter: RealEstateType[];
@@ -40,16 +39,16 @@ interface ArticleListFilterProps {
 }
 
 const ArticleListFilter: React.FC<ArticleListFilterProps> = ({
-    typeFilter,
-    tradeTypeFilter,
-    minSalePrice,
-    maxSalePrice,
-    minRentPrice,
-    maxRentPrice,
-    sortField,
-    sortOrder,
-    onFilterChange
-}) => {
+                                                                 typeFilter,
+                                                                 tradeTypeFilter,
+                                                                 minSalePrice,
+                                                                 maxSalePrice,
+                                                                 minRentPrice,
+                                                                 maxRentPrice,
+                                                                 sortField,
+                                                                 sortOrder,
+                                                                 onFilterChange
+                                                             }) => {
     const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
     const open = Boolean(anchorEl);
 
@@ -65,31 +64,31 @@ const ArticleListFilter: React.FC<ArticleListFilterProps> = ({
         const newTypeFilter = typeFilter.includes(type)
             ? typeFilter.filter(t => t !== type)
             : [...typeFilter, type];
-        onFilterChange({ typeFilter: newTypeFilter });
+        onFilterChange({typeFilter: newTypeFilter});
     };
 
     const handleTradeTypeFilterChange = (type: TradeType) => {
         const newTradeTypeFilter = tradeTypeFilter.includes(type)
             ? tradeTypeFilter.filter(t => t !== type)
             : [...tradeTypeFilter, type];
-        onFilterChange({ tradeTypeFilter: newTradeTypeFilter });
+        onFilterChange({tradeTypeFilter: newTradeTypeFilter});
     };
 
     const handlePriceChange = (field: string, value: string) => {
         const numericValue = value === '' ? 0 : convertKoreanPriceToNumber(value);
-        onFilterChange({ [field]: numericValue });
+        onFilterChange({[field]: numericValue});
     };
 
     const handleSortChange = (event: SelectChangeEvent<string>) => {
         const [field, order] = event.target.value.split(':');
-        onFilterChange({ sortField: field, sortOrder: order });
+        onFilterChange({sortField: field, sortOrder: order});
     };
 
     return (
-        <Box sx={{ mb: 2 }}>
+        <Box sx={{mb: 2}}>
             <Button
                 onClick={handleClick}
-                startIcon={<FilterListIcon />}
+                startIcon={<FilterListIcon/>}
                 variant="outlined"
                 size="small"
             >
@@ -105,10 +104,10 @@ const ArticleListFilter: React.FC<ArticleListFilterProps> = ({
                     horizontal: 'left',
                 }}
             >
-                <Box sx={{ p: 2, width: 300 }}>
-                    <Box sx={{ mb: 2 }}>
+                <Box sx={{p: 2, width: 300}}>
+                    <Box sx={{mb: 2}}>
                         <InputLabel>매물 유형</InputLabel>
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
+                        <Box sx={{display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1}}>
                             {REAL_ESTATE_OPTIONS.map((type) => (
                                 <Chip
                                     key={type}
@@ -124,9 +123,9 @@ const ArticleListFilter: React.FC<ArticleListFilterProps> = ({
                         </Box>
                     </Box>
 
-                    <Box sx={{ mb: 2 }}>
+                    <Box sx={{mb: 2}}>
                         <InputLabel>거래 유형</InputLabel>
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
+                        <Box sx={{display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1}}>
                             {TRADE_TYPE_OPTIONS.map((type) => (
                                 <Chip
                                     key={type}
@@ -138,9 +137,9 @@ const ArticleListFilter: React.FC<ArticleListFilterProps> = ({
                         </Box>
                     </Box>
 
-                    <Box sx={{ mb: 2 }}>
+                    <Box sx={{mb: 2}}>
                         <InputLabel>매매가</InputLabel>
-                        <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+                        <Box sx={{display: 'flex', gap: 1, mt: 1}}>
                             <TextField
                                 size="small"
                                 placeholder="최소"
@@ -162,9 +161,9 @@ const ArticleListFilter: React.FC<ArticleListFilterProps> = ({
                         </Box>
                     </Box>
 
-                    <Box sx={{ mb: 2 }}>
+                    <Box sx={{mb: 2}}>
                         <InputLabel>보증금/월세</InputLabel>
-                        <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+                        <Box sx={{display: 'flex', gap: 1, mt: 1}}>
                             <TextField
                                 size="small"
                                 placeholder="최소"

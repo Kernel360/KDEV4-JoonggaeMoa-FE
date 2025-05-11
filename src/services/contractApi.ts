@@ -1,8 +1,8 @@
 import api from "./api"
-import type { AxiosResponse } from "axios"
-import type { ApiResponse } from "./customerApi"
-import type { CreateContractRequest, UpdateContractRequest, ContractResponse, ExpiredContractResponse } from "../types/contract"
-import type { PageResponse } from "../types/page"
+import type {AxiosResponse} from "axios"
+import type {ApiResponse} from "./customerApi"
+import type {ContractResponse, CreateContractRequest, ExpiredContractResponse} from "../types/contract"
+import type {PageResponse} from "../types/page"
 
 // 계약 생성
 export const createContract = async (
@@ -10,7 +10,7 @@ export const createContract = async (
     file: File,
 ): Promise<AxiosResponse<ApiResponse<string>>> => {
     const formData = new FormData()
-    formData.append("contractData", new Blob([JSON.stringify(contractData)], { type: "application/json" }))
+    formData.append("contractData", new Blob([JSON.stringify(contractData)], {type: "application/json"}))
     formData.append("file", file)
 
     return api.post(`/api/contracts`, formData, {
@@ -36,7 +36,7 @@ export const getAllContracts = async (
         size: size.toString(),
         sort: 'createdAt,desc'
     });
-    
+
     if (keyword) {
         params.append('keyword', keyword);
     }

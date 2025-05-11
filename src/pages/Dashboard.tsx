@@ -1,73 +1,32 @@
 "use client"
 
-import React, { useEffect, useState, useRef } from "react"
+import React, {useEffect, useRef, useState} from "react"
 import {
     Box,
-    Typography,
-    List,
-    ListItem,
-    ListItemIcon,
-    ListItemText,
-    Paper,
-    Grid,
-    Avatar,
-    IconButton,
-    Badge,
     Button,
-    createTheme,
-    ThemeProvider,
-    Menu,
-    MenuItem,
-    Container,
-    AppBar,
-    Toolbar,
     CircularProgress,
-    ToggleButtonGroup,
+    createTheme,
+    Grid,
+    Paper,
     ToggleButton,
-    Snackbar,
-    Alert,
-    Checkbox,
+    ToggleButtonGroup,
+    Typography,
 } from "@mui/material"
-import {
-    Business,
-    People,
-    Forum,
-    Email,
-    Home,
-    Person,
-    Notifications,
-    Assignment,
-    InsertDriveFile,
-    Search,
-    Dashboard as DashboardIcon,
-    Settings,
-    Menu as MenuIcon,
-    ChevronLeft,
-    Logout,
-    ArrowBack,
-} from "@mui/icons-material"
-import { useNavigate } from "react-router-dom"
-import { useAuth } from "../context/AuthContext"
+import {Forum, InsertDriveFile, People,} from "@mui/icons-material"
+import {useNavigate} from "react-router-dom"
+import {useAuth} from "../context/AuthContext"
 import api from "../services/api"
-import { PieChart } from "@toast-ui/chart"
-import { dashboardApi } from "../services/dashboardApi"
-import type { 
-    RealEstateTypeSummaryResponse, 
-    TradeTypeSummaryResponse,
-    CustomerSummaryResponse,
-    ContractSummaryResponse,
+import {PieChart} from "@toast-ui/chart"
+import {dashboardApi} from "../services/dashboardApi"
+import type {
     ConsultationSummaryResponse,
-    RealEstateTypeSummary,
-    TradeTypeSummary
+    ContractSummaryResponse,
+    CustomerSummaryResponse,
+    RealEstateTypeSummaryResponse,
+    TradeTypeSummaryResponse
 } from "../types/dashboard"
-import { format, differenceInMonths, isSameMonth, isToday, parseISO, addMonths, differenceInDays, startOfDay } from 'date-fns';
-
-import { TooltipModel } from "@toast-ui/chart/types/components/tooltip"
-import { TooltipTheme } from "@toast-ui/chart/types/theme"
-
-import { toast } from 'react-toastify';
-import Layout from "../components/Layout"
-import { contractApi } from "../services/contractApi"
+import {differenceInDays, format, parseISO, startOfDay} from 'date-fns';
+import {contractApi} from "../services/contractApi"
 
 
 // 커스텀 테마 생성
@@ -147,8 +106,8 @@ const Dashboard = () => {
     const [notificationError, setNotificationError] = useState<string | null>(null);
     const [notificationAnchorEl, setNotificationAnchorEl] = useState<null | HTMLElement>(null);
     const [unreadCount, setUnreadCount] = useState(0);
-    
-    const { logout } = useAuth()
+
+    const {logout} = useAuth()
     const navigate = useNavigate()
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -161,22 +120,22 @@ const Dashboard = () => {
     const [customerSummary, setCustomerSummary] = useState<CustomerSummaryResponse | null>(null);
     const [contractSummary, setContractSummary] = useState<ContractSummaryResponse | null>(null);
     const [consultationSummary, setConsultationSummary] = useState<ConsultationSummaryResponse | null>(null);
-    
+
     // 차트 인스턴스 ref
     const realEstateTypeChartInstance = useRef<any>(null);
     const tradeTypeChartInstance = useRef<any>(null);
-    
+
     // 차트 컨테이너 ref
     const realEstateTypeChartRef = useRef<HTMLDivElement>(null);
     const tradeTypeChartRef = useRef<HTMLDivElement>(null);
-    
+
     // 로딩 상태 분리
     const [realEstateTypeLoading, setRealEstateTypeLoading] = useState(false);
     const [tradeTypeLoading, setTradeTypeLoading] = useState(false);
     const [customerSummaryLoading, setCustomerSummaryLoading] = useState(false);
     const [contractSummaryLoading, setContractSummaryLoading] = useState(false);
     const [consultationSummaryLoading, setConsultationSummaryLoading] = useState(false);
-    
+
     // 에러 상태 분리
     const [realEstateTypeError, setRealEstateTypeError] = useState<string | null>(null);
     const [tradeTypeError, setTradeTypeError] = useState<string | null>(null);
@@ -246,7 +205,7 @@ const Dashboard = () => {
         navigate("/");
         handleMenuClose();
     }
-    
+
 
     const fetchContracts = async () => {
         try {
@@ -269,7 +228,7 @@ const Dashboard = () => {
         if (!agentId) {
             console.warn("agentId is missing or invalid:", agentId);
             return;
-        }    
+        }
         // 초기 알림 데이터 로드
         const fetchNotifications = async () => {
             try {
@@ -279,7 +238,7 @@ const Dashboard = () => {
                         ...notification,
                         isRead: notification.read
                     }));
-                    
+
                     setNotifications(allNotifications);
                     const unreadCount = allNotifications.filter(n => !n.isRead).length;
                     setUnreadCount(unreadCount);
@@ -301,7 +260,7 @@ const Dashboard = () => {
         const initialFetch = async () => {
             try {
                 setLoading(true);
-                
+
                 // 초기 데이터 로딩
                 await Promise.all([
                     fetchRealEstateTypeData(realEstateTypePeriod),
@@ -311,7 +270,7 @@ const Dashboard = () => {
                     fetchConsultationSummary(),
                     fetchContracts()
                 ]);
-                
+
                 setError(null);
             } catch (err) {
                 console.error("Error fetching initial dashboard data:", err);
@@ -320,16 +279,15 @@ const Dashboard = () => {
                 setLoading(false);
             }
         };
-        
+
         initialFetch();
-        
+
         // 컴포넌트 언마운트 시 차트 인스턴스 정리
         return () => {
             cleanupCharts();
         };
     }, []); // 의존성 배열 비움 - 컴포넌트 마운트 시 한 번만 실행
 
-    
 
     const fetchRealEstateTypeData = async (period) => {
         try {
@@ -439,7 +397,7 @@ const Dashboard = () => {
             fetchRealEstateTypeData(newPeriod);
         }
     };
-    
+
     const handleTradeTypePeriodChange = (event, newPeriod) => {
         if (newPeriod !== null) {
             setTradeTypePeriod(newPeriod);
@@ -455,12 +413,12 @@ const Dashboard = () => {
 
     const getContractsByPeriod = (period: string = selectedPeriod) => {
         if (!contracts) return [];
-        
+
         return contracts.filter(contract => {
             const expiredDate = startOfDay(parseISO(contract.expiredAt));
             const today = startOfDay(new Date());
             const daysDiff = differenceInDays(expiredDate, today);
-            
+
             switch (period) {
                 case 'today':
                     return daysDiff === 0;
@@ -475,7 +433,7 @@ const Dashboard = () => {
             }
         }).sort((a, b) => new Date(a.expiredAt).getTime() - new Date(b.expiredAt).getTime());
     };
-    
+
     // 차트 렌더링
     useEffect(() => {
         if (!realEstateTypeData?.values?.length || !realEstateTypeChartRef.current) return;
@@ -493,9 +451,9 @@ const Dashboard = () => {
 
         const mainTypes = sortedRealEstateTypes.filter(item => item.ratio >= THRESHOLD);
         const otherTypes = sortedRealEstateTypes.filter(item => item.ratio < THRESHOLD);
-        
+
         const otherRatio = otherTypes.reduce((sum, item) => sum + item.ratio, 0);
-        
+
         const realEstateChartData = {
             series: [
                 ...mainTypes.map(item => ({
@@ -514,8 +472,7 @@ const Dashboard = () => {
                 el: realEstateTypeChartRef.current,
                 data: realEstateChartData,
                 options: {
-                    chart: { 
-                    },
+                    chart: {},
                     series: {
                         dataLabels: {
                             visible: true,
@@ -531,7 +488,7 @@ const Dashboard = () => {
                     theme: {
                         series: {
                             colors: [
-                                '#4CAF50', '#2196F3', '#FFC107', '#9C27B0', 
+                                '#4CAF50', '#2196F3', '#FFC107', '#9C27B0',
                                 '#FF5722', '#607D8B', '#795548', '#3F51B5'
                             ]
                         }
@@ -549,7 +506,7 @@ const Dashboard = () => {
                     },
                     legend: {
                         visible: true,
-                        showCheckbox: false 
+                        showCheckbox: false
                     },
                     exportMenu: {
                         visible: false
@@ -579,7 +536,7 @@ const Dashboard = () => {
         }
 
         const types = tradeTypeData.values.filter(item => item.ratio >= 0.5);
-        
+
         const tradeTypeChartData = {
             series: types.map(item => ({
                 name: item.type,
@@ -592,8 +549,7 @@ const Dashboard = () => {
                 el: tradeTypeChartRef.current,
                 data: tradeTypeChartData,
                 options: {
-                    chart: { 
-                    },
+                    chart: {},
                     series: {
                         dataLabels: {
                             visible: true,
@@ -616,7 +572,7 @@ const Dashboard = () => {
                     },
                     legend: {
                         visible: true,
-                        showCheckbox: false 
+                        showCheckbox: false
                     },
                     exportMenu: {
                         visible: false
@@ -636,28 +592,28 @@ const Dashboard = () => {
     }, [tradeTypeData]);
 
     const handleContractClick = (contractId: string) => {
-    navigate(`/contract/${contractId}`);
-};
+        navigate(`/contract/${contractId}`);
+    };
 
     return (
-        <Box sx={{ px: 4, pb: 6 }}>
+        <Box sx={{px: 4, pb: 6}}>
             {/* 통계 */}
-            <Grid container spacing={4} sx={{ mb: 4, mt: 2 }}>
+            <Grid container spacing={4} sx={{mb: 4, mt: 2}}>
                 <Grid item xs={12} md={4}>
-                    <Paper sx={{ p: 4, bgcolor: '#ffffff', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)' }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2 }}>
+                    <Paper sx={{p: 4, bgcolor: '#ffffff', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'}}>
+                        <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2}}>
                             <Box>
-                                <Typography color="#003459" variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
+                                <Typography color="#003459" variant="body2" sx={{mb: 1, fontWeight: 500}}>
                                     금주 신규 고객
                                 </Typography>
                                 {customerSummaryLoading ? (
-                                    <CircularProgress size={24} />
+                                    <CircularProgress size={24}/>
                                 ) : customerSummaryError ? (
                                     <Typography color="error" variant="body2">
                                         {customerSummaryError}
                                     </Typography>
                                 ) : customerSummary ? (
-                                    <Typography variant="h4" sx={{ color: '#00171f', fontWeight: 600 }}>
+                                    <Typography variant="h4" sx={{color: '#00171f', fontWeight: 600}}>
                                         {customerSummary.count}
                                     </Typography>
                                 ) : (
@@ -666,22 +622,22 @@ const Dashboard = () => {
                                     </Typography>
                                 )}
                             </Box>
-                            <Box sx={{ 
-                                p: 1.5, 
-                                bgcolor: '#00a8e8', 
+                            <Box sx={{
+                                p: 1.5,
+                                bgcolor: '#00a8e8',
                                 borderRadius: '50%',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center'
                             }}>
-                                <People sx={{ color: '#ffffff' }} />
+                                <People sx={{color: '#ffffff'}}/>
                             </Box>
                         </Box>
                         {customerSummary && (
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Typography 
-                                    variant="body2" 
-                                    sx={{ 
+                            <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+                                <Typography
+                                    variant="body2"
+                                    sx={{
                                         color: customerSummary.rate >= 0 ? '#007ea7' : '#00171f',
                                         display: 'flex',
                                         alignItems: 'center',
@@ -699,20 +655,20 @@ const Dashboard = () => {
                 </Grid>
 
                 <Grid item xs={12} md={4}>
-                    <Paper sx={{ p: 4, bgcolor: '#ffffff', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)' }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2 }}>
+                    <Paper sx={{p: 4, bgcolor: '#ffffff', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'}}>
+                        <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2}}>
                             <Box>
-                                <Typography color="#003459" variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
+                                <Typography color="#003459" variant="body2" sx={{mb: 1, fontWeight: 500}}>
                                     진행중인 계약
                                 </Typography>
                                 {contractSummaryLoading ? (
-                                    <CircularProgress size={24} />
+                                    <CircularProgress size={24}/>
                                 ) : contractSummaryError ? (
                                     <Typography color="error" variant="body2">
                                         {contractSummaryError}
                                     </Typography>
                                 ) : contractSummary ? (
-                                    <Typography variant="h4" sx={{ color: '#00171f', fontWeight: 600 }}>
+                                    <Typography variant="h4" sx={{color: '#00171f', fontWeight: 600}}>
                                         {contractSummary.count}
                                     </Typography>
                                 ) : (
@@ -721,22 +677,22 @@ const Dashboard = () => {
                                     </Typography>
                                 )}
                             </Box>
-                            <Box sx={{ 
-                                p: 1.5, 
-                                bgcolor: '#00a8e8', 
+                            <Box sx={{
+                                p: 1.5,
+                                bgcolor: '#00a8e8',
                                 borderRadius: '50%',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center'
                             }}>
-                                <InsertDriveFile sx={{ color: '#ffffff' }} />
+                                <InsertDriveFile sx={{color: '#ffffff'}}/>
                             </Box>
                         </Box>
                         {contractSummary && (
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Typography 
-                                    variant="body2" 
-                                    sx={{ 
+                            <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+                                <Typography
+                                    variant="body2"
+                                    sx={{
                                         color: contractSummary.rate >= 0 ? '#007ea7' : '#00171f',
                                         display: 'flex',
                                         alignItems: 'center',
@@ -754,9 +710,9 @@ const Dashboard = () => {
                 </Grid>
 
                 <Grid item xs={12} md={4}>
-                    <Paper 
-                        sx={{ 
-                            p: 4, 
+                    <Paper
+                        sx={{
+                            p: 4,
                             bgcolor: '#ffffff',
                             cursor: 'pointer',
                             transition: 'all 0.2s ease',
@@ -768,19 +724,19 @@ const Dashboard = () => {
                         }}
                         onClick={() => navigate('/consultation')}
                     >
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2 }}>
+                        <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 2}}>
                             <Box>
-                                <Typography color="#003459" variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
+                                <Typography color="#003459" variant="body2" sx={{mb: 1, fontWeight: 500}}>
                                     오늘 상담
                                 </Typography>
                                 {consultationSummaryLoading ? (
-                                    <CircularProgress size={24} />
+                                    <CircularProgress size={24}/>
                                 ) : consultationSummaryError ? (
                                     <Typography color="error" variant="body2">
                                         {consultationSummaryError}
                                     </Typography>
                                 ) : consultationSummary ? (
-                                    <Typography variant="h4" sx={{ color: '#00171f', fontWeight: 600 }}>
+                                    <Typography variant="h4" sx={{color: '#00171f', fontWeight: 600}}>
                                         {consultationSummary.todayCount}
                                     </Typography>
                                 ) : (
@@ -789,22 +745,22 @@ const Dashboard = () => {
                                     </Typography>
                                 )}
                             </Box>
-                            <Box sx={{ 
-                                p: 1.5, 
-                                bgcolor: '#00a8e8', 
+                            <Box sx={{
+                                p: 1.5,
+                                bgcolor: '#00a8e8',
                                 borderRadius: '50%',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center'
                             }}>
-                                <Forum sx={{ color: '#ffffff' }} />
+                                <Forum sx={{color: '#ffffff'}}/>
                             </Box>
                         </Box>
                         {consultationSummary && (
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Typography 
-                                    variant="body2" 
-                                    sx={{ 
+                            <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+                                <Typography
+                                    variant="body2"
+                                    sx={{
                                         color: '#007ea7',
                                         display: 'flex',
                                         alignItems: 'center',
@@ -823,11 +779,11 @@ const Dashboard = () => {
             </Grid>
 
             {/* 만료 예정 계약 */}
-            <Grid container spacing={3} sx={{ mb: 4 }}>
+            <Grid container spacing={3} sx={{mb: 4}}>
                 <Grid item xs={12}>
-                    <Paper sx={{ p: 4, bgcolor: '#ffffff', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)' }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                            <Typography variant="h6" sx={{ color: '#00171f', fontWeight: 600 }}>
+                    <Paper sx={{p: 4, bgcolor: '#ffffff', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'}}>
+                        <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3}}>
+                            <Typography variant="h6" sx={{color: '#00171f', fontWeight: 600}}>
                                 만료 예정 계약
                             </Typography>
                             <ToggleButtonGroup
@@ -868,97 +824,100 @@ const Dashboard = () => {
                         </Box>
 
                         {contractsLoading ? (
-                            <Box sx={{ display: "flex", justifyContent: "center", my: 2 }}>
-                                <CircularProgress size={24} />
+                            <Box sx={{display: "flex", justifyContent: "center", my: 2}}>
+                                <CircularProgress size={24}/>
                             </Box>
                         ) : contractsError ? (
                             <Typography color="error" variant="body2">
                                 {contractsError}
                             </Typography>
                         ) : (
-                            <Box sx={{ overflowX: 'auto' }}>
-                                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                            <Box sx={{overflowX: 'auto'}}>
+                                <table style={{width: '100%', borderCollapse: 'collapse'}}>
                                     <thead>
-                                        <tr style={{ 
-                                            backgroundColor: '#e9ecef',
-                                            borderBottom: '1px solid #e9ecef'
-                                        }}>
-                                            <th style={{ 
-                                                padding: '12px 16px',
-                                                textAlign: 'left',
-                                                fontSize: '0.875rem',
-                                                fontWeight: 500,
-                                                color: '#003459'
-                                            }}>임대인</th>
-                                            <th style={{ 
-                                                padding: '12px 16px',
-                                                textAlign: 'left',
-                                                fontSize: '0.875rem',
-                                                fontWeight: 500,
-                                                color: '#003459'
-                                            }}>임차인</th>
-                                            <th style={{ 
-                                                padding: '12px 16px',
-                                                textAlign: 'left',
-                                                fontSize: '0.875rem',
-                                                fontWeight: 500,
-                                                color: '#003459'
-                                            }}>만료일</th>
-                                        </tr>
+                                    <tr style={{
+                                        backgroundColor: '#e9ecef',
+                                        borderBottom: '1px solid #e9ecef'
+                                    }}>
+                                        <th style={{
+                                            padding: '12px 16px',
+                                            textAlign: 'left',
+                                            fontSize: '0.875rem',
+                                            fontWeight: 500,
+                                            color: '#003459'
+                                        }}>임대인
+                                        </th>
+                                        <th style={{
+                                            padding: '12px 16px',
+                                            textAlign: 'left',
+                                            fontSize: '0.875rem',
+                                            fontWeight: 500,
+                                            color: '#003459'
+                                        }}>임차인
+                                        </th>
+                                        <th style={{
+                                            padding: '12px 16px',
+                                            textAlign: 'left',
+                                            fontSize: '0.875rem',
+                                            fontWeight: 500,
+                                            color: '#003459'
+                                        }}>만료일
+                                        </th>
+                                    </tr>
                                     </thead>
                                     <tbody>
-                                        {getContractsByPeriod().length === 0 ? (
-                                            <tr>
-                                                <td colSpan={4} style={{ 
-                                                    padding: '24px',
-                                                    textAlign: 'center',
-                                                    color: '#00a8e8'
-                                                }}>
-                                                    {selectedPeriod === 'today' && '오늘 만료되는 계약이 없습니다.'}
-                                                    {selectedPeriod === '1-2month' && '1-2개월 이내 만료되는 계약이 없습니다.'}
-                                                    {selectedPeriod === '3month' && '3개월 이내 만료되는 계약이 없습니다.'}
-                                                    {selectedPeriod === '4-6month' && '4-6개월 이내 만료되는 계약이 없습니다.'}
-                                                </td>
-                                            </tr>
-                                        ) : (
-                                            getContractsByPeriod()
-                                                .map(contract => (
-                                                    <tr 
-                                                        key={contract.id}
-                                                        style={{ 
-                                                            borderBottom: '1px solid #e9ecef',
-                                                            cursor: 'pointer',
-                                                            backgroundColor: 'transparent',
-                                                            transition: 'background-color 0.2s'
-                                                        }}
-                                                        onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f8f9fa'}
-                                                        onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                                                        onClick={() => handleContractClick(contract.id)}
-                                                    >
-                                                        <td style={{ 
-                                                            padding: '12px 16px',
-                                                            fontSize: '0.875rem',
-                                                            color: '#00171f'
-                                                        }}>
-                                                            {contract.landlordName}
-                                                        </td>
-                                                        <td style={{ 
-                                                            padding: '12px 16px',
-                                                            fontSize: '0.875rem',
-                                                            color: '#00171f'
-                                                        }}>
-                                                            {contract.tenantName}
-                                                        </td>
-                                                        <td style={{ 
-                                                            padding: '12px 16px',
-                                                            fontSize: '0.875rem',
-                                                            color: '#666666'
-                                                        }}>
-                                                            {format(parseISO(contract.expiredAt), 'yyyy년 M월 d일')}
-                                                        </td>
-                                                    </tr>
-                                                ))
-                                        )}
+                                    {getContractsByPeriod().length === 0 ? (
+                                        <tr>
+                                            <td colSpan={4} style={{
+                                                padding: '24px',
+                                                textAlign: 'center',
+                                                color: '#00a8e8'
+                                            }}>
+                                                {selectedPeriod === 'today' && '오늘 만료되는 계약이 없습니다.'}
+                                                {selectedPeriod === '1-2month' && '1-2개월 이내 만료되는 계약이 없습니다.'}
+                                                {selectedPeriod === '3month' && '3개월 이내 만료되는 계약이 없습니다.'}
+                                                {selectedPeriod === '4-6month' && '4-6개월 이내 만료되는 계약이 없습니다.'}
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        getContractsByPeriod()
+                                            .map(contract => (
+                                                <tr
+                                                    key={contract.id}
+                                                    style={{
+                                                        borderBottom: '1px solid #e9ecef',
+                                                        cursor: 'pointer',
+                                                        backgroundColor: 'transparent',
+                                                        transition: 'background-color 0.2s'
+                                                    }}
+                                                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f8f9fa'}
+                                                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                                    onClick={() => handleContractClick(contract.id)}
+                                                >
+                                                    <td style={{
+                                                        padding: '12px 16px',
+                                                        fontSize: '0.875rem',
+                                                        color: '#00171f'
+                                                    }}>
+                                                        {contract.landlordName}
+                                                    </td>
+                                                    <td style={{
+                                                        padding: '12px 16px',
+                                                        fontSize: '0.875rem',
+                                                        color: '#00171f'
+                                                    }}>
+                                                        {contract.tenantName}
+                                                    </td>
+                                                    <td style={{
+                                                        padding: '12px 16px',
+                                                        fontSize: '0.875rem',
+                                                        color: '#666666'
+                                                    }}>
+                                                        {format(parseISO(contract.expiredAt), 'yyyy년 M월 d일')}
+                                                    </td>
+                                                </tr>
+                                            ))
+                                    )}
                                     </tbody>
                                 </table>
                             </Box>
@@ -970,8 +929,8 @@ const Dashboard = () => {
             {/* Charts */}
             <Grid container spacing={3}>
                 <Grid item xs={12} md={6}>
-                    <Paper sx={{ p: 3, boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)' }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                    <Paper sx={{p: 3, boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'}}>
+                        <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3}}>
                             <Typography variant="h6">매물 유형별 분포</Typography>
                             <ToggleButtonGroup
                                 value={realEstateTypePeriod}
@@ -1006,41 +965,41 @@ const Dashboard = () => {
                                 </ToggleButton>
                             </ToggleButtonGroup>
                         </Box>
-                        
+
                         {realEstateTypeLoading ? (
-                            <Box sx={{ display: "flex", justifyContent: "center", my: 5 }}>
-                                <CircularProgress />
+                            <Box sx={{display: "flex", justifyContent: "center", my: 5}}>
+                                <CircularProgress/>
                             </Box>
                         ) : realEstateTypeError ? (
-                            <Box sx={{ textAlign: "center", py: 3 }}>
+                            <Box sx={{textAlign: "center", py: 3}}>
                                 <Typography color="error">{realEstateTypeError}</Typography>
-                                <Button 
-                                    variant="contained" 
-                                    sx={{ mt: 2 }} 
+                                <Button
+                                    variant="contained"
+                                    sx={{mt: 2}}
                                     onClick={() => handleRealEstateTypePeriodChange(null as any, realEstateTypePeriod)}
                                 >
                                     다시 시도
                                 </Button>
                             </Box>
                         ) : (
-                            <Box 
-                                ref={realEstateTypeChartRef} 
-                                sx={{ 
+                            <Box
+                                ref={realEstateTypeChartRef}
+                                sx={{
                                     width: '100%',
                                     height: '350px',
                                     '& canvas': {
                                         width: '100% !important',
                                         height: '100% !important'
                                     }
-                                }} 
+                                }}
                             />
                         )}
                     </Paper>
                 </Grid>
 
                 <Grid item xs={12} md={6}>
-                    <Paper sx={{ p: 3, boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)' }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                    <Paper sx={{p: 3, boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'}}>
+                        <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3}}>
                             <Typography variant="h6">거래 유형별 분포</Typography>
                             <ToggleButtonGroup
                                 value={tradeTypePeriod}
@@ -1075,39 +1034,39 @@ const Dashboard = () => {
                                 </ToggleButton>
                             </ToggleButtonGroup>
                         </Box>
-                        
+
                         {tradeTypeLoading ? (
-                            <Box sx={{ display: "flex", justifyContent: "center", my: 5 }}>
-                                <CircularProgress />
+                            <Box sx={{display: "flex", justifyContent: "center", my: 5}}>
+                                <CircularProgress/>
                             </Box>
                         ) : tradeTypeError ? (
-                            <Box sx={{ textAlign: "center", py: 3 }}>
+                            <Box sx={{textAlign: "center", py: 3}}>
                                 <Typography color="error">{tradeTypeError}</Typography>
-                                <Button 
-                                    variant="contained" 
-                                    sx={{ mt: 2 }} 
+                                <Button
+                                    variant="contained"
+                                    sx={{mt: 2}}
                                     onClick={() => handleTradeTypePeriodChange(null as any, tradeTypePeriod)}
                                 >
                                     다시 시도
                                 </Button>
                             </Box>
                         ) : (
-                            <Box 
-                                ref={tradeTypeChartRef} 
-                                sx={{ 
+                            <Box
+                                ref={tradeTypeChartRef}
+                                sx={{
                                     width: '100%',
                                     height: '350px',
                                     '& canvas': {
                                         width: '100% !important',
                                         height: '100% !important'
                                     }
-                                }} 
+                                }}
                             />
                         )}
                     </Paper>
                 </Grid>
             </Grid>
-            
+
         </Box>
     )
 }

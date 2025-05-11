@@ -1,35 +1,32 @@
 "use client"
 
 import type React from "react"
-
-import { useState, useEffect } from "react"
+import {useEffect, useState} from "react"
 import {
-    Box,
-    Container,
-    Typography,
-    Paper,
-    TextField,
-    Button,
-    Grid,
-    AppBar,
-    Toolbar,
-    IconButton,
-    CircularProgress,
-    Snackbar,
     Alert,
-    Divider,
+    Box,
+    Button,
     Card,
     CardContent,
+    CircularProgress,
+    Container,
+    Divider,
+    Grid,
+    IconButton,
     InputAdornment,
+    Paper,
+    Snackbar,
+    TextField,
+    Typography,
 } from "@mui/material"
-import { ArrowBack, Add, Search, Edit, Delete } from "@mui/icons-material"
-import { useNavigate, useParams } from "react-router-dom"
-import { messageTemplateApi } from "../services/messageTemplateApi"
-import type { MessageTemplateResponse, MessageTemplateRequest } from "../services/messageTemplateApi"
+import {Add, ArrowBack, Delete, Search} from "@mui/icons-material"
+import {useNavigate, useParams} from "react-router-dom"
+import type {MessageTemplateRequest, MessageTemplateResponse} from "../services/messageTemplateApi"
+import {messageTemplateApi} from "../services/messageTemplateApi"
 
 const MessageTemplateCreate = () => {
     const navigate = useNavigate()
-    const { id } = useParams<{ id: string }>()
+    const {id} = useParams<{ id: string }>()
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState(false)
@@ -104,7 +101,7 @@ const MessageTemplateCreate = () => {
             setError("템플릿은 최대 10개까지만 생성할 수 있습니다.")
             return
         }
-        
+
         // Create a temporary empty template with a temporary ID
         const tempId = Date.now() // Use timestamp as temporary ID
         const emptyTemplate: MessageTemplateResponse = {
@@ -112,10 +109,10 @@ const MessageTemplateCreate = () => {
             title: "새 템플릿",
             content: ""
         }
-        
+
         // Add the empty template to the list
         setTemplates([...templates, emptyTemplate])
-        
+
         // Select the new empty template
         setSelectedTemplate(emptyTemplate)
         setTemplateTitle("")
@@ -134,7 +131,7 @@ const MessageTemplateCreate = () => {
     const handleContentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newContent = e.target.value
         const newByteCount = getByteLength(newContent)
-        
+
         if (newByteCount <= 90) {
             setTemplateContent(newContent)
             setByteCount(newByteCount)
@@ -179,7 +176,7 @@ const MessageTemplateCreate = () => {
             if (selectedTemplate) {
                 // Check if this is a temporary template (created with handleAddTemplate)
                 const isTemporaryTemplate = templates.some(t => t.id === selectedTemplate.id && t.title === "새 템플릿" && t.content === "")
-                
+
                 if (isTemporaryTemplate) {
                     // Create a new template instead of updating
                     response = await messageTemplateApi.createMessageTemplate(templateData)
@@ -203,13 +200,13 @@ const MessageTemplateCreate = () => {
 
             if (response.data.success) {
                 setSuccess(true)
-                
+
                 // Fetch templates and maintain focus on the saved template
                 const templatesResponse = await messageTemplateApi.getMessageTemplates()
                 if (templatesResponse.data.success) {
                     const updatedTemplates = templatesResponse.data.data || []
                     setTemplates(updatedTemplates)
-                    
+
                     // Find the saved template and select it
                     if (savedTemplateId) {
                         const savedTemplate = updatedTemplates.find(t => t.id === savedTemplateId)
@@ -232,7 +229,7 @@ const MessageTemplateCreate = () => {
     const handleDelete = async (templateToDelete?: MessageTemplateResponse) => {
         // Use the passed template or the currently selected template
         const templateToRemove = templateToDelete || selectedTemplate
-        
+
         if (!templateToRemove) return
 
         if (!window.confirm("정말로 이 템플릿을 삭제하시겠습니까?")) return
@@ -243,12 +240,12 @@ const MessageTemplateCreate = () => {
 
             // Check if this is a temporary template (created with handleAddTemplate)
             const isTemporaryTemplate = templates.some(t => t.id === templateToRemove.id && t.title === "새 템플릿" && t.content === "")
-            
+
             if (isTemporaryTemplate) {
                 // Just remove the temporary template from the list
                 const updatedTemplates = templates.filter((t) => t.id !== templateToRemove.id)
                 setTemplates(updatedTemplates)
-                
+
                 // Select another template or reset
                 if (updatedTemplates.length > 0) {
                     handleTemplateSelect(updatedTemplates[0])
@@ -258,7 +255,7 @@ const MessageTemplateCreate = () => {
                     setTemplateContent("")
                     updatePreview("")
                 }
-                
+
                 setSuccess(true)
             } else {
                 // Delete the template from the server
@@ -309,29 +306,30 @@ const MessageTemplateCreate = () => {
     )
 
     return (
-        <Box sx={{ flexGrow: 1, minHeight: "100vh" }}>
-            <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-                <Box sx={{ display: "flex", alignItems: "center", mb: 4 }}>
-                    <IconButton onClick={() => navigate("/message")} sx={{ mr: 1 }}>
-                        <ArrowBack />
+        <Box sx={{flexGrow: 1, minHeight: "100vh"}}>
+            <Container maxWidth="lg" sx={{mt: 4, mb: 4}}>
+                <Box sx={{display: "flex", alignItems: "center", mb: 4}}>
+                    <IconButton onClick={() => navigate("/message")} sx={{mr: 1}}>
+                        <ArrowBack/>
                     </IconButton>
-                    <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                    <Typography variant="h6" sx={{fontWeight: "bold"}}>
                         템플릿 관리
                     </Typography>
                 </Box>
 
                 <Grid container spacing={3}>
                     <Grid item xs={12} md={4}>
-                        <Paper elevation={0} sx={{ p: 3 }}>
-                            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-                                <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
+                        <Paper elevation={0} sx={{p: 3}}>
+                            <Box sx={{display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2}}>
+                                <Typography variant="subtitle1" sx={{fontWeight: "bold"}}>
                                     템플릿 목록
                                 </Typography>
-                                <Box sx={{ display: "flex", alignItems: "center" }}>
-                                    <Typography variant="caption" color="textSecondary" sx={{ mr: 1 }}>
+                                <Box sx={{display: "flex", alignItems: "center"}}>
+                                    <Typography variant="caption" color="textSecondary" sx={{mr: 1}}>
                                         {templates.length}/10
                                     </Typography>
-                                    <Button startIcon={<Add />} size="small" onClick={handleAddTemplate} sx={{ color: "#1976d2" }}>
+                                    <Button startIcon={<Add/>} size="small" onClick={handleAddTemplate}
+                                            sx={{color: "#1976d2"}}>
                                         추가
                                     </Button>
                                 </Box>
@@ -343,17 +341,17 @@ const MessageTemplateCreate = () => {
                                 placeholder="템플릿 검색"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                sx={{ mb: 2 }}
+                                sx={{mb: 2}}
                                 InputProps={{
                                     startAdornment: (
                                         <InputAdornment position="start">
-                                            <Search fontSize="small" />
+                                            <Search fontSize="small"/>
                                         </InputAdornment>
                                     ),
                                 }}
                             />
 
-                            <Box sx={{ maxHeight: "600px", overflow: "auto" }}>
+                            <Box sx={{maxHeight: "600px", overflow: "auto"}}>
                                 {filteredTemplates.map((template) => (
                                     <Card
                                         key={template.id}
@@ -366,22 +364,26 @@ const MessageTemplateCreate = () => {
                                         }}
                                         onClick={() => handleTemplateSelect(template)}
                                     >
-                                        <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
-                                            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                                <Typography variant="subtitle2" sx={{ fontWeight: "bold" }}>
+                                        <CardContent sx={{p: 2, "&:last-child": {pb: 2}}}>
+                                            <Box sx={{
+                                                display: "flex",
+                                                justifyContent: "space-between",
+                                                alignItems: "center"
+                                            }}>
+                                                <Typography variant="subtitle2" sx={{fontWeight: "bold"}}>
                                                     {template.title}
                                                 </Typography>
                                                 <Box>
                                                     <IconButton
                                                         size="small"
-                                                        sx={{ p: 0.5 }}
+                                                        sx={{p: 0.5}}
                                                         onClick={(e) => {
                                                             e.stopPropagation()
                                                             // Don't set the selected template here, just pass the template directly
                                                             handleDelete(template)
                                                         }}
                                                     >
-                                                        <Delete fontSize="small" />
+                                                        <Delete fontSize="small"/>
                                                     </IconButton>
                                                 </Box>
                                             </Box>
@@ -404,7 +406,7 @@ const MessageTemplateCreate = () => {
                                 ))}
 
                                 {filteredTemplates.length === 0 && (
-                                    <Box sx={{ p: 2, textAlign: "center", bgcolor: "#f9f9f9", borderRadius: 1 }}>
+                                    <Box sx={{p: 2, textAlign: "center", bgcolor: "#f9f9f9", borderRadius: 1}}>
                                         <Typography variant="body2" color="text.secondary">
                                             {searchTerm ? "검색 결과가 없습니다." : "등록된 템플릿이 없습니다."}
                                         </Typography>
@@ -415,8 +417,8 @@ const MessageTemplateCreate = () => {
                     </Grid>
 
                     <Grid item xs={12} md={8}>
-                        <Paper elevation={0} sx={{ p: 3 }}>
-                            <Typography variant="subtitle1" sx={{ mb: 3, fontWeight: "bold" }}>
+                        <Paper elevation={0} sx={{p: 3}}>
+                            <Typography variant="subtitle1" sx={{mb: 3, fontWeight: "bold"}}>
                                 {selectedTemplate ? "템플릿 수정" : "새 템플릿 작성"}
                             </Typography>
 
@@ -426,10 +428,10 @@ const MessageTemplateCreate = () => {
                                 value={templateTitle}
                                 onChange={(e) => setTemplateTitle(e.target.value)}
                                 placeholder="템플릿 제목을 입력하세요"
-                                sx={{ mb: 3 }}
+                                sx={{mb: 3}}
                             />
 
-                            <Typography variant="subtitle2" color="textSecondary" sx={{ mb: 1 }}>
+                            <Typography variant="subtitle2" color="textSecondary" sx={{mb: 1}}>
                                 템플릿 내용
                             </Typography>
                             <TextField
@@ -439,19 +441,19 @@ const MessageTemplateCreate = () => {
                                 value={templateContent}
                                 onChange={handleContentChange}
                                 placeholder="템플릿 내용을 입력하세요. (고객명은 ${이름}으로 입력하세요.)"
-                                sx={{ mb: 3 }}
+                                sx={{mb: 3}}
                                 error={byteCount > 90}
                                 helperText={byteCount > 90 ? "최대 90바이트까지 입력 가능합니다." : ""}
                             />
-                            <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+                            <Box sx={{display: "flex", justifyContent: "flex-end"}}>
                                 <Typography variant="caption" color={byteCount > 90 ? "error" : "textSecondary"}>
                                     {byteCount}/90 바이트
                                 </Typography>
                             </Box>
 
-                            <Divider sx={{ my: 3 }} />
+                            <Divider sx={{my: 3}}/>
 
-                            <Typography variant="subtitle2" color="textSecondary" sx={{ mb: 1 }}>
+                            <Typography variant="subtitle2" color="textSecondary" sx={{mb: 1}}>
                                 미리보기
                             </Typography>
                             <Paper
@@ -468,11 +470,11 @@ const MessageTemplateCreate = () => {
                                 {previewContent || "미리보기 내용이 여기에 표시됩니다."}
                             </Paper>
 
-                            <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+                            <Box sx={{display: "flex", justifyContent: "flex-end"}}>
                                 <Button
                                     variant="outlined"
                                     onClick={handleReset}
-                                    sx={{ mr: 1, borderColor: "#ddd", color: "#333" }}
+                                    sx={{mr: 1, borderColor: "#ddd", color: "#333"}}
                                     disabled={loading}
                                 >
                                     초기화
@@ -480,10 +482,10 @@ const MessageTemplateCreate = () => {
                                 <Button
                                     variant="contained"
                                     onClick={handleSave}
-                                    sx={{ bgcolor: "#000", "&:hover": { bgcolor: "#333" } }}
+                                    sx={{bgcolor: "#000", "&:hover": {bgcolor: "#333"}}}
                                     disabled={loading}
                                 >
-                                    {loading ? <CircularProgress size={24} /> : "저장하기"}
+                                    {loading ? <CircularProgress size={24}/> : "저장하기"}
                                 </Button>
                             </Box>
                         </Paper>
@@ -492,13 +494,13 @@ const MessageTemplateCreate = () => {
             </Container>
 
             <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError(null)}>
-                <Alert onClose={() => setError(null)} severity="error" sx={{ width: "100%" }}>
+                <Alert onClose={() => setError(null)} severity="error" sx={{width: "100%"}}>
                     {error}
                 </Alert>
             </Snackbar>
 
             <Snackbar open={success} autoHideDuration={6000} onClose={() => setSuccess(false)}>
-                <Alert onClose={() => setSuccess(false)} severity="success" sx={{ width: "100%" }}>
+                <Alert onClose={() => setSuccess(false)} severity="success" sx={{width: "100%"}}>
                     템플릿이 성공적으로 저장되었습니다.
                 </Alert>
             </Snackbar>

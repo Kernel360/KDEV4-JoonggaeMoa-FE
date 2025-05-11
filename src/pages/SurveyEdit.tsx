@@ -1,38 +1,38 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import {useEffect, useState} from "react"
 import {
-    Box,
-    Container,
-    Typography,
-    Paper,
-    TextField,
-    Button,
-    IconButton,
-    Grid,
-    FormControlLabel,
-    Checkbox,
-    MenuItem,
-    Select,
-    FormControl,
-    InputLabel,
-    Divider,
-    CircularProgress,
-    Snackbar,
     Alert,
+    Box,
+    Button,
     Card,
     CardContent,
+    Checkbox,
+    CircularProgress,
+    Container,
+    Divider,
+    FormControl,
+    FormControlLabel,
+    Grid,
+    IconButton,
+    InputLabel,
+    MenuItem,
+    Paper,
     Radio,
+    Select,
+    Snackbar,
+    TextField,
+    Typography,
 } from "@mui/material"
-import { ArrowBack, Add, Delete, DragIndicator } from "@mui/icons-material"
-import { useNavigate, useParams } from "react-router-dom"
-import { surveyApi } from "../services/surveyApi"
-import type { SurveyUpdateRequest, QuestionUpdateRequest, SurveyDetailResponse } from "../types/survey"
-import { QuestionType as QuestionTypeEnum } from "../types/survey"
+import {Add, ArrowBack, Delete, DragIndicator} from "@mui/icons-material"
+import {useNavigate, useParams} from "react-router-dom"
+import {surveyApi} from "../services/surveyApi"
+import type {QuestionUpdateRequest, SurveyUpdateRequest} from "../types/survey"
+import {QuestionType as QuestionTypeEnum} from "../types/survey"
 
 const SurveyEdit = () => {
     const navigate = useNavigate()
-    const { id } = useParams<{ id: string }>()
+    const {id} = useParams<{ id: string }>()
     const [loading, setLoading] = useState(false)
     const [initialLoading, setInitialLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
@@ -110,8 +110,8 @@ const SurveyEdit = () => {
 
     // 실시간 유효성 검사 함수
     const validateField = (field: string, value: any, index?: number) => {
-        const newErrors = { ...validationErrors }
-        
+        const newErrors = {...validationErrors}
+
         if (field === 'title') {
             if (!value.trim()) {
                 newErrors.title = "설문 제목을 입력해주세요."
@@ -122,27 +122,27 @@ const SurveyEdit = () => {
             if (!newErrors.questions) {
                 newErrors.questions = {}
             }
-            
+
             if (!value.trim()) {
                 newErrors.questions[index] = "질문 내용을 입력해주세요."
             } else {
                 delete newErrors.questions[index]
                 if (Object.keys(newErrors.questions).length === 0) {
-                delete newErrors.questions
+                    delete newErrors.questions
                 }
             }
         } else if (field === 'option' && typeof index === 'number') {
             const questionIndex = Math.floor(index / 100)
             const optionIndex = index % 100
-            
+
             if (!newErrors.options) {
                 newErrors.options = {}
             }
-            
+
             if (!newErrors.options[`${questionIndex}`]) {
                 newErrors.options[`${questionIndex}`] = []
             }
-            
+
             // 빈 옵션 검사
             const emptyOptionIndex = newErrors.options[`${questionIndex}`].indexOf(`옵션 ${optionIndex + 1}`)
             if (!value.trim()) {
@@ -154,7 +154,7 @@ const SurveyEdit = () => {
                     newErrors.options[`${questionIndex}`].splice(emptyOptionIndex, 1)
                 }
             }
-            
+
             // 중복 옵션 검사
             const duplicateIndex = newErrors.options[`${questionIndex}`].indexOf("중복된 선택지가 있습니다")
             if (hasDuplicateOptions(questions[questionIndex].options)) {
@@ -166,18 +166,18 @@ const SurveyEdit = () => {
                     newErrors.options[`${questionIndex}`].splice(duplicateIndex, 1)
                 }
             }
-            
+
             // 옵션 에러가 없으면 해당 질문의 옵션 에러 객체 삭제
             if (newErrors.options[`${questionIndex}`].length === 0) {
                 delete newErrors.options[`${questionIndex}`]
             }
-            
+
             // 모든 옵션 에러가 없으면 options 객체 삭제
             if (Object.keys(newErrors.options).length === 0) {
                 delete newErrors.options
             }
         }
-        
+
         setValidationErrors(newErrors)
     }
 
@@ -191,7 +191,7 @@ const SurveyEdit = () => {
     // 질문 내용 변경 핸들러
     const handleQuestionChange = (index: number, field: string, value: any) => {
         const newQuestions = [...questions]
-        
+
         if (field === 'content') {
             newQuestions[index] = {
                 ...newQuestions[index],
@@ -203,7 +203,7 @@ const SurveyEdit = () => {
                 ...newQuestions[index],
                 type: value
             }
-            
+
             // 질문 타입이 변경되면 옵션 초기화
             if (value === QuestionTypeEnum.TEXT) {
                 newQuestions[index].options = []
@@ -216,7 +216,7 @@ const SurveyEdit = () => {
                 isRequired: value
             }
         }
-        
+
         setQuestions(newQuestions)
     }
 
@@ -225,7 +225,7 @@ const SurveyEdit = () => {
         const newQuestions = [...questions]
         newQuestions[questionIndex].options[optionIndex] = value
         setQuestions(newQuestions)
-        
+
         // 옵션 유효성 검사 (questionIndex * 100 + optionIndex를 인덱스로 사용)
         validateField('option', value, questionIndex * 100 + optionIndex)
     }
@@ -239,7 +239,7 @@ const SurveyEdit = () => {
                 setError("선택지는 최대 5개까지만 추가할 수 있습니다.");
                 return;
             }
-            
+
             const newQuestions = [...questions];
             newQuestions[questionIndex].options.push("");
             setQuestions(newQuestions);
@@ -254,7 +254,7 @@ const SurveyEdit = () => {
             setError("선택지는 최소 1개는 유지해야 합니다.");
             return;
         }
-        
+
         const newQuestions = [...questions];
         newQuestions[questionIndex].options.splice(optionIndex, 1);
         setQuestions(newQuestions);
@@ -271,35 +271,35 @@ const SurveyEdit = () => {
     const hasOptionError = (questionIndex: number, optionIndex: number): boolean => {
         const question = questions[questionIndex];
         const option = question.options[optionIndex];
-        
+
         // 빈 선택지 검사
         if (!option.trim()) {
             return true;
         }
-        
+
         // 중복 선택지 검사
         const nonEmptyOptions = question.options.filter(opt => opt.trim() !== "");
         const uniqueOptions = new Set(nonEmptyOptions);
         return uniqueOptions.size !== nonEmptyOptions.length && option.trim() !== "";
     };
-    
+
     // 옵션 에러 메시지 함수
     const getOptionErrorMessage = (questionIndex: number, optionIndex: number): string => {
         const question = questions[questionIndex];
         const option = question.options[optionIndex];
-        
+
         // 빈 선택지 검사
         if (!option.trim()) {
             return "선택지 내용을 입력해주세요";
         }
-        
+
         // 중복 선택지 검사
         const nonEmptyOptions = question.options.filter(opt => opt.trim() !== "");
         const uniqueOptions = new Set(nonEmptyOptions);
         if (uniqueOptions.size !== nonEmptyOptions.length && option.trim() !== "") {
             return "중복된 선택지입니다";
         }
-        
+
         return "";
     };
 
@@ -410,16 +410,16 @@ const SurveyEdit = () => {
         if (question.type !== QuestionTypeEnum.RADIO && question.type !== QuestionTypeEnum.CHECKBOX) return null;
 
         return (
-            <Box sx={{ mt: 2, pl: 2 }}>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            <Box sx={{mt: 2, pl: 2}}>
+                <Typography variant="body2" color="text.secondary" sx={{mb: 1}}>
                     선택지 ({question.options.length}/5)
                 </Typography>
                 {question.options.map((option, optionIndex) => (
-                    <Box key={optionIndex} sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                    <Box key={optionIndex} sx={{display: 'flex', alignItems: 'center', mb: 1}}>
                         {question.type === QuestionTypeEnum.RADIO ? (
-                            <Radio size="small" sx={{ mr: 1 }} />
+                            <Radio size="small" sx={{mr: 1}}/>
                         ) : (
-                            <Checkbox size="small" sx={{ mr: 1 }} />
+                            <Checkbox size="small" sx={{mr: 1}}/>
                         )}
                         <TextField
                             fullWidth
@@ -433,29 +433,29 @@ const SurveyEdit = () => {
                         <IconButton
                             size="small"
                             onClick={() => handleRemoveOption(questionIndex, optionIndex)}
-                            sx={{ ml: 1 }}
+                            sx={{ml: 1}}
                             disabled={question.options.length <= 1}
                         >
-                            <Delete fontSize="small" />
+                            <Delete fontSize="small"/>
                         </IconButton>
                     </Box>
                 ))}
                 {question.options.length < 5 && (
                     <Button
-                        startIcon={<Add />}
+                        startIcon={<Add/>}
                         onClick={() => handleAddOption(questionIndex)}
-                        sx={{ mt: 1 }}
+                        sx={{mt: 1}}
                     >
                         선택지 추가
                     </Button>
                 )}
                 {question.options.length >= 5 && (
-                    <Typography variant="body2" color="error" sx={{ mt: 1 }}>
+                    <Typography variant="body2" color="error" sx={{mt: 1}}>
                         선택지는 최대 5개까지만 추가할 수 있습니다.
                     </Typography>
                 )}
                 {question.options.length <= 1 && (
-                    <Typography variant="body2" color="error" sx={{ mt: 1 }}>
+                    <Typography variant="body2" color="error" sx={{mt: 1}}>
                         선택지는 최소 1개는 유지해야 합니다.
                     </Typography>
                 )}
@@ -465,27 +465,31 @@ const SurveyEdit = () => {
 
     if (initialLoading) {
         return (
-            <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
-                <CircularProgress />
+            <Box sx={{display: "flex", justifyContent: "center", alignItems: "center", height: "100vh"}}>
+                <CircularProgress/>
             </Box>
         )
     }
 
     return (
-        <Box sx={{ flexGrow: 1, bgcolor: "#ffffff", minHeight: "100vh", py: 3 }}>
-            <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
-                <Paper elevation={0} sx={{ p: 4, borderRadius: 2, boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
-                    <Box sx={{ display: "flex", alignItems: "center", mb: 4 }}>
-                        <IconButton onClick={() => navigate(`/survey/${id}`)} sx={{ mr: 1 }}>
-                            <ArrowBack />
+        <Box sx={{flexGrow: 1, bgcolor: "#ffffff", minHeight: "100vh", py: 3}}>
+            <Container maxWidth="md" sx={{mt: 4, mb: 4}}>
+                <Paper elevation={0} sx={{
+                    p: 4,
+                    borderRadius: 2,
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                }}>
+                    <Box sx={{display: "flex", alignItems: "center", mb: 4}}>
+                        <IconButton onClick={() => navigate(`/survey/${id}`)} sx={{mr: 1}}>
+                            <ArrowBack/>
                         </IconButton>
-                        <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                        <Typography variant="h6" sx={{fontWeight: "bold"}}>
                             설문 수정하기
                         </Typography>
                     </Box>
 
                     {/* 설문 기본 정보 */}
-                    <Grid container spacing={3} sx={{ mb: 4 }}>
+                    <Grid container spacing={3} sx={{mb: 4}}>
                         <Grid item xs={12}>
                             <TextField
                                 label="설문 제목"
@@ -512,19 +516,20 @@ const SurveyEdit = () => {
                         </Grid>
                     </Grid>
 
-                    <Divider sx={{ mb: 4 }} />
+                    <Divider sx={{mb: 4}}/>
 
                     {/* 질문 목록 */}
-                    <Typography variant="h6" sx={{ mb: 2 }}>
+                    <Typography variant="h6" sx={{mb: 2}}>
                         질문 목록
                     </Typography>
 
                     {questions.map((question, index) => (
-                        <Card key={index} sx={{ mb: 3, border: validationErrors.questions?.[index] ? "1px solid #f44336" : "none" }}>
+                        <Card key={index}
+                              sx={{mb: 3, border: validationErrors.questions?.[index] ? "1px solid #f44336" : "none"}}>
                             <CardContent>
-                                <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                                    <DragIndicator sx={{ mr: 1, color: "#888" }} />
-                                    <Typography variant="subtitle1" sx={{ flexGrow: 1 }}>
+                                <Box sx={{display: "flex", alignItems: "center", mb: 2}}>
+                                    <DragIndicator sx={{mr: 1, color: "#888"}}/>
+                                    <Typography variant="subtitle1" sx={{flexGrow: 1}}>
                                         질문 {index + 1}
                                     </Typography>
                                     <IconButton
@@ -532,7 +537,7 @@ const SurveyEdit = () => {
                                         onClick={() => handleRemoveQuestion(index)}
                                         disabled={questions.length === 1}
                                     >
-                                        <Delete />
+                                        <Delete/>
                                     </IconButton>
                                 </Box>
 
@@ -581,16 +586,17 @@ const SurveyEdit = () => {
                         </Card>
                     ))}
 
-                    <Button variant="outlined" startIcon={<Add />} onClick={handleAddQuestion} sx={{ mb: 4 }}>
+                    <Button variant="outlined" startIcon={<Add/>} onClick={handleAddQuestion} sx={{mb: 4}}>
                         질문 추가
                     </Button>
 
-                    <Divider sx={{ my: 3 }} />
+                    <Divider sx={{my: 3}}/>
 
-                    <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+                    <Box sx={{display: "flex", justifyContent: "center", mt: 2}}>
                         <Button
                             variant="outlined"
-                            sx={{ mr: 1, borderColor: "#007ea7", color: "#007ea7",
+                            sx={{
+                                mr: 1, borderColor: "#007ea7", color: "#007ea7",
                                 '&:hover': {
                                     borderColor: "#003459",
                                     color: "#003459",
@@ -604,24 +610,24 @@ const SurveyEdit = () => {
                         </Button>
                         <Button
                             variant="contained"
-                            sx={{ bgcolor: "#007ea7", "&:hover": { bgcolor: "#003459" } }}
+                            sx={{bgcolor: "#007ea7", "&:hover": {bgcolor: "#003459"}}}
                             onClick={handleSubmit}
                             disabled={loading}
                         >
-                            {loading ? <CircularProgress size={24} /> : "설문 수정하기"}
+                            {loading ? <CircularProgress size={24}/> : "설문 수정하기"}
                         </Button>
                     </Box>
                 </Paper>
             </Container>
 
             <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError(null)}>
-                <Alert onClose={() => setError(null)} severity="error" sx={{ width: "100%" }}>
+                <Alert onClose={() => setError(null)} severity="error" sx={{width: "100%"}}>
                     {error}
                 </Alert>
             </Snackbar>
 
             <Snackbar open={success} autoHideDuration={6000} onClose={() => setSuccess(false)}>
-                <Alert onClose={() => setSuccess(false)} severity="success" sx={{ width: "100%" }}>
+                <Alert onClose={() => setSuccess(false)} severity="success" sx={{width: "100%"}}>
                     설문이 성공적으로 수정되었습니다.
                 </Alert>
             </Snackbar>

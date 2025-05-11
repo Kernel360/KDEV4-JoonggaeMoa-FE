@@ -2,80 +2,91 @@
 
 // Declare global kakao namespace
 declare namespace kakao {
-  namespace maps {
-    class LatLng {
-      constructor(lat: number, lng: number);
-      getLat(): number;
-      getLng(): number;
-    }
+    namespace maps {
+        class LatLng {
+            constructor(lat: number, lng: number);
 
-    class Map {
-      constructor(container: HTMLElement, options: MapOptions);
-      setCenter(latLng: LatLng): void;
-      setLevel(level: number): void;
-      getBounds(): LatLngBounds;
-      setBounds(bounds: LatLngBounds): void;
-    }
+            getLat(): number;
 
-    interface MapOptions {
-      center: LatLng;
-      level: number;
-      draggable?: boolean;
-      scrollwheel?: boolean;
-      disableDoubleClickZoom?: boolean;
-      mapTypeControl?: boolean;
-      zoomControl?: boolean;
-    }
+            getLng(): number;
+        }
 
-    class Marker {
-      constructor(options: MarkerOptions);
-      setMap(map: Map | null): void;
-    }
+        class Map {
+            constructor(container: HTMLElement, options: MapOptions);
 
-    interface MarkerOptions {
-      position: LatLng;
-      image?: MarkerImage;
-      title?: string;
-    }
+            setCenter(latLng: LatLng): void;
 
-    class MarkerImage {
-      constructor(url: string, size: Size, options: { offset: Point });
-    }
+            setLevel(level: number): void;
 
-    class Size {
-      constructor(width: number, height: number);
-    }
+            getBounds(): LatLngBounds;
 
-    class Point {
-      constructor(x: number, y: number);
-    }
+            setBounds(bounds: LatLngBounds): void;
+        }
 
-    class InfoWindow {
-      constructor(options: any);
-      open(map: Map, marker: Marker): void;
-      close(): void;
-    }
+        interface MapOptions {
+            center: LatLng;
+            level: number;
+            draggable?: boolean;
+            scrollwheel?: boolean;
+            disableDoubleClickZoom?: boolean;
+            mapTypeControl?: boolean;
+            zoomControl?: boolean;
+        }
 
-    class MarkerClusterer {
-      constructor(options: any);
-    }
+        class Marker {
+            constructor(options: MarkerOptions);
 
-    class event {
-      static addListener(target: any, eventName: string, callback: (...args: any[]) => void): void;
-      static removeListener(target: any, eventName: string, callback: (...args: any[]) => void): void;
-    }
+            setMap(map: Map | null): void;
+        }
 
-    class LatLngBounds {
-      constructor();
-      extend(latLng: LatLng): void;
+        interface MarkerOptions {
+            position: LatLng;
+            image?: MarkerImage;
+            title?: string;
+        }
+
+        class MarkerImage {
+            constructor(url: string, size: Size, options: { offset: Point });
+        }
+
+        class Size {
+            constructor(width: number, height: number);
+        }
+
+        class Point {
+            constructor(x: number, y: number);
+        }
+
+        class InfoWindow {
+            constructor(options: any);
+
+            open(map: Map, marker: Marker): void;
+
+            close(): void;
+        }
+
+        class MarkerClusterer {
+            constructor(options: any);
+        }
+
+        class event {
+            static addListener(target: any, eventName: string, callback: (...args: any[]) => void): void;
+
+            static removeListener(target: any, eventName: string, callback: (...args: any[]) => void): void;
+        }
+
+        class LatLngBounds {
+            constructor();
+
+            extend(latLng: LatLng): void;
+        }
     }
-  }
 }
 
 declare global {
-  interface Window {
-    kakao: typeof kakao;
-  }
+    interface Window {
+        kakao: typeof kakao;
+    }
 }
 
 // Ensure this file is treated as a module

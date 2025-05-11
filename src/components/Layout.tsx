@@ -1,48 +1,42 @@
-import React, { useState, useEffect, ReactNode } from "react";
+import React, {ReactNode, useEffect, useState} from "react";
 import {
+    Alert,
+    Avatar,
+    Badge,
     Box,
-    Typography,
+    Button,
+    createTheme,
+    IconButton,
     List,
     ListItem,
     ListItemIcon,
     ListItemText,
-    IconButton,
-    Badge,
-    Button,
-    createTheme,
-    ThemeProvider,
     Menu,
     MenuItem,
-    Avatar,
-    CircularProgress,
     Snackbar,
-    Alert,
+    ThemeProvider,
+    Typography,
 } from "@mui/material";
 import {
-    Business,
-    People,
-    Forum,
-    Email,
-    Home,
-    Person,
-    Notifications,
     Assignment,
-    InsertDriveFile,
-    Search,
-    Dashboard as DashboardIcon,
-    Settings,
-    Menu as MenuIcon,
+    Business,
     ChevronLeft,
+    Dashboard as DashboardIcon,
+    Email,
+    Forum,
+    InsertDriveFile,
+    KeyboardArrowDown,
     Logout,
-    QuestionAnswer,
-    KeyboardArrowDown
+    Notifications,
+    People,
+    Person,
+    QuestionAnswer
 } from "@mui/icons-material";
-import { useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import {useLocation, useNavigate} from "react-router-dom";
+import {useAuth} from "../context/AuthContext";
 import api from "../services/api";
-import { toast } from 'react-toastify';
-import { useNotification } from "../context/NotificationContext";
-import { formatDistanceToNow } from 'date-fns';
+import {useNotification} from "../context/NotificationContext";
+import {formatDistanceToNow} from 'date-fns';
 import Footer from './Footer';
 
 // 커스텀 테마 생성
@@ -131,20 +125,20 @@ interface LayoutProps {
     children: ReactNode;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children }) => {
+const Layout: React.FC<LayoutProps> = ({children}) => {
     // Remove the local notifications state
     // const [notifications, setNotifications] = useState<Notification[]>([]);
     const [notificationError, setNotificationError] = useState<string | null>(null);
     const [notificationAnchorEl, setNotificationAnchorEl] = useState<null | HTMLElement>(null);
     // Get notifications from context
-    const { notifications, unreadCount, markAsRead, fetchNotifications } = useNotification();
-    
-    const { logout } = useAuth();
-    const { closeSSEConnection } = useNotification();  // Add this line
+    const {notifications, unreadCount, markAsRead, fetchNotifications} = useNotification();
+
+    const {logout} = useAuth();
+    const {closeSSEConnection} = useNotification();  // Add this line
     const navigate = useNavigate();
     const location = useLocation();
     const [sidebarOpen, setSidebarOpen] = useState(true);
-    const [profile, setProfile] = useState<{ name: string;} | null>(null);
+    const [profile, setProfile] = useState<{ name: string; } | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -217,7 +211,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             handleMenuClose();
         }
     };
-    
+
     const handleNotificationNavigation = async (notification: Notification) => {
         console.log("Notification being handled:", notification);
         try {
@@ -226,18 +220,18 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 navigate('/');
                 return;
             }
-            
-            if(notification.isRead === false) {
+
+            if (notification.isRead === false) {
                 markAsRead(notification.id);
             }
-    
-            
+
+
             handleNotificationClose();
-            
+
             // Navigate based on type
             switch (notification.type) {
                 case 'SURVEY':
-                    handleSurveyManagement();  
+                    handleSurveyManagement();
                     break;
                 case 'ARTICLE':
                     handleArticleManagement();
@@ -284,10 +278,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         };
 
         fetchProfile();
-        
+
         // 주기적으로 프로필 정보 업데이트 (5분마다)
         const profileInterval = setInterval(fetchProfile, 5 * 60 * 1000);
-        
+
         // 컴포넌트 언마운트 시 인터벌 정리
         return () => {
             clearInterval(profileInterval);
@@ -301,7 +295,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         if (!agentId) {
             console.warn("agentId is missing or invalid:", agentId);
             return;
-        }    
+        }
 
         fetchNotifications();
 
@@ -309,13 +303,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
     return (
         <ThemeProvider theme={theme}>
-            <Box sx={{ 
-                display: 'flex', 
+            <Box sx={{
+                display: 'flex',
                 flexDirection: 'column',
                 minHeight: '100vh'
             }}>
                 {/* Header */}
-                <Box sx={{ 
+                <Box sx={{
                     position: 'fixed',
                     top: 0,
                     left: 0,
@@ -324,14 +318,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     bgcolor: 'white',
                     boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
                 }}>
-                    <Box sx={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
+                    <Box sx={{
+                        display: 'flex',
+                        alignItems: 'center',
                         justifyContent: 'space-between',
                         height: 64,
                         px: 3,
                     }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Box sx={{display: 'flex', alignItems: 'center', gap: 2}}>
                             <Box
                                 onClick={() => navigate("/dashboard")}
                                 sx={{
@@ -346,17 +340,17 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                     },
                                 }}
                             >
-                                <img 
-                                    src="/로고.png" 
-                                    alt="중개모아 로고" 
-                                    style={{ width: '45px', height: '50px' }}
+                                <img
+                                    src="/로고.png"
+                                    alt="중개모아 로고"
+                                    style={{width: '45px', height: '50px'}}
                                 />
                                 <Box>
-                                    <Typography 
-                                        variant="h5" 
+                                    <Typography
+                                        variant="h5"
                                         className="logo-title"
-                                        sx={{ 
-                                            fontWeight: 800, 
+                                        sx={{
+                                            fontWeight: 800,
                                             color: '#003459',
                                             fontSize: '1.4rem',
                                             transition: 'color 0.2s ease',
@@ -370,17 +364,17 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 </Box>
                             </Box>
                         </Box>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                            <IconButton 
-                                color="inherit" 
+                        <Box sx={{display: 'flex', alignItems: 'center', gap: 2}}>
+                            <IconButton
+                                color="inherit"
                                 onClick={handleNotificationClick}
-                                sx={{ 
+                                sx={{
                                     position: 'relative',
                                     mr: 2
                                 }}
                             >
                                 <Badge badgeContent={unreadCount} color="error">
-                                    <Notifications />
+                                    <Notifications/>
                                 </Badge>
                             </IconButton>
                             <Menu
@@ -397,12 +391,18 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                     }
                                 }}
                                 MenuListProps={{
-                                    sx: { overflow: 'auto' }
+                                    sx: {overflow: 'auto'}
                                 }}
                                 disableScrollLock={true}
                             >
-                                <Box sx={{ p: 1.5, borderBottom: '1px solid #e9ecef', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                                <Box sx={{
+                                    p: 1.5,
+                                    borderBottom: '1px solid #e9ecef',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center'
+                                }}>
+                                    <Typography variant="subtitle1" sx={{fontWeight: 600}}>
                                         알림
                                     </Typography>
                                     <Button
@@ -411,7 +411,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                             navigate("/notification-list");
                                             handleNotificationClose();
                                         }}
-                                        sx={{ 
+                                        sx={{
                                             color: 'primary.main',
                                             fontWeight: 500
                                         }}
@@ -420,19 +420,19 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                     </Button>
                                 </Box>
                                 {notificationError ? (
-                                    <Box sx={{ p: 2, textAlign: 'center' }}>
+                                    <Box sx={{p: 2, textAlign: 'center'}}>
                                         <Typography color="error" variant="body2">
                                             {notificationError}
                                         </Typography>
                                     </Box>
                                 ) : notifications.length === 0 ? (
-                                    <Box sx={{ p: 3, textAlign: 'center' }}>
+                                    <Box sx={{p: 3, textAlign: 'center'}}>
                                         <Typography variant="body2" color="text.secondary">
                                             새로운 알림이 없습니다
                                         </Typography>
                                     </Box>
                                 ) : (
-                                    <List sx={{ p: 0 }}>
+                                    <List sx={{p: 0}}>
                                         {notifications
                                             .sort((a, b) => {
                                                 // First sort by read status (unread first)
@@ -443,93 +443,98 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                                 return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
                                             })
                                             .map((notification) => (
-                                        <ListItem
-                                            key={notification.id}
-                                            button
-                                            onClick={() => handleNotificationNavigation(notification)}
-                                            sx={{
-                                                py: 1.5,
-                                                px: 2,
-                                                borderBottom: '1px solid #f0f0f0',
-                                                '&:hover': {
-                                                    bgcolor: 'rgba(0, 0, 0, 0.04)'
-                                                }
-                                            }}
-                                        >
-                                            <ListItemIcon sx={{ minWidth: 40 }}>
-                                                <Box
+                                                <ListItem
+                                                    key={notification.id}
+                                                    button
+                                                    onClick={() => handleNotificationNavigation(notification)}
                                                     sx={{
-                                                        width: 32,
-                                                        height: 32,
-                                                        borderRadius: '50%',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        bgcolor: `${getNotificationColor(notification.type)}20`,
-                                                        color: getNotificationColor(notification.type)
+                                                        py: 1.5,
+                                                        px: 2,
+                                                        borderBottom: '1px solid #f0f0f0',
+                                                        '&:hover': {
+                                                            bgcolor: 'rgba(0, 0, 0, 0.04)'
+                                                        }
                                                     }}
                                                 >
-                                                    {notification.type === 'SURVEY' && <Assignment fontSize="small" />}
-                                                    {notification.type === 'ARTICLE' && <InsertDriveFile fontSize="small" />}
-                                                    {notification.type === 'CONSULTATION' && <Forum fontSize="small" />}
-                                                    {notification.type === 'MESSAGE' && <Email fontSize="small" />}
-                                                    {notification.type === 'CONTRACT' && <InsertDriveFile fontSize="small" />}
-                                                </Box>
-                                            </ListItemIcon>
-                                            <ListItemText
-                                                primary={
-                                                    <Typography
-                                                        variant="body2"
-                                                        sx={{
-                                                            fontWeight: notification.isRead ? 400 : 600,
-                                                            color: notification.isRead ? 'text.primary' : 'primary.main'
-                                                        }}
-                                                    >
-                                                        {notification.content}
-                                                    </Typography>
-                                                }
-                                                secondary={
-                                                    <Typography variant="caption" color="text.secondary">
-                                                        {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
-                                                    </Typography>
-                                                }
-                                            />
-                                        </ListItem>
-                                    ))}
+                                                    <ListItemIcon sx={{minWidth: 40}}>
+                                                        <Box
+                                                            sx={{
+                                                                width: 32,
+                                                                height: 32,
+                                                                borderRadius: '50%',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center',
+                                                                bgcolor: `${getNotificationColor(notification.type)}20`,
+                                                                color: getNotificationColor(notification.type)
+                                                            }}
+                                                        >
+                                                            {notification.type === 'SURVEY' &&
+                                                                <Assignment fontSize="small"/>}
+                                                            {notification.type === 'ARTICLE' &&
+                                                                <InsertDriveFile fontSize="small"/>}
+                                                            {notification.type === 'CONSULTATION' &&
+                                                                <Forum fontSize="small"/>}
+                                                            {notification.type === 'MESSAGE' &&
+                                                                <Email fontSize="small"/>}
+                                                            {notification.type === 'CONTRACT' &&
+                                                                <InsertDriveFile fontSize="small"/>}
+                                                        </Box>
+                                                    </ListItemIcon>
+                                                    <ListItemText
+                                                        primary={
+                                                            <Typography
+                                                                variant="body2"
+                                                                sx={{
+                                                                    fontWeight: notification.isRead ? 400 : 600,
+                                                                    color: notification.isRead ? 'text.primary' : 'primary.main'
+                                                                }}
+                                                            >
+                                                                {notification.content}
+                                                            </Typography>
+                                                        }
+                                                        secondary={
+                                                            <Typography variant="caption" color="text.secondary">
+                                                                {formatDistanceToNow(new Date(notification.createdAt), {addSuffix: true})}
+                                                            </Typography>
+                                                        }
+                                                    />
+                                                </ListItem>
+                                            ))}
                                     </List>
                                 )}
                             </Menu>
                             {profile && (
-                                <Box 
-                                    sx={{ 
-                                        display: 'flex', 
-                                        alignItems: 'center', 
+                                <Box
+                                    sx={{
+                                        display: 'flex',
+                                        alignItems: 'center',
                                         cursor: 'pointer',
                                         '&:hover': {
                                             bgcolor: 'rgba(0,0,0,0.04)',
                                             borderRadius: 1,
                                         },
                                         p: 1,
-                                    }} 
+                                    }}
                                     onClick={handleMenuOpen}
                                 >
-                                    <Avatar 
-                                        sx={{ 
-                                            width: 36, 
-                                            height: 36, 
+                                    <Avatar
+                                        sx={{
+                                            width: 36,
+                                            height: 36,
                                             bgcolor: '#007ea7',
                                             fontSize: '1rem',
                                         }}
                                     >
                                         {profile.name ? profile.name.charAt(0).toUpperCase() : 'U'}
                                     </Avatar>
-                                    <Box sx={{ ml: 1, display: { xs: 'none', sm: 'block' } }}>
-                                        <Typography variant="body1" sx={{ fontWeight: 600, fontSize: '0.9rem' }}>
+                                    <Box sx={{ml: 1, display: {xs: 'none', sm: 'block'}}}>
+                                        <Typography variant="body1" sx={{fontWeight: 600, fontSize: '0.9rem'}}>
                                             {profile.name}
                                         </Typography>
                                     </Box>
-                                    <Box sx={{ ml: 0.5, display: 'flex', alignItems: 'center' }}>
-                                        <KeyboardArrowDown sx={{ color: '#003459', fontSize: '1.2rem' }} />
+                                    <Box sx={{ml: 0.5, display: 'flex', alignItems: 'center'}}>
+                                        <KeyboardArrowDown sx={{color: '#003459', fontSize: '1.2rem'}}/>
                                     </Box>
                                 </Box>
                             )}
@@ -545,19 +550,19 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                         boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
                                     }
                                 }}
-                                transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-                                anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                                transformOrigin={{horizontal: 'right', vertical: 'top'}}
+                                anchorOrigin={{horizontal: 'right', vertical: 'bottom'}}
                                 MenuListProps={{
-                                    sx: { overflow: 'auto' }
+                                    sx: {overflow: 'auto'}
                                 }}
                                 disableScrollLock={true}
                             >
-                                <MenuItem 
+                                <MenuItem
                                     onClick={() => {
                                         navigate("/my-page");
                                         handleMenuClose();
                                     }}
-                                    sx={{ 
+                                    sx={{
                                         py: 1.5,
                                         px: 2,
                                         '&:hover': {
@@ -566,19 +571,19 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                     }}
                                 >
                                     <ListItemIcon>
-                                        <Person sx={{ color: '#007ea7' }} />
+                                        <Person sx={{color: '#007ea7'}}/>
                                     </ListItemIcon>
-                                    <ListItemText 
-                                        primary="마이페이지" 
+                                    <ListItemText
+                                        primary="마이페이지"
                                         primaryTypographyProps={{
                                             fontSize: '0.9rem',
                                             fontWeight: 500,
                                         }}
                                     />
                                 </MenuItem>
-                                <MenuItem 
+                                <MenuItem
                                     onClick={handleLogout}
-                                    sx={{ 
+                                    sx={{
                                         py: 1.5,
                                         px: 2,
                                         '&:hover': {
@@ -587,10 +592,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                     }}
                                 >
                                     <ListItemIcon>
-                                        <Logout sx={{ color: '#007ea7' }} />
+                                        <Logout sx={{color: '#007ea7'}}/>
                                     </ListItemIcon>
-                                    <ListItemText 
-                                        primary="로그아웃" 
+                                    <ListItemText
+                                        primary="로그아웃"
                                         primaryTypographyProps={{
                                             fontSize: '0.9rem',
                                             fontWeight: 500,
@@ -603,7 +608,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </Box>
 
                 {/* Main Content Area */}
-                <Box sx={{ 
+                <Box sx={{
                     display: 'flex',
                     flex: 1,
                     mt: 8, // Add margin top to account for fixed header
@@ -646,22 +651,22 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 borderColor: 'divider',
                             }}
                         >
-                            <ChevronLeft sx={{ transform: sidebarOpen ? 'none' : 'scaleX(-1)' }} />
+                            <ChevronLeft sx={{transform: sidebarOpen ? 'none' : 'scaleX(-1)'}}/>
                         </IconButton>
 
                         {/* Menu Items */}
-                        <List sx={{ py: 1 }}>
-                            <ListItem 
-                                button 
+                        <List sx={{py: 1}}>
+                            <ListItem
+                                button
                                 onClick={() => navigate("/dashboard")}
                                 selected={location.pathname === "/dashboard"}
-                                sx={{ py: 1.5 }}
+                                sx={{py: 1.5}}
                             >
-                                <ListItemIcon sx={{ minWidth: 40 }}>
-                                    <DashboardIcon color={location.pathname === "/dashboard" ? "primary" : "action"} />
+                                <ListItemIcon sx={{minWidth: 40}}>
+                                    <DashboardIcon color={location.pathname === "/dashboard" ? "primary" : "action"}/>
                                 </ListItemIcon>
-                                <ListItemText 
-                                    primary="대시보드" 
+                                <ListItemText
+                                    primary="대시보드"
                                     primaryTypographyProps={{
                                         fontSize: '0.9rem',
                                         color: location.pathname === "/dashboard" ? "primary" : "text.primary",
@@ -669,16 +674,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 />
                             </ListItem>
 
-                            <ListItem 
+                            <ListItem
                                 button
                                 onClick={handleArticleManagement}
                                 selected={location.pathname.startsWith("/article")}
-                                sx={{ py: 1.5 }}
+                                sx={{py: 1.5}}
                             >
-                                <ListItemIcon sx={{ minWidth: 40 }}>
-                                    <Business color={location.pathname.startsWith("/article") ? "primary" : "action"} />
+                                <ListItemIcon sx={{minWidth: 40}}>
+                                    <Business color={location.pathname.startsWith("/article") ? "primary" : "action"}/>
                                 </ListItemIcon>
-                                <ListItemText 
+                                <ListItemText
                                     primary="매물 관리"
                                     primaryTypographyProps={{
                                         fontSize: '0.9rem',
@@ -687,16 +692,17 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 />
                             </ListItem>
 
-                            <ListItem 
-                                button 
+                            <ListItem
+                                button
                                 onClick={() => navigate("/contract")}
                                 selected={location.pathname.startsWith("/contract")}
-                                sx={{ py: 1.5 }}
+                                sx={{py: 1.5}}
                             >
-                                <ListItemIcon sx={{ minWidth: 40 }}>
-                                    <InsertDriveFile color={location.pathname.startsWith("/contract") ? "primary" : "action"} />
+                                <ListItemIcon sx={{minWidth: 40}}>
+                                    <InsertDriveFile
+                                        color={location.pathname.startsWith("/contract") ? "primary" : "action"}/>
                                 </ListItemIcon>
-                                <ListItemText 
+                                <ListItemText
                                     primary="계약 관리"
                                     primaryTypographyProps={{
                                         fontSize: '0.9rem',
@@ -705,16 +711,17 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 />
                             </ListItem>
 
-                            <ListItem 
-                                button 
+                            <ListItem
+                                button
                                 onClick={() => navigate("/customer-management")}
                                 selected={location.pathname.startsWith("/customer-management")}
-                                sx={{ py: 1.5 }}
+                                sx={{py: 1.5}}
                             >
-                                <ListItemIcon sx={{ minWidth: 40 }}>
-                                    <People color={location.pathname.startsWith("/customer-management") ? "primary" : "action"} />
+                                <ListItemIcon sx={{minWidth: 40}}>
+                                    <People
+                                        color={location.pathname.startsWith("/customer-management") ? "primary" : "action"}/>
                                 </ListItemIcon>
-                                <ListItemText 
+                                <ListItemText
                                     primary="고객 관리"
                                     primaryTypographyProps={{
                                         fontSize: '0.9rem',
@@ -723,16 +730,17 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 />
                             </ListItem>
 
-                            <ListItem 
-                                button 
+                            <ListItem
+                                button
                                 onClick={() => navigate("/consultation")}
                                 selected={location.pathname.startsWith("/consultation")}
-                                sx={{ py: 1.5 }}
+                                sx={{py: 1.5}}
                             >
-                                <ListItemIcon sx={{ minWidth: 40 }}>
-                                    <Forum color={location.pathname.startsWith("/consultation") ? "primary" : "action"} />
+                                <ListItemIcon sx={{minWidth: 40}}>
+                                    <Forum
+                                        color={location.pathname.startsWith("/consultation") ? "primary" : "action"}/>
                                 </ListItemIcon>
-                                <ListItemText 
+                                <ListItemText
                                     primary="상담 관리"
                                     primaryTypographyProps={{
                                         fontSize: '0.9rem',
@@ -741,16 +749,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 />
                             </ListItem>
 
-                            <ListItem 
-                                button 
+                            <ListItem
+                                button
                                 onClick={() => navigate("/survey")}
                                 selected={location.pathname.startsWith("/survey")}
-                                sx={{ py: 1.5 }}
+                                sx={{py: 1.5}}
                             >
-                                <ListItemIcon sx={{ minWidth: 40 }}>
-                                    <Assignment color={location.pathname.startsWith("/survey") ? "primary" : "action"} />
+                                <ListItemIcon sx={{minWidth: 40}}>
+                                    <Assignment color={location.pathname.startsWith("/survey") ? "primary" : "action"}/>
                                 </ListItemIcon>
-                                <ListItemText 
+                                <ListItemText
                                     primary="설문 관리"
                                     primaryTypographyProps={{
                                         fontSize: '0.9rem',
@@ -759,16 +767,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 />
                             </ListItem>
 
-                            <ListItem 
-                                button 
+                            <ListItem
+                                button
                                 onClick={() => navigate("/message")}
                                 selected={location.pathname.startsWith("/message")}
-                                sx={{ py: 1.5 }}
+                                sx={{py: 1.5}}
                             >
-                                <ListItemIcon sx={{ minWidth: 40 }}>
-                                    <Email color={location.pathname.startsWith("/message") ? "primary" : "action"} />
+                                <ListItemIcon sx={{minWidth: 40}}>
+                                    <Email color={location.pathname.startsWith("/message") ? "primary" : "action"}/>
                                 </ListItemIcon>
-                                <ListItemText 
+                                <ListItemText
                                     primary="문자 관리"
                                     primaryTypographyProps={{
                                         fontSize: '0.9rem',
@@ -777,16 +785,17 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 />
                             </ListItem>
 
-                            <ListItem 
-                                button 
+                            <ListItem
+                                button
                                 onClick={() => navigate("/inquiry")}
                                 selected={location.pathname.startsWith("/inquiry")}
-                                sx={{ py: 1.5 }}
+                                sx={{py: 1.5}}
                             >
-                                <ListItemIcon sx={{ minWidth: 40 }}>
-                                    <QuestionAnswer color={location.pathname.startsWith("/inquiry") ? "primary" : "action"} />
+                                <ListItemIcon sx={{minWidth: 40}}>
+                                    <QuestionAnswer
+                                        color={location.pathname.startsWith("/inquiry") ? "primary" : "action"}/>
                                 </ListItemIcon>
-                                <ListItemText 
+                                <ListItemText
                                     primary="문의 게시판"
                                     primaryTypographyProps={{
                                         fontSize: '0.9rem',
@@ -796,19 +805,19 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                             </ListItem>
                         </List>
 
-                        <Box sx={{ mt: 'auto', p: 2, borderTop: '1px solid rgba(0,0,0,0.1)' }}>
-                            <ListItem 
+                        <Box sx={{mt: 'auto', p: 2, borderTop: '1px solid rgba(0,0,0,0.1)'}}>
+                            <ListItem
                                 button
                                 onClick={() => navigate("/my-page")}
                                 selected={location.pathname === "/my-page"}
-                                sx={{ 
+                                sx={{
                                     borderRadius: '8px',
                                 }}
                             >
-                                <ListItemIcon sx={{ minWidth: 40 }}>
-                                    <Person color={location.pathname === "/my-page" ? "primary" : "action"} />
+                                <ListItemIcon sx={{minWidth: 40}}>
+                                    <Person color={location.pathname === "/my-page" ? "primary" : "action"}/>
                                 </ListItemIcon>
-                                <ListItemText 
+                                <ListItemText
                                     primary="마이페이지"
                                     primaryTypographyProps={{
                                         fontSize: '0.9rem',
@@ -820,8 +829,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     </Box>
 
                     {/* Main Content */}
-                    <Box sx={{ 
-                        flexGrow: 1, 
+                    <Box sx={{
+                        flexGrow: 1,
                         transition: 'all 0.3s ease',
                         marginLeft: sidebarOpen ? '240px' : 0,
                         width: sidebarOpen ? 'calc(100% - 240px)' : '100%',
@@ -834,12 +843,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </Box>
 
                 {/* Footer - Now outside the main content area */}
-                <Footer />
+                <Footer/>
             </Box>
 
             {/* Error Snackbar */}
             <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError(null)}>
-                <Alert onClose={() => setError(null)} severity="error" sx={{ width: "100%" }}>
+                <Alert onClose={() => setError(null)} severity="error" sx={{width: "100%"}}>
                     {error}
                 </Alert>
             </Snackbar>

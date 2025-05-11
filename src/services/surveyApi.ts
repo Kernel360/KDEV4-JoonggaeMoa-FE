@@ -1,16 +1,14 @@
 import api from "./api"
-import type { AxiosResponse } from "axios"
+import type {AxiosResponse} from "axios"
 import type {
-    SurveyCreateRequest,
-    SurveyUpdateRequest,
-    SurveyResponse,
     AnswerRequest,
     AnswerResponse,
+    SurveyCreateRequest,
     SurveyDetailResponse,
+    SurveyResponse,
+    SurveyUpdateRequest,
 } from "../types/survey"
-import type { ApiResponse } from "../types/api"
-import type { PageResponse } from "../types/survey" // PageResponse 타입 임포트
-import axios from "axios"
+import type {ApiResponse} from "../types/api"
 
 // 설문 생성
 export const createSurvey = async (surveyData: SurveyCreateRequest): Promise<AxiosResponse<ApiResponse<void>>> => {

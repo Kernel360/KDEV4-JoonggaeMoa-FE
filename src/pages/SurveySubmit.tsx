@@ -1,9 +1,10 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
-import { useParams, useNavigate } from "react-router-dom"
+import {useEffect, useState} from "react"
+import {useNavigate, useParams} from "react-router-dom"
 import {
+    Alert,
     Box,
     Button,
     Card,
@@ -17,23 +18,20 @@ import {
     FormGroup,
     FormHelperText,
     FormLabel,
+    Paper,
     Radio,
     RadioGroup,
     Stack,
     TextField,
     Typography,
-    Alert,
-    Paper,
-    Snackbar,
-    Grid,
 } from "@mui/material"
 // 고객용 API 함수 import로 변경
-import { getSurveyForCustomer, submitSurveyAnswerForCustomer } from "../services/surveyApi"
-import { QuestionType, type QuestionResponse, type SurveyResponse, type SurveyDetailResponse, AnswerRequest } from "../types/survey"
-import { CheckCircle } from "@mui/icons-material"
+import {getSurveyForCustomer, submitSurveyAnswerForCustomer} from "../services/surveyApi"
+import {AnswerRequest, type QuestionResponse, QuestionType, type SurveyDetailResponse} from "../types/survey"
+import {CheckCircle} from "@mui/icons-material"
 
 const SurveySubmit: React.FC = () => {
-    const { surveyId } = useParams<{ surveyId: string }>()
+    const {surveyId} = useParams<{ surveyId: string }>()
     const navigate = useNavigate()
 
     const [loading, setLoading] = useState<boolean>(true)
@@ -82,8 +80,8 @@ const SurveySubmit: React.FC = () => {
 
     // 실시간 유효성 검사 함수
     const validateField = (field: string, value: any, questionId?: number) => {
-        const newErrors = { ...formErrors }
-        
+        const newErrors = {...formErrors}
+
         if (field === 'name') {
             if (!value.trim()) {
                 newErrors.name = "이름을 입력해주세요."
@@ -116,15 +114,15 @@ const SurveySubmit: React.FC = () => {
             if (!newErrors.questions) {
                 newErrors.questions = {}
             }
-            
+
             const question = survey?.questions.find(q => q.id === questionId)
             if (question?.isRequired) {
                 // 빈 배열이거나 모든 요소가 빈 문자열인 경우
-                if (!value || 
-                    (Array.isArray(value) && 
-                     (value.length === 0 || value.every(item => !item.trim())))) {
+                if (!value ||
+                    (Array.isArray(value) &&
+                        (value.length === 0 || value.every(item => !item.trim())))) {
                     newErrors.questions[questionId] = "필수 응답 항목입니다."
-                    
+
                     // 필수 질문 누락 목록 업데이트
                     const missingQuestions = [...missingRequiredQuestions];
                     if (!missingQuestions.includes(question.content)) {
@@ -134,7 +132,7 @@ const SurveySubmit: React.FC = () => {
                     }
                 } else {
                     delete newErrors.questions[questionId];
-                    
+
                     // 필수 질문 누락 목록에서 제거
                     const missingQuestions = missingRequiredQuestions.filter(q => q !== question.content);
                     setMissingRequiredQuestions(missingQuestions);
@@ -143,13 +141,13 @@ const SurveySubmit: React.FC = () => {
                     }
                 }
             }
-            
+
             // 모든 질문 에러가 없으면 questions 객체 삭제
             if (Object.keys(newErrors.questions).length === 0) {
                 delete newErrors.questions
             }
         }
-        
+
         setFormErrors(newErrors)
     }
 
@@ -173,7 +171,7 @@ const SurveySubmit: React.FC = () => {
         // 숫자만 추출
         const numbersOnly = value.replace(/[^\d]/g, '');
         let formattedNumber = numbersOnly;
-        
+
         // 자동 하이픈 추가
         if (numbersOnly.length > 0) {
             if (numbersOnly.length <= 3) {
@@ -184,7 +182,7 @@ const SurveySubmit: React.FC = () => {
                 formattedNumber = `${numbersOnly.slice(0, 3)}-${numbersOnly.slice(3, 7)}-${numbersOnly.slice(7, 11)}`;
             }
         }
-        
+
         setPhone(formattedNumber);
         validateField('phone', formattedNumber);
     };
@@ -199,7 +197,7 @@ const SurveySubmit: React.FC = () => {
     // 답변 상태 업데이트 핸들러
     const handleAnswerChange = (questionId: number, value: string, checked?: boolean) => {
         setAnswers((prev) => {
-            const answersCopy = { ...prev }
+            const answersCopy = {...prev}
 
             // 질문 찾기
             const question = survey?.questions.find((q) => q.id === questionId)
@@ -252,7 +250,7 @@ const SurveySubmit: React.FC = () => {
         const hours = String(selectedDate.getHours()).padStart(2, '0');
         const minutes = String(selectedDate.getMinutes()).padStart(2, '0');
         const formattedDateTime = `${year}-${month}-${day} ${hours}:${minutes}`;
-        
+
         setConsultAt(formattedDateTime);
         setSubmitError(null);
     };
@@ -329,10 +327,10 @@ const SurveySubmit: React.FC = () => {
 
         // 필수 질문 검증
         const missingQuestions: string[] = []
-        
+
         survey?.questions.forEach((question) => {
             if (question.isRequired) {
-                const hasAnswer = answers[question.id] && 
+                const hasAnswer = answers[question.id] &&
                     answers[question.id].some(answer => answer.trim() !== "")
                 if (!hasAnswer) {
                     missingQuestions.push(question.content)
@@ -440,13 +438,13 @@ const SurveySubmit: React.FC = () => {
             <Box
                 key={question.id}
                 mb={3}
-                sx={{ backgroundColor: "#f9f9f9", p: 2, borderRadius: 1 }}
+                sx={{backgroundColor: "#f9f9f9", p: 2, borderRadius: 1}}
             >
                 <FormControl required={question.isRequired} error={!!questionError} component="fieldset" fullWidth>
-                    <FormLabel component="legend" sx={{ mb: 1, fontWeight: "bold" }}>
+                    <FormLabel component="legend" sx={{mb: 1, fontWeight: "bold"}}>
                         {question.content}
                         {question.isRequired && (
-                            <Typography component="span" color="error" sx={{ ml: 1, fontSize: "0.8rem" }}>
+                            <Typography component="span" color="error" sx={{ml: 1, fontSize: "0.8rem"}}>
                                 (필수)
                             </Typography>
                         )}
@@ -470,7 +468,7 @@ const SurveySubmit: React.FC = () => {
                         onChange={(e) => handleAnswerChange(question.id, e.target.value)}
                     >
                         {question.options.map((option, idx) => (
-                            <FormControlLabel key={idx} value={option} control={<Radio />} label={option} />
+                            <FormControlLabel key={idx} value={option} control={<Radio/>} label={option}/>
                         ))}
                     </RadioGroup>
                 )
@@ -525,11 +523,11 @@ const SurveySubmit: React.FC = () => {
                     textAlign: "center",
                 }}
             >
-                <CheckCircle sx={{ fontSize: 80, color: "success.main", mb: 3 }} />
+                <CheckCircle sx={{fontSize: 80, color: "success.main", mb: 3}}/>
                 <Typography variant="h4" gutterBottom>
                     설문 제출이 완료되었습니다!
                 </Typography>
-                <Typography variant="body1" color="text.secondary" sx={{ mb: 4, maxWidth: "600px" }}>
+                <Typography variant="body1" color="text.secondary" sx={{mb: 4, maxWidth: "600px"}}>
                     소중한 의견을 보내주셔서 감사합니다. 제출하신 내용은 소중히 활용하겠습니다.
                 </Typography>
                 <Button variant="contained" color="primary" size="large" onClick={() => window.location.reload()}>
@@ -542,8 +540,8 @@ const SurveySubmit: React.FC = () => {
     // 로딩 중
     if (loading) {
         return (
-            <Container maxWidth="md" sx={{ py: 4, display: "flex", justifyContent: "center" }}>
-                <CircularProgress />
+            <Container maxWidth="md" sx={{py: 4, display: "flex", justifyContent: "center"}}>
+                <CircularProgress/>
             </Container>
         )
     }
@@ -551,9 +549,9 @@ const SurveySubmit: React.FC = () => {
     // 오류 발생
     if (error && !survey) {
         return (
-            <Container maxWidth="md" sx={{ py: 4 }}>
+            <Container maxWidth="md" sx={{py: 4}}>
                 <Alert severity="error">{error}</Alert>
-                <Button variant="outlined" color="primary" sx={{ mt: 2 }} onClick={() => navigate(-1)}>
+                <Button variant="outlined" color="primary" sx={{mt: 2}} onClick={() => navigate(-1)}>
                     이전으로 돌아가기
                 </Button>
             </Container>
@@ -563,22 +561,22 @@ const SurveySubmit: React.FC = () => {
     // 성공 화면 표시
     if (success) {
         return (
-            <Container maxWidth="md" sx={{ py: 4 }}>
+            <Container maxWidth="md" sx={{py: 4}}>
                 {renderSuccessScreen()}
             </Container>
         )
     }
 
     return (
-        <Container maxWidth="md" sx={{ py: 4 }}>
+        <Container maxWidth="md" sx={{py: 4}}>
             {error && (
-                <Alert severity="error" sx={{ mb: 3 }}>
+                <Alert severity="error" sx={{mb: 3}}>
                     {error}
                 </Alert>
             )}
 
             {survey && (
-                <Paper elevation={2} sx={{ p: 3, mb: 4 }}>
+                <Paper elevation={2} sx={{p: 3, mb: 4}}>
                     <Typography variant="h4" component="h1" gutterBottom>
                         {survey.title}
                     </Typography>
@@ -589,13 +587,13 @@ const SurveySubmit: React.FC = () => {
             )}
 
             <form onSubmit={handleSubmit}>
-                <Card sx={{ mb: 4 }}>
+                <Card sx={{mb: 4}}>
                     <CardContent>
                         <Typography variant="h6" gutterBottom>
                             개인 정보
                         </Typography>
 
-                        <Divider sx={{ mb: 3 }} />
+                        <Divider sx={{mb: 3}}/>
 
                         <Stack spacing={2}>
                             <TextField
@@ -627,12 +625,12 @@ const SurveySubmit: React.FC = () => {
                                 required
                                 error={!!formErrors.phone}
                                 helperText={formErrors.phone}
-                                inputProps={{ maxLength: 13 }}
+                                inputProps={{maxLength: 13}}
                             />
 
                             <FormControl required error={!!formErrors.consent}>
                                 <FormControlLabel
-                                    control={<Checkbox checked={consent} onChange={handleConsentChange} />}
+                                    control={<Checkbox checked={consent} onChange={handleConsentChange}/>}
                                     label="개인정보 수집 및 이용에 동의합니다."
                                 />
                                 {formErrors.consent && <FormHelperText error>{formErrors.consent}</FormHelperText>}
@@ -642,7 +640,7 @@ const SurveySubmit: React.FC = () => {
                 </Card>
 
                 {survey && (
-                    <Card sx={{ mb: 4 }}>
+                    <Card sx={{mb: 4}}>
                         <CardContent>
                             <Typography variant="h6" gutterBottom>
                                 상담 신청
@@ -657,11 +655,11 @@ const SurveySubmit: React.FC = () => {
                                 label="상담을 신청합니다"
                             />
                             {applyConsultation && (
-                                <Box sx={{ mt: 2 }}>
-                                    <Typography 
-                                        variant="body2" 
-                                        color="text.secondary" 
-                                        sx={{ mb: 2 }}
+                                <Box sx={{mt: 2}}>
+                                    <Typography
+                                        variant="body2"
+                                        color="text.secondary"
+                                        sx={{mb: 2}}
                                     >
                                         상담 신청은 오늘로부터 2개월 이내로만 가능합니다.
                                     </Typography>
@@ -691,13 +689,13 @@ const SurveySubmit: React.FC = () => {
                 )}
 
                 {survey && survey.questions && Array.isArray(survey.questions) && (
-                    <Card sx={{ mb: 4 }}>
+                    <Card sx={{mb: 4}}>
                         <CardContent>
                             <Typography variant="h6" gutterBottom>
                                 설문 항목
                             </Typography>
 
-                            <Divider sx={{ mb: 3 }} />
+                            <Divider sx={{mb: 3}}/>
 
                             {survey.questions.map(renderQuestion)}
                         </CardContent>
@@ -705,21 +703,21 @@ const SurveySubmit: React.FC = () => {
                 )}
 
                 {submitError !== null && submitError !== '' && (
-                    <Alert severity="error" sx={{ mb: 2 }}>
+                    <Alert severity="error" sx={{mb: 2}}>
                         {submitError}
                     </Alert>
                 )}
 
-                <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
+                <Box sx={{display: "flex", justifyContent: "center", mt: 3}}>
                     <Button
                         type="submit"
                         variant="contained"
                         color="primary"
                         size="large"
                         disabled={submitting}
-                        sx={{ minWidth: 120 }}
+                        sx={{minWidth: 120}}
                     >
-                        {submitting ? <CircularProgress size={24} /> : "제출하기"}
+                        {submitting ? <CircularProgress size={24}/> : "제출하기"}
                     </Button>
                 </Box>
             </form>

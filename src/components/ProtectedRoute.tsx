@@ -1,11 +1,10 @@
 "use client"
 
-import React, { useState, useEffect, ReactNode } from "react";
-import { Navigate } from "react-router-dom"
-import { useAuth } from "../context/AuthContext"
+import React, {ReactNode, useState} from "react";
+import {Navigate, useLocation} from "react-router-dom"
+import {useAuth} from "../context/AuthContext"
 import Layout from "./Layout"
-import { CircularProgress, Box, ThemeProvider, Snackbar, Alert, createTheme } from "@mui/material"
-import { useLocation } from "react-router-dom"
+import {Alert, Box, CircularProgress, createTheme, Snackbar, ThemeProvider} from "@mui/material"
 
 const theme = createTheme({
     palette: {
@@ -24,22 +23,22 @@ interface ProtectedRouteProps {
 }
 
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-    const { isAuthenticated, loading } = useAuth();
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({children}) => {
+    const {isAuthenticated, loading} = useAuth();
     const location = useLocation();
     const [error, setError] = useState<string | null>(null);
 
-    
+
     if (loading) {
         return (
-            <Box sx={{ 
-                width: "100vw", 
-                height: "100vh", 
-                display: "flex", 
-                justifyContent: "center", 
-                alignItems: "center" 
+            <Box sx={{
+                width: "100vw",
+                height: "100vh",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center"
             }}>
-                <CircularProgress />
+                <CircularProgress/>
             </Box>
         )
     }
@@ -51,7 +50,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
     // For other protected routes
     if (!isAuthenticated) {
-        return <Navigate to="/" />
+        return <Navigate to="/"/>
     }
 
     if (location.pathname.startsWith('/article')) {
@@ -60,17 +59,16 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
                 {children}
                 {/* Error Snackbar */}
                 <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError(null)}>
-                    <Alert onClose={() => setError(null)} severity="error" sx={{ width: "100%" }}>
+                    <Alert onClose={() => setError(null)} severity="error" sx={{width: "100%"}}>
                         {error}
                     </Alert>
                 </Snackbar>
             </ThemeProvider>
         );
-    }
-    else{
+    } else {
         return <Layout>{children}</Layout>
     }
-    
+
 }
 
 export default ProtectedRoute

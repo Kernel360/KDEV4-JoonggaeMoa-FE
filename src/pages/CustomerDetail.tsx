@@ -1,26 +1,23 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import {useEffect, useState} from "react"
 import {
+    Alert,
     Box,
-    Container,
-    Typography,
-    Paper,
-    Grid,
     Button,
-    Divider,
-    AppBar,
-    Toolbar,
-    IconButton,
-    Chip,
     CircularProgress,
+    Container,
     Dialog,
     DialogActions,
     DialogContent,
     DialogContentText,
     DialogTitle,
+    Divider,
+    Grid,
+    IconButton,
+    Paper,
     Snackbar,
-    Alert,
+    Typography,
 } from "@mui/material"
 import Timeline from '@mui/lab/Timeline';
 import TimelineItem from '@mui/lab/TimelineItem';
@@ -28,14 +25,14 @@ import TimelineSeparator from '@mui/lab/TimelineSeparator';
 import TimelineConnector from '@mui/lab/TimelineConnector';
 import TimelineContent from '@mui/lab/TimelineContent';
 import TimelineDot from '@mui/lab/TimelineDot';
-import { ArrowBack, Edit, Delete, Campaign, Message, Assignment, Description, Poll } from "@mui/icons-material"
-import { useNavigate, useParams } from "react-router-dom"
-import { customerApi } from "../services/customerApi"
-import type { CustomerResponse, History, CustomerHistoryResponse } from "../services/customerApi"
+import {ArrowBack, Assignment, Delete, Description, Edit, Message, Poll} from "@mui/icons-material"
+import {useNavigate, useParams} from "react-router-dom"
+import type {CustomerResponse, History} from "../services/customerApi"
+import {customerApi} from "../services/customerApi"
 
 const CustomerDetail = () => {
     const navigate = useNavigate()
-    const { id } = useParams<{ id: string }>()
+    const {id} = useParams<{ id: string }>()
     const [customer, setCustomer] = useState<CustomerResponse | null>(null)
     const [history, setHistory] = useState<History[]>([])
     const [loading, setLoading] = useState(true)
@@ -50,15 +47,15 @@ const CustomerDetail = () => {
     const getHistoryIcon = (type: History['type']) => {
         switch (type) {
             case 'CONSULTATION':
-                return <Description />
+                return <Description/>
             case 'CONTRACT':
-                return <Assignment />
+                return <Assignment/>
             case 'MESSAGE':
-                return <Message />
+                return <Message/>
             case 'SURVEY':
-                return <Poll />
+                return <Poll/>
             default:
-                return <Description />
+                return <Description/>
         }
     }
 
@@ -82,9 +79,9 @@ const CustomerDetail = () => {
             setFilteredHistory([]);
             return;
         }
-        
+
         let filteredItems: History[] = [];
-        
+
         if (activeTab === '전체') {
             filteredItems = [...history];
         } else {
@@ -98,38 +95,38 @@ const CustomerDetail = () => {
             const targetType = typeMap[activeTab as keyof typeof typeMap];
 
             filteredItems = history.filter(item => item.type === targetType);
-            
+
         }
-        
+
         const sortedItems = filteredItems.sort((a, b) => {
             const dateA = a.type === 'CONTRACT' && !a.date ? a.startDate : a.date;
             const dateB = b.type === 'CONTRACT' && !b.date ? b.startDate : b.date;
-            
+
             if (!dateA && !dateB) return 0;
             if (!dateA) return 1;
             if (!dateB) return -1;
-            
+
             return new Date(dateB).getTime() - new Date(dateA).getTime();
         });
-        
+
         setFilteredHistory(sortedItems);
     }, [activeTab, history]);
 
     const getTabCount = (tabName: string): number => {
         if (!history || history.length === 0) return 0;
-        
+
         if (tabName === '전체') return history.length;
-        
+
         const typeMap: Record<string, History['type']> = {
             '계약': 'CONTRACT',
             '상담': 'CONSULTATION',
             '메시지': 'MESSAGE',
             '설문': 'SURVEY'
         };
-        
+
         const targetType = typeMap[tabName];
         if (!targetType) return 0;
-        
+
         return history.filter(item => item.type === targetType).length;
     };
 
@@ -145,7 +142,7 @@ const CustomerDetail = () => {
             const response = await customerApi.getCustomerById(customerId)
 
             if (response.data.success && response.data.data) {
-                const { history, ...customerData } = response.data.data
+                const {history, ...customerData} = response.data.data
                 setCustomer(customerData)
                 setHistory(history)
             } else {
@@ -162,7 +159,7 @@ const CustomerDetail = () => {
     const formatHistoryContent = (history: History) => {
         const getMessageStatus = (status: string | null) => {
             if (!status) return '상태 정보 없음';
-            
+
             switch (status) {
                 case 'PENDING':
                     return '전송 예약';
@@ -189,7 +186,7 @@ const CustomerDetail = () => {
                 const content = history.content || '없음';
                 const status = getMessageStatus(history.sendStatus);
                 const maxContentLength = 25;
-                
+
                 if (content.length > maxContentLength) {
                     return `메시지: ${truncateText(content, maxContentLength)} (상태: ${status})`;
                 } else {
@@ -257,8 +254,8 @@ const CustomerDetail = () => {
 
     if (loading) {
         return (
-            <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
-                <CircularProgress />
+            <Box sx={{display: "flex", justifyContent: "center", alignItems: "center", height: "100vh"}}>
+                <CircularProgress/>
             </Box>
         )
     }
@@ -266,11 +263,11 @@ const CustomerDetail = () => {
     if (error || !customer) {
         return (
             <Container>
-                <Box sx={{ mt: 5, textAlign: "center" }}>
+                <Box sx={{mt: 5, textAlign: "center"}}>
                     <Typography variant="h6" color="error" gutterBottom>
                         {error || "고객을 찾을 수 없습니다."}
                     </Typography>
-                    <Button variant="contained" onClick={() => navigate("/customer-management")} sx={{ mt: 2 }}>
+                    <Button variant="contained" onClick={() => navigate("/customer-management")} sx={{mt: 2}}>
                         고객 목록으로 돌아가기
                     </Button>
                 </Box>
@@ -279,7 +276,7 @@ const CustomerDetail = () => {
     }
 
     return (
-        <Box sx={{ flexGrow: 1, minHeight: "100vh", py: 3 }}>
+        <Box sx={{flexGrow: 1, minHeight: "100vh", py: 3}}>
             <Container
                 maxWidth="lg"
                 sx={{
@@ -288,39 +285,39 @@ const CustomerDetail = () => {
             >
                 <Grid container spacing={3}>
                     <Grid item xs={12} md={6}>
-                        <Paper 
-                            elevation={0} 
-                            sx={{ 
-                                p: 4, 
+                        <Paper
+                            elevation={0}
+                            sx={{
+                                p: 4,
                                 borderRadius: 2,
                                 boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
                             }}
                         >
-                            <Box sx={{ 
-                                display: "flex", 
-                                alignItems: "center", 
+                            <Box sx={{
+                                display: "flex",
+                                alignItems: "center",
                                 mb: 4,
                                 justifyContent: "space-between"
                             }}>
-                                <Box sx={{ display: "flex", alignItems: "center" }}>
-                                    <IconButton 
-                                        onClick={() => navigate("/customer-management")} 
-                                        sx={{ 
+                                <Box sx={{display: "flex", alignItems: "center"}}>
+                                    <IconButton
+                                        onClick={() => navigate("/customer-management")}
+                                        sx={{
                                             mr: 2,
                                             color: 'text.secondary'
                                         }}
                                     >
-                                        <ArrowBack />
+                                        <ArrowBack/>
                                     </IconButton>
-                                    <Typography variant="h6" sx={{ fontWeight: 500 }}>
+                                    <Typography variant="h6" sx={{fontWeight: 500}}>
                                         고객 상세 정보
                                     </Typography>
                                 </Box>
-                                <Box sx={{ display: 'flex', gap: 2 }}>
+                                <Box sx={{display: 'flex', gap: 2}}>
                                     <Button
-                                        startIcon={<Edit />}
+                                        startIcon={<Edit/>}
                                         onClick={() => navigate(`/customer-management/edit/${id}`)}
-                                        sx={{ 
+                                        sx={{
                                             color: 'text.secondary',
                                             '&:hover': {
                                                 bgcolor: 'rgba(0,0,0,0.04)'
@@ -329,10 +326,10 @@ const CustomerDetail = () => {
                                     >
                                         수정
                                     </Button>
-                                    <Button 
-                                        startIcon={<Delete />} 
+                                    <Button
+                                        startIcon={<Delete/>}
                                         onClick={handleDeleteClick}
-                                        sx={{ 
+                                        sx={{
                                             color: 'error.main',
                                             '&:hover': {
                                                 bgcolor: 'error.lighter'
@@ -346,18 +343,18 @@ const CustomerDetail = () => {
 
                             <Grid container spacing={3}>
                                 <Grid item xs={12} sm={6}>
-                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                    <Typography variant="body2" color="text.secondary" sx={{mb: 1}}>
                                         이름
                                     </Typography>
-                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                    <Typography variant="body1" sx={{fontWeight: 500}}>
                                         {customer.name}
                                     </Typography>
                                 </Grid>
                                 <Grid item xs={12} sm={6}>
-                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                    <Typography variant="body2" color="text.secondary" sx={{mb: 1}}>
                                         상태
                                     </Typography>
-                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                    <Box sx={{display: 'flex', alignItems: 'center'}}>
                                         <Box
                                             sx={{
                                                 width: 8,
@@ -367,78 +364,78 @@ const CustomerDetail = () => {
                                                 mr: 1
                                             }}
                                         />
-                                        <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                        <Typography variant="body1" sx={{fontWeight: 500}}>
                                             {customer.isVip ? "VIP" : "일반"}
                                         </Typography>
                                     </Box>
                                 </Grid>
                                 <Grid item xs={12} sm={6}>
-                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                    <Typography variant="body2" color="text.secondary" sx={{mb: 1}}>
                                         연락처
                                     </Typography>
-                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                    <Typography variant="body1" sx={{fontWeight: 500}}>
                                         {customer.phone}
                                     </Typography>
                                 </Grid>
                                 <Grid item xs={12} sm={6}>
-                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                    <Typography variant="body2" color="text.secondary" sx={{mb: 1}}>
                                         이메일
                                     </Typography>
-                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                    <Typography variant="body1" sx={{fontWeight: 500}}>
                                         {customer.email || "-"}
                                     </Typography>
                                 </Grid>
                                 <Grid item xs={12} sm={6}>
-                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                    <Typography variant="body2" color="text.secondary" sx={{mb: 1}}>
                                         생년월일
                                     </Typography>
-                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                    <Typography variant="body1" sx={{fontWeight: 500}}>
                                         {customer.birthday || "-"}
                                     </Typography>
                                 </Grid>
                                 <Grid item xs={12} sm={6}>
-                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                    <Typography variant="body2" color="text.secondary" sx={{mb: 1}}>
                                         직업
                                     </Typography>
-                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                    <Typography variant="body1" sx={{fontWeight: 500}}>
                                         {customer.job || "-"}
                                     </Typography>
                                 </Grid>
                                 <Grid item xs={12} sm={6}>
-                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                    <Typography variant="body2" color="text.secondary" sx={{mb: 1}}>
                                         관심 매물
                                     </Typography>
-                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                    <Typography variant="body1" sx={{fontWeight: 500}}>
                                         {customer.interestProperty || "-"}
                                     </Typography>
                                 </Grid>
                                 <Grid item xs={12} sm={6}>
-                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                    <Typography variant="body2" color="text.secondary" sx={{mb: 1}}>
                                         관심 지역
                                     </Typography>
-                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                    <Typography variant="body1" sx={{fontWeight: 500}}>
                                         {customer.interestLocation || "-"}
                                     </Typography>
                                 </Grid>
                                 <Grid item xs={12} sm={6}>
-                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                    <Typography variant="body2" color="text.secondary" sx={{mb: 1}}>
                                         자산 상태
                                     </Typography>
-                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                    <Typography variant="body1" sx={{fontWeight: 500}}>
                                         {customer.assetStatus || "-"}
                                     </Typography>
                                 </Grid>
                                 <Grid item xs={12} sm={6}>
-                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                    <Typography variant="body2" color="text.secondary" sx={{mb: 1}}>
                                         마케팅 동의
                                     </Typography>
-                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                    <Typography variant="body1" sx={{fontWeight: 500}}>
                                         {customer.consent ? "동의함" : "동의하지 않음"}
                                     </Typography>
                                 </Grid>
                                 <Grid item xs={12}>
-                                    <Divider sx={{ my: 3 }} />
-                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                    <Divider sx={{my: 3}}/>
+                                    <Typography variant="body2" color="text.secondary" sx={{mb: 2}}>
                                         메모
                                     </Typography>
                                     <Paper
@@ -450,7 +447,7 @@ const CustomerDetail = () => {
                                             borderRadius: 1,
                                         }}
                                     >
-                                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                                        <Typography variant="body2" sx={{color: 'text.secondary'}}>
                                             {customer.memo || "메모가 없습니다."}
                                         </Typography>
                                     </Paper>
@@ -459,35 +456,35 @@ const CustomerDetail = () => {
                         </Paper>
                     </Grid>
                     <Grid item xs={12} md={6}>
-                        <Paper 
-                            elevation={0} 
-                            sx={{ 
-                                p: 4, 
-                                borderRadius: 2, 
+                        <Paper
+                            elevation={0}
+                            sx={{
+                                p: 4,
+                                borderRadius: 2,
                                 height: '100%',
                                 display: 'flex',
                                 flexDirection: 'column',
                                 boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
                             }}
                         >
-                            <Typography variant="h6" sx={{ fontWeight: 500, mb: 3 }}>
+                            <Typography variant="h6" sx={{fontWeight: 500, mb: 3}}>
                                 고객 히스토리
                             </Typography>
                             {loading ? (
-                                <Box sx={{ display: "flex", justifyContent: "center", p: 3, flexGrow: 1 }}>
-                                    <CircularProgress />
+                                <Box sx={{display: "flex", justifyContent: "center", p: 3, flexGrow: 1}}>
+                                    <CircularProgress/>
                                 </Box>
                             ) : (
-                                <Box sx={{ 
-                                    overflowY: 'auto', 
-                                    maxHeight: 'calc(100vh - 250px)', 
+                                <Box sx={{
+                                    overflowY: 'auto',
+                                    maxHeight: 'calc(100vh - 250px)',
                                     pr: 2,
                                     flexGrow: 1
                                 }}>
-                                    <Box sx={{ mb: 3 }}>
-                                        <Box sx={{ 
-                                            display: 'flex', 
-                                            gap: 1, 
+                                    <Box sx={{mb: 3}}>
+                                        <Box sx={{
+                                            display: 'flex',
+                                            gap: 1,
                                             mb: 2,
                                             overflowX: 'auto',
                                             '&::-webkit-scrollbar': {
@@ -517,7 +514,7 @@ const CustomerDetail = () => {
                                             ))}
                                         </Box>
                                     </Box>
-                                    <Timeline sx={{ 
+                                    <Timeline sx={{
                                         p: 0,
                                         m: 0,
                                         '& .MuiTimelineItem-root': {
@@ -533,8 +530,8 @@ const CustomerDetail = () => {
                                         {filteredHistory.map((item, index) => (
                                             <TimelineItem key={`${item.id}-${index}`}>
                                                 <TimelineSeparator>
-                                                    <TimelineDot 
-                                                        sx={{ 
+                                                    <TimelineDot
+                                                        sx={{
                                                             boxShadow: 'none',
                                                             p: 0.75,
                                                             m: 0
@@ -543,10 +540,10 @@ const CustomerDetail = () => {
                                                     >
                                                         {getHistoryIcon(item.type)}
                                                     </TimelineDot>
-                                                    <TimelineConnector sx={{ bgcolor: 'grey.200' }} />
+                                                    <TimelineConnector sx={{bgcolor: 'grey.200'}}/>
                                                 </TimelineSeparator>
                                                 <TimelineContent>
-                                                    <Box 
+                                                    <Box
                                                         onClick={() => handleHistoryItemClick(item)}
                                                         sx={{
                                                             cursor: 'pointer',
@@ -557,21 +554,21 @@ const CustomerDetail = () => {
                                                             }
                                                         }}
                                                     >
-                                                        <Typography 
-                                                            variant="caption" 
-                                                            sx={{ 
+                                                        <Typography
+                                                            variant="caption"
+                                                            sx={{
                                                                 color: 'text.secondary',
                                                                 display: 'block',
                                                                 mb: 0.25
                                                             }}
                                                         >
-                                                            {item.type === 'CONTRACT' && !item.date ? 
-                                                                (item.startDate ? new Date(item.startDate).toLocaleString() : '날짜 정보 없음') : 
+                                                            {item.type === 'CONTRACT' && !item.date ?
+                                                                (item.startDate ? new Date(item.startDate).toLocaleString() : '날짜 정보 없음') :
                                                                 (item.date ? new Date(item.date).toLocaleString() : '날짜 정보 없음')}
                                                         </Typography>
-                                                        <Typography 
-                                                            variant="body2" 
-                                                            sx={{ 
+                                                        <Typography
+                                                            variant="body2"
+                                                            sx={{
                                                                 color: 'text.primary',
                                                                 fontWeight: 500,
                                                                 textOverflow: 'ellipsis',
@@ -586,14 +583,14 @@ const CustomerDetail = () => {
                                             </TimelineItem>
                                         ))}
                                         {filteredHistory.length === 0 && (
-                                            <Box sx={{ 
-                                                textAlign: 'center', 
+                                            <Box sx={{
+                                                textAlign: 'center',
                                                 py: 4,
                                                 color: 'text.secondary'
                                             }}>
                                                 <Typography variant="body2">
-                                                    {activeTab === '전체' ? 
-                                                        '히스토리가 없습니다.' : 
+                                                    {activeTab === '전체' ?
+                                                        '히스토리가 없습니다.' :
                                                         `${activeTab} 히스토리가 없습니다.`}
                                                 </Typography>
                                             </Box>
@@ -607,8 +604,8 @@ const CustomerDetail = () => {
             </Container>
 
             {/* Delete Confirmation Dialog */}
-            <Dialog 
-                open={openDeleteDialog} 
+            <Dialog
+                open={openDeleteDialog}
                 onClose={handleDeleteClose}
                 PaperProps={{
                     sx: {
@@ -617,17 +614,17 @@ const CustomerDetail = () => {
                     }
                 }}
             >
-                <DialogTitle sx={{ pb: 1 }}>고객 삭제</DialogTitle>
+                <DialogTitle sx={{pb: 1}}>고객 삭제</DialogTitle>
                 <DialogContent>
-                    <DialogContentText sx={{ color: 'text.secondary' }}>
+                    <DialogContentText sx={{color: 'text.secondary'}}>
                         {customer.name} 고객의 정보를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
                     </DialogContentText>
                 </DialogContent>
-                <DialogActions sx={{ p: 2, pt: 1 }}>
-                    <Button 
-                        onClick={handleDeleteClose} 
+                <DialogActions sx={{p: 2, pt: 1}}>
+                    <Button
+                        onClick={handleDeleteClose}
                         disabled={deleteLoading}
-                        sx={{ 
+                        sx={{
                             color: 'text.secondary',
                             '&:hover': {
                                 bgcolor: 'rgba(0,0,0,0.04)'
@@ -640,7 +637,7 @@ const CustomerDetail = () => {
                         onClick={handleDeleteConfirm}
                         color="error"
                         disabled={deleteLoading}
-                        startIcon={deleteLoading ? <CircularProgress size={20} /> : null}
+                        startIcon={deleteLoading ? <CircularProgress size={20}/> : null}
                         sx={{
                             '&:hover': {
                                 bgcolor: 'error.light'
@@ -653,16 +650,16 @@ const CustomerDetail = () => {
             </Dialog>
 
             {/* Success Snackbar */}
-            <Snackbar 
-                open={deleteSuccess} 
-                autoHideDuration={6000} 
+            <Snackbar
+                open={deleteSuccess}
+                autoHideDuration={6000}
                 onClose={() => setDeleteSuccess(false)}
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+                anchorOrigin={{vertical: 'bottom', horizontal: 'center'}}
             >
-                <Alert 
-                    onClose={() => setDeleteSuccess(false)} 
-                    severity="success" 
-                    sx={{ 
+                <Alert
+                    onClose={() => setDeleteSuccess(false)}
+                    severity="success"
+                    sx={{
                         width: "100%",
                         borderRadius: 2
                     }}
@@ -672,16 +669,16 @@ const CustomerDetail = () => {
             </Snackbar>
 
             {/* Error Snackbar */}
-            <Snackbar 
-                open={!!deleteError} 
-                autoHideDuration={6000} 
+            <Snackbar
+                open={!!deleteError}
+                autoHideDuration={6000}
                 onClose={() => setDeleteError(null)}
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+                anchorOrigin={{vertical: 'bottom', horizontal: 'center'}}
             >
-                <Alert 
-                    onClose={() => setDeleteError(null)} 
-                    severity="error" 
-                    sx={{ 
+                <Alert
+                    onClose={() => setDeleteError(null)}
+                    severity="error"
+                    sx={{
                         width: "100%",
                         borderRadius: 2
                     }}

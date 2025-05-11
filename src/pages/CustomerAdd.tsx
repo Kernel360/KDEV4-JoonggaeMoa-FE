@@ -1,29 +1,27 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import {useState} from "react"
 import {
-    Box,
-    Container,
-    Typography,
-    Paper,
-    TextField,
-    Button,
-    Grid,
-    FormControlLabel,
-    Checkbox,
-    AppBar,
-    Toolbar,
-    IconButton,
-    Snackbar,
     Alert,
+    Box,
+    Button,
+    Checkbox,
     CircularProgress,
+    Container,
+    FormControlLabel,
+    Grid,
+    IconButton,
+    Paper,
+    Snackbar,
+    TextField,
+    Typography,
 } from "@mui/material"
-import { ArrowBack } from "@mui/icons-material"
-import { useNavigate } from "react-router-dom"
-import { customerApi, type CreateCustomerRequest } from "../services/customerApi"
-import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers"
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs"
+import {ArrowBack} from "@mui/icons-material"
+import {useNavigate} from "react-router-dom"
+import {type CreateCustomerRequest, customerApi} from "../services/customerApi"
+import {DatePicker, LocalizationProvider} from "@mui/x-date-pickers"
+import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs"
 import dayjs from "dayjs"
 import "dayjs/locale/ko"
 
@@ -47,12 +45,12 @@ const CustomerAdd = () => {
     })
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target
-        
+        const {name, value} = e.target
+
         if (name === 'phone') {
             // Remove all non-numeric characters
             const numericValue = value.replace(/\D/g, '')
-            
+
             // Format the phone number
             if (numericValue.length <= 11) {
                 let formattedPhone = numericValue
@@ -62,16 +60,16 @@ const CustomerAdd = () => {
                 if (numericValue.length > 7) {
                     formattedPhone = formattedPhone.slice(0, 8) + '-' + formattedPhone.slice(8)
                 }
-                setFormData(prev => ({ ...prev, [name]: formattedPhone }))
+                setFormData(prev => ({...prev, [name]: formattedPhone}))
             }
         } else {
-            setFormData(prev => ({ ...prev, [name]: value }))
+            setFormData(prev => ({...prev, [name]: value}))
         }
     }
 
     const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, checked } = e.target
-        setFormData((prev) => ({ ...prev, [name]: checked }))
+        const {name, checked} = e.target
+        setFormData((prev) => ({...prev, [name]: checked}))
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -81,7 +79,7 @@ const CustomerAdd = () => {
             setError("이름, 전화번호, 이메일, 생년월일은 필수 입력 항목입니다.")
             return
         }
-        
+
         if (formData.birthday && dayjs(formData.birthday).isAfter(dayjs())) {
             setError("생년월일은 현재 날짜 이전이어야 합니다.");
             return
@@ -97,15 +95,14 @@ const CustomerAdd = () => {
                 setSuccess(true)
                 navigate("/customer-management")
 
-            }
-            else{
-                if(response.data.error?.code=="4092"){
-                    setError("이미 등록된 전화번호입니다.") 
-                } else if(response.data.error?.code=="4093"){
-                    setError("이미 등록된 이메일입니다.") 
+            } else {
+                if (response.data.error?.code == "4092") {
+                    setError("이미 등록된 전화번호입니다.")
+                } else if (response.data.error?.code == "4093") {
+                    setError("이미 등록된 이메일입니다.")
                 } else {
                     setError("고객 등록에 실패했습니다.")
-                 }
+                }
             }
         } catch (err: any) {
             console.error("Error creating customer:", err)
@@ -115,27 +112,27 @@ const CustomerAdd = () => {
     }
 
     return (
-        <Box sx={{ flexGrow: 1, minHeight: "100vh" }}>
+        <Box sx={{flexGrow: 1, minHeight: "100vh"}}>
             <Container
                 maxWidth="md"
                 sx={{
                     mt: 4,
                     mb: 4,
                     mx: "auto",
-                    px: { xs: 2, sm: 3, md: 4 },
+                    px: {xs: 2, sm: 3, md: 4},
                 }}
             >
-                <Paper elevation={0} sx={{ p: 4, borderRadius: 2, bgcolor: "#ffffff" }}>
-                    <Box sx={{ display: "flex", alignItems: "center", mb: 4 }}>
-                        <IconButton onClick={() => navigate("/customer-management")} sx={{ mr: 1 }}>
-                            <ArrowBack />
+                <Paper elevation={0} sx={{p: 4, borderRadius: 2, bgcolor: "#ffffff"}}>
+                    <Box sx={{display: "flex", alignItems: "center", mb: 4}}>
+                        <IconButton onClick={() => navigate("/customer-management")} sx={{mr: 1}}>
+                            <ArrowBack/>
                         </IconButton>
-                        <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                        <Typography variant="h6" sx={{fontWeight: "bold"}}>
                             고객 정보 등록
                         </Typography>
                     </Box>
 
-                    <Typography variant="subtitle2" color="textSecondary" sx={{ mb: 3 }}>
+                    <Typography variant="subtitle2" color="textSecondary" sx={{mb: 3}}>
                         고객의 기본 정보를 입력해주세요.
                     </Typography>
 
@@ -174,7 +171,8 @@ const CustomerAdd = () => {
                                 />
                             </Grid>
                             <Grid item xs={12} sm={6}>
-                                <TextField fullWidth label="직업" name="job" value={formData.job} onChange={handleChange} />
+                                <TextField fullWidth label="직업" name="job" value={formData.job}
+                                           onChange={handleChange}/>
                             </Grid>
                             <Grid item xs={12} sm={6}>
                                 <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="ko">
@@ -184,9 +182,9 @@ const CustomerAdd = () => {
                                         onChange={(newValue) => {
                                             if (newValue) {
                                                 const formattedDate = dayjs(newValue).format('YYYY-MM-DD')
-                                                setFormData(prev => ({ ...prev, birthday: formattedDate }))
+                                                setFormData(prev => ({...prev, birthday: formattedDate}))
                                             } else {
-                                                setFormData(prev => ({ ...prev, birthday: '' }))
+                                                setFormData(prev => ({...prev, birthday: ''}))
                                             }
                                         }}
                                         format="YYYY-MM-DD"
@@ -202,7 +200,8 @@ const CustomerAdd = () => {
                             </Grid>
                             <Grid item xs={12} sm={6}>
                                 <FormControlLabel
-                                    control={<Checkbox checked={formData.isVip} onChange={handleCheckboxChange} name="isVip" />}
+                                    control={<Checkbox checked={formData.isVip} onChange={handleCheckboxChange}
+                                                       name="isVip"/>}
                                     label="VIP 고객"
                                 />
                             </Grid>
@@ -219,7 +218,8 @@ const CustomerAdd = () => {
                             </Grid>
                             <Grid item xs={12}>
                                 <FormControlLabel
-                                    control={<Checkbox checked={formData.consent} onChange={handleCheckboxChange} name="consent" />}
+                                    control={<Checkbox checked={formData.consent} onChange={handleCheckboxChange}
+                                                       name="consent"/>}
                                     label="마케팅 정보 수신에 동의합니다."
                                 />
                             </Grid>
@@ -250,10 +250,10 @@ const CustomerAdd = () => {
                                     onChange={handleChange}
                                 />
                             </Grid>
-                            <Grid item xs={12} sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+                            <Grid item xs={12} sx={{display: "flex", justifyContent: "center", mt: 2}}>
                                 <Button
                                     variant="outlined"
-                                    sx={{ mr: 1, borderColor: "#ddd", color: "#333" }}
+                                    sx={{mr: 1, borderColor: "#ddd", color: "#333"}}
                                     onClick={() => navigate("/customer-management")}
                                     disabled={loading}
                                 >
@@ -262,10 +262,10 @@ const CustomerAdd = () => {
                                 <Button
                                     type="submit"
                                     variant="contained"
-                                    sx={{ bgcolor: "#007ea7", "&:hover": { bgcolor: "#003459" } }}
+                                    sx={{bgcolor: "#007ea7", "&:hover": {bgcolor: "#003459"}}}
                                     disabled={loading}
                                 >
-                                    {loading ? <CircularProgress size={24} /> : "고객 등록하기"}
+                                    {loading ? <CircularProgress size={24}/> : "고객 등록하기"}
                                 </Button>
                             </Grid>
                         </Grid>
@@ -274,13 +274,13 @@ const CustomerAdd = () => {
             </Container>
 
             <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError(null)}>
-                <Alert onClose={() => setError(null)} severity="error" sx={{ width: "100%" }}>
+                <Alert onClose={() => setError(null)} severity="error" sx={{width: "100%"}}>
                     {error}
                 </Alert>
             </Snackbar>
 
             <Snackbar open={success} autoHideDuration={6000} onClose={() => setSuccess(false)}>
-                <Alert onClose={() => setSuccess(false)} severity="success" sx={{ width: "100%" }}>
+                <Alert onClose={() => setSuccess(false)} severity="success" sx={{width: "100%"}}>
                     고객이 성공적으로 등록되었습니다. 고객 목록 페이지로 이동합니다.
                 </Alert>
             </Snackbar>

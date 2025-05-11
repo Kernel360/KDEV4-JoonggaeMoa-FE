@@ -1,16 +1,8 @@
 import React from 'react';
-import {
-    Box,
-    Typography,
-    Paper,
-    List,
-    ListItem,
-    Container,
-    IconButton,
-} from '@mui/material';
-import { ArrowBack } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
-import { useNotification } from '../context/NotificationContext';
+import {Box, Container, IconButton, List, ListItem, Paper, Typography,} from '@mui/material';
+import {ArrowBack} from '@mui/icons-material';
+import {useNavigate} from 'react-router-dom';
+import {useNotification} from '../context/NotificationContext';
 
 interface Notification {
     id: number;
@@ -38,7 +30,7 @@ const getNotificationColor = (type: string) => {
 };
 
 const NotificationList: React.FC = () => {
-    const { notifications, markAsRead } = useNotification();
+    const {notifications, markAsRead} = useNotification();
     const navigate = useNavigate();
 
     const handleNotificationNavigation = async (notification: Notification) => {
@@ -72,10 +64,10 @@ const NotificationList: React.FC = () => {
     };
 
     return (
-        <Container maxWidth="md" sx={{ py: 4 }}>
-            <Box sx={{ mb: 4, display: 'flex', alignItems: 'center' }}>
-                <IconButton onClick={() => navigate(-1)} sx={{ mr: 2 }}>
-                    <ArrowBack />
+        <Container maxWidth="md" sx={{py: 4}}>
+            <Box sx={{mb: 4, display: 'flex', alignItems: 'center'}}>
+                <IconButton onClick={() => navigate(-1)} sx={{mr: 2}}>
+                    <ArrowBack/>
                 </IconButton>
                 <Typography variant="h5" component="h1">
                     알림 목록
@@ -93,7 +85,7 @@ const NotificationList: React.FC = () => {
                                 sx={{
                                     py: 2,
                                     borderBottom: '1px solid rgba(0,0,0,0.06)',
-                                    '&:last-child': { borderBottom: 'none' },
+                                    '&:last-child': {borderBottom: 'none'},
                                     bgcolor: notification.isRead ? 'action.hover' : 'transparent',
                                     cursor: 'pointer',
                                     '&:hover': {
@@ -108,8 +100,8 @@ const NotificationList: React.FC = () => {
                                     borderRadius: '4px',
                                     bgcolor: notification.isRead ? 'grey.400' : getNotificationColor(notification.type),
                                     mr: 2
-                                }} />
-                                <Box sx={{ width: '100%' }}>
+                                }}/>
+                                <Box sx={{width: '100%'}}>
                                     <Typography
                                         variant="body1"
                                         sx={{
@@ -120,7 +112,7 @@ const NotificationList: React.FC = () => {
                                     >
                                         {notification.content}
                                     </Typography>
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
                                         <Typography
                                             component="span"
                                             variant="body2"
@@ -138,9 +130,9 @@ const NotificationList: React.FC = () => {
                                         >
                                             {notification.type}
                                         </Typography>
-                                        <Typography 
-                                            variant="caption" 
-                                            sx={{ 
+                                        <Typography
+                                            variant="caption"
+                                            sx={{
                                                 color: 'text.secondary',
                                                 fontSize: '0.75rem'
                                             }}

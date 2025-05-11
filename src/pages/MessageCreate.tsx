@@ -1,40 +1,35 @@
 "use client"
 
 import type React from "react"
-import type { SelectChangeEvent } from "@mui/material/Select"
-
-import { useState, useEffect, useRef, useCallback } from "react"
+import {useCallback, useEffect, useRef, useState} from "react"
+import type {SelectChangeEvent} from "@mui/material/Select"
 import {
-    Box,
-    Container,
-    Typography,
-    Paper,
-    TextField,
-    Button,
-    Grid,
-    FormControlLabel,
-    AppBar,
-    Toolbar,
-    IconButton,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
-    CircularProgress,
-    Snackbar,
     Alert,
-    Divider,
+    Box,
+    Button,
     Checkbox,
+    CircularProgress,
+    Container,
+    Divider,
+    FormControl,
     FormHelperText,
+    Grid,
+    IconButton,
     InputAdornment,
+    InputLabel,
+    MenuItem,
+    Paper,
+    Select,
+    Snackbar,
+    TextField,
+    Typography,
 } from "@mui/material"
-import { ArrowBack, InfoOutlined, Search } from "@mui/icons-material"
-import { useNavigate } from "react-router-dom"
-import { messageApi } from "../services/messageApi"
-import { messageTemplateApi } from "../services/messageTemplateApi"
-import { customerApi } from "../services/customerApi"
-import type { CustomerListResponse } from "../services/customerApi"
-import type { MessageTemplateResponse } from "../services/messageTemplateApi"
+import {ArrowBack, InfoOutlined, Search} from "@mui/icons-material"
+import {useNavigate} from "react-router-dom"
+import {messageApi} from "../services/messageApi"
+import type {MessageTemplateResponse} from "../services/messageTemplateApi"
+import {messageTemplateApi} from "../services/messageTemplateApi"
+import {customerApi} from "../services/customerApi"
 
 function getByteLength(str: string): number {
     // Count bytes properly for Korean characters (UTF-8)
@@ -87,12 +82,12 @@ const MessageCreate = () => {
     const [success, setSuccess] = useState(false)
 
     // 고객 관련 상태
-    const [customers, setCustomers] = useState<{id: number; name: string; phone: string}[]>([])
+    const [customers, setCustomers] = useState<{ id: number; name: string; phone: string }[]>([])
     const [selectedCustomers, setSelectedCustomers] = useState<number[]>([])
     const [customerLoading, setCustomerLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState("")
     const [currentSearchTerm, setCurrentSearchTerm] = useState("")
-    
+
     // 무한 스크롤 관련 상태
     const [cursor, setCursor] = useState<number | undefined>(undefined)
     const [hasMore, setHasMore] = useState(true)
@@ -118,7 +113,7 @@ const MessageCreate = () => {
         fetchTemplates()
 
         // 현재 시간에서 30분 후로 초기화
-        const { date, time } = getThirtyMinutesLater()
+        const {date, time} = getThirtyMinutesLater()
         setScheduledDate(date)
         setScheduledTime(time)
 
@@ -141,23 +136,23 @@ const MessageCreate = () => {
             } else {
                 setIsLoadingMoreCustomers(true)
             }
-            
+
             const response = await customerApi.getInfiniteCustomers(cursorId, currentSearchTerm)
-            
+
             if (response.data.success && response.data.data) {
                 const newCustomers = response.data.data.content
-                
+
                 if (cursorId === undefined) {
                     setCustomers(newCustomers)
                 } else {
                     setCustomers(prev => [...prev, ...newCustomers])
                 }
-                
+
                 // 마지막 고객의 ID를 커서로 설정
                 if (newCustomers.length > 0) {
                     setCursor(newCustomers[newCustomers.length - 1].id)
                 }
-                
+
                 // 더 이상 데이터가 없으면 hasMore를 false로 설정
                 setHasMore(!response.data.data.last)
             } else {
@@ -183,15 +178,15 @@ const MessageCreate = () => {
     // 무한 스크롤을 위한 콜백 함수
     const lastCustomerRefCallback = useCallback((node: HTMLDivElement | null) => {
         if (customerLoading || isLoadingMoreCustomers) return
-        
+
         if (observer.current) observer.current.disconnect()
-        
+
         observer.current = new IntersectionObserver(entries => {
             if (entries[0].isIntersecting && hasMore) {
                 fetchCustomers(cursor)
             }
         })
-        
+
         if (node) observer.current.observe(node)
         lastCustomerRef.current = node
     }, [customerLoading, hasMore, isLoadingMoreCustomers, cursor])
@@ -328,28 +323,28 @@ const MessageCreate = () => {
 
     // 현재 시간 + 10분 이후의 시간으로 재설정하는 함수
     const resetToThirtyMinutesLater = () => {
-        const { date, time } = getThirtyMinutesLater()
+        const {date, time} = getThirtyMinutesLater()
         setScheduledDate(date)
         setScheduledTime(time)
         setTimeError(false)
     }
 
     return (
-        <Box sx={{ flexGrow: 1, minHeight: "100vh" }}>
+        <Box sx={{flexGrow: 1, minHeight: "100vh"}}>
             <Container
                 maxWidth="lg"
                 sx={{
                     mt: 4,
                     mb: 4,
                     mx: "auto",
-                    px: { xs: 2, sm: 3, md: 4 },
+                    px: {xs: 2, sm: 3, md: 4},
                 }}
             >
-                <Box sx={{ display: "flex", alignItems: "center", mb: 4 }}>
-                    <IconButton onClick={() => navigate("/message")} sx={{ mr: 1 }}>
-                        <ArrowBack />
+                <Box sx={{display: "flex", alignItems: "center", mb: 4}}>
+                    <IconButton onClick={() => navigate("/message")} sx={{mr: 1}}>
+                        <ArrowBack/>
                     </IconButton>
-                    <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                    <Typography variant="h6" sx={{fontWeight: "bold"}}>
                         문자 작성
                     </Typography>
                 </Box>
@@ -357,21 +352,21 @@ const MessageCreate = () => {
                 <form onSubmit={handleSubmit}>
                     <Grid container spacing={3}>
                         <Grid item xs={12} md={5}>
-                            <Paper 
-                                elevation={0} 
-                                sx={{ 
-                                    p: 3, 
-                                    borderRadius: 2, 
+                            <Paper
+                                elevation={0}
+                                sx={{
+                                    p: 3,
+                                    borderRadius: 2,
                                     height: "100%",
                                     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
                                 }}
                             >
-                                <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: "bold", color: "#00171f" }}>
+                                <Typography variant="subtitle1" sx={{mb: 2, fontWeight: "bold", color: "#00171f"}}>
                                     고객 선택
                                 </Typography>
 
                                 {/* 검색창 */}
-                                <Box component="div" sx={{ display: 'flex', gap: 1, mb: 2 }}>
+                                <Box component="div" sx={{display: 'flex', gap: 1, mb: 2}}>
                                     <TextField
                                         fullWidth
                                         size="small"
@@ -384,7 +379,7 @@ const MessageCreate = () => {
                                                 handleSearchSubmit(e)
                                             }
                                         }}
-                                        sx={{ 
+                                        sx={{
                                             '& .MuiOutlinedInput-root': {
                                                 borderRadius: 1,
                                                 '&:hover fieldset': {
@@ -398,17 +393,17 @@ const MessageCreate = () => {
                                         InputProps={{
                                             startAdornment: (
                                                 <InputAdornment position="start">
-                                                    <Search fontSize="small" sx={{ color: '#666' }} />
+                                                    <Search fontSize="small" sx={{color: '#666'}}/>
                                                 </InputAdornment>
                                             ),
                                         }}
                                     />
-                                    <Button 
-                                        variant="contained" 
+                                    <Button
+                                        variant="contained"
                                         onClick={handleSearchSubmit}
-                                        sx={{ 
-                                            bgcolor: "#007ea7", 
-                                            "&:hover": { bgcolor: "#003459" },
+                                        sx={{
+                                            bgcolor: "#007ea7",
+                                            "&:hover": {bgcolor: "#003459"},
                                             whiteSpace: 'nowrap'
                                         }}
                                     >
@@ -417,19 +412,19 @@ const MessageCreate = () => {
                                 </Box>
 
                                 {/* 고객 목록 */}
-                                <Box 
-                                    sx={{ 
-                                        border: "1px solid #eee", 
-                                        borderRadius: 1, 
+                                <Box
+                                    sx={{
+                                        border: "1px solid #eee",
+                                        borderRadius: 1,
                                         mb: 2,
                                         boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                                        maxHeight: "500px", 
+                                        maxHeight: "500px",
                                         overflow: "auto"
                                     }}
                                 >
                                     {customerLoading ? (
-                                        <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
-                                            <CircularProgress size={24} sx={{ color: '#007ea7' }} />
+                                        <Box sx={{display: "flex", justifyContent: "center", p: 3}}>
+                                            <CircularProgress size={24} sx={{color: '#007ea7'}}/>
                                         </Box>
                                     ) : customers.length > 0 ? (
                                         customers.map((customer, index) => (
@@ -458,17 +453,17 @@ const MessageCreate = () => {
                                                     onChange={() => handleCustomerSelect(customer.id)}
                                                     size="small"
                                                     onClick={(e) => e.stopPropagation()}
-                                                    sx={{ 
+                                                    sx={{
                                                         color: '#007ea7',
                                                         '&.Mui-checked': {
                                                             color: '#007ea7',
                                                         }
                                                     }}
                                                 />
-                                                <Typography 
-                                                    variant="body1" 
-                                                    sx={{ 
-                                                        ml: 1, 
+                                                <Typography
+                                                    variant="body1"
+                                                    sx={{
+                                                        ml: 1,
                                                         fontWeight: 500,
                                                         fontSize: "0.95rem"
                                                     }}
@@ -478,32 +473,32 @@ const MessageCreate = () => {
                                             </Box>
                                         ))
                                     ) : (
-                                        <Box sx={{ p: 3, textAlign: "center" }}>
+                                        <Box sx={{p: 3, textAlign: "center"}}>
                                             <Typography variant="body2" color="text.secondary">
                                                 {currentSearchTerm ? "검색 결과가 없습니다." : "고객을 검색해주세요."}
                                             </Typography>
                                         </Box>
                                     )}
-                                    
+
                                     {isLoadingMoreCustomers && (
-                                        <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
-                                            <CircularProgress size={20} sx={{ color: '#007ea7' }} />
+                                        <Box sx={{display: "flex", justifyContent: "center", p: 2}}>
+                                            <CircularProgress size={20} sx={{color: '#007ea7'}}/>
                                         </Box>
                                     )}
                                 </Box>
 
                                 {/* 선택된 고객 수 */}
-                                <Box 
-                                    sx={{ 
-                                        display: "flex", 
-                                        justifyContent: "space-between", 
+                                <Box
+                                    sx={{
+                                        display: "flex",
+                                        justifyContent: "space-between",
                                         alignItems: "center",
                                         p: 1,
                                         bgcolor: "rgba(0, 126, 167, 0.05)",
                                         borderRadius: 1
                                     }}
                                 >
-                                    <Typography variant="body2" sx={{ fontWeight: 500, color: "#007ea7" }}>
+                                    <Typography variant="body2" sx={{fontWeight: 500, color: "#007ea7"}}>
                                         {selectedCustomers.length}명 선택됨
                                     </Typography>
                                 </Box>
@@ -511,24 +506,24 @@ const MessageCreate = () => {
                         </Grid>
 
                         <Grid item xs={12} md={7}>
-                            <Paper 
-                                elevation={0} 
-                                sx={{ 
-                                    p: 3, 
+                            <Paper
+                                elevation={0}
+                                sx={{
+                                    p: 3,
                                     borderRadius: 2,
                                     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
                                 }}
                             >
-                                <Typography variant="subtitle1" sx={{ mb: 3, fontWeight: "bold", color: "#00171f" }}>
+                                <Typography variant="subtitle1" sx={{mb: 3, fontWeight: "bold", color: "#00171f"}}>
                                     메시지 정보
                                 </Typography>
 
                                 <Grid container spacing={2}>
                                     <Grid item xs={12}>
-                                        <FormControl 
-                                            fullWidth 
-                                            size="small" 
-                                            sx={{ 
+                                        <FormControl
+                                            fullWidth
+                                            size="small"
+                                            sx={{
                                                 mb: 2,
                                                 '& .MuiOutlinedInput-root': {
                                                     borderRadius: 1,
@@ -542,7 +537,8 @@ const MessageCreate = () => {
                                             }}
                                         >
                                             <InputLabel>템플릿 선택</InputLabel>
-                                            <Select value={selectedTemplate} label="템플릿 선택" onChange={handleTemplateChange}>
+                                            <Select value={selectedTemplate} label="템플릿 선택"
+                                                    onChange={handleTemplateChange}>
                                                 <MenuItem value="">직접 입력</MenuItem>
                                                 {templates.map((template) => (
                                                     <MenuItem key={template.id} value={template.id.toString()}>
@@ -562,7 +558,7 @@ const MessageCreate = () => {
                                     value={content}
                                     onChange={handleContentChange}
                                     placeholder="문자 내용을 입력하세요. (고객명은 ${이름}으로 입력하세요.)"
-                                    sx={{ 
+                                    sx={{
                                         mb: 1,
                                         '& .MuiOutlinedInput-root': {
                                             borderRadius: 1,
@@ -578,15 +574,15 @@ const MessageCreate = () => {
                                     helperText={byteCount > 90 ? "최대 90바이트까지 입력 가능합니다." : ""}
                                 />
 
-                                <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 3 }}>
+                                <Box sx={{display: "flex", justifyContent: "flex-end", mb: 3}}>
                                     <Typography variant="caption" color={byteCount > 90 ? "error" : "text.secondary"}>
                                         {byteCount}/90 바이트
                                     </Typography>
                                 </Box>
 
-                                <Divider sx={{ my: 2 }} />
+                                <Divider sx={{my: 2}}/>
 
-                                <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 500, color: "#00171f" }}>
+                                <Typography variant="subtitle2" sx={{mb: 1, fontWeight: 500, color: "#00171f"}}>
                                     미리보기
                                 </Typography>
                                 <Paper
@@ -607,10 +603,10 @@ const MessageCreate = () => {
                                     {previewContent || "미리보기 내용이 여기에 표시됩니다."}
                                 </Paper>
 
-                                <Divider sx={{ my: 2 }} />
+                                <Divider sx={{my: 2}}/>
 
-                                <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                                    <Typography variant="subtitle1" sx={{ mr: 1, fontWeight: 500, color: "#00171f" }}>
+                                <Box sx={{display: "flex", alignItems: "center", mb: 2}}>
+                                    <Typography variant="subtitle1" sx={{mr: 1, fontWeight: 500, color: "#00171f"}}>
                                         발송 예약
                                     </Typography>
                                     <Box
@@ -624,8 +620,8 @@ const MessageCreate = () => {
                                             ml: 1,
                                         }}
                                     >
-                                        <InfoOutlined fontSize="small" sx={{ mr: 0.5, color: "#007ea7" }} />
-                                        <Typography variant="caption" sx={{ color: "#007ea7" }}>
+                                        <InfoOutlined fontSize="small" sx={{mr: 0.5, color: "#007ea7"}}/>
+                                        <Typography variant="caption" sx={{color: "#007ea7"}}>
                                             현재 시간으로부터 최소 30분 이후로 설정해야 합니다
                                         </Typography>
                                     </Box>
@@ -644,7 +640,7 @@ const MessageCreate = () => {
                                                     setScheduledDate(e.target.value);
                                                 }
                                             }}
-                                            InputLabelProps={{ shrink: true }}
+                                            InputLabelProps={{shrink: true}}
                                             error={timeError}
                                             inputProps={{
                                                 max: "9999-12-31"
@@ -669,7 +665,7 @@ const MessageCreate = () => {
                                             label="시간"
                                             value={scheduledTime}
                                             onChange={(e) => setScheduledTime(e.target.value)}
-                                            InputLabelProps={{ shrink: true }}
+                                            InputLabelProps={{shrink: true}}
                                             error={timeError}
                                             sx={{
                                                 '& .MuiOutlinedInput-root': {
@@ -687,13 +683,18 @@ const MessageCreate = () => {
                                 </Grid>
 
                                 {timeError && (
-                                    <Box sx={{ mt: 1, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                                    <Box sx={{
+                                        mt: 1,
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "space-between"
+                                    }}>
                                         <FormHelperText error>현재 시간으로부터 최소 30분 이후로 설정해야 합니다</FormHelperText>
                                         <Button
                                             size="small"
                                             onClick={resetToThirtyMinutesLater}
-                                            sx={{ 
-                                                color: "#007ea7", 
+                                            sx={{
+                                                color: "#007ea7",
                                                 fontSize: "0.75rem",
                                                 '&:hover': {
                                                     bgcolor: 'rgba(0, 126, 167, 0.1)'
@@ -705,13 +706,13 @@ const MessageCreate = () => {
                                     </Box>
                                 )}
 
-                                <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 3 }}>
+                                <Box sx={{display: "flex", justifyContent: "flex-end", mt: 3}}>
                                     <Button
                                         variant="outlined"
                                         onClick={() => navigate("/message")}
-                                        sx={{ 
-                                            mr: 1, 
-                                            borderColor: "#007ea7", 
+                                        sx={{
+                                            mr: 1,
+                                            borderColor: "#007ea7",
                                             color: "#007ea7",
                                             '&:hover': {
                                                 borderColor: "#003459",
@@ -726,13 +727,13 @@ const MessageCreate = () => {
                                     <Button
                                         type="submit"
                                         variant="contained"
-                                        sx={{ 
-                                            bgcolor: "#007ea7", 
-                                            "&:hover": { bgcolor: "#003459" } 
+                                        sx={{
+                                            bgcolor: "#007ea7",
+                                            "&:hover": {bgcolor: "#003459"}
                                         }}
                                         disabled={loading}
                                     >
-                                        {loading ? <CircularProgress size={24} /> : "예약하기"}
+                                        {loading ? <CircularProgress size={24}/> : "예약하기"}
                                     </Button>
                                 </Box>
                             </Paper>
@@ -742,13 +743,13 @@ const MessageCreate = () => {
             </Container>
 
             <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError(null)}>
-                <Alert onClose={() => setError(null)} severity="error" sx={{ width: "100%" }}>
+                <Alert onClose={() => setError(null)} severity="error" sx={{width: "100%"}}>
                     {error}
                 </Alert>
             </Snackbar>
 
             <Snackbar open={success} autoHideDuration={6000} onClose={() => setSuccess(false)}>
-                <Alert onClose={() => setSuccess(false)} severity="success" sx={{ width: "100%" }}>
+                <Alert onClose={() => setSuccess(false)} severity="success" sx={{width: "100%"}}>
                     문자가 성공적으로 예약되었습니다.
                 </Alert>
             </Snackbar>
