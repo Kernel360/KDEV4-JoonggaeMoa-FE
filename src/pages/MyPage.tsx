@@ -1,5 +1,3 @@
-"use client"
-
 import React, {useEffect, useState} from "react"
 import {
     Avatar,
@@ -167,7 +165,11 @@ const MyPage = () => {
                     </Box>
 
                     <Grid container spacing={3}>
-                        <Grid item xs={12} md={6}>
+                        <Grid
+                            size={{
+                                xs: 12,
+                                md: 6
+                            }}>
                             <Paper elevation={0} sx={{p: 3, bgcolor: "#f9fafb", borderRadius: 2, height: '100%'}}>
                                 <Typography variant="subtitle1" sx={{fontWeight: 600, color: '#111827', mb: 2}}>
                                     기본 정보
@@ -208,7 +210,11 @@ const MyPage = () => {
                                 </Box>
                             </Paper>
                         </Grid>
-                        <Grid item xs={12} md={6}>
+                        <Grid
+                            size={{
+                                xs: 12,
+                                md: 6
+                            }}>
                             <Paper elevation={0} sx={{p: 3, bgcolor: "#f9fafb", borderRadius: 2, height: '100%'}}>
                                 <Typography variant="subtitle1" sx={{fontWeight: 600, color: '#111827', mb: 2}}>
                                     사무실 정보
@@ -267,7 +273,7 @@ const MyPage = () => {
                     <form onSubmit={handleEditSubmit}>
                         <DialogContent sx={{pt: 3}}>
                             <Grid container spacing={2}>
-                                <Grid item xs={12}>
+                                <Grid size={12}>
                                     <TextField
                                         fullWidth
                                         label="아이디"
@@ -280,7 +286,11 @@ const MyPage = () => {
                                         sx={{mb: 1}}
                                     />
                                 </Grid>
-                                <Grid item xs={12} sm={6}>
+                                <Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 6
+                                    }}>
                                     <TextField
                                         fullWidth
                                         label="이름"
@@ -292,7 +302,11 @@ const MyPage = () => {
                                         sx={{mb: 1}}
                                     />
                                 </Grid>
-                                <Grid item xs={12} sm={6}>
+                                <Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 6
+                                    }}>
                                     <TextField
                                         fullWidth
                                         label="전화번호"
@@ -308,7 +322,7 @@ const MyPage = () => {
                                         sx={{mb: 1}}
                                     />
                                 </Grid>
-                                <Grid item xs={12}>
+                                <Grid size={12}>
                                     <TextField
                                         fullWidth
                                         label="이메일"
@@ -321,7 +335,11 @@ const MyPage = () => {
                                         sx={{mb: 1}}
                                     />
                                 </Grid>
-                                <Grid item xs={12} sm={6}>
+                                <Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 6
+                                    }}>
                                     <TextField
                                         fullWidth
                                         label="사무실명"
@@ -333,7 +351,11 @@ const MyPage = () => {
                                         sx={{mb: 1}}
                                     />
                                 </Grid>
-                                <Grid item xs={12} sm={6}>
+                                <Grid
+                                    size={{
+                                        xs: 12,
+                                        sm: 6
+                                    }}>
                                     <TextField
                                         fullWidth
                                         label="지역"
@@ -345,7 +367,7 @@ const MyPage = () => {
                                         sx={{mb: 1}}
                                     />
                                 </Grid>
-                                <Grid item xs={12}>
+                                <Grid size={12}>
                                     <TextField
                                         fullWidth
                                         label="사업자등록번호"
@@ -393,7 +415,7 @@ const MyPage = () => {
                 </Dialog>
             </Container>
         </Box>
-    )
+    );
 }
 
 export default MyPage

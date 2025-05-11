@@ -11,6 +11,7 @@ import {
     ListItem,
     ListItemIcon,
     ListItemText,
+    ListItemButton,
     Menu,
     MenuItem,
     Snackbar,
@@ -126,11 +127,8 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({children}) => {
-    // Remove the local notifications state
-    // const [notifications, setNotifications] = useState<Notification[]>([]);
     const [notificationError, setNotificationError] = useState<string | null>(null);
     const [notificationAnchorEl, setNotificationAnchorEl] = useState<null | HTMLElement>(null);
-    // Get notifications from context
     const {notifications, unreadCount, markAsRead, fetchNotifications} = useNotification();
 
     const {logout} = useAuth();
@@ -290,7 +288,7 @@ const Layout: React.FC<LayoutProps> = ({children}) => {
 
     useEffect(() => {
         const agentId = localStorage.getItem('agentId');
-        let eventSource: EventSource | null = null;
+        const eventSource: EventSource | null = null;
 
         if (!agentId) {
             console.warn("agentId is missing or invalid:", agentId);
@@ -445,60 +443,66 @@ const Layout: React.FC<LayoutProps> = ({children}) => {
                                             .map((notification) => (
                                                 <ListItem
                                                     key={notification.id}
-                                                    button
-                                                    onClick={() => handleNotificationNavigation(notification)}
+                                                    component="li"
+                                                    disablePadding
                                                     sx={{
-                                                        py: 1.5,
-                                                        px: 2,
                                                         borderBottom: '1px solid #f0f0f0',
-                                                        '&:hover': {
-                                                            bgcolor: 'rgba(0, 0, 0, 0.04)'
-                                                        }
                                                     }}
                                                 >
-                                                    <ListItemIcon sx={{minWidth: 40}}>
-                                                        <Box
-                                                            sx={{
-                                                                width: 32,
-                                                                height: 32,
-                                                                borderRadius: '50%',
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                justifyContent: 'center',
-                                                                bgcolor: `${getNotificationColor(notification.type)}20`,
-                                                                color: getNotificationColor(notification.type)
-                                                            }}
-                                                        >
-                                                            {notification.type === 'SURVEY' &&
-                                                                <Assignment fontSize="small"/>}
-                                                            {notification.type === 'ARTICLE' &&
-                                                                <InsertDriveFile fontSize="small"/>}
-                                                            {notification.type === 'CONSULTATION' &&
-                                                                <Forum fontSize="small"/>}
-                                                            {notification.type === 'MESSAGE' &&
-                                                                <Email fontSize="small"/>}
-                                                            {notification.type === 'CONTRACT' &&
-                                                                <InsertDriveFile fontSize="small"/>}
-                                                        </Box>
-                                                    </ListItemIcon>
-                                                    <ListItemText
-                                                        primary={
-                                                            <Typography
-                                                                variant="body2"
+                                                    <ListItemButton
+                                                        onClick={() => handleNotificationNavigation(notification)}
+                                                        sx={{
+                                                            py: 1.5,
+                                                            px: 2,
+                                                            '&:hover': {
+                                                                bgcolor: 'rgba(0, 0, 0, 0.04)'
+                                                            }
+                                                        }}
+                                                    >
+                                                        <ListItemIcon sx={{minWidth: 40}}>
+                                                            <Box
                                                                 sx={{
-                                                                    fontWeight: notification.isRead ? 400 : 600,
-                                                                    color: notification.isRead ? 'text.primary' : 'primary.main'
+                                                                    width: 32,
+                                                                    height: 32,
+                                                                    borderRadius: '50%',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    justifyContent: 'center',
+                                                                    bgcolor: `${getNotificationColor(notification.type)}20`,
+                                                                    color: getNotificationColor(notification.type)
                                                                 }}
                                                             >
-                                                                {notification.content}
-                                                            </Typography>
-                                                        }
-                                                        secondary={
-                                                            <Typography variant="caption" color="text.secondary">
-                                                                {formatDistanceToNow(new Date(notification.createdAt), {addSuffix: true})}
-                                                            </Typography>
-                                                        }
-                                                    />
+                                                                {notification.type === 'SURVEY' &&
+                                                                    <Assignment fontSize="small"/>}
+                                                                {notification.type === 'ARTICLE' &&
+                                                                    <InsertDriveFile fontSize="small"/>}
+                                                                {notification.type === 'CONSULTATION' &&
+                                                                    <Forum fontSize="small"/>}
+                                                                {notification.type === 'MESSAGE' &&
+                                                                    <Email fontSize="small"/>}
+                                                                {notification.type === 'CONTRACT' &&
+                                                                    <InsertDriveFile fontSize="small"/>}
+                                                            </Box>
+                                                        </ListItemIcon>
+                                                        <ListItemText
+                                                            primary={
+                                                                <Typography
+                                                                    variant="body2"
+                                                                    sx={{
+                                                                        fontWeight: notification.isRead ? 400 : 600,
+                                                                        color: notification.isRead ? 'text.primary' : 'primary.main'
+                                                                    }}
+                                                                >
+                                                                    {notification.content}
+                                                                </Typography>
+                                                            }
+                                                            secondary={
+                                                                <Typography variant="caption" color="text.secondary">
+                                                                    {formatDistanceToNow(new Date(notification.createdAt), {addSuffix: true})}
+                                                                </Typography>
+                                                            }
+                                                        />
+                                                    </ListItemButton>
                                                 </ListItem>
                                             ))}
                                     </List>
@@ -656,174 +660,183 @@ const Layout: React.FC<LayoutProps> = ({children}) => {
 
                         {/* Menu Items */}
                         <List sx={{py: 1}}>
-                            <ListItem
-                                button
-                                onClick={() => navigate("/dashboard")}
-                                selected={location.pathname === "/dashboard"}
-                                sx={{py: 1.5}}
-                            >
-                                <ListItemIcon sx={{minWidth: 40}}>
-                                    <DashboardIcon color={location.pathname === "/dashboard" ? "primary" : "action"}/>
-                                </ListItemIcon>
-                                <ListItemText
-                                    primary="대시보드"
-                                    primaryTypographyProps={{
-                                        fontSize: '0.9rem',
-                                        color: location.pathname === "/dashboard" ? "primary" : "text.primary",
-                                    }}
-                                />
+                            <ListItem component="li" disablePadding>
+                                <ListItemButton
+                                    onClick={() => navigate("/dashboard")}
+                                    selected={location.pathname === "/dashboard"}
+                                    sx={{py: 1.5}}
+                                >
+                                    <ListItemIcon sx={{minWidth: 40}}>
+                                        <DashboardIcon color={location.pathname === "/dashboard" ? "primary" : "action"}/>
+                                    </ListItemIcon>
+                                    <ListItemText
+                                        primary="대시보드"
+                                        primaryTypographyProps={{
+                                            fontSize: '0.9rem',
+                                            color: location.pathname === "/dashboard" ? "primary" : "text.primary",
+                                        }}
+                                    />
+                                </ListItemButton>
                             </ListItem>
 
-                            <ListItem
-                                button
-                                onClick={handleArticleManagement}
-                                selected={location.pathname.startsWith("/article")}
-                                sx={{py: 1.5}}
-                            >
-                                <ListItemIcon sx={{minWidth: 40}}>
-                                    <Business color={location.pathname.startsWith("/article") ? "primary" : "action"}/>
-                                </ListItemIcon>
-                                <ListItemText
-                                    primary="매물 관리"
-                                    primaryTypographyProps={{
-                                        fontSize: '0.9rem',
-                                        color: location.pathname.startsWith("/article") ? "primary" : "text.primary",
-                                    }}
-                                />
+                            <ListItem component="li" disablePadding>
+                                <ListItemButton
+                                    onClick={handleArticleManagement}
+                                    selected={location.pathname.startsWith("/article")}
+                                    sx={{py: 1.5}}
+                                >
+                                    <ListItemIcon sx={{minWidth: 40}}>
+                                        <Business color={location.pathname.startsWith("/article") ? "primary" : "action"}/>
+                                    </ListItemIcon>
+                                    <ListItemText
+                                        primary="매물 관리"
+                                        primaryTypographyProps={{
+                                            fontSize: '0.9rem',
+                                            color: location.pathname.startsWith("/article") ? "primary" : "text.primary",
+                                        }}
+                                    />
+                                </ListItemButton>
                             </ListItem>
 
-                            <ListItem
-                                button
-                                onClick={() => navigate("/contract")}
-                                selected={location.pathname.startsWith("/contract")}
-                                sx={{py: 1.5}}
-                            >
-                                <ListItemIcon sx={{minWidth: 40}}>
-                                    <InsertDriveFile
-                                        color={location.pathname.startsWith("/contract") ? "primary" : "action"}/>
-                                </ListItemIcon>
-                                <ListItemText
-                                    primary="계약 관리"
-                                    primaryTypographyProps={{
-                                        fontSize: '0.9rem',
-                                        color: location.pathname.startsWith("/contract") ? "primary" : "text.primary",
-                                    }}
-                                />
+                            <ListItem component="li" disablePadding>
+                                <ListItemButton
+                                    onClick={() => navigate("/contract")}
+                                    selected={location.pathname.startsWith("/contract")}
+                                    sx={{py: 1.5}}
+                                >
+                                    <ListItemIcon sx={{minWidth: 40}}>
+                                        <InsertDriveFile
+                                            color={location.pathname.startsWith("/contract") ? "primary" : "action"}/>
+                                    </ListItemIcon>
+                                    <ListItemText
+                                        primary="계약 관리"
+                                        primaryTypographyProps={{
+                                            fontSize: '0.9rem',
+                                            color: location.pathname.startsWith("/contract") ? "primary" : "text.primary",
+                                        }}
+                                    />
+                                </ListItemButton>
                             </ListItem>
 
-                            <ListItem
-                                button
-                                onClick={() => navigate("/customer-management")}
-                                selected={location.pathname.startsWith("/customer-management")}
-                                sx={{py: 1.5}}
-                            >
-                                <ListItemIcon sx={{minWidth: 40}}>
-                                    <People
-                                        color={location.pathname.startsWith("/customer-management") ? "primary" : "action"}/>
-                                </ListItemIcon>
-                                <ListItemText
-                                    primary="고객 관리"
-                                    primaryTypographyProps={{
-                                        fontSize: '0.9rem',
-                                        color: location.pathname.startsWith("/customer-management") ? "primary" : "text.primary",
-                                    }}
-                                />
+                            <ListItem component="li" disablePadding>
+                                <ListItemButton
+                                    onClick={() => navigate("/customer-management")}
+                                    selected={location.pathname.startsWith("/customer-management")}
+                                    sx={{py: 1.5}}
+                                >
+                                    <ListItemIcon sx={{minWidth: 40}}>
+                                        <People
+                                            color={location.pathname.startsWith("/customer-management") ? "primary" : "action"}/>
+                                    </ListItemIcon>
+                                    <ListItemText
+                                        primary="고객 관리"
+                                        primaryTypographyProps={{
+                                            fontSize: '0.9rem',
+                                            color: location.pathname.startsWith("/customer-management") ? "primary" : "text.primary",
+                                        }}
+                                    />
+                                </ListItemButton>
                             </ListItem>
 
-                            <ListItem
-                                button
-                                onClick={() => navigate("/consultation")}
-                                selected={location.pathname.startsWith("/consultation")}
-                                sx={{py: 1.5}}
-                            >
-                                <ListItemIcon sx={{minWidth: 40}}>
-                                    <Forum
-                                        color={location.pathname.startsWith("/consultation") ? "primary" : "action"}/>
-                                </ListItemIcon>
-                                <ListItemText
-                                    primary="상담 관리"
-                                    primaryTypographyProps={{
-                                        fontSize: '0.9rem',
-                                        color: location.pathname.startsWith("/consultation") ? "primary" : "text.primary",
-                                    }}
-                                />
+                            <ListItem component="li" disablePadding>
+                                <ListItemButton
+                                    onClick={() => navigate("/consultation")}
+                                    selected={location.pathname.startsWith("/consultation")}
+                                    sx={{py: 1.5}}
+                                >
+                                    <ListItemIcon sx={{minWidth: 40}}>
+                                        <Forum
+                                            color={location.pathname.startsWith("/consultation") ? "primary" : "action"}/>
+                                    </ListItemIcon>
+                                    <ListItemText
+                                        primary="상담 관리"
+                                        primaryTypographyProps={{
+                                            fontSize: '0.9rem',
+                                            color: location.pathname.startsWith("/consultation") ? "primary" : "text.primary",
+                                        }}
+                                    />
+                                </ListItemButton>
                             </ListItem>
 
-                            <ListItem
-                                button
-                                onClick={() => navigate("/survey")}
-                                selected={location.pathname.startsWith("/survey")}
-                                sx={{py: 1.5}}
-                            >
-                                <ListItemIcon sx={{minWidth: 40}}>
-                                    <Assignment color={location.pathname.startsWith("/survey") ? "primary" : "action"}/>
-                                </ListItemIcon>
-                                <ListItemText
-                                    primary="설문 관리"
-                                    primaryTypographyProps={{
-                                        fontSize: '0.9rem',
-                                        color: location.pathname.startsWith("/survey") ? "primary" : "text.primary",
-                                    }}
-                                />
+                            <ListItem component="li" disablePadding>
+                                <ListItemButton
+                                    onClick={() => navigate("/survey")}
+                                    selected={location.pathname.startsWith("/survey")}
+                                    sx={{py: 1.5}}
+                                >
+                                    <ListItemIcon sx={{minWidth: 40}}>
+                                        <Assignment color={location.pathname.startsWith("/survey") ? "primary" : "action"}/>
+                                    </ListItemIcon>
+                                    <ListItemText
+                                        primary="설문 관리"
+                                        primaryTypographyProps={{
+                                            fontSize: '0.9rem',
+                                            color: location.pathname.startsWith("/survey") ? "primary" : "text.primary",
+                                        }}
+                                    />
+                                </ListItemButton>
                             </ListItem>
 
-                            <ListItem
-                                button
-                                onClick={() => navigate("/message")}
-                                selected={location.pathname.startsWith("/message")}
-                                sx={{py: 1.5}}
-                            >
-                                <ListItemIcon sx={{minWidth: 40}}>
-                                    <Email color={location.pathname.startsWith("/message") ? "primary" : "action"}/>
-                                </ListItemIcon>
-                                <ListItemText
-                                    primary="문자 관리"
-                                    primaryTypographyProps={{
-                                        fontSize: '0.9rem',
-                                        color: location.pathname.startsWith("/message") ? "primary" : "text.primary",
-                                    }}
-                                />
+                            <ListItem component="li" disablePadding>
+                                <ListItemButton
+                                    onClick={() => navigate("/message")}
+                                    selected={location.pathname.startsWith("/message")}
+                                    sx={{py: 1.5}}
+                                >
+                                    <ListItemIcon sx={{minWidth: 40}}>
+                                        <Email color={location.pathname.startsWith("/message") ? "primary" : "action"}/>
+                                    </ListItemIcon>
+                                    <ListItemText
+                                        primary="문자 관리"
+                                        primaryTypographyProps={{
+                                            fontSize: '0.9rem',
+                                            color: location.pathname.startsWith("/message") ? "primary" : "text.primary",
+                                        }}
+                                    />
+                                </ListItemButton>
                             </ListItem>
 
-                            <ListItem
-                                button
-                                onClick={() => navigate("/inquiry")}
-                                selected={location.pathname.startsWith("/inquiry")}
-                                sx={{py: 1.5}}
-                            >
-                                <ListItemIcon sx={{minWidth: 40}}>
-                                    <QuestionAnswer
-                                        color={location.pathname.startsWith("/inquiry") ? "primary" : "action"}/>
-                                </ListItemIcon>
-                                <ListItemText
-                                    primary="문의 게시판"
-                                    primaryTypographyProps={{
-                                        fontSize: '0.9rem',
-                                        color: location.pathname.startsWith("/inquiry") ? "primary" : "text.primary",
-                                    }}
-                                />
+                            <ListItem component="li" disablePadding>
+                                <ListItemButton
+                                    onClick={() => navigate("/inquiry")}
+                                    selected={location.pathname.startsWith("/inquiry")}
+                                    sx={{py: 1.5}}
+                                >
+                                    <ListItemIcon sx={{minWidth: 40}}>
+                                        <QuestionAnswer
+                                            color={location.pathname.startsWith("/inquiry") ? "primary" : "action"}/>
+                                    </ListItemIcon>
+                                    <ListItemText
+                                        primary="문의 게시판"
+                                        primaryTypographyProps={{
+                                            fontSize: '0.9rem',
+                                            color: location.pathname.startsWith("/inquiry") ? "primary" : "text.primary",
+                                        }}
+                                    />
+                                </ListItemButton>
                             </ListItem>
                         </List>
 
                         <Box sx={{mt: 'auto', p: 2, borderTop: '1px solid rgba(0,0,0,0.1)'}}>
-                            <ListItem
-                                button
-                                onClick={() => navigate("/my-page")}
-                                selected={location.pathname === "/my-page"}
-                                sx={{
-                                    borderRadius: '8px',
-                                }}
-                            >
-                                <ListItemIcon sx={{minWidth: 40}}>
-                                    <Person color={location.pathname === "/my-page" ? "primary" : "action"}/>
-                                </ListItemIcon>
-                                <ListItemText
-                                    primary="마이페이지"
-                                    primaryTypographyProps={{
-                                        fontSize: '0.9rem',
-                                        color: location.pathname === "/my-page" ? "primary" : "text.primary",
+                            <ListItem component="li" disablePadding>
+                                <ListItemButton
+                                    onClick={() => navigate("/my-page")}
+                                    selected={location.pathname === "/my-page"}
+                                    sx={{
+                                        borderRadius: '8px',
                                     }}
-                                />
+                                >
+                                    <ListItemIcon sx={{minWidth: 40}}>
+                                        <Person color={location.pathname === "/my-page" ? "primary" : "action"}/>
+                                    </ListItemIcon>
+                                    <ListItemText
+                                        primary="마이페이지"
+                                        primaryTypographyProps={{
+                                            fontSize: '0.9rem',
+                                            color: location.pathname === "/my-page" ? "primary" : "text.primary",
+                                        }}
+                                    />
+                                </ListItemButton>
                             </ListItem>
                         </Box>
                     </Box>

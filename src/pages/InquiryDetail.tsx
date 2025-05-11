@@ -560,7 +560,6 @@ const InquiryDetail: React.FC = () => {
                     </Paper>
                 )}
             </Box>
-
             <Snackbar
                 open={!!error}
                 autoHideDuration={6000}
@@ -577,7 +576,6 @@ const InquiryDetail: React.FC = () => {
                     {error}
                 </Alert>
             </Snackbar>
-
             <Dialog
                 open={openDialog}
                 onClose={() => setOpenDialog(false)}
@@ -629,11 +627,9 @@ const InquiryDetail: React.FC = () => {
                             onChange={(e) => {
                                 let value = e.target.value.replace(/[^0-9]/g, '');
                                 if (value.length > 0) {
-                                    if (value.length <= 3) {
-                                        value = value;
-                                    } else if (value.length <= 7) {
+                                    if (value.length > 3 && value.length <= 7) {
                                         value = value.slice(0, 3) + '-' + value.slice(3);
-                                    } else {
+                                    } else if (value.length > 7) {
                                         value = value.slice(0, 3) + '-' + value.slice(3, 7) + '-' + value.slice(7, 11);
                                     }
                                 }
@@ -683,7 +679,8 @@ const InquiryDetail: React.FC = () => {
                                         twoMonthsLater.setMonth(now.getMonth() + 2);
 
                                         // 한국 시간으로 변환
-                                        const koreanTime = new Date(newValue.getTime() + (9 * 60 * 60 * 1000));
+                                        const date = newValue as Date;
+                                        const koreanTime = new Date(date.getTime() + (9 * 60 * 60 * 1000));
                                         const year = koreanTime.getUTCFullYear();
                                         const month = String(koreanTime.getUTCMonth() + 1).padStart(2, '0');
                                         const day = String(koreanTime.getUTCDate()).padStart(2, '0');
@@ -770,7 +767,6 @@ const InquiryDetail: React.FC = () => {
                     </Button>
                 </DialogActions>
             </Dialog>
-
         </Box>
     );
 };

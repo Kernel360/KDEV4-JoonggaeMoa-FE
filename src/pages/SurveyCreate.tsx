@@ -1,5 +1,3 @@
-"use client"
-
 import {useState} from "react"
 import {
     Alert,
@@ -450,7 +448,7 @@ const SurveyCreate = () => {
 
                     {/* 설문 기본 정보 */}
                     <Grid container spacing={3} sx={{mb: 4}}>
-                        <Grid item xs={12}>
+                        <Grid size={12}>
                             <TextField
                                 label="설문 제목"
                                 fullWidth
@@ -461,7 +459,7 @@ const SurveyCreate = () => {
                                 required
                             />
                         </Grid>
-                        <Grid item xs={12}>
+                        <Grid size={12}>
                             <TextField
                                 label="설문 설명"
                                 fullWidth
@@ -499,7 +497,7 @@ const SurveyCreate = () => {
                                 </Box>
 
                                 <Grid container spacing={2}>
-                                    <Grid item xs={12}>
+                                    <Grid size={12}>
                                         <TextField
                                             label="질문 내용"
                                             fullWidth
@@ -510,7 +508,11 @@ const SurveyCreate = () => {
                                             required
                                         />
                                     </Grid>
-                                    <Grid item xs={12} sm={6}>
+                                    <Grid
+                                        size={{
+                                            xs: 12,
+                                            sm: 6
+                                        }}>
                                         <FormControl fullWidth>
                                             <InputLabel>질문 유형</InputLabel>
                                             <Select
@@ -524,7 +526,11 @@ const SurveyCreate = () => {
                                             </Select>
                                         </FormControl>
                                     </Grid>
-                                    <Grid item xs={12} sm={6}>
+                                    <Grid
+                                        size={{
+                                            xs: 12,
+                                            sm: 6
+                                        }}>
                                         <FormControlLabel
                                             control={
                                                 <Checkbox
@@ -576,20 +582,18 @@ const SurveyCreate = () => {
                     </Box>
                 </Paper>
             </Container>
-
             <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError(null)}>
                 <Alert onClose={() => setError(null)} severity="error" sx={{width: "100%"}}>
                     {error}
                 </Alert>
             </Snackbar>
-
             <Snackbar open={success} autoHideDuration={6000} onClose={() => setSuccess(false)}>
                 <Alert onClose={() => setSuccess(false)} severity="success" sx={{width: "100%"}}>
                     설문이 성공적으로 생성되었습니다. 설문 목록 페이지로 이동합니다.
                 </Alert>
             </Snackbar>
         </Box>
-    )
+    );
 }
 
 export default SurveyCreate

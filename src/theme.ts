@@ -1,4 +1,4 @@
-import {createTheme} from '@mui/material/styles';
+import createTheme from '@mui/material/styles/createTheme';
 
 export const theme = createTheme({
     palette: {
@@ -26,10 +26,10 @@ export const theme = createTheme({
     components: {
         MuiContainer: {
             styleOverrides: {
-                root: {
-                    paddingLeft: 24,
-                    paddingRight: 24,
-                },
+                root: ({ theme }) => ({
+                    paddingLeft: theme.spacing(24),
+                    paddingRight: theme.spacing(24),
+                }),
             },
         },
         MuiPaper: {

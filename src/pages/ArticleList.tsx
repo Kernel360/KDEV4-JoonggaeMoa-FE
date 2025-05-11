@@ -1,5 +1,3 @@
-"use client"
-
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import FilterListIcon from '@mui/icons-material/FilterList'
 import LocationOnIcon from '@mui/icons-material/LocationOn'

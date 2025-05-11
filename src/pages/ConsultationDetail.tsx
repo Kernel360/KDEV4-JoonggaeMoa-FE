@@ -1,5 +1,3 @@
-"use client"
-
 import React, {useEffect, useState} from "react"
 import {
     Alert,
@@ -547,7 +545,7 @@ const ConsultationDetail = () => {
                         boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)'
                     }}>
                         <Grid container spacing={3}>
-                            <Grid item xs={12}>
+                            <Grid size={12}>
                                 <Box sx={{display: 'flex', alignItems: 'center', mb: 2}}>
                                     <Typography variant="h6" component="h2"
                                                 sx={{flexGrow: 1, color: '#00171f', fontWeight: 'bold'}}>
@@ -564,9 +562,13 @@ const ConsultationDetail = () => {
                                 </Box>
                                 <Paper sx={{p: 2, bgcolor: '#f9fafb'}}>
                                     <Grid container spacing={3}>
-                                        <Grid item xs={12} md={6}>
+                                        <Grid
+                                            size={{
+                                                xs: 12,
+                                                md: 6
+                                            }}>
                                             <Grid container spacing={2}>
-                                                <Grid item xs={6}>
+                                                <Grid size={6}>
                                                     <Typography variant="body2"
                                                                 sx={{color: '#007ea7', fontWeight: 'medium'}}>
                                                         이름
@@ -576,7 +578,7 @@ const ConsultationDetail = () => {
                                                         {consultationHistory?.customerName}
                                                     </Typography>
                                                 </Grid>
-                                                <Grid item xs={6}>
+                                                <Grid size={6}>
                                                     <Typography variant="body2"
                                                                 sx={{color: '#6b7280', fontWeight: 'medium'}}>
                                                         이메일
@@ -585,7 +587,7 @@ const ConsultationDetail = () => {
                                                         {consultationHistory?.customerEmail}
                                                     </Typography>
                                                 </Grid>
-                                                <Grid item xs={6}>
+                                                <Grid size={6}>
                                                     <Typography variant="body2"
                                                                 sx={{color: '#6b7280', fontWeight: 'medium'}}>
                                                         전화번호
@@ -594,7 +596,7 @@ const ConsultationDetail = () => {
                                                         {consultationHistory?.customerPhone}
                                                     </Typography>
                                                 </Grid>
-                                                <Grid item xs={6}>
+                                                <Grid size={6}>
                                                     <Typography variant="body2"
                                                                 sx={{color: '#6b7280', fontWeight: 'medium'}}>
                                                         직업
@@ -605,12 +607,17 @@ const ConsultationDetail = () => {
                                                 </Grid>
                                             </Grid>
                                         </Grid>
-                                        <Grid item xs={12} md={6} sx={{
-                                            borderLeft: {md: '1px solid #e5e7eb'},
-                                            pl: {md: 3}
-                                        }}>
+                                        <Grid
+                                            sx={{
+                                                borderLeft: {md: '1px solid #e5e7eb'},
+                                                pl: {md: 3}
+                                            }}
+                                            size={{
+                                                xs: 12,
+                                                md: 6
+                                            }}>
                                             <Grid container spacing={2}>
-                                                <Grid item xs={6}>
+                                                <Grid size={6}>
                                                     <Typography variant="body2"
                                                                 sx={{color: '#6b7280', fontWeight: 'medium'}}>
                                                         관심매물
@@ -619,7 +626,7 @@ const ConsultationDetail = () => {
                                                         {consultationHistory?.interestProperty || "-"}
                                                     </Typography>
                                                 </Grid>
-                                                <Grid item xs={6}>
+                                                <Grid size={6}>
                                                     <Typography variant="body2"
                                                                 sx={{color: '#6b7280', fontWeight: 'medium'}}>
                                                         관심지역
@@ -628,7 +635,7 @@ const ConsultationDetail = () => {
                                                         {consultationHistory?.interestLocation || "-"}
                                                     </Typography>
                                                 </Grid>
-                                                <Grid item xs={6}>
+                                                <Grid size={6}>
                                                     <Typography variant="body2"
                                                                 sx={{color: '#6b7280', fontWeight: 'medium'}}>
                                                         자산상태
@@ -648,7 +655,11 @@ const ConsultationDetail = () => {
 
                 <Grid container spacing={3}>
                     {/* 좌측: 상담 히스토리 리스트 또는 상세 정보 */}
-                    <Grid item xs={12} md={6}>
+                    <Grid
+                        size={{
+                            xs: 12,
+                            md: 6
+                        }}>
                         <Paper elevation={0} sx={{
                             p: 3,
                             borderRadius: 2,
@@ -1006,9 +1017,13 @@ const ConsultationDetail = () => {
                                             flexDirection: 'column'
                                         }}>
                                             <Grid container spacing={2} sx={{height: '100%'}}>
-                                                <Grid item xs={12}>
+                                                <Grid size={12}>
                                                     <Grid container spacing={2}>
-                                                        <Grid item xs={12} sm={6}>
+                                                        <Grid
+                                                            size={{
+                                                                xs: 12,
+                                                                sm: 6
+                                                            }}>
                                                             <Typography variant="subtitle1" gutterBottom
                                                                         sx={{color: '#374151', fontWeight: 'medium'}}>
                                                                 상담 일시
@@ -1019,7 +1034,11 @@ const ConsultationDetail = () => {
                                                                 </Typography>
                                                             </Paper>
                                                         </Grid>
-                                                        <Grid item xs={12} sm={6}>
+                                                        <Grid
+                                                            size={{
+                                                                xs: 12,
+                                                                sm: 6
+                                                            }}>
                                                             <Typography variant="subtitle1" gutterBottom
                                                                         sx={{color: '#374151', fontWeight: 'medium'}}>
                                                                 상담 목적
@@ -1032,12 +1051,14 @@ const ConsultationDetail = () => {
                                                         </Grid>
                                                     </Grid>
                                                 </Grid>
-                                                <Grid item xs={12} sx={{
-                                                    flexGrow: 1,
-                                                    display: 'flex',
-                                                    flexDirection: 'column',
-                                                    mt: 0
-                                                }}>
+                                                <Grid
+                                                    sx={{
+                                                        flexGrow: 1,
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        mt: 0
+                                                    }}
+                                                    size={12}>
                                                     <Typography variant="subtitle1" gutterBottom
                                                                 sx={{color: '#374151', fontWeight: 'medium'}}>
                                                         메모
@@ -1068,7 +1089,11 @@ const ConsultationDetail = () => {
                     </Grid>
 
                     {/* 우측: 상담 상세 정보 & 수정 폼 */}
-                    <Grid item xs={12} md={6}>
+                    <Grid
+                        size={{
+                            xs: 12,
+                            md: 6
+                        }}>
                         <Paper elevation={0} sx={{
                             p: 3,
                             borderRadius: 2,
@@ -1130,9 +1155,13 @@ const ConsultationDetail = () => {
                             ) : (
                                 <Box sx={{display: 'flex', flexDirection: 'column', height: '100%'}}>
                                     <Grid container spacing={2} sx={{height: '100%'}}>
-                                        <Grid item xs={12}>
+                                        <Grid size={12}>
                                             <Grid container spacing={2}>
-                                                <Grid item xs={12} sm={6}>
+                                                <Grid
+                                                    size={{
+                                                        xs: 12,
+                                                        sm: 6
+                                                    }}>
                                                     <Typography variant="subtitle1" gutterBottom
                                                                 sx={{color: '#374151', fontWeight: 'medium'}}>
                                                         상담 일시
@@ -1161,7 +1190,11 @@ const ConsultationDetail = () => {
                                                         }}
                                                     />
                                                 </Grid>
-                                                <Grid item xs={12} sm={6}>
+                                                <Grid
+                                                    size={{
+                                                        xs: 12,
+                                                        sm: 6
+                                                    }}>
                                                     <Typography variant="subtitle1" gutterBottom
                                                                 sx={{color: '#374151', fontWeight: 'medium'}}>
                                                         상담 목적
@@ -1192,8 +1225,9 @@ const ConsultationDetail = () => {
                                                 </Grid>
                                             </Grid>
                                         </Grid>
-                                        <Grid item xs={12}
-                                              sx={{flexGrow: 1, display: 'flex', flexDirection: 'column', mt: 0}}>
+                                        <Grid
+                                            sx={{flexGrow: 1, display: 'flex', flexDirection: 'column', mt: 0}}
+                                            size={12}>
                                             <Typography variant="subtitle1" gutterBottom
                                                         sx={{color: '#374151', fontWeight: 'medium'}}>
                                                 메모
@@ -1233,7 +1267,6 @@ const ConsultationDetail = () => {
                     </Grid>
                 </Grid>
             </Container>
-
             {/* 알림 스낵바 */}
             <Snackbar
                 open={snackbar.open}
@@ -1249,7 +1282,6 @@ const ConsultationDetail = () => {
                     {snackbar.message}
                 </Alert>
             </Snackbar>
-
             {/* 확인 대화상자 */}
             <Dialog
                 open={confirmDialogOpen}
@@ -1268,7 +1300,6 @@ const ConsultationDetail = () => {
                     </Button>
                 </DialogActions>
             </Dialog>
-
             {/* 새 상담 확인 대화상자 */}
             <Dialog
                 open={confirmNewConsultationDialogOpen}
@@ -1288,7 +1319,7 @@ const ConsultationDetail = () => {
                 </DialogActions>
             </Dialog>
         </Box>
-    )
+    );
 }
 
 export default ConsultationDetail

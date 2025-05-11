@@ -1,5 +1,3 @@
-"use client"
-
 import type React from "react"
 import {useState} from "react"
 import {
@@ -138,7 +136,11 @@ const CustomerAdd = () => {
 
                     <form onSubmit={handleSubmit}>
                         <Grid container spacing={3}>
-                            <Grid item xs={12} sm={6}>
+                            <Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 6
+                                }}>
                                 <TextField
                                     required
                                     fullWidth
@@ -148,7 +150,11 @@ const CustomerAdd = () => {
                                     onChange={handleChange}
                                 />
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 6
+                                }}>
                                 <TextField
                                     required
                                     fullWidth
@@ -159,7 +165,11 @@ const CustomerAdd = () => {
                                     placeholder="010-0000-0000"
                                 />
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 6
+                                }}>
                                 <TextField
                                     required
                                     fullWidth
@@ -170,11 +180,19 @@ const CustomerAdd = () => {
                                     onChange={handleChange}
                                 />
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 6
+                                }}>
                                 <TextField fullWidth label="직업" name="job" value={formData.job}
                                            onChange={handleChange}/>
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 6
+                                }}>
                                 <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="ko">
                                     <DatePicker
                                         label="생년월일"
@@ -198,14 +216,18 @@ const CustomerAdd = () => {
                                     />
                                 </LocalizationProvider>
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 6
+                                }}>
                                 <FormControlLabel
                                     control={<Checkbox checked={formData.isVip} onChange={handleCheckboxChange}
                                                        name="isVip"/>}
                                     label="VIP 고객"
                                 />
                             </Grid>
-                            <Grid item xs={12}>
+                            <Grid size={12}>
                                 <TextField
                                     fullWidth
                                     label="메모"
@@ -216,14 +238,18 @@ const CustomerAdd = () => {
                                     onChange={handleChange}
                                 />
                             </Grid>
-                            <Grid item xs={12}>
+                            <Grid size={12}>
                                 <FormControlLabel
                                     control={<Checkbox checked={formData.consent} onChange={handleCheckboxChange}
                                                        name="consent"/>}
                                     label="마케팅 정보 수신에 동의합니다."
                                 />
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 6
+                                }}>
                                 <TextField
                                     fullWidth
                                     label="관심 매물"
@@ -232,7 +258,11 @@ const CustomerAdd = () => {
                                     onChange={handleChange}
                                 />
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 6
+                                }}>
                                 <TextField
                                     fullWidth
                                     label="관심 지역"
@@ -241,7 +271,11 @@ const CustomerAdd = () => {
                                     onChange={handleChange}
                                 />
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid
+                                size={{
+                                    xs: 12,
+                                    sm: 6
+                                }}>
                                 <TextField
                                     fullWidth
                                     label="자산 상태"
@@ -250,7 +284,7 @@ const CustomerAdd = () => {
                                     onChange={handleChange}
                                 />
                             </Grid>
-                            <Grid item xs={12} sx={{display: "flex", justifyContent: "center", mt: 2}}>
+                            <Grid sx={{display: "flex", justifyContent: "center", mt: 2}} size={12}>
                                 <Button
                                     variant="outlined"
                                     sx={{mr: 1, borderColor: "#ddd", color: "#333"}}
@@ -272,20 +306,18 @@ const CustomerAdd = () => {
                     </form>
                 </Paper>
             </Container>
-
             <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError(null)}>
                 <Alert onClose={() => setError(null)} severity="error" sx={{width: "100%"}}>
                     {error}
                 </Alert>
             </Snackbar>
-
             <Snackbar open={success} autoHideDuration={6000} onClose={() => setSuccess(false)}>
                 <Alert onClose={() => setSuccess(false)} severity="success" sx={{width: "100%"}}>
                     고객이 성공적으로 등록되었습니다. 고객 목록 페이지로 이동합니다.
                 </Alert>
             </Snackbar>
         </Box>
-    )
+    );
 }
 
 export default CustomerAdd

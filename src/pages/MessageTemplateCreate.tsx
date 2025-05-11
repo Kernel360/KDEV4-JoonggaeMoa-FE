@@ -1,5 +1,3 @@
-"use client"
-
 import type React from "react"
 import {useEffect, useState} from "react"
 import {
@@ -318,7 +316,11 @@ const MessageTemplateCreate = () => {
                 </Box>
 
                 <Grid container spacing={3}>
-                    <Grid item xs={12} md={4}>
+                    <Grid
+                        size={{
+                            xs: 12,
+                            md: 4
+                        }}>
                         <Paper elevation={0} sx={{p: 3}}>
                             <Box sx={{display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2}}>
                                 <Typography variant="subtitle1" sx={{fontWeight: "bold"}}>
@@ -416,7 +418,11 @@ const MessageTemplateCreate = () => {
                         </Paper>
                     </Grid>
 
-                    <Grid item xs={12} md={8}>
+                    <Grid
+                        size={{
+                            xs: 12,
+                            md: 8
+                        }}>
                         <Paper elevation={0} sx={{p: 3}}>
                             <Typography variant="subtitle1" sx={{mb: 3, fontWeight: "bold"}}>
                                 {selectedTemplate ? "템플릿 수정" : "새 템플릿 작성"}
@@ -492,20 +498,18 @@ const MessageTemplateCreate = () => {
                     </Grid>
                 </Grid>
             </Container>
-
             <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError(null)}>
                 <Alert onClose={() => setError(null)} severity="error" sx={{width: "100%"}}>
                     {error}
                 </Alert>
             </Snackbar>
-
             <Snackbar open={success} autoHideDuration={6000} onClose={() => setSuccess(false)}>
                 <Alert onClose={() => setSuccess(false)} severity="success" sx={{width: "100%"}}>
                     템플릿이 성공적으로 저장되었습니다.
                 </Alert>
             </Snackbar>
         </Box>
-    )
+    );
 }
 
 export default MessageTemplateCreate

@@ -1,5 +1,3 @@
-"use client"
-
 import React, {useEffect, useState} from 'react';
 import {
     Alert,
@@ -325,7 +323,7 @@ const SurveyDetail: React.FC = () => {
 
                     {/* Add a section to display and copy the survey URL after the survey title and description */}
                     <Grid container spacing={3}>
-                        <Grid item xs={12}>
+                        <Grid size={12}>
                             <Typography variant="subtitle2" color="textSecondary">
                                 설문 제목
                             </Typography>
@@ -333,7 +331,7 @@ const SurveyDetail: React.FC = () => {
                                 {survey.title}
                             </Typography>
                         </Grid>
-                        <Grid item xs={12}>
+                        <Grid size={12}>
                             <Typography variant="subtitle2" color="textSecondary">
                                 설문 설명
                             </Typography>
@@ -342,7 +340,7 @@ const SurveyDetail: React.FC = () => {
                                 {survey.description || "설명이 없습니다."}
                             </Typography>
                         </Grid>
-                        <Grid item xs={12}>
+                        <Grid size={12}>
                             <Typography variant="subtitle2" color="textSecondary">
                                 등록일
                             </Typography>
@@ -352,7 +350,7 @@ const SurveyDetail: React.FC = () => {
                         </Grid>
 
                         {/* Add URL section */}
-                        <Grid item xs={12}>
+                        <Grid size={12}>
                             <Typography variant="subtitle2" color="textSecondary">
                                 고객용 설문 URL
                             </Typography>
@@ -452,7 +450,6 @@ const SurveyDetail: React.FC = () => {
                     </TableContainer>
                 </Paper>
             </Container>
-
             {/* 삭제 확인 다이얼로그 */}
             <Dialog
                 open={deleteDialogOpen}
@@ -512,21 +509,18 @@ const SurveyDetail: React.FC = () => {
                     </Button>
                 </DialogActions>
             </Dialog>
-
             {/* 성공 메시지 스낵바 */}
             <Snackbar open={!!successMessage} autoHideDuration={6000} onClose={() => setSuccessMessage(null)}>
                 <Alert onClose={() => setSuccessMessage(null)} severity="success" sx={{width: "100%"}}>
                     {successMessage}
                 </Alert>
             </Snackbar>
-
             {/* 에러 메시지 스낵바 */}
             <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError(null)}>
                 <Alert onClose={() => setError(null)} severity="error" sx={{width: "100%"}}>
                     {error}
                 </Alert>
             </Snackbar>
-
             {/* Add a new Snackbar for the copy URL success message */}
             <Snackbar open={copyUrlSuccess} autoHideDuration={3000} onClose={() => setCopyUrlSuccess(false)}>
                 <Alert onClose={() => setCopyUrlSuccess(false)} severity="success" sx={{width: "100%"}}>
@@ -534,7 +528,7 @@ const SurveyDetail: React.FC = () => {
                 </Alert>
             </Snackbar>
         </Box>
-    )
+    );
 }
 
 export default SurveyDetail

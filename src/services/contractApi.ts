@@ -61,3 +61,8 @@ export const contractApi = {
     },
 }
 
+// 만료 계약 조회
+export const getExpiredContracts = async (): Promise<ExpiredContractResponse> => {
+    const response = await api.get<ApiResponse<ExpiredContractResponse>>('/api/dashboard/expired-contract');
+    return response.data.data;
+};

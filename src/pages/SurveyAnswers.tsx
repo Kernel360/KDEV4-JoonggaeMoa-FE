@@ -1,5 +1,3 @@
-"use client"
-
 import type React from "react"
 import {useEffect, useRef, useState} from "react"
 import {
@@ -473,7 +471,6 @@ const SurveyAnswers = () => {
                     </Paper>
                 )}
             </Container>
-
             {/* 상세 보기 다이얼로그 */}
             <Dialog
                 open={detailDialogOpen}
@@ -497,7 +494,7 @@ const SurveyAnswers = () => {
                         <DialogContent dividers>
                             <Grid container spacing={3}>
                                 {/* 설문 정보 */}
-                                <Grid item xs={12}>
+                                <Grid size={12}>
                                     <Card variant="outlined" sx={{mb: 3}}>
                                         <CardContent>
                                             <Typography variant="subtitle1" sx={{fontWeight: "bold", mb: 1}}>
@@ -514,7 +511,11 @@ const SurveyAnswers = () => {
                                 </Grid>
 
                                 {/* 고객 정보 */}
-                                <Grid item xs={12} md={6}>
+                                <Grid
+                                    size={{
+                                        xs: 12,
+                                        md: 6
+                                    }}>
                                     <Card variant="outlined" sx={{
                                         height: "100%",
                                         boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
@@ -556,7 +557,11 @@ const SurveyAnswers = () => {
                                 </Grid>
 
                                 {/* 응답 시간 정보 */}
-                                <Grid item xs={12} md={6}>
+                                <Grid
+                                    size={{
+                                        xs: 12,
+                                        md: 6
+                                    }}>
                                     <Card variant="outlined" sx={{
                                         height: "100%",
                                         boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
@@ -582,7 +587,7 @@ const SurveyAnswers = () => {
                                 </Grid>
 
                                 {/* 응답 내용 */}
-                                <Grid item xs={12}>
+                                <Grid size={12}>
                                     <Typography variant="subtitle1" sx={{fontWeight: "bold", mb: 2}}>
                                         응답 내용
                                     </Typography>
@@ -621,14 +626,13 @@ const SurveyAnswers = () => {
                     </>
                 )}
             </Dialog>
-
             <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError(null)}>
                 <Alert onClose={() => setError(null)} severity="error" sx={{width: "100%"}}>
                     {error}
                 </Alert>
             </Snackbar>
         </Box>
-    )
+    );
 }
 
 export default SurveyAnswers

@@ -1,5 +1,3 @@
-"use client"
-
 import type React from "react"
 import {useState} from "react"
 import {
@@ -165,7 +163,7 @@ const CustomerImport = () => {
                     <Divider sx={{my: 3}}/>
 
                     <Grid container spacing={2} justifyContent="center">
-                        <Grid item>
+                        <Grid>
                             <Button
                                 variant="outlined"
                                 sx={{borderColor: "#ddd", color: "#333"}}
@@ -175,7 +173,7 @@ const CustomerImport = () => {
                                 취소
                             </Button>
                         </Grid>
-                        <Grid item>
+                        <Grid>
                             <Button
                                 variant="contained"
                                 sx={{bgcolor: "#000", "&:hover": {bgcolor: "#333"}}}
@@ -188,20 +186,18 @@ const CustomerImport = () => {
                     </Grid>
                 </Paper>
             </Container>
-
             <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError(null)}>
                 <Alert onClose={() => setError(null)} severity="error" sx={{width: "100%"}}>
                     {error}
                 </Alert>
             </Snackbar>
-
             <Snackbar open={uploadSuccess} autoHideDuration={6000} onClose={() => setUploadSuccess(false)}>
                 <Alert severity="success" sx={{width: "100%"}}>
                     파일이 성공적으로 업로드되었습니다. 고객 목록 페이지로 이동합니다.
                 </Alert>
             </Snackbar>
         </Box>
-    )
+    );
 }
 
 export default CustomerImport

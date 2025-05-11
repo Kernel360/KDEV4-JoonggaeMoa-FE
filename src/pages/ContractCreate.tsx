@@ -1,5 +1,3 @@
-"use client"
-
 import type React from "react"
 import {useCallback, useEffect, useRef, useState} from "react"
 import {
@@ -246,7 +244,6 @@ const ContractCreate = () => {
                     </Alert>
                 </Box>
             )}
-
             <Container
                 maxWidth="lg"
                 sx={{
@@ -267,7 +264,11 @@ const ContractCreate = () => {
 
                 <form onSubmit={handleSubmit}>
                     <Grid container spacing={3}>
-                        <Grid item xs={12} md={5}>
+                        <Grid
+                            size={{
+                                xs: 12,
+                                md: 5
+                            }}>
                             <Paper elevation={0} sx={{p: 4, borderRadius: 2, height: "100%"}}>
                                 <Typography variant="subtitle1" sx={{mb: 2, fontWeight: "bold"}}>
                                     고객 선택
@@ -401,14 +402,22 @@ const ContractCreate = () => {
                             </Paper>
                         </Grid>
 
-                        <Grid item xs={12} md={7}>
+                        <Grid
+                            size={{
+                                xs: 12,
+                                md: 7
+                            }}>
                             <Paper elevation={0} sx={{p: 4, borderRadius: 2}}>
                                 <Typography variant="subtitle1" sx={{mb: 3, fontWeight: "bold", color: "#003459"}}>
                                     계약 기본 정보
                                 </Typography>
 
                                 <Grid container spacing={3}>
-                                    <Grid item xs={12} sm={6}>
+                                    <Grid
+                                        size={{
+                                            xs: 12,
+                                            sm: 6
+                                        }}>
                                         <TextField
                                             fullWidth
                                             label="계약일"
@@ -429,7 +438,11 @@ const ContractCreate = () => {
                                             }}
                                         />
                                     </Grid>
-                                    <Grid item xs={12} sm={6}>
+                                    <Grid
+                                        size={{
+                                            xs: 12,
+                                            sm: 6
+                                        }}>
                                         <TextField
                                             fullWidth
                                             label="만료일"
@@ -459,7 +472,11 @@ const ContractCreate = () => {
                                 </Typography>
 
                                 <Grid container spacing={3}>
-                                    <Grid item xs={12} sm={6}>
+                                    <Grid
+                                        size={{
+                                            xs: 12,
+                                            sm: 6
+                                        }}>
                                         <Box sx={{mb: 2}}>
                                             <Typography variant="body2" color="textSecondary" gutterBottom>
                                                 임대인
@@ -482,7 +499,11 @@ const ContractCreate = () => {
                                             )}
                                         </Box>
                                     </Grid>
-                                    <Grid item xs={12} sm={6}>
+                                    <Grid
+                                        size={{
+                                            xs: 12,
+                                            sm: 6
+                                        }}>
                                         <Box sx={{mb: 2}}>
                                             <Typography variant="body2" color="textSecondary" gutterBottom>
                                                 임차인
@@ -574,7 +595,6 @@ const ContractCreate = () => {
                     </Grid>
                 </form>
             </Container>
-
             {/* Remove the error Snackbar */}
             <Snackbar open={success} autoHideDuration={6000} onClose={() => setSuccess(false)}>
                 <Alert onClose={() => setSuccess(false)} severity="success" sx={{width: "100%"}}>
@@ -582,7 +602,7 @@ const ContractCreate = () => {
                 </Alert>
             </Snackbar>
         </Box>
-    )
+    );
 }
 
 export default ContractCreate
