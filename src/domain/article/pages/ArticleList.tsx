@@ -1,3 +1,24 @@
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useNavigate } from 'react-router-dom'
+
+import ArticleDetail from "@/domain/article/components/ArticleDetail"
+import ArticleListView from '@/domain/article/components/ArticleListView'
+import { REAL_ESTATE_OPTIONS, TRADE_TYPE_OPTIONS } from '@/domain/article/constants/articleConstants'
+import ArticleListMap from '@/domain/article/map/components/ArticleListMap'
+import { DEFAULT_MAP_BOUNDS, MAP_ZOOM_LEVELS, YEOKSAM_CENTER } from '@/domain/article/map/constants/mapConstants'
+import { regionApi } from "@/domain/article/map/services/regionApi"
+import { calculatePrecisionByZoom, generateClusterId, getClusterColor } from '@/domain/article/map/utils/clusterUtils'
+import { getCityOptions, getDistrictOptions, KOREA_REGIONS } from '@/domain/article/map/utils/regionData'
+import type { Region } from '@/domain/article/map/utils/regionUtils'
+import { articleApi } from "@/domain/article/services/articleApi"
+import type {
+    ArticleResponse,
+    ClusterInfo,
+    ComplexResponse,
+    RealEstateType,
+    TradeType
+} from "@/domain/article/types/article"
+import { createCoordinates, validateCoordinates } from "@/domain/article/utils/articleFormat"
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import FilterListIcon from '@mui/icons-material/FilterList'
 import LocationOnIcon from '@mui/icons-material/LocationOn'
@@ -24,28 +45,7 @@ import {
     useMediaQuery,
     useTheme
 } from "@mui/material"
-import React, {useCallback, useEffect, useMemo, useRef, useState} from "react"
-import {useNavigate} from 'react-router-dom'
-import ArticleDetail from "@/domain/article/components/ArticleDetail"
-import ArticleListMap from '@/domain/article/map/components/ArticleListMap'
-import ArticleListView from '@/domain/article/components/ArticleListView'
-import {DEFAULT_MAP_BOUNDS, MAP_ZOOM_LEVELS, YEOKSAM_CENTER} from '@/domain/article/map/utils/mapUtils'
-import {articleApi} from "@/domain/article/services/articleApi"
-import {regionApi} from "@/domain/article/map/services/regionApi"
-import type {
-    ArticleResponse,
-    ClusterInfo,
-    ComplexResponse,
-    RealEstateType,
-    TradeType
-} from "@/domain/article/types/article"
-import {REAL_ESTATE_OPTIONS, TRADE_TYPE_OPTIONS} from '@/domain/article/types/article'
-import {createCoordinates, validateCoordinates} from "@/domain/article/utils/articleFormat"
-import {getCityOptions, getDistrictOptions, KOREA_REGIONS} from '@/domain/article/map/utils/regionData'
-import type {Region} from '@/domain/article/map/utils/regionUtils'
-import {calculatePrecisionByZoom, generateClusterId, getClusterColor} from '@/domain/article/map/utils/clusterUtils'
 
-// 확장된 API 응답 타입들
 interface PageContent<T> {
     content: T[];
     totalElements?: number;
@@ -1469,7 +1469,7 @@ const ArticleList: React.FC = () => {
             counts.총계++;
             if (article.tradeType === "매매") counts.매매++;
             else if (article.tradeType === "전세") counts.전세++;
-            else if (article.tradeType === "월세" || article.tradeType === "단기임대") counts.월세++;
+            else if (article.tradeType === "월세") counts.월세++;
             else counts.기타++;
         });
         return counts;

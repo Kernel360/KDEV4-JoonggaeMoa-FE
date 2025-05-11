@@ -24,7 +24,7 @@ const compat = new FlatCompat({
 });
 
 export default defineConfig([
-    ...reactHooks.configs["recommended-latest"],
+    reactHooks.configs["recommended-latest"],
     {
         languageOptions: {
             globals: {
@@ -53,7 +53,6 @@ export default defineConfig([
         plugins: {
             react: fixupPluginRules(reactPlugin),
             "react-refresh": reactRefresh,
-            "@typescript-eslint": typescriptEslint,
             "import": importPlugin,
         },
 
@@ -120,7 +119,7 @@ export default defineConfig([
                 }
             }
         },
-    }, ...globalIgnores([
+    }, globalIgnores([
         "**/node_modules",
         "node_modules/**/*",
         "**/node_modules/**/*",

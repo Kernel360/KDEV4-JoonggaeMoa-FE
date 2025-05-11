@@ -1,5 +1,6 @@
 import {ClusterInfo} from "@/domain/article/types/article";
 import {getTypeColor} from "@/domain/article/utils/articleDisplay";
+import { HEATMAP_COLORS, PRECISION_BY_ZOOM } from "@/domain/article/map/constants/mapConstants";
 
 /**
  * 좌표와 정밀도를 기반으로 클러스터 ID를 생성합니다.
@@ -54,13 +55,14 @@ export const extractCoordinatesFromClusterId = (clusterId: string, precision: nu
  * @returns 정밀도 값 (1~8)
  */
 export const calculatePrecisionByZoom = (zoom: number): number => {
-    if (zoom <= 2) return 2;      // 매우 큰 클러스터 (국가/대륙 수준)
-    else if (zoom <= 3) return 3; // 큰 클러스터 (도시 광역 수준)
-    else if (zoom <= 4) return 4; // 중간 크기 클러스터 (도시 수준)
-    else if (zoom <= 5) return 6; // 작은 클러스터 (구/군 수준) - 개별 매물이 잘 보이도록 정밀도 높임
-    else if (zoom <= 7) return 6; // 작은 클러스터 (동/읍/면 수준)
-    else if (zoom <= 10) return 7; // 매우 작은 클러스터 (블록 수준)
-    else return 8;                // 상세 지역 (개별 건물 수준)
+    if (zoom <= PRECISION_BY_ZOOM.LOW.MAX_LEVEL) return PRECISION_BY_ZOOM.LOW.PRECISION;
+    if (zoom <= PRECISION_BY_ZOOM.MEDIUM_LOW.MAX_LEVEL) return PRECISION_BY_ZOOM.MEDIUM_LOW.PRECISION;
+    if (zoom <= PRECISION_BY_ZOOM.MEDIUM.MAX_LEVEL) return PRECISION_BY_ZOOM.MEDIUM.PRECISION;
+    if (zoom <= PRECISION_BY_ZOOM.MEDIUM_HIGH.MAX_LEVEL) return PRECISION_BY_ZOOM.MEDIUM_HIGH.PRECISION;
+    if (zoom <= PRECISION_BY_ZOOM.HIGH.MAX_LEVEL) return PRECISION_BY_ZOOM.HIGH.PRECISION;
+    if (zoom <= PRECISION_BY_ZOOM.VERY_HIGH.MAX_LEVEL) return PRECISION_BY_ZOOM.VERY_HIGH.PRECISION;
+    if (zoom <= PRECISION_BY_ZOOM.ULTRA_HIGH.MAX_LEVEL) return PRECISION_BY_ZOOM.ULTRA_HIGH.PRECISION;
+    return PRECISION_BY_ZOOM.MAX.PRECISION;
 };
 
 /**
@@ -70,13 +72,14 @@ export const calculatePrecisionByZoom = (zoom: number): number => {
  * @returns 색상 코드 (hex)
  */
 export const getClusterColor = (cluster: ClusterInfo): string => {
-    // 기본 색상은 '#FF5722' (주황색)
-    // 매물이 많을수록 더 진한 색으로 표시
-    const intensity = Math.min(1.0, cluster.count / 100); // 최대 100개까지 강도 증가
-    const baseColor = cluster.mainRealEstateType ? getTypeColor(cluster.mainRealEstateType) : '#FF5722';
-
-    // 투명도를 이용해 강도 조절
-    return baseColor;
+    // 매물 타입에 따른 색상이 있으면 해당 색상 사용
+    if (cluster.mainRealEstateType) {
+        return getTypeColor(cluster.mainRealEstateType);
+    }
+    
+    // 매물 수에 따라 히트맵 색상 선택
+    const intensity = Math.min(9, Math.floor(cluster.count / 10)); // 매물 10개 단위로 색상 변경 (최대 9)
+    return HEATMAP_COLORS[intensity];
 };
 
 /**

@@ -1,68 +1,17 @@
 import type {RealEstateType, TradeType} from "@/domain/article/types/article";
+import { PROPERTY_TYPE_STYLES } from "@/domain/article/map/constants/mapConstants";
+import { TRADE_TYPE_COLORS } from "@/domain/article/constants/articleConstants";
 
 export const getTypeColor = (type: RealEstateType | string): string => {
-    switch (type) {
-        case '아파트':
-            return '#2196f3';
-        case '오피스텔':
-            return '#4caf50';
-        case '전원주택':
-            return "#00bcd4";
-        case '빌라':
-            return '#ff9800';
-        case '단독/다가구':
-            return '#9c27b0';
-        case '상가주택':
-            return '#f44336';
-        case '한옥주택':
-            return '#795548';
-        case '상가':
-            return '#f44336';
-        case '사무실':
-            return '#607d8b';
-        default:
-            return '#9e9e9e';
-    }
+    return PROPERTY_TYPE_STYLES[type as keyof typeof PROPERTY_TYPE_STYLES]?.color || PROPERTY_TYPE_STYLES["default"].color;
 };
 
 export const getTradeTypeColor = (type: TradeType | string): string => {
-    switch (type) {
-        case '매매':
-            return 'primary';
-        case '전세':
-            return 'success';
-        case '월세':
-            return 'warning';
-        case '단기임대':
-            return 'info';
-        default:
-            return 'default';
-    }
+    return TRADE_TYPE_COLORS[type as keyof typeof TRADE_TYPE_COLORS] || TRADE_TYPE_COLORS.default;
 };
 
 export const getTypeEmoji = (type: RealEstateType | string): string => {
-    switch (type) {
-        case '아파트':
-            return '🏢';
-        case '오피스텔':
-            return '🏬';
-        case '빌라':
-            return '🏠';
-        case '전원주택':
-            return '🏡';
-        case '단독/다가구':
-            return '🏡';
-        case '상가주택':
-            return '🏪';
-        case '한옥주택':
-            return '🏡';
-        case '상가':
-            return '🏪';
-        case '사무실':
-            return '🏢';
-        default:
-            return '🏠';
-    }
+    return PROPERTY_TYPE_STYLES[type as keyof typeof PROPERTY_TYPE_STYLES]?.icon || PROPERTY_TYPE_STYLES["default"].icon;
 };
 
 export const createArticleMarkerSvg = (buildingType: string, isSelected: boolean = false, customColor?: string, customOpacity?: number, groupCount?: number): string => {

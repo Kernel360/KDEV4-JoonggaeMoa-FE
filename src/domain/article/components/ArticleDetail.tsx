@@ -349,7 +349,7 @@ const ArticleDetail = ({article, onClose}: ArticleDetailProps) => {
                                         <Typography variant="h5" fontWeight="bold" gutterBottom>
                                             {article.tradeType === "매매" ? "매매가" : "보증금"} {isZeroPrice(article.priceSale) ? "X" : formatPrice(article.priceSale)}
                                         </Typography>
-                                        {(article.tradeType === "전세" || article.tradeType === "월세" || article.tradeType === "단기임대") && article.priceRent > 0 && (
+                                        {(article.tradeType === "전세" || article.tradeType === "월세") && article.priceRent > 0 && (
                                             <Typography variant="h6" color="text.secondary">
                                                 월세 {formatPrice(article.priceRent)}
                                             </Typography>
