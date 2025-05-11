@@ -1,0 +1,39 @@
+# Dependencies
+node_modules
+node_modules/**
+**/node_modules/**
+
+# Build artifacts
+dist
+dist/**
+**/dist/**
+build
+build/**
+
+# Minified files
+**/*.min.js
+**/*.min.css
+
+# Vendor files
+vendor/**
+**/vendor/**
+
+# Bundle files
+**/bundle.js
+**/*.bundle.js
+
+# Generated files
+**/*.generated.*
+
+# Other generated files
+.cursor
+
+# Testing libraries
+coverage
+__tests__
+__mocks__
+
+# Config files
+vite.config.ts
+tsconfig.json
+tsconfig.node.json 
