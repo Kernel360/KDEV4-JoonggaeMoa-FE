@@ -1,47 +1,47 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect, useRef } from "react"
+import {useEffect, useRef, useState} from "react"
 import {
+    Accordion,
+    AccordionDetails,
+    AccordionSummary,
+    Alert,
     Box,
+    Button,
+    Card,
+    CardContent,
+    Chip,
+    CircularProgress,
     Container,
-    Typography,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    Divider,
+    Grid,
+    IconButton,
+    InputAdornment,
+    List,
+    ListItem,
+    ListItemText,
     Paper,
+    Snackbar,
+    Tab,
     Table,
     TableBody,
     TableCell,
     TableContainer,
     TableHead,
     TableRow,
-    Button,
-    IconButton,
-    TextField,
-    InputAdornment,
-    CircularProgress,
-    Snackbar,
-    Alert,
-    Accordion,
-    AccordionSummary,
-    AccordionDetails,
-    Divider,
-    Chip,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    Grid,
-    Card,
-    CardContent,
-    List,
-    ListItem,
-    ListItemText,
     Tabs,
-    Tab,
+    TextField,
+    Typography,
 } from "@mui/material"
-import { ArrowBack, Search, ExpandMore, Person } from "@mui/icons-material"
-import { useNavigate } from "react-router-dom"
-import { surveyApi } from "../services/surveyApi"
-import type { AnswerResponse, QuestionAnswerResponse } from "../types/survey"
+import {ArrowBack, ExpandMore, Person, Search} from "@mui/icons-material"
+import {useNavigate} from "react-router-dom"
+import {surveyApi} from "../services/surveyApi"
+import type {AnswerResponse} from "../types/survey"
 
 // 탭 패널 컴포넌트
 interface TabPanelProps {
@@ -51,7 +51,7 @@ interface TabPanelProps {
 }
 
 function TabPanel(props: TabPanelProps) {
-    const { children, value, index, ...other } = props
+    const {children, value, index, ...other} = props
 
     return (
         <div
@@ -61,7 +61,7 @@ function TabPanel(props: TabPanelProps) {
             aria-labelledby={`simple-tab-${index}`}
             {...other}
         >
-            {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+            {value === index && <Box sx={{p: 3}}>{children}</Box>}
         </div>
     )
 }
@@ -101,7 +101,7 @@ const SurveyAnswers = () => {
                     })
                 }
             },
-            { threshold: 1.0 }
+            {threshold: 1.0}
         )
 
         observerRef.current = observer
@@ -125,7 +125,7 @@ const SurveyAnswers = () => {
             } else {
                 setIsLoadingMore(true)
             }
-            
+
             const response = await surveyApi.getAllSurveyAnswers(pageNum)
             if (response.data.success && response.data.data) {
                 const newAnswers = response.data.data.content || []
@@ -210,7 +210,10 @@ const SurveyAnswers = () => {
             acc[customerId].answers.push(answer)
             return acc
         },
-        {} as Record<number, { customer: { id: number; name: string; email: string; phone: string; consent: boolean }; answers: AnswerResponse[] }>,
+        {} as Record<number, {
+            customer: { id: number; name: string; email: string; phone: string; consent: boolean };
+            answers: AnswerResponse[]
+        }>,
     )
 
     // 고객 상세 페이지로 이동
@@ -236,18 +239,23 @@ const SurveyAnswers = () => {
     }
 
     return (
-        <Box sx={{ flexGrow: 1, minHeight: "100vh", py: 3 }}>
-            <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-                <Box sx={{ display: "flex", alignItems: "center", mb: 4 }}>
-                    <IconButton onClick={() => navigate("/survey")} sx={{ mr: 1 }}>
-                        <ArrowBack />
+        <Box sx={{flexGrow: 1, minHeight: "100vh", py: 3}}>
+            <Container maxWidth="lg" sx={{mt: 4, mb: 4}}>
+                <Box sx={{display: "flex", alignItems: "center", mb: 4}}>
+                    <IconButton onClick={() => navigate("/survey")} sx={{mr: 1}}>
+                        <ArrowBack/>
                     </IconButton>
-                    <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                    <Typography variant="h6" sx={{fontWeight: "bold"}}>
                         설문 응답 목록
                     </Typography>
                 </Box>
 
-                <Paper elevation={0} sx={{ mb: 3, p: 3, borderRadius: 2, boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
+                <Paper elevation={0} sx={{
+                    mb: 3,
+                    p: 3,
+                    borderRadius: 2,
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                }}>
                     <TextField
                         placeholder="고객명, 이메일, 전화번호 또는 설문 제목으로 검색"
                         variant="outlined"
@@ -258,7 +266,7 @@ const SurveyAnswers = () => {
                         InputProps={{
                             startAdornment: (
                                 <InputAdornment position="start">
-                                    <Search />
+                                    <Search/>
                                 </InputAdornment>
                             ),
                         }}
@@ -266,68 +274,72 @@ const SurveyAnswers = () => {
                 </Paper>
 
                 {loading ? (
-                    <Box sx={{ display: "flex", justifyContent: "center", my: 5 }}>
-                        <CircularProgress />
+                    <Box sx={{display: "flex", justifyContent: "center", my: 5}}>
+                        <CircularProgress/>
                     </Box>
                 ) : error ? (
-                    <Paper elevation={0} sx={{ p: 3, textAlign: "center" }}>
+                    <Paper elevation={0} sx={{p: 3, textAlign: "center"}}>
                         <Typography color="error">{error}</Typography>
-                        <Button 
-                            variant="contained" 
-                            sx={{ mt: 2 }} 
+                        <Button
+                            variant="contained"
+                            sx={{mt: 2}}
                             onClick={(e: React.MouseEvent<HTMLButtonElement>) => fetchSurveyAnswers(0)}
                         >
                             다시 시도
                         </Button>
                     </Paper>
                 ) : (
-                    <Paper elevation={0} sx={{ borderRadius: 2 }}>
-                        <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+                    <Paper elevation={0} sx={{borderRadius: 2}}>
+                        <Box sx={{borderBottom: 1, borderColor: "divider"}}>
                             <Tabs value={tabValue} onChange={handleTabChange} aria-label="survey answers tabs">
-                                <Tab label="전체 응답" />
-                                <Tab label="설문별 보기" />
+                                <Tab label="전체 응답"/>
+                                <Tab label="설문별 보기"/>
                             </Tabs>
                         </Box>
 
                         {/* 전체 응답 탭 */}
                         <TabPanel value={tabValue} index={0}>
                             {filteredAnswers.length > 0 ? (
-                                <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2, overflow: "hidden", boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
+                                <TableContainer component={Paper} elevation={0} sx={{
+                                    borderRadius: 2,
+                                    overflow: "hidden",
+                                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                                }}>
                                     <Table>
                                         <TableHead>
-                                            <TableRow sx={{ 
+                                            <TableRow sx={{
                                                 backgroundColor: '#e9ecef',
                                                 borderBottom: '1px solid #e9ecef'
                                             }}>
-                                                <TableCell sx={{ 
+                                                <TableCell sx={{
                                                     padding: '12px 16px',
                                                     textAlign: 'left',
                                                     fontSize: '0.875rem',
                                                     fontWeight: 500,
                                                     color: '#003459'
                                                 }}>고객명</TableCell>
-                                                <TableCell sx={{ 
+                                                <TableCell sx={{
                                                     padding: '12px 16px',
                                                     textAlign: 'left',
                                                     fontSize: '0.875rem',
                                                     fontWeight: 500,
                                                     color: '#003459'
                                                 }}>이메일</TableCell>
-                                                <TableCell sx={{ 
+                                                <TableCell sx={{
                                                     padding: '12px 16px',
                                                     textAlign: 'left',
                                                     fontSize: '0.875rem',
                                                     fontWeight: 500,
                                                     color: '#003459'
                                                 }}>전화번호</TableCell>
-                                                <TableCell sx={{ 
+                                                <TableCell sx={{
                                                     padding: '12px 16px',
                                                     textAlign: 'left',
                                                     fontSize: '0.875rem',
                                                     fontWeight: 500,
                                                     color: '#003459'
                                                 }}>설문 제목</TableCell>
-                                                <TableCell sx={{ 
+                                                <TableCell sx={{
                                                     padding: '12px 16px',
                                                     textAlign: 'left',
                                                     fontSize: '0.875rem',
@@ -342,7 +354,7 @@ const SurveyAnswers = () => {
                                                     key={`${answer.customerId}-${index}`}
                                                     hover
                                                     onClick={() => handleViewDetail(answer)}
-                                                    sx={{ cursor: "pointer" }}
+                                                    sx={{cursor: "pointer"}}
                                                 >
                                                     <TableCell>{answer.customerName}</TableCell>
                                                     <TableCell>{answer.customerEmail}</TableCell>
@@ -355,7 +367,7 @@ const SurveyAnswers = () => {
                                     </Table>
                                 </TableContainer>
                             ) : (
-                                <Box sx={{ p: 3, textAlign: "center" }}>
+                                <Box sx={{p: 3, textAlign: "center"}}>
                                     <Typography variant="body1">
                                         {searchTerm ? "검색 결과가 없습니다." : "등록된 설문 응답이 없습니다."}
                                     </Typography>
@@ -367,51 +379,60 @@ const SurveyAnswers = () => {
                         <TabPanel value={tabValue} index={1}>
                             {Object.keys(groupedBySurvey).length > 0 ? (
                                 Object.values(groupedBySurvey).map((group) => (
-                                    <Accordion key={group.survey.id} sx={{ mb: 2 }}>
-                                        <AccordionSummary expandIcon={<ExpandMore />}>
+                                    <Accordion key={group.survey.id} sx={{mb: 2}}>
+                                        <AccordionSummary expandIcon={<ExpandMore/>}>
                                             <Box
-                                                sx={{ display: "flex", alignItems: "center", width: "100%", justifyContent: "space-between" }}
+                                                sx={{
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    width: "100%",
+                                                    justifyContent: "space-between"
+                                                }}
                                             >
-                                                <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
+                                                <Typography variant="subtitle1" sx={{fontWeight: "bold"}}>
                                                     {group.survey.title}
                                                 </Typography>
                                                 <Chip
                                                     label={`${group.answers.length}개의 응답`}
                                                     size="small"
-                                                    sx={{ bgcolor: "#e3f2fd", color: "#1976d2" }}
+                                                    sx={{bgcolor: "#e3f2fd", color: "#1976d2"}}
                                                 />
                                             </Box>
                                         </AccordionSummary>
                                         <AccordionDetails>
-                                            <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2, overflow: "hidden", boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
+                                            <TableContainer component={Paper} elevation={0} sx={{
+                                                borderRadius: 2,
+                                                overflow: "hidden",
+                                                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                                            }}>
                                                 <Table size="small">
                                                     <TableHead>
-                                                        <TableRow sx={{ 
+                                                        <TableRow sx={{
                                                             backgroundColor: '#e9ecef',
                                                             borderBottom: '1px solid #e9ecef'
                                                         }}>
-                                                            <TableCell sx={{ 
+                                                            <TableCell sx={{
                                                                 padding: '12px 16px',
                                                                 textAlign: 'left',
                                                                 fontSize: '0.875rem',
                                                                 fontWeight: 500,
                                                                 color: '#003459'
                                                             }}>고객명</TableCell>
-                                                            <TableCell sx={{ 
+                                                            <TableCell sx={{
                                                                 padding: '12px 16px',
                                                                 textAlign: 'left',
                                                                 fontSize: '0.875rem',
                                                                 fontWeight: 500,
                                                                 color: '#003459'
                                                             }}>이메일</TableCell>
-                                                            <TableCell sx={{ 
+                                                            <TableCell sx={{
                                                                 padding: '12px 16px',
                                                                 textAlign: 'left',
                                                                 fontSize: '0.875rem',
                                                                 fontWeight: 500,
                                                                 color: '#003459'
                                                             }}>전화번호</TableCell>
-                                                            <TableCell sx={{ 
+                                                            <TableCell sx={{
                                                                 padding: '12px 16px',
                                                                 textAlign: 'left',
                                                                 fontSize: '0.875rem',
@@ -426,7 +447,7 @@ const SurveyAnswers = () => {
                                                                 key={`${answer.customerId}-${index}`}
                                                                 hover
                                                                 onClick={() => handleViewDetail(answer)}
-                                                                sx={{ cursor: "pointer" }}
+                                                                sx={{cursor: "pointer"}}
                                                             >
                                                                 <TableCell>{answer.customerName}</TableCell>
                                                                 <TableCell>{answer.customerEmail}</TableCell>
@@ -442,7 +463,7 @@ const SurveyAnswers = () => {
                                     </Accordion>
                                 ))
                             ) : (
-                                <Box sx={{ p: 3, textAlign: "center" }}>
+                                <Box sx={{p: 3, textAlign: "center"}}>
                                     <Typography variant="body1">
                                         {searchTerm ? "검색 결과가 없습니다." : "등록된 설문 응답이 없습니다."}
                                     </Typography>
@@ -469,7 +490,7 @@ const SurveyAnswers = () => {
                 {selectedAnswer && (
                     <>
                         <DialogTitle>
-                            <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                            <Typography variant="h6" sx={{fontWeight: "bold"}}>
                                 설문 응답 상세
                             </Typography>
                         </DialogTitle>
@@ -477,9 +498,9 @@ const SurveyAnswers = () => {
                             <Grid container spacing={3}>
                                 {/* 설문 정보 */}
                                 <Grid item xs={12}>
-                                    <Card variant="outlined" sx={{ mb: 3 }}>
+                                    <Card variant="outlined" sx={{mb: 3}}>
                                         <CardContent>
-                                            <Typography variant="subtitle1" sx={{ fontWeight: "bold", mb: 1 }}>
+                                            <Typography variant="subtitle1" sx={{fontWeight: "bold", mb: 1}}>
                                                 설문 정보
                                             </Typography>
                                             <Typography variant="h6" gutterBottom>
@@ -494,16 +515,24 @@ const SurveyAnswers = () => {
 
                                 {/* 고객 정보 */}
                                 <Grid item xs={12} md={6}>
-                                    <Card variant="outlined" sx={{ height: "100%", boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
+                                    <Card variant="outlined" sx={{
+                                        height: "100%",
+                                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                                    }}>
                                         <CardContent>
-                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                                                <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
+                                            <Box sx={{
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                alignItems: 'center',
+                                                mb: 2
+                                            }}>
+                                                <Typography variant="subtitle1" sx={{fontWeight: "bold"}}>
                                                     고객 정보
                                                 </Typography>
                                                 <Button
                                                     variant="outlined"
                                                     size="small"
-                                                    startIcon={<Person />}
+                                                    startIcon={<Person/>}
                                                     onClick={() => handleViewCustomerDetail(selectedAnswer.customerId.toString())}
                                                 >
                                                     고객 상세
@@ -511,13 +540,15 @@ const SurveyAnswers = () => {
                                             </Box>
                                             <List dense>
                                                 <ListItem>
-                                                    <ListItemText primary="이름" secondary={selectedAnswer.customerName} />
+                                                    <ListItemText primary="이름" secondary={selectedAnswer.customerName}/>
                                                 </ListItem>
                                                 <ListItem>
-                                                    <ListItemText primary="이메일" secondary={selectedAnswer.customerEmail} />
+                                                    <ListItemText primary="이메일"
+                                                                  secondary={selectedAnswer.customerEmail}/>
                                                 </ListItem>
                                                 <ListItem>
-                                                    <ListItemText primary="연락처" secondary={selectedAnswer.customerPhone} />
+                                                    <ListItemText primary="연락처"
+                                                                  secondary={selectedAnswer.customerPhone}/>
                                                 </ListItem>
                                             </List>
                                         </CardContent>
@@ -526,14 +557,18 @@ const SurveyAnswers = () => {
 
                                 {/* 응답 시간 정보 */}
                                 <Grid item xs={12} md={6}>
-                                    <Card variant="outlined" sx={{ height: "100%", boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
+                                    <Card variant="outlined" sx={{
+                                        height: "100%",
+                                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                                    }}>
                                         <CardContent>
-                                            <Typography variant="subtitle1" sx={{ fontWeight: "bold", mb: 2 }}>
+                                            <Typography variant="subtitle1" sx={{fontWeight: "bold", mb: 2}}>
                                                 응답 정보
                                             </Typography>
                                             <List dense>
                                                 <ListItem>
-                                                    <ListItemText primary="등록일" secondary={formatDate(selectedAnswer.createdAt)} />
+                                                    <ListItemText primary="등록일"
+                                                                  secondary={formatDate(selectedAnswer.createdAt)}/>
                                                 </ListItem>
                                                 <ListItem>
                                                     <ListItemText
@@ -548,26 +583,29 @@ const SurveyAnswers = () => {
 
                                 {/* 응답 내용 */}
                                 <Grid item xs={12}>
-                                    <Typography variant="subtitle1" sx={{ fontWeight: "bold", mb: 2 }}>
+                                    <Typography variant="subtitle1" sx={{fontWeight: "bold", mb: 2}}>
                                         응답 내용
                                     </Typography>
                                     {selectedAnswer.questionAnswers.map((item, index) => (
-                                        <Card key={index} variant="outlined" sx={{ mb: 2, boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
+                                        <Card key={index} variant="outlined" sx={{
+                                            mb: 2,
+                                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                                        }}>
                                             <CardContent>
-                                                <Typography variant="subtitle2" sx={{ fontWeight: "bold", mb: 1 }}>
+                                                <Typography variant="subtitle2" sx={{fontWeight: "bold", mb: 1}}>
                                                     {index + 1}. {item.question}
                                                 </Typography>
-                                                <Divider sx={{ my: 1 }} />
+                                                <Divider sx={{my: 1}}/>
                                                 {item.answers.length > 0 ? (
-                                                    <Box sx={{ pl: 2 }}>
+                                                    <Box sx={{pl: 2}}>
                                                         {item.answers.map((ans, i) => (
-                                                            <Typography key={i} variant="body2" sx={{ mb: 0.5 }}>
+                                                            <Typography key={i} variant="body2" sx={{mb: 0.5}}>
                                                                 {item.answers.length > 1 ? `• ${ans}` : ans}
                                                             </Typography>
                                                         ))}
                                                     </Box>
                                                 ) : (
-                                                    <Typography variant="body2" color="text.secondary" sx={{ pl: 2 }}>
+                                                    <Typography variant="body2" color="text.secondary" sx={{pl: 2}}>
                                                         응답 없음
                                                     </Typography>
                                                 )}
@@ -585,7 +623,7 @@ const SurveyAnswers = () => {
             </Dialog>
 
             <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError(null)}>
-                <Alert onClose={() => setError(null)} severity="error" sx={{ width: "100%" }}>
+                <Alert onClose={() => setError(null)} severity="error" sx={{width: "100%"}}>
                     {error}
                 </Alert>
             </Snackbar>

@@ -1,12 +1,12 @@
 import api from "./api";
-import type { 
-    RealEstateTypeSummaryResponse, 
-    TradeTypeSummaryResponse,
-    CustomerSummaryResponse,
+import type {
+    ConsultationSummaryResponse,
     ContractSummaryResponse,
-    ConsultationSummaryResponse
+    CustomerSummaryResponse,
+    RealEstateTypeSummaryResponse,
+    TradeTypeSummaryResponse
 } from "../types/dashboard";
-import type { ApiResponse } from "../types/api";
+import type {ApiResponse} from "../types/api";
 
 // 대시보드 API 서비스
 export const dashboardApi = {
@@ -16,7 +16,7 @@ export const dashboardApi = {
             `/api/dashboard/real-estate-type-summary?period=${period}`
         );
     },
-    
+
     // 거래 유형 요약 데이터 가져오기
     getTradeTypeSummary: async (period: string) => {
         return api.get<{ success: boolean; data: TradeTypeSummaryResponse; error?: { message: string } }>(

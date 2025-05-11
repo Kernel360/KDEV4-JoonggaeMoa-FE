@@ -1,9 +1,13 @@
 import api from "./api"
-import type { AxiosResponse } from "axios"
-import type { ConsultationResultRequest, ConsultationResponse, ConsultationMonthInfo, ConsultationHistoryDto } from "../types/consultation"
-import type { ApiResponse } from "../types/api"
-import axios from "axios"
-import { ConsultationStatus } from "../types/consultation"
+import type {AxiosResponse} from "axios"
+import type {
+    ConsultationHistoryDto,
+    ConsultationMonthInfo,
+    ConsultationResponse,
+    ConsultationResultRequest
+} from "../types/consultation"
+import {ConsultationStatus} from "../types/consultation"
+import type {ApiResponse} from "../types/api"
 
 export const createConsultation = async (consultationData: {
     customerId: number
@@ -105,7 +109,7 @@ export const getConsultationMonthInfo = async (month: string): Promise<AxiosResp
 };
 
 // 상태별 상담 목록 가져오기
-export const getConsultationsByStatus = async (month: string, status: ConsultationStatus) : Promise<AxiosResponse<ApiResponse<ConsultationResponse[]>>> => {
+export const getConsultationsByStatus = async (month: string, status: ConsultationStatus): Promise<AxiosResponse<ApiResponse<ConsultationResponse[]>>> => {
     return api.get(`/api/consultations/status?month=${month}&status=${status}`)
 }
 

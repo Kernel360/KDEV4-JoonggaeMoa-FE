@@ -1,6 +1,6 @@
 import api from "./api"
-import type { AxiosResponse } from "axios"
-import type { ApiResponse } from "../types/api"
+import type {AxiosResponse} from "axios"
+import type {ApiResponse} from "../types/api"
 
 // 메시지 응답 타입
 export interface MessageResponse {
@@ -72,7 +72,7 @@ export const messageApi = {
     getMessages: async (
         params?: MessagePaginationParams,
     ): Promise<AxiosResponse<ApiResponse<PageResponse<MessageResponse>>>> => {
-        return api.get("/api/all-messages", { params })
+        return api.get("/api/all-messages", {params})
     },
 
     // 메시지 예약/전송

@@ -1,4 +1,4 @@
-import type { RealEstateType, TradeType } from "../types/article";
+import type {RealEstateType, TradeType} from "../types/article";
 
 export const getTypeColor = (type: RealEstateType | string): string => {
     switch (type) {
@@ -68,14 +68,14 @@ export const getTypeEmoji = (type: RealEstateType | string): string => {
 export const createArticleMarkerSvg = (buildingType: string, isSelected: boolean = false, customColor?: string, customOpacity?: number, groupCount?: number): string => {
     const color = customColor || getTypeColor(buildingType);
     const emoji = getTypeEmoji(buildingType);
-    
+
     // 핀포인트 크기 줄이기
     const circleRadius = isSelected ? 18 : 15;
     const strokeWidth = isSelected ? 2.5 : 1.5;
     const strokeColor = isSelected ? '#FF5722' : 'white';
     const fontSize = isSelected ? 16 : 14;
     const opacity = customOpacity !== undefined ? customOpacity : 1.0;
-    
+
     // 동일 좌표 매물 그룹에 대한 카운트 버블 추가
     const countBubble = groupCount && groupCount > 1 ? `
         <g>
@@ -83,7 +83,7 @@ export const createArticleMarkerSvg = (buildingType: string, isSelected: boolean
             <text x="27" y="16" font-size="10" text-anchor="middle" fill="white" font-weight="bold">${groupCount}</text>
         </g>
     ` : '';
-    
+
     return `
         <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
             <circle cx="20" cy="20" r="${circleRadius}" fill="${color}" stroke="${strokeColor}" stroke-width="${strokeWidth}" opacity="${opacity}"/>

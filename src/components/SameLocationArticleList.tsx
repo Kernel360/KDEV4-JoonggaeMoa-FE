@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
-import { Box, List, Typography, IconButton, Paper, Slide, useMediaQuery, useTheme } from '@mui/material';
+import {useEffect, useState} from 'react';
+import {Box, IconButton, List, Paper, Slide, Typography, useMediaQuery, useTheme} from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import ArticleItem from './ArticleItem';
-import type { ArticleResponse } from '../types/article';
+import type {ArticleResponse} from '../types/article';
 
 interface SameLocationArticleListProps {
     articles: ArticleResponse[];
@@ -15,14 +15,14 @@ interface SameLocationArticleListProps {
 }
 
 const SameLocationArticleList = ({
-    articles,
-    isOpen,
-    onClose,
-    onArticleClick,
-    selectedArticle,
-    location,
-    isListHidden = false
-}: SameLocationArticleListProps) => {
+                                     articles,
+                                     isOpen,
+                                     onClose,
+                                     onArticleClick,
+                                     selectedArticle,
+                                     location,
+                                     isListHidden = false
+                                 }: SameLocationArticleListProps) => {
     const [transition, setTransition] = useState(false);
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -74,12 +74,12 @@ const SameLocationArticleList = ({
                     bgcolor: 'background.paper'
                 }}
             >
-                <Box sx={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center', 
+                <Box sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
                     p: isMobile ? 1 : 2, // 모바일에서는 패딩 줄임
-                    borderBottom: '1px solid', 
+                    borderBottom: '1px solid',
                     borderColor: 'divider',
                     ...(isMobile && {
                         position: 'sticky',
@@ -93,11 +93,11 @@ const SameLocationArticleList = ({
                         동일 위치 매물 ({articles.length}개)
                     </Typography>
                     <IconButton onClick={onClose} size="small">
-                        <CloseIcon />
+                        <CloseIcon/>
                     </IconButton>
                 </Box>
-                
-                <List sx={{ p: isMobile ? 1 : 2 }}>
+
+                <List sx={{p: isMobile ? 1 : 2}}>
                     {articles.map((article) => (
                         <ArticleItem
                             key={article.id}

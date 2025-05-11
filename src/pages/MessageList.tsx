@@ -1,41 +1,37 @@
 "use client"
 
-import React from "react"
-import { useState, useEffect, useRef, useCallback } from "react"
+import React, {useCallback, useEffect, useState} from "react"
 import {
+    Alert,
     Box,
+    Button,
+    CircularProgress,
     Container,
-    Typography,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogContentText,
+    DialogTitle,
+    Grid,
+    IconButton,
+    InputAdornment,
+    MenuItem,
     Paper,
+    Snackbar,
     Table,
     TableBody,
     TableCell,
     TableContainer,
     TableHead,
-    TableRow,
-    Button,
-    IconButton,
-    AppBar,
-    Toolbar,
-    TextField,
-    InputAdornment,
-    CircularProgress,
-    Chip,
-    Grid,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogContentText,
-    DialogActions,
-    Snackbar,
-    Alert,
     TablePagination,
-    MenuItem,
+    TableRow,
+    TextField,
+    Typography,
 } from "@mui/material"
-import { Search, Add, ArrowBack, History, Edit, Delete } from "@mui/icons-material"
-import { useNavigate } from "react-router-dom"
-import { messageApi } from "../services/messageApi"
-import type { ReservedMessageResponse, MessagePageResponse } from "../services/messageApi"
+import {Add, ArrowBack, History, Search} from "@mui/icons-material"
+import {useNavigate} from "react-router-dom"
+import type {ReservedMessageResponse} from "../services/messageApi"
+import {messageApi} from "../services/messageApi"
 
 const MessageList = () => {
     const navigate = useNavigate()
@@ -149,7 +145,7 @@ const MessageList = () => {
             setSelectedMessage(message)
             setEditContent(message.content)
             setByteCount(new TextEncoder().encode(message.content).length)
-            
+
             // Set edit date and time
             if (message.sendAt) {
                 const date = new Date(message.sendAt)
@@ -158,7 +154,7 @@ const MessageList = () => {
                 const day = String(date.getDate()).padStart(2, "0")
                 const hours = String(date.getHours()).padStart(2, "0")
                 const minutes = String(date.getMinutes()).padStart(2, "0")
-                
+
                 setEditSendAtDate(`${year}-${month}-${day}`)
                 setEditSendAtTime(`${hours}:${minutes}`)
             }
@@ -243,31 +239,31 @@ const MessageList = () => {
     }
 
     return (
-        <Box sx={{ flexGrow: 1, minHeight: "100vh" }}>
+        <Box sx={{flexGrow: 1, minHeight: "100vh"}}>
             <Container
                 maxWidth="lg"
                 sx={{
                     mt: 4,
                     mb: 4,
                     mx: "auto",
-                    px: { xs: 2, sm: 3, md: 4 },
+                    px: {xs: 2, sm: 3, md: 4},
                 }}
             >
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
-                    <Box sx={{ display: "flex", alignItems: "center" }}>
-                        <IconButton onClick={() => navigate("/dashboard")} sx={{ mr: 1 }}>
-                            <ArrowBack />
+                <Box sx={{display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3}}>
+                    <Box sx={{display: "flex", alignItems: "center"}}>
+                        <IconButton onClick={() => navigate("/dashboard")} sx={{mr: 1}}>
+                            <ArrowBack/>
                         </IconButton>
-                        <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                        <Typography variant="h6" sx={{fontWeight: "bold"}}>
                             문자 관리
                         </Typography>
                     </Box>
                     <Box>
                         <Button
                             variant="outlined"
-                            sx={{ 
-                                mr: 2, 
-                                borderColor: "#007ea7", 
+                            sx={{
+                                mr: 2,
+                                borderColor: "#007ea7",
                                 color: "#007ea7",
                                 '&:hover': {
                                     borderColor: "#003459",
@@ -276,15 +272,15 @@ const MessageList = () => {
                                 }
                             }}
                             onClick={() => navigate("/message/history")}
-                            startIcon={<History />}
+                            startIcon={<History/>}
                         >
                             전체 문자 조회
                         </Button>
                         <Button
                             variant="outlined"
-                            sx={{ 
-                                mr: 2, 
-                                borderColor: "#007ea7", 
+                            sx={{
+                                mr: 2,
+                                borderColor: "#007ea7",
                                 color: "#007ea7",
                                 '&:hover': {
                                     borderColor: "#003459",
@@ -298,10 +294,10 @@ const MessageList = () => {
                         </Button>
                         <Button
                             variant="contained"
-                            startIcon={<Add />}
+                            startIcon={<Add/>}
                             sx={{
                                 bgcolor: "#007ea7",
-                                "&:hover": { bgcolor: "#003459" },
+                                "&:hover": {bgcolor: "#003459"},
                             }}
                             onClick={() => navigate("/message/create")}
                         >
@@ -310,15 +306,20 @@ const MessageList = () => {
                     </Box>
                 </Box>
 
-                <Paper elevation={0} sx={{ mb: 3, p: 3, borderRadius: 2, boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
+                <Paper elevation={0} sx={{
+                    mb: 3,
+                    p: 3,
+                    borderRadius: 2,
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                }}>
                     <form onSubmit={handleSearch}>
-                        <Box sx={{ display: 'flex', gap: 2 }}>
+                        <Box sx={{display: 'flex', gap: 2}}>
                             <TextField
                                 select
                                 value={searchType}
                                 onChange={(e) => setSearchType(e.target.value as "name" | "phone")}
                                 size="small"
-                                sx={{ width: 120 }}
+                                sx={{width: 120}}
                             >
                                 <MenuItem value="name">고객명</MenuItem>
                                 <MenuItem value="phone">전화번호</MenuItem>
@@ -333,7 +334,7 @@ const MessageList = () => {
                                 InputProps={{
                                     startAdornment: (
                                         <InputAdornment position="start">
-                                            <Search />
+                                            <Search/>
                                         </InputAdornment>
                                     ),
                                 }}
@@ -343,7 +344,7 @@ const MessageList = () => {
                                 variant="contained"
                                 sx={{
                                     bgcolor: "#007ea7",
-                                    "&:hover": { bgcolor: "#003459" },
+                                    "&:hover": {bgcolor: "#003459"},
                                 }}
                             >
                                 검색
@@ -353,53 +354,57 @@ const MessageList = () => {
                 </Paper>
 
                 {loading ? (
-                    <Box sx={{ display: "flex", justifyContent: "center", my: 5 }}>
-                        <CircularProgress />
+                    <Box sx={{display: "flex", justifyContent: "center", my: 5}}>
+                        <CircularProgress/>
                     </Box>
                 ) : error ? (
-                    <Paper elevation={0} sx={{ p: 3, textAlign: "center", borderRadius: 2 }}>
+                    <Paper elevation={0} sx={{p: 3, textAlign: "center", borderRadius: 2}}>
                         <Typography color="error">{error}</Typography>
-                        <Button variant="contained" sx={{ mt: 2 }} onClick={() => fetchReservedMessages()}>
+                        <Button variant="contained" sx={{mt: 2}} onClick={() => fetchReservedMessages()}>
                             다시 시도
                         </Button>
                     </Paper>
                 ) : (
-                    <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2, overflow: "hidden", boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
+                    <TableContainer component={Paper} elevation={0} sx={{
+                        borderRadius: 2,
+                        overflow: "hidden",
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                    }}>
                         <Table>
                             <TableHead>
-                                <TableRow sx={{ 
+                                <TableRow sx={{
                                     backgroundColor: '#e9ecef',
                                     borderBottom: '1px solid #e9ecef'
                                 }}>
-                                    <TableCell sx={{ 
+                                    <TableCell sx={{
                                         padding: '12px 16px',
                                         textAlign: 'left',
                                         fontSize: '0.875rem',
                                         fontWeight: 500,
                                         color: '#003459'
                                     }}>고객명</TableCell>
-                                    <TableCell sx={{ 
+                                    <TableCell sx={{
                                         padding: '12px 16px',
                                         textAlign: 'left',
                                         fontSize: '0.875rem',
                                         fontWeight: 500,
                                         color: '#003459'
                                     }}>전화번호</TableCell>
-                                    <TableCell sx={{ 
+                                    <TableCell sx={{
                                         padding: '12px 16px',
                                         textAlign: 'left',
                                         fontSize: '0.875rem',
                                         fontWeight: 500,
                                         color: '#003459'
                                     }}>내용</TableCell>
-                                    <TableCell sx={{ 
+                                    <TableCell sx={{
                                         padding: '12px 16px',
                                         textAlign: 'left',
                                         fontSize: '0.875rem',
                                         fontWeight: 500,
                                         color: '#003459'
                                     }}>작성 시간</TableCell>
-                                    <TableCell sx={{ 
+                                    <TableCell sx={{
                                         padding: '12px 16px',
                                         textAlign: 'left',
                                         fontSize: '0.875rem',
@@ -415,12 +420,17 @@ const MessageList = () => {
                                             <TableRow
                                                 hover
                                                 onClick={() => handleMessageClick(message)}
-                                                sx={{ cursor: "pointer" }}
+                                                sx={{cursor: "pointer"}}
                                             >
                                                 <TableCell>{message.customerName}</TableCell>
                                                 <TableCell>{message.customerPhone || "-"}</TableCell>
                                                 <TableCell
-                                                    sx={{ maxWidth: "300px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                                                    sx={{
+                                                        maxWidth: "300px",
+                                                        overflow: "hidden",
+                                                        textOverflow: "ellipsis",
+                                                        whiteSpace: "nowrap"
+                                                    }}
                                                 >
                                                     {message.content}
                                                 </TableCell>
@@ -429,13 +439,20 @@ const MessageList = () => {
                                             </TableRow>
                                             {selectedMessage && selectedMessage.id === message.id && (
                                                 <TableRow>
-                                                    <TableCell colSpan={5} sx={{ p: 0 }}>
-                                                        <Paper elevation={0} sx={{ p: 3, bgcolor: 'rgba(0, 126, 167, 0.05)' }}>
-                                                            <Box sx={{ mx: 3 }}>
+                                                    <TableCell colSpan={5} sx={{p: 0}}>
+                                                        <Paper elevation={0}
+                                                               sx={{p: 3, bgcolor: 'rgba(0, 126, 167, 0.05)'}}>
+                                                            <Box sx={{mx: 3}}>
                                                                 <Grid container spacing={2}>
                                                                     <Grid item xs={12}>
-                                                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                                                                            <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                                                                        <Box sx={{
+                                                                            display: 'flex',
+                                                                            justifyContent: 'space-between',
+                                                                            alignItems: 'center',
+                                                                            mb: 1
+                                                                        }}>
+                                                                            <Typography variant="subtitle1"
+                                                                                        sx={{fontWeight: 'bold'}}>
                                                                                 메시지 상세 정보
                                                                             </Typography>
                                                                             <Box>
@@ -443,7 +460,7 @@ const MessageList = () => {
                                                                                     variant="outlined"
                                                                                     size="small"
                                                                                     onClick={handleEditOpen}
-                                                                                    sx={{ mr: 1 }}
+                                                                                    sx={{mr: 1}}
                                                                                 >
                                                                                     수정
                                                                                 </Button>
@@ -459,7 +476,8 @@ const MessageList = () => {
                                                                         </Box>
                                                                     </Grid>
                                                                     <Grid item xs={12} sm={6}>
-                                                                        <Typography variant="body2" color="text.secondary">
+                                                                        <Typography variant="body2"
+                                                                                    color="text.secondary">
                                                                             작성 시간
                                                                         </Typography>
                                                                         <Typography variant="body1">
@@ -467,7 +485,8 @@ const MessageList = () => {
                                                                         </Typography>
                                                                     </Grid>
                                                                     <Grid item xs={12} sm={6}>
-                                                                        <Typography variant="body2" color="text.secondary">
+                                                                        <Typography variant="body2"
+                                                                                    color="text.secondary">
                                                                             예약 시간
                                                                         </Typography>
                                                                         <Typography variant="body1">
@@ -475,7 +494,8 @@ const MessageList = () => {
                                                                         </Typography>
                                                                     </Grid>
                                                                     <Grid item xs={12} sm={6}>
-                                                                        <Typography variant="body2" color="text.secondary">
+                                                                        <Typography variant="body2"
+                                                                                    color="text.secondary">
                                                                             고객명
                                                                         </Typography>
                                                                         <Typography variant="body1">
@@ -483,7 +503,8 @@ const MessageList = () => {
                                                                         </Typography>
                                                                     </Grid>
                                                                     <Grid item xs={12} sm={6}>
-                                                                        <Typography variant="body2" color="text.secondary">
+                                                                        <Typography variant="body2"
+                                                                                    color="text.secondary">
                                                                             전화번호
                                                                         </Typography>
                                                                         <Typography variant="body1">
@@ -491,7 +512,8 @@ const MessageList = () => {
                                                                         </Typography>
                                                                     </Grid>
                                                                     <Grid item xs={12}>
-                                                                        <Typography variant="body2" color="text.secondary">
+                                                                        <Typography variant="body2"
+                                                                                    color="text.secondary">
                                                                             메시지 내용
                                                                         </Typography>
                                                                         <Paper
@@ -503,7 +525,8 @@ const MessageList = () => {
                                                                                 borderRadius: 1,
                                                                             }}
                                                                         >
-                                                                            <Typography variant="body1" sx={{ whiteSpace: "pre-wrap" }}>
+                                                                            <Typography variant="body1"
+                                                                                        sx={{whiteSpace: "pre-wrap"}}>
                                                                                 {message.content}
                                                                             </Typography>
                                                                         </Paper>
@@ -518,7 +541,7 @@ const MessageList = () => {
                                     ))
                                 ) : (
                                     <TableRow>
-                                        <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
+                                        <TableCell colSpan={5} align="center" sx={{py: 3}}>
                                             <Typography variant="body1">
                                                 {searchTerm ? "검색 결과가 없습니다." : "예약된 문자가 없습니다."}
                                             </Typography>
@@ -539,7 +562,7 @@ const MessageList = () => {
                     onRowsPerPageChange={handleChangeRowsPerPage}
                     rowsPerPageOptions={[10, 25, 50]}
                     labelRowsPerPage="페이지당 행 수:"
-                    labelDisplayedRows={({ from, to, count }) => `${from}-${to} / ${count}`}
+                    labelDisplayedRows={({from, to, count}) => `${from}-${to} / ${count}`}
                 />
             </Container>
 
@@ -547,14 +570,14 @@ const MessageList = () => {
             <Dialog open={editDialogOpen} onClose={handleEditClose} fullWidth maxWidth="sm">
                 <DialogTitle>메시지 수정</DialogTitle>
                 <DialogContent>
-                    <DialogContentText sx={{ mb: 2 }}>메시지 내용과 발송 예정 시간을 수정하세요.</DialogContentText>
-                    <Box sx={{ display: "flex", gap: 2, mb: 3, mt: 2 }}>
+                    <DialogContentText sx={{mb: 2}}>메시지 내용과 발송 예정 시간을 수정하세요.</DialogContentText>
+                    <Box sx={{display: "flex", gap: 2, mb: 3, mt: 2}}>
                         <TextField
                             label="날짜"
                             type="date"
                             value={editSendAtDate}
                             onChange={(e) => setEditSendAtDate(e.target.value)}
-                            InputLabelProps={{ shrink: true }}
+                            InputLabelProps={{shrink: true}}
                             fullWidth
                         />
                         <TextField
@@ -562,7 +585,7 @@ const MessageList = () => {
                             type="time"
                             value={editSendAtTime}
                             onChange={(e) => setEditSendAtTime(e.target.value)}
-                            InputLabelProps={{ shrink: true }}
+                            InputLabelProps={{shrink: true}}
                             fullWidth
                         />
                     </Box>
@@ -576,7 +599,7 @@ const MessageList = () => {
                         onChange={(e) => {
                             const newContent = e.target.value;
                             const newByteCount = new TextEncoder().encode(newContent).length;
-                            
+
                             // Only update if within byte limit
                             if (newByteCount <= MAX_BYTES) {
                                 setEditContent(newContent);
@@ -585,7 +608,7 @@ const MessageList = () => {
                         }}
                         variant="outlined"
                         error={byteCount > MAX_BYTES}
-                        helperText={`${byteCount}/${MAX_BYTES} 바이트 (${Math.round(byteCount/MAX_BYTES*100)}%)`}
+                        helperText={`${byteCount}/${MAX_BYTES} 바이트 (${Math.round(byteCount / MAX_BYTES * 100)}%)`}
                     />
                 </DialogContent>
                 <DialogActions>
@@ -621,14 +644,14 @@ const MessageList = () => {
 
             {/* 성공 메시지 스낵바 */}
             <Snackbar open={!!successMessage} autoHideDuration={6000} onClose={() => setSuccessMessage(null)}>
-                <Alert onClose={() => setSuccessMessage(null)} severity="success" sx={{ width: "100%" }}>
+                <Alert onClose={() => setSuccessMessage(null)} severity="success" sx={{width: "100%"}}>
                     {successMessage}
                 </Alert>
             </Snackbar>
 
             {/* 에러 메시지 스낵바 */}
             <Snackbar open={!!errorMessage} autoHideDuration={6000} onClose={() => setErrorMessage(null)}>
-                <Alert onClose={() => setErrorMessage(null)} severity="error" sx={{ width: "100%" }}>
+                <Alert onClose={() => setErrorMessage(null)} severity="error" sx={{width: "100%"}}>
                     {errorMessage}
                 </Alert>
             </Snackbar>

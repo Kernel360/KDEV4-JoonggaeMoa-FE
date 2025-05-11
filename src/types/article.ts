@@ -1,5 +1,5 @@
 // 매물 응답 타입
-export type RealEstateType = 
+export type RealEstateType =
     | "아파트"
     | "오피스텔"
     | "빌라"
@@ -195,9 +195,9 @@ export interface PageResponse<T> {
 }
 
 // 다양한 API 응답 형식
-export type ArticleApiResponse = 
-    | ApiResponse<ArticleResponse[]> 
-    | ApiResponse<PageResponse<ArticleResponse>> 
-    | HateoasResponse<ArticleResponse> 
-    | PageResponse<ArticleResponse> 
+export type ArticleApiResponse =
+    | ApiResponse<ArticleResponse[]>
+    | ApiResponse<PageResponse<ArticleResponse>>
+    | HateoasResponse<ArticleResponse>
+    | PageResponse<ArticleResponse>
     | ArticleResponse[];

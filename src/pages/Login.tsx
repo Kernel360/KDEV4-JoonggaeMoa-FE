@@ -1,30 +1,19 @@
 "use client"
 
-import { useState, type FormEvent } from "react"
-import { Link, useNavigate } from "react-router-dom"
-import {
-    Box,
-    Typography,
-    TextField,
-    Button,
-    IconButton,
-    InputAdornment,
-    Checkbox,
-    FormControlLabel,
-    Alert,
-    Snackbar,
-} from "@mui/material"
-import { Visibility, VisibilityOff, Person, Lock, CheckCircle } from '@mui/icons-material';
-import { useAuth } from "../context/AuthContext.tsx"
+import {type FormEvent, useState} from "react"
+import {Link, useNavigate} from "react-router-dom"
+import {Alert, Box, Button, IconButton, InputAdornment, Snackbar, TextField, Typography,} from "@mui/material"
+import {Lock, Person, Visibility, VisibilityOff} from '@mui/icons-material';
+import {useAuth} from "../context/AuthContext.tsx"
 import axios from "axios"
-import { useNotification } from "../context/NotificationContext.tsx"
+import {useNotification} from "../context/NotificationContext.tsx"
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 function Login() {
     const navigate = useNavigate()
-    const { login } = useAuth()
-    const { setupSSEConnection } = useNotification()
+    const {login} = useAuth()
+    const {setupSSEConnection} = useNotification()
     const [username, setUsername] = useState("")
     const [password, setPassword] = useState("")
     const [showPassword, setShowPassword] = useState(false)
@@ -86,7 +75,7 @@ function Login() {
     ];
 
     return (
-        <Box sx={{ 
+        <Box sx={{
             minHeight: '100vh',
             width: '100vw',
             display: 'flex',
@@ -94,8 +83,8 @@ function Login() {
             overflow: 'hidden'
         }}>
             {/* 왼쪽 브랜드 소개 영역 */}
-            <Box sx={{ 
-                display: { xs: 'none', lg: 'flex' },
+            <Box sx={{
+                display: {xs: 'none', lg: 'flex'},
                 width: '50%',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
@@ -104,21 +93,21 @@ function Login() {
                 height: '100vh'
             }}>
                 <Box>
-                    <Box sx={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        mb: 4 
+                    <Box sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        mb: 4
                     }}>
-                        <Box sx={{ width: '90px' }}>
+                        <Box sx={{width: '90px'}}>
                             <img
                                 src="/로고.png"
                                 alt="브랜드 로고"
-                                style={{ width: '100%' }}
+                                style={{width: '100%'}}
                             />
                         </Box>
-                        <Typography 
-                            variant="h5" 
-                            sx={{ 
+                        <Typography
+                            variant="h5"
+                            sx={{
                                 ml: 2,
                                 color: '#0047AB',
                                 fontWeight: 700,
@@ -129,36 +118,36 @@ function Login() {
                             중개모아
                         </Typography>
                     </Box>
-                    <Typography variant="h2" sx={{ 
+                    <Typography variant="h2" sx={{
                         color: '#007ea7',
                         fontWeight: 700,
                         mb: 3,
                         fontSize: '2.5rem',
                         lineHeight: 1.2
                     }}>
-                        부동산 중개의<br />새로운 기준
+                        부동산 중개의<br/>새로운 기준
                     </Typography>
-                    <Typography sx={{ 
+                    <Typography sx={{
                         color: '#00a8e8',
                         fontSize: '1.25rem',
                         mb: 4
                     }}>
-                        더 쉽고 편리한 부동산 중개 서비스로<br />
+                        더 쉽고 편리한 부동산 중개 서비스로<br/>
                         여러분의 성공을 지원합니다.
                     </Typography>
                 </Box>
 
                 <Box>
-                    <Box sx={{ 
+                    <Box sx={{
                         display: 'grid',
                         gridTemplateColumns: 'repeat(3, 1fr)',
                         gap: 2,
                         mb: 4
                     }}>
                         {[
-                            { icon: 'home', title: '매물 관리', desc: '효율적인 관리' },
-                            { icon: 'handshake', title: '계약 관리', desc: '안전한 계약' },
-                            { icon: 'chart-line', title: '실적 분석', desc: '성과 확인' }
+                            {icon: 'home', title: '매물 관리', desc: '효율적인 관리'},
+                            {icon: 'handshake', title: '계약 관리', desc: '안전한 계약'},
+                            {icon: 'chart-line', title: '실적 분석', desc: '성과 확인'}
                         ].map((item, i) => (
                             <Box key={i} sx={{
                                 bgcolor: 'rgba(255,255,255,0.8)',
@@ -166,24 +155,24 @@ function Login() {
                                 borderRadius: 2,
                                 boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
                             }}>
-                                <Typography sx={{ color: '#007ea7', mb: 1, fontWeight: 600 }}>
+                                <Typography sx={{color: '#007ea7', mb: 1, fontWeight: 600}}>
                                     {item.title}
                                 </Typography>
-                                <Typography sx={{ color: '#007ea7', fontSize: '0.875rem' }}>
+                                <Typography sx={{color: '#007ea7', fontSize: '0.875rem'}}>
                                     {item.desc}
                                 </Typography>
                             </Box>
                         ))}
                     </Box>
-                    <Typography sx={{ color: '#007ea7', fontSize: '0.875rem' }}>
+                    <Typography sx={{color: '#007ea7', fontSize: '0.875rem'}}>
                         © 2025 중개모아. All rights reserved.
                     </Typography>
                 </Box>
             </Box>
 
             {/* 오른쪽 로그인 폼 */}
-            <Box sx={{ 
-                width: { xs: '100%', lg: '50%' },
+            <Box sx={{
+                width: {xs: '100%', lg: '50%'},
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -191,29 +180,29 @@ function Login() {
                 height: '100vh',
                 overflow: 'auto'
             }}>
-                <Box sx={{ width: '100%', maxWidth: '32rem' }}>
-                    <Box sx={{ textAlign: { xs: 'center', lg: 'left' }, mb: 5 }}>
-                        <Typography variant="h4" sx={{ 
+                <Box sx={{width: '100%', maxWidth: '32rem'}}>
+                    <Box sx={{textAlign: {xs: 'center', lg: 'left'}, mb: 5}}>
+                        <Typography variant="h4" sx={{
                             fontWeight: 700,
                             color: 'text.primary',
                             mb: 1
                         }}>
                             환영합니다!
                         </Typography>
-                        <Typography sx={{ color: 'text.secondary' }}>
+                        <Typography sx={{color: 'text.secondary'}}>
                             계정에 로그인하여 모든 기능을 이용해보세요.
                         </Typography>
                     </Box>
 
                     <Box component="form" onSubmit={handleSubmit} noValidate>
-                        <Box sx={{ mb: 3 }}>
-                            <Typography sx={{ 
+                        <Box sx={{mb: 3}}>
+                            <Typography sx={{
                                 fontSize: '0.875rem',
                                 fontWeight: 500,
                                 color: 'text.primary',
                                 mb: 1
                             }}>
-                                아이디 <Box component="span" sx={{ color: 'error.main' }}>*</Box>
+                                아이디 <Box component="span" sx={{color: 'error.main'}}>*</Box>
                             </Typography>
                             <TextField
                                 fullWidth
@@ -224,7 +213,7 @@ function Login() {
                                 InputProps={{
                                     startAdornment: (
                                         <InputAdornment position="start">
-                                            <Person sx={{ color: 'text.secondary' }} />
+                                            <Person sx={{color: 'text.secondary'}}/>
                                         </InputAdornment>
                                     ),
                                 }}
@@ -239,19 +228,19 @@ function Login() {
                             />
                         </Box>
 
-                        <Box sx={{ mb: 3 }}>
-                            <Box sx={{ 
+                        <Box sx={{mb: 3}}>
+                            <Box sx={{
                                 display: 'flex',
                                 justifyContent: 'space-between',
                                 alignItems: 'center',
                                 mb: 1
                             }}>
-                                <Typography sx={{ 
+                                <Typography sx={{
                                     fontSize: '0.875rem',
                                     fontWeight: 500,
                                     color: 'text.primary'
                                 }}>
-                                    비밀번호 <Box component="span" sx={{ color: 'error.main' }}>*</Box>
+                                    비밀번호 <Box component="span" sx={{color: 'error.main'}}>*</Box>
                                 </Typography>
                             </Box>
                             <TextField
@@ -264,7 +253,7 @@ function Login() {
                                 InputProps={{
                                     startAdornment: (
                                         <InputAdornment position="start">
-                                            <Lock sx={{ color: 'text.secondary' }} />
+                                            <Lock sx={{color: 'text.secondary'}}/>
                                         </InputAdornment>
                                     ),
                                     endAdornment: (
@@ -273,7 +262,7 @@ function Login() {
                                                 onClick={() => setShowPassword(!showPassword)}
                                                 edge="end"
                                             >
-                                                {showPassword ? <VisibilityOff /> : <Visibility />}
+                                                {showPassword ? <VisibilityOff/> : <Visibility/>}
                                             </IconButton>
                                         </InputAdornment>
                                     ),
@@ -308,13 +297,13 @@ function Login() {
                             {loading ? "로그인 중..." : "로그인"}
                         </Button>
 
-                        <Box sx={{ 
+                        <Box sx={{
                             mt: 4,
                             textAlign: 'center'
                         }}>
-                            <Typography sx={{ color: 'text.secondary' }}>
+                            <Typography sx={{color: 'text.secondary'}}>
                                 아직 계정이 없으신가요?{' '}
-                                <Link to="/signup" style={{ 
+                                <Link to="/signup" style={{
                                     textDecoration: 'none',
                                     color: '#00a8e8',
                                     fontWeight: 500
@@ -324,28 +313,28 @@ function Login() {
                             </Typography>
                         </Box>
 
-                        <Box sx={{ 
+                        <Box sx={{
                             mt: 5,
                             pt: 3,
                             borderTop: '1px solid',
                             borderColor: 'grey.200'
                         }}>
-                            
+
                         </Box>
                     </Box>
                 </Box>
             </Box>
 
-            <Snackbar 
-                open={openSnackbar} 
-                autoHideDuration={6000} 
+            <Snackbar
+                open={openSnackbar}
+                autoHideDuration={6000}
                 onClose={handleCloseSnackbar}
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+                anchorOrigin={{vertical: 'bottom', horizontal: 'center'}}
             >
-                <Alert 
-                    onClose={handleCloseSnackbar} 
-                    severity="error" 
-                    sx={{ width: '100%', borderRadius: 2 }}
+                <Alert
+                    onClose={handleCloseSnackbar}
+                    severity="error"
+                    sx={{width: '100%', borderRadius: 2}}
                 >
                     {error}
                 </Alert>

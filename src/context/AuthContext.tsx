@@ -1,7 +1,7 @@
 import type React from "react"
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
-import { useNavigate } from "react-router-dom"
-import { setAccessToken, removeAccessToken } from "../services/api"
+import {createContext, type ReactNode, useContext, useEffect, useState} from "react"
+import {useNavigate} from "react-router-dom"
+import {removeAccessToken, setAccessToken} from "../services/api"
 
 interface AuthContextType {
     isAuthenticated: boolean
@@ -22,7 +22,7 @@ export const useAuth = () => {
     return context
 }
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({children}) => {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false)
     const [agentId, setAgentId] = useState<number | null>(null)
     const navigate = useNavigate()
@@ -57,5 +57,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setAgentId(null)
         navigate("/")
     }
-    return <AuthContext.Provider value={{ isAuthenticated, login, logout, agentId, loading }}>{children}</AuthContext.Provider>
+    return <AuthContext.Provider
+        value={{isAuthenticated, login, logout, agentId, loading}}>{children}</AuthContext.Provider>
 }

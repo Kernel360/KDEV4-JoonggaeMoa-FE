@@ -1,11 +1,14 @@
 "use client"
 
-import React from "react"
-import { useState, useEffect, useCallback, useRef } from "react"
+import React, {useCallback, useEffect, useRef, useState} from "react"
 import {
     Box,
+    Chip,
+    CircularProgress,
     Container,
-    Typography,
+    Grid,
+    IconButton,
+    InputAdornment,
     Paper,
     Table,
     TableBody,
@@ -13,20 +16,14 @@ import {
     TableContainer,
     TableHead,
     TableRow,
-    AppBar,
-    Toolbar,
     TextField,
-    InputAdornment,
-    Chip,
-    CircularProgress,
-    IconButton,
-    Grid,
+    Typography,
 } from "@mui/material"
-import { Search, ArrowBack } from "@mui/icons-material"
-import { useNavigate } from "react-router-dom"
-import { messageApi } from "../services/messageApi"
-import { MessageStatus } from "../types/message"
-import type { MessageResponse } from "../services/messageApi"
+import {ArrowBack, Search} from "@mui/icons-material"
+import {useNavigate} from "react-router-dom"
+import type {MessageResponse} from "../services/messageApi"
+import {messageApi} from "../services/messageApi"
+import {MessageStatus} from "../types/message"
 
 const MessageHistory = () => {
     const navigate = useNavigate()
@@ -97,7 +94,7 @@ const MessageHistory = () => {
                         fetchMessages(false)
                     }
                 },
-                { rootMargin: "100px" },
+                {rootMargin: "100px"},
             )
 
             if (node) observer.current.observe(node)
@@ -112,9 +109,9 @@ const MessageHistory = () => {
     }
 
     const statusConfig = {
-        [MessageStatus.SENT]: { color: "#e8f5e9", textColor: "#2e7d32", label: "전송 완료" },
-        [MessageStatus.FAILED]: { color: "#ffebee", textColor: "#c62828", label: "전송 실패" },
-        [MessageStatus.PENDING]: { color: "#fff8e1", textColor: "#f57c00", label: "전송 대기" },
+        [MessageStatus.SENT]: {color: "#e8f5e9", textColor: "#2e7d32", label: "전송 완료"},
+        [MessageStatus.FAILED]: {color: "#ffebee", textColor: "#c62828", label: "전송 실패"},
+        [MessageStatus.PENDING]: {color: "#fff8e1", textColor: "#f57c00", label: "전송 대기"},
     }
 
     const formatDate = (dateString: string) => {
@@ -161,17 +158,22 @@ const MessageHistory = () => {
     }
 
     return (
-        <Box sx={{ flexGrow: 1, minHeight: "100vh" }}>
-            <Container maxWidth="lg" sx={{ mt: 4, mb: 4, mx: "auto", px: { xs: 2, sm: 3, md: 4 } }}>
-                <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-                    <IconButton onClick={() => navigate(-1)} sx={{ mr: 1 }}>
-                        <ArrowBack />
+        <Box sx={{flexGrow: 1, minHeight: "100vh"}}>
+            <Container maxWidth="lg" sx={{mt: 4, mb: 4, mx: "auto", px: {xs: 2, sm: 3, md: 4}}}>
+                <Box sx={{display: "flex", alignItems: "center", mb: 3}}>
+                    <IconButton onClick={() => navigate(-1)} sx={{mr: 1}}>
+                        <ArrowBack/>
                     </IconButton>
-                    <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                    <Typography variant="h6" sx={{fontWeight: "bold"}}>
                         전체 문자 조회
                     </Typography>
                 </Box>
-                <Paper elevation={0} sx={{ mb: 3, p: 3, borderRadius: 2, boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
+                <Paper elevation={0} sx={{
+                    mb: 3,
+                    p: 3,
+                    borderRadius: 2,
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                }}>
                     <TextField
                         placeholder="고객명 또는 내용으로 검색"
                         variant="outlined"
@@ -182,7 +184,7 @@ const MessageHistory = () => {
                         InputProps={{
                             startAdornment: (
                                 <InputAdornment position="start">
-                                    <Search />
+                                    <Search/>
                                 </InputAdornment>
                             ),
                         }}
@@ -190,53 +192,57 @@ const MessageHistory = () => {
                 </Paper>
 
                 {loading ? (
-                    <Box sx={{ display: "flex", justifyContent: "center", my: 5 }}>
-                        <CircularProgress />
+                    <Box sx={{display: "flex", justifyContent: "center", my: 5}}>
+                        <CircularProgress/>
                     </Box>
                 ) : (
-                    <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2, overflow: "hidden", boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}>
+                    <TableContainer component={Paper} elevation={0} sx={{
+                        borderRadius: 2,
+                        overflow: "hidden",
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                    }}>
                         <Table>
                             <TableHead>
-                                <TableRow sx={{ 
+                                <TableRow sx={{
                                     backgroundColor: '#e9ecef',
                                     borderBottom: '1px solid #e9ecef'
                                 }}>
-                                    <TableCell sx={{ 
+                                    <TableCell sx={{
                                         padding: '12px 16px',
                                         textAlign: 'left',
                                         fontSize: '0.875rem',
                                         fontWeight: 500,
                                         color: '#003459'
                                     }}>고객명</TableCell>
-                                    <TableCell sx={{ 
+                                    <TableCell sx={{
                                         padding: '12px 16px',
                                         textAlign: 'left',
                                         fontSize: '0.875rem',
                                         fontWeight: 500,
                                         color: '#003459'
                                     }}>전화번호</TableCell>
-                                    <TableCell sx={{ 
+                                    <TableCell sx={{
                                         padding: '12px 16px',
                                         textAlign: 'left',
                                         fontSize: '0.875rem',
                                         fontWeight: 500,
                                         color: '#003459'
                                     }}>내용</TableCell>
-                                    <TableCell sx={{ 
+                                    <TableCell sx={{
                                         padding: '12px 16px',
                                         textAlign: 'left',
                                         fontSize: '0.875rem',
                                         fontWeight: 500,
                                         color: '#003459'
                                     }}>작성 시간</TableCell>
-                                    <TableCell sx={{ 
+                                    <TableCell sx={{
                                         padding: '12px 16px',
                                         textAlign: 'left',
                                         fontSize: '0.875rem',
                                         fontWeight: 500,
                                         color: '#003459'
                                     }}>예약 시간</TableCell>
-                                    <TableCell sx={{ 
+                                    <TableCell sx={{
                                         padding: '12px 16px',
                                         textAlign: 'left',
                                         fontSize: '0.875rem',
@@ -252,13 +258,18 @@ const MessageHistory = () => {
                                             <TableRow
                                                 hover
                                                 onClick={() => handleMessageClick(message)}
-                                                sx={{ cursor: "pointer" }}
+                                                sx={{cursor: "pointer"}}
                                                 ref={!searchTerm && index === filteredMessages.length - 1 ? lastMessageElementRef : null}
                                             >
                                                 <TableCell>{message.customerName}</TableCell>
                                                 <TableCell>{message.customerPhone || "-"}</TableCell>
                                                 <TableCell
-                                                    sx={{ maxWidth: "300px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                                                    sx={{
+                                                        maxWidth: "300px",
+                                                        overflow: "hidden",
+                                                        textOverflow: "ellipsis",
+                                                        whiteSpace: "nowrap"
+                                                    }}
                                                 >
                                                     {message.content}
                                                 </TableCell>
@@ -270,24 +281,31 @@ const MessageHistory = () => {
                                                         size="small"
                                                         sx={{
                                                             bgcolor: message.sendStatus === MessageStatus.SENT ? 'rgba(0, 126, 167, 0.1)' :
-                                                                    message.sendStatus === MessageStatus.FAILED ? 'rgba(198, 40, 40, 0.1)' :
+                                                                message.sendStatus === MessageStatus.FAILED ? 'rgba(198, 40, 40, 0.1)' :
                                                                     'rgba(245, 124, 0, 0.1)',
                                                             color: message.sendStatus === MessageStatus.SENT ? '#007ea7' :
-                                                                   message.sendStatus === MessageStatus.FAILED ? '#c62828' :
-                                                                   '#f57c00',
+                                                                message.sendStatus === MessageStatus.FAILED ? '#c62828' :
+                                                                    '#f57c00',
                                                         }}
                                                     />
                                                 </TableCell>
                                             </TableRow>
                                             {selectedMessage && selectedMessage.id === message.id && (
                                                 <TableRow>
-                                                    <TableCell colSpan={6} sx={{ p: 0 }}>
-                                                        <Paper elevation={0} sx={{ p: 3, bgcolor: 'rgba(0, 126, 167, 0.05)' }}>
-                                                            <Box sx={{ mx: 3 }}>
+                                                    <TableCell colSpan={6} sx={{p: 0}}>
+                                                        <Paper elevation={0}
+                                                               sx={{p: 3, bgcolor: 'rgba(0, 126, 167, 0.05)'}}>
+                                                            <Box sx={{mx: 3}}>
                                                                 <Grid container spacing={2}>
                                                                     <Grid item xs={12}>
-                                                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                                                                            <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                                                                        <Box sx={{
+                                                                            display: 'flex',
+                                                                            justifyContent: 'space-between',
+                                                                            alignItems: 'center',
+                                                                            mb: 1
+                                                                        }}>
+                                                                            <Typography variant="subtitle1"
+                                                                                        sx={{fontWeight: 'bold'}}>
                                                                                 메시지 상세 정보
                                                                             </Typography>
                                                                             <Chip
@@ -295,17 +313,18 @@ const MessageHistory = () => {
                                                                                 size="small"
                                                                                 sx={{
                                                                                     bgcolor: message.sendStatus === MessageStatus.SENT ? 'rgba(0, 126, 167, 0.1)' :
-                                                                                            message.sendStatus === MessageStatus.FAILED ? 'rgba(198, 40, 40, 0.1)' :
+                                                                                        message.sendStatus === MessageStatus.FAILED ? 'rgba(198, 40, 40, 0.1)' :
                                                                                             'rgba(245, 124, 0, 0.1)',
                                                                                     color: message.sendStatus === MessageStatus.SENT ? '#007ea7' :
-                                                                                           message.sendStatus === MessageStatus.FAILED ? '#c62828' :
-                                                                                           '#f57c00',
+                                                                                        message.sendStatus === MessageStatus.FAILED ? '#c62828' :
+                                                                                            '#f57c00',
                                                                                 }}
                                                                             />
                                                                         </Box>
                                                                     </Grid>
                                                                     <Grid item xs={12} sm={6}>
-                                                                        <Typography variant="body2" color="text.secondary">
+                                                                        <Typography variant="body2"
+                                                                                    color="text.secondary">
                                                                             작성 시간
                                                                         </Typography>
                                                                         <Typography variant="body1">
@@ -313,7 +332,8 @@ const MessageHistory = () => {
                                                                         </Typography>
                                                                     </Grid>
                                                                     <Grid item xs={12} sm={6}>
-                                                                        <Typography variant="body2" color="text.secondary">
+                                                                        <Typography variant="body2"
+                                                                                    color="text.secondary">
                                                                             발송 시간
                                                                         </Typography>
                                                                         <Typography variant="body1">
@@ -321,7 +341,8 @@ const MessageHistory = () => {
                                                                         </Typography>
                                                                     </Grid>
                                                                     <Grid item xs={12} sm={6}>
-                                                                        <Typography variant="body2" color="text.secondary">
+                                                                        <Typography variant="body2"
+                                                                                    color="text.secondary">
                                                                             고객명
                                                                         </Typography>
                                                                         <Typography variant="body1">
@@ -329,7 +350,8 @@ const MessageHistory = () => {
                                                                         </Typography>
                                                                     </Grid>
                                                                     <Grid item xs={12} sm={6}>
-                                                                        <Typography variant="body2" color="text.secondary">
+                                                                        <Typography variant="body2"
+                                                                                    color="text.secondary">
                                                                             전화번호
                                                                         </Typography>
                                                                         <Typography variant="body1">
@@ -337,7 +359,8 @@ const MessageHistory = () => {
                                                                         </Typography>
                                                                     </Grid>
                                                                     <Grid item xs={12}>
-                                                                        <Typography variant="body2" color="text.secondary">
+                                                                        <Typography variant="body2"
+                                                                                    color="text.secondary">
                                                                             메시지 내용
                                                                         </Typography>
                                                                         <Paper
@@ -349,7 +372,8 @@ const MessageHistory = () => {
                                                                                 borderRadius: 1,
                                                                             }}
                                                                         >
-                                                                            <Typography variant="body1" sx={{ whiteSpace: "pre-wrap" }}>
+                                                                            <Typography variant="body1"
+                                                                                        sx={{whiteSpace: "pre-wrap"}}>
                                                                                 {message.content}
                                                                             </Typography>
                                                                         </Paper>
@@ -364,7 +388,7 @@ const MessageHistory = () => {
                                     ))
                                 ) : (
                                     <TableRow>
-                                        <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
+                                        <TableCell colSpan={6} align="center" sx={{py: 3}}>
                                             <Typography variant="body1">
                                                 {searchTerm ? "검색 결과가 없습니다." : "전송된 문자가 없습니다."}
                                             </Typography>
@@ -373,8 +397,8 @@ const MessageHistory = () => {
                                 )}
                                 {loadingMore && (
                                     <TableRow>
-                                        <TableCell colSpan={6} align="center" sx={{ py: 2 }}>
-                                            <CircularProgress size={24} />
+                                        <TableCell colSpan={6} align="center" sx={{py: 2}}>
+                                            <CircularProgress size={24}/>
                                         </TableCell>
                                     </TableRow>
                                 )}

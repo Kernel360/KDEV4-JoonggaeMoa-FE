@@ -1,5 +1,5 @@
-import { Box, Typography } from '@mui/material';
-import { formatPrice, isZeroPrice } from '../utils/articlePrice';
+import {Box, Typography} from '@mui/material';
+import {formatPrice, isZeroPrice} from '../utils/articlePrice';
 
 interface ArticlePriceProps {
     tradeType: string;
@@ -9,13 +9,13 @@ interface ArticlePriceProps {
     priceRoomMax?: number;
 }
 
-const ArticlePrice = ({ tradeType, priceSale, priceRent, priceRoomMin, priceRoomMax }: ArticlePriceProps) => {
+const ArticlePrice = ({tradeType, priceSale, priceRent, priceRoomMin, priceRoomMax}: ArticlePriceProps) => {
     return (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+        <Box sx={{display: 'flex', flexDirection: 'column', gap: 0.5}}>
             {tradeType === "단기임대" ? (
                 <Typography variant="subtitle1" fontWeight="bold">
-                    {priceRoomMin && priceRoomMax 
-                        ? `단기임대 ${formatPrice(priceRoomMin)} ~ ${formatPrice(priceRoomMax)}원` 
+                    {priceRoomMin && priceRoomMax
+                        ? `단기임대 ${formatPrice(priceRoomMin)} ~ ${formatPrice(priceRoomMax)}원`
                         : `단기임대 가격 정보 없음`}
                 </Typography>
             ) : isZeroPrice(priceSale) ? (
@@ -31,7 +31,7 @@ const ArticlePrice = ({ tradeType, priceSale, priceRent, priceRoomMin, priceRoom
                             <Typography variant="subtitle1" fontWeight="bold">
                                 보증금 {formatPrice(priceSale)}원
                             </Typography>
-                            
+
                             {!isZeroPrice(priceRent) && (
                                 <Typography variant="subtitle1" fontWeight="bold" color="error.main">
                                     월세 {formatPrice(priceRent)}원

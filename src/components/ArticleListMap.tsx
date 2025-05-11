@@ -1,9 +1,9 @@
-import React, { useRef } from 'react';
-import { Box } from '@mui/material';
+import React, {useRef} from 'react';
+import {Box} from '@mui/material';
 import MapView from './MapView';
-import type { ArticleResponse, ClusterInfo, RealEstateType } from '../types/article';
-import { validateCoordinates } from '../utils/articleFormat';
-import type { Region } from '../utils/regionUtils';
+import type {ArticleResponse, ClusterInfo} from '../types/article';
+import {validateCoordinates} from '../utils/articleFormat';
+import type {Region} from '../utils/regionUtils';
 
 interface ArticleListMapProps {
     articles: ArticleResponse[];
@@ -20,29 +20,32 @@ interface ArticleListMapProps {
     clusters: ClusterInfo[];
     onArticleClick: (article: ArticleResponse) => void;
     onClusterClick: (cluster: ClusterInfo) => void;
-    onBoundsChanged: (bounds: { ne: { lat: number; lng: number }; sw: { lat: number; lng: number } }, zoom: number) => void;
+    onBoundsChanged: (bounds: {
+        ne: { lat: number; lng: number };
+        sw: { lat: number; lng: number }
+    }, zoom: number) => void;
     mapRef?: React.RefObject<any>;
     isListHidden?: boolean;
 }
 
 const ArticleListMap: React.FC<ArticleListMapProps> = ({
-    articles,
-    selectedArticle,
-    selectedRegions,
-    allRegions,
-    initialCenter,
-    initialZoom,
-    clusterMode,
-    clusters,
-    onArticleClick,
-    onClusterClick,
-    onBoundsChanged,
-    mapRef,
-    isListHidden
-}) => {
+                                                           articles,
+                                                           selectedArticle,
+                                                           selectedRegions,
+                                                           allRegions,
+                                                           initialCenter,
+                                                           initialZoom,
+                                                           clusterMode,
+                                                           clusters,
+                                                           onArticleClick,
+                                                           onClusterClick,
+                                                           onBoundsChanged,
+                                                           mapRef,
+                                                           isListHidden
+                                                       }) => {
     // 유효한 좌표가 있는 매물만 필터링 (메모이제이션 적용)
     const validArticles = React.useMemo(() => {
-        return articles.filter(article => 
+        return articles.filter(article =>
             validateCoordinates(article.latitude, article.longitude)
         );
     }, [articles]);

@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import React, {createContext, ReactNode, useCallback, useContext, useEffect, useState} from 'react';
 import api from '../services/api';
-import { toast } from 'react-toastify';
-import { useNavigate } from 'react-router-dom';
+import {toast} from 'react-toastify';
+import {useNavigate} from 'react-router-dom';
 
 interface Notification {
     id: number;
@@ -24,11 +24,16 @@ interface NotificationContextType {
 const NotificationContext = createContext<NotificationContextType>({
     notifications: [],
     unreadCount: 0,
-    addNotification: () => {},
-    markAsRead: async () => {},
-    setupSSEConnection: () => {},
-    closeSSEConnection: () => {},
-    fetchNotifications: async () => {},
+    addNotification: () => {
+    },
+    markAsRead: async () => {
+    },
+    setupSSEConnection: () => {
+    },
+    closeSSEConnection: () => {
+    },
+    fetchNotifications: async () => {
+    },
 });
 
 export const useNotification = () => useContext(NotificationContext);
@@ -37,13 +42,13 @@ interface NotificationProviderProps {
     children: ReactNode;
 }
 
-export const NotificationProvider: React.FC<NotificationProviderProps> = ({ children }) => {
+export const NotificationProvider: React.FC<NotificationProviderProps> = ({children}) => {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [eventSource, setEventSource] = useState<EventSource | null>(null);
     const navigate = useNavigate();
 
-    const excludedPaths = ['/','/signup', '/surveys/submit/:surveyId', '/inquiry', '/inquiry/:id', 'login']; 
+    const excludedPaths = ['/', '/signup', '/surveys/submit/:surveyId', '/inquiry', '/inquiry/:id', 'login'];
     const shouldExclude = excludedPaths.includes(location.pathname);
 
     const fetchNotifications = useCallback(async () => {
@@ -57,15 +62,15 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
                     id: notification.id,
                     type: notification.type,
                     content: notification.content,
-                    isRead: notification.isRead,  
+                    isRead: notification.isRead,
                     createdAt: notification.createdAt
                 }));
-                
+
                 console.log('Transformed Notifications:', {
                     original: response.data.data,
                     transformed: allNotifications,
                 });
-                
+
                 setNotifications(allNotifications);
                 const unread = allNotifications.filter((n: Notification) => !n.isRead).length;
                 setUnreadCount(unread);
@@ -113,7 +118,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
                             }
 
                             toast.dismiss();
-                
+
                             switch (notification.type) {
                                 case 'SURVEY':
                                     navigate('/survey');
@@ -148,7 +153,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
             await api.patch(`/api/notifications/${notificationId}`);
 
             setNotifications(prev =>
-                prev.map(n => n.id === notificationId ? { ...n, isRead: true } : n)
+                prev.map(n => n.id === notificationId ? {...n, isRead: true} : n)
             );
 
             setUnreadCount(prev => Math.max(0, prev - 1));
@@ -172,7 +177,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
         const clientId = getClientId();
         const source = new EventSource(
             `${api.defaults.baseURL}/api/notifications/subscribe?agentId=${agentId}&clientId=${clientId}`
-          );
+        );
 
         source.onopen = () => {
             console.log("SSE connection opened");

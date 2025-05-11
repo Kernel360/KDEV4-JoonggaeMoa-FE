@@ -1,16 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import {
-    Dialog,
-    DialogContent,
-    Button,
-    TextField,
-    Typography,
-    Box,
-    CircularProgress,
-    IconButton,
-    Fab
-} from '@mui/material';
-import ChatIcon from '@mui/icons-material/Chat';
+import React, {useEffect, useRef, useState} from 'react';
+import {Box, Button, CircularProgress, Dialog, DialogContent, IconButton, TextField, Typography} from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import api from '../services/api';
 
@@ -24,21 +13,21 @@ interface ChatbotDialogProps {
     onClose: () => void;
 }
 
-const ChatbotDialog: React.FC<ChatbotDialogProps> = ({ open, onClose }) => {
+const ChatbotDialog: React.FC<ChatbotDialogProps> = ({open, onClose}) => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
     const messagesEndRef = useRef<null | HTMLDivElement>(null);
 
     const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        messagesEndRef.current?.scrollIntoView({behavior: "smooth"});
     };
 
     // 초기 안내 메시지 추가
     useEffect(() => {
         if (open) {
             setMessages([
-                { text: "안녕하세요! 어떤 도움이 필요하신가요?", isUser: false },
+                {text: "안녕하세요! 어떤 도움이 필요하신가요?", isUser: false},
             ]);
         }
         scrollToBottom();
@@ -54,7 +43,7 @@ const ChatbotDialog: React.FC<ChatbotDialogProps> = ({ open, onClose }) => {
 
         const userMessage = input.trim();
         setInput('');
-        setMessages(prev => [...prev, { text: userMessage, isUser: true }]);
+        setMessages(prev => [...prev, {text: userMessage, isUser: true}]);
         setLoading(true);
 
         try {
@@ -63,10 +52,10 @@ const ChatbotDialog: React.FC<ChatbotDialogProps> = ({ open, onClose }) => {
             });
 
             if (response.data.success) {
-                setMessages(prev => [...prev, { text: response.data.data.answer, isUser: false }]);
+                setMessages(prev => [...prev, {text: response.data.data.answer, isUser: false}]);
             }
         } catch (error) {
-            setMessages(prev => [...prev, { text: '답변을 가져오는 데 실패했습니다.', isUser: false }]);
+            setMessages(prev => [...prev, {text: '답변을 가져오는 데 실패했습니다.', isUser: false}]);
         } finally {
             setLoading(false);
         }
@@ -101,8 +90,8 @@ const ChatbotDialog: React.FC<ChatbotDialogProps> = ({ open, onClose }) => {
                     color: 'white'
                 }}>
                     <Typography variant="h6">AI 챗봇</Typography>
-                    <IconButton onClick={onClose} sx={{ color: 'white' }}>
-                        <CloseIcon />
+                    <IconButton onClick={onClose} sx={{color: 'white'}}>
+                        <CloseIcon/>
                     </IconButton>
                 </Box>
 
@@ -123,7 +112,7 @@ const ChatbotDialog: React.FC<ChatbotDialogProps> = ({ open, onClose }) => {
                                 mb: 1
                             }}
                         >
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <Box sx={{display: 'flex', alignItems: 'center'}}>
                                 {/* AI 메시지일 경우 로봇 이모티콘을 추가 */}
                                 {!message.isUser && (
                                     <Box
@@ -136,7 +125,7 @@ const ChatbotDialog: React.FC<ChatbotDialogProps> = ({ open, onClose }) => {
                                         }}
                                     >
                                         {/* AI 이모티콘 표시 */}
-                                        <Typography sx={{ fontSize: 24 }}>🤖</Typography>
+                                        <Typography sx={{fontSize: 24}}>🤖</Typography>
                                     </Box>
                                 )}
 
@@ -149,7 +138,7 @@ const ChatbotDialog: React.FC<ChatbotDialogProps> = ({ open, onClose }) => {
                                     wordBreak: 'break-word',
                                     boxShadow: 3,
                                 }}>
-                                    <Typography sx={{ whiteSpace: 'pre-line' }}>
+                                    <Typography sx={{whiteSpace: 'pre-line'}}>
                                         {message.text}
                                     </Typography>
                                 </Box>
@@ -157,16 +146,16 @@ const ChatbotDialog: React.FC<ChatbotDialogProps> = ({ open, onClose }) => {
                         </Box>
                     ))}
                     {loading && (
-                        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                            <CircularProgress size={24} />
+                        <Box sx={{display: 'flex', justifyContent: 'center'}}>
+                            <CircularProgress size={24}/>
                         </Box>
                     )}
-                    <div ref={messagesEndRef} />
+                    <div ref={messagesEndRef}/>
                 </DialogContent>
 
-                <Box sx={{ p: 2, borderTop: '1px solid #e0e0e0' }}>
+                <Box sx={{p: 2, borderTop: '1px solid #e0e0e0'}}>
                     <form onSubmit={handleSubmit}>
-                        <Box sx={{ display: 'flex', gap: 1 }}>
+                        <Box sx={{display: 'flex', gap: 1}}>
                             <TextField
                                 fullWidth
                                 value={input}

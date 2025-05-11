@@ -26,21 +26,20 @@ import {
     useMediaQuery,
     useTheme
 } from "@mui/material"
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
+import React, {useCallback, useEffect, useMemo, useRef, useState} from "react"
+import {useNavigate} from 'react-router-dom'
 import ArticleDetail from "../components/ArticleDetail"
 import ArticleListMap from '../components/ArticleListMap'
 import ArticleListView from '../components/ArticleListView'
-import { YEOKSAM_CENTER, MAP_ZOOM_LEVELS, DEFAULT_MAP_BOUNDS } from '../utils/mapUtils'
-import { articleApi } from "../services/articleApi"
-import { regionApi } from "../services/regionApi"
-import type { ArticleResponse, ClusterInfo, ComplexResponse, RealEstateType, TradeType } from "../types/article"
-import { REAL_ESTATE_OPTIONS, TRADE_TYPE_OPTIONS } from '../types/article'
-import { validateCoordinates, createCoordinates, parseCoordinate } from "../utils/articleFormat"
-import { getCityOptions, getDistrictOptions, KOREA_REGIONS } from '../utils/regionData'
-import type { Region } from '../utils/regionUtils'
-import { generateClusterId, calculatePrecisionByZoom, getClusterColor } from '../utils/clusterUtils'
-import { filterArticlesInBounds } from '../utils/mapUtils'
+import {DEFAULT_MAP_BOUNDS, MAP_ZOOM_LEVELS, YEOKSAM_CENTER} from '../utils/mapUtils'
+import {articleApi} from "../services/articleApi"
+import {regionApi} from "../services/regionApi"
+import type {ArticleResponse, ClusterInfo, ComplexResponse, RealEstateType, TradeType} from "../types/article"
+import {REAL_ESTATE_OPTIONS, TRADE_TYPE_OPTIONS} from '../types/article'
+import {createCoordinates, validateCoordinates} from "../utils/articleFormat"
+import {getCityOptions, getDistrictOptions, KOREA_REGIONS} from '../utils/regionData'
+import type {Region} from '../utils/regionUtils'
+import {calculatePrecisionByZoom, generateClusterId, getClusterColor} from '../utils/clusterUtils'
 
 // 확장된 API 응답 타입들
 interface PageContent<T> {
@@ -76,7 +75,7 @@ const ArticleList: React.FC = () => {
     const mapRef = useRef<any>(null);
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-    
+
     // mapRef가 실제로 할당되었는지 확인하는 함수
     const ensureMapRef = useCallback(() => {
         if (!mapRef.current) {
@@ -111,7 +110,7 @@ const ArticleList: React.FC = () => {
     const [currentPage, setCurrentPage] = useState(0);
     const [hasMore, setHasMore] = useState(true);
     const [totalArticleCount, setTotalArticleCount] = useState(0);
-    
+
     // 현재 선택된 클러스터 정보 저장용 상태
     const [currentClusterInfo, setCurrentClusterInfo] = useState<ClusterDetailInfo | null>(null);
 
@@ -149,7 +148,7 @@ const ArticleList: React.FC = () => {
     const observerRef = useRef<IntersectionObserver | null>(null);
     // 클러스터 전환 이벤트 플래그
     const clusterTransitionRef = useRef(false);
-    
+
     // 추가 매물 로드 핸들러
     const loadMoreArticles = useCallback(() => {
         if (isLoadingMore || !hasMore) return;
@@ -167,7 +166,7 @@ const ArticleList: React.FC = () => {
             }
         }
     }, [isLoadingMore, hasMore, currentClusterInfo, currentPage]);
-    
+
     const loadMoreRef = useCallback((node: HTMLLIElement | null) => {
         if (isLoadingMore || !hasMore || showMapBoundList) return;
         if (observerRef.current) observerRef.current.disconnect();
@@ -181,11 +180,14 @@ const ArticleList: React.FC = () => {
         if (node) observerRef.current.observe(node);
     }, [isLoadingMore, hasMore, showMapBoundList]);
 
-    const filterArticlesInBounds = useCallback((articlesToFilter: ArticleResponse[], bounds: { ne: { lat: number; lng: number }; sw: { lat: number; lng: number } }) => {
+    const filterArticlesInBounds = useCallback((articlesToFilter: ArticleResponse[], bounds: {
+        ne: { lat: number; lng: number };
+        sw: { lat: number; lng: number }
+    }) => {
         return articlesToFilter.filter(article => {
             const coordinates = createCoordinates(article.latitude, article.longitude);
             if (!coordinates) return false;
-            
+
             return (
                 coordinates.lat >= bounds.sw.lat &&
                 coordinates.lat <= bounds.ne.lat &&
@@ -196,15 +198,21 @@ const ArticleList: React.FC = () => {
     }, []);
 
     // 함수 참조를 담을 refs
-    const fetchArticlesRef = useRef<(pageToFetch: number, currentBounds?: { ne: { lat: number; lng: number }; sw: { lat: number; lng: number } }, loadMore?: boolean) => Promise<void>>();
-    const fetchClustersRef = useRef<(bounds: { ne: { lat: number; lng: number }; sw: { lat: number; lng: number } }, zoom: number) => Promise<void>>();
+    const fetchArticlesRef = useRef<(pageToFetch: number, currentBounds?: {
+        ne: { lat: number; lng: number };
+        sw: { lat: number; lng: number }
+    }, loadMore?: boolean) => Promise<void>>();
+    const fetchClustersRef = useRef<(bounds: {
+        ne: { lat: number; lng: number };
+        sw: { lat: number; lng: number }
+    }, zoom: number) => Promise<void>>();
     const loadMoreClusterArticlesRef = useRef<() => Promise<void>>();
 
     // 클러스터 처리 로직
     const processedClusters = useMemo(() => {
         // Ensure clusters is always treated as an array
         const clustersArray = Array.isArray(clusters) ? clusters : [];
-        
+
         const result = clustersArray.map(cluster => ({
             ...cluster,
             color: getClusterColor(cluster)
@@ -213,47 +221,49 @@ const ArticleList: React.FC = () => {
     }, [clusters]);
 
     // 지도 관련 상태 업데이트를 처리하는 함수
-    const handleMapViewChange = useCallback((newBounds: { ne: { lat: number; lng: number }; sw: { lat: number; lng: number } }, newZoom: number) => {
+    const handleMapViewChange = useCallback((newBounds: {
+        ne: { lat: number; lng: number };
+        sw: { lat: number; lng: number }
+    }, newZoom: number) => {
         // 클러스터 전환 플래그가 활성화된 경우는 무시 (클러스터 클릭으로 인한 줌인)
         if (clusterTransitionRef.current) {
             clusterTransitionRef.current = false;
             return;
         }
-        
+
         // 경계 변경은 항상 반영
         setMapBounds(newBounds);
-        
+
         // 줌 레벨 변경 감지 (이전과 다른 경우만 상태 업데이트)
         if (newZoom !== mapZoom) {
             // 줌 레벨만 업데이트하고 중심점은 변경하지 않음
             setMapZoom(newZoom);
-            
+
             // 클러스터 모드 전환 감지 (5 → 6 또는 6 → 5)
             const isTransitioningToCluster = mapZoom < CLUSTER_ZOOM_THRESHOLD && newZoom >= CLUSTER_ZOOM_THRESHOLD;
             const isTransitioningFromCluster = mapZoom >= CLUSTER_ZOOM_THRESHOLD && newZoom < CLUSTER_ZOOM_THRESHOLD;
-            
+
             // 클러스터 모드 변경이 감지되면 즉시 처리
             if (isTransitioningToCluster) {
                 console.log(`클러스터 모드로 전환: 핀 → 클러스터, zoom=${newZoom}`);
                 // 클러스터 모드로 즉시 전환
                 setIsClusterMode(true);
-                
+
                 // 기존 매물 표시 초기화
                 setVisibleMapArticles([]);
-                
+
                 // 클러스터 데이터 즉시 요청
                 if (fetchClustersRef.current) {
                     fetchClustersRef.current(newBounds, newZoom);
                 }
-            } 
-            else if (isTransitioningFromCluster) {
+            } else if (isTransitioningFromCluster) {
                 console.log(`매물 핀 모드로 전환: 클러스터 → 핀, zoom=${newZoom}`);
                 // 핀 모드로 즉시 전환
                 setIsClusterMode(false);
-                
+
                 // 기존 클러스터 제거
                 setClusters([]);
-                
+
                 // 매물 데이터 즉시 요청
                 if (fetchArticlesRef.current) {
                     fetchArticlesRef.current(0, newBounds, false);
@@ -263,7 +273,7 @@ const ArticleList: React.FC = () => {
             else if (fetchArticlesRef.current) {
                 fetchArticlesRef.current(0, newBounds, false);
             }
-        } 
+        }
         // 줌은 같지만 경계만 변경된 경우
         else if (
             newBounds.ne.lat !== mapBounds.ne.lat ||
@@ -272,14 +282,14 @@ const ArticleList: React.FC = () => {
             newBounds.sw.lng !== mapBounds.sw.lng
         ) {
             // 필터가 적용되었거나 지도 영역 기준으로 리스트가 표시되는 경우 데이터 다시 로드
-            const hasFilters = typeFilter.length > 0 || 
-                              tradeTypeFilter.length > 0 || 
-                              minSalePrice > 0 || 
-                              maxSalePrice > 0 || 
-                              minRentPrice > 0 || 
-                              maxRentPrice > 0 ||
-                              isRegionFiltered;
-                
+            const hasFilters = typeFilter.length > 0 ||
+                tradeTypeFilter.length > 0 ||
+                minSalePrice > 0 ||
+                maxSalePrice > 0 ||
+                minRentPrice > 0 ||
+                maxRentPrice > 0 ||
+                isRegionFiltered;
+
             // 현재 선택된 클러스터가 없고, (필터가 적용되었거나 지도 영역 기준 리스트가 표시되는 경우)에 새로운 매물 요청
             if (!currentClusterInfo && (hasFilters || showMapBoundList)) {
                 if (fetchArticlesRef.current) {
@@ -326,7 +336,7 @@ const ArticleList: React.FC = () => {
             }
 
             // 상태 업데이트 (필요한 경우에만)
-            setCurrentLocation({ lat: cluster.lat, lng: cluster.lng });
+            setCurrentLocation({lat: cluster.lat, lng: cluster.lng});
             setMapZoom(targetZoomLevel);
 
             // 매물 로딩 시작 (병렬로 API 호출)
@@ -410,7 +420,7 @@ const ArticleList: React.FC = () => {
                     setCurrentClusterInfo({
                         clusterId,
                         precision: precisionVal,
-                        center: { lat: cluster.lat, lng: cluster.lng },
+                        center: {lat: cluster.lat, lng: cluster.lng},
                         articles: [],
                         allArticles: [],
                         isEmpty: true
@@ -447,7 +457,7 @@ const ArticleList: React.FC = () => {
                 const clusterInfoRef = {
                     clusterId,
                     precision: precisionVal,
-                    center: { lat: cluster.lat, lng: cluster.lng },
+                    center: {lat: cluster.lat, lng: cluster.lng},
                     articles: validArticles,
                     allArticles: validArticles,
                     isEmpty: false
@@ -498,34 +508,34 @@ const ArticleList: React.FC = () => {
         try {
             setIsLoadingMore(true);
             console.log(`클러스터 내 추가 매물 로드 중, 현재 페이지: ${currentPage}, 페이지 크기: ${PAGE_SIZE}`);
-            
+
             const nextPage = currentPage + 1;
-            
+
             // 클라이언트 측 페이징 (이미 모든 데이터를 저장하고 있는 경우)
             if (currentClusterInfo.allArticles && currentClusterInfo.allArticles.length > nextPage * PAGE_SIZE) {
                 console.log("캐시된 데이터로 클라이언트 측 페이징 사용");
-                
+
                 // 다음 페이지 데이터 추출
                 const nextPageArticles = currentClusterInfo.allArticles.slice(
-                    nextPage * PAGE_SIZE, 
+                    nextPage * PAGE_SIZE,
                     (nextPage + 1) * PAGE_SIZE
                 );
-                
+
                 // 추가 데이터 병합
                 setAllPaginatedArticles(prev => [...prev, ...nextPageArticles]);
                 setCurrentPage(nextPage);
-                
+
                 // 더 불러올 데이터가 있는지 체크
                 setHasMore(currentClusterInfo.allArticles.length > (nextPage + 1) * PAGE_SIZE);
-                
+
                 setIsLoadingMore(false);
                 return;
             }
-            
+
             // 서버에서 다음 페이지 로드 시도
             try {
                 console.log(`서버에서 추가 매물 로드 중: clusterId=${currentClusterInfo.clusterId}, precision=${currentClusterInfo.precision}, page=${nextPage}`);
-                
+
                 // API 호출
                 const response = await articleApi.getArticlesByCluster({
                     clusterId: currentClusterInfo.clusterId,
@@ -533,25 +543,25 @@ const ArticleList: React.FC = () => {
                     page: nextPage,
                     size: PAGE_SIZE
                 });
-                
+
                 // 응답 데이터 검증
                 if (!response.data) {
                     throw new Error("API 응답 데이터가 없습니다");
                 }
-                
+
                 // 성공 여부 확인
                 if ('success' in response.data && response.data.success === false) {
                     throw new Error(`API 오류: ${response.data.error?.message || '알 수 없는 오류'}`);
                 }
-                
+
                 // 데이터 추출
                 let newArticles: ArticleResponse[] = [];
-                
+
                 // 표준 API 응답인 경우 {success: true, data: [...]}
                 if ('success' in response.data && response.data.success === true && 'data' in response.data) {
                     // response.data.data를 any로 타입 단언하여 content 속성 접근 문제 해결
                     const responseData = response.data.data as any;
-                    
+
                     if (Array.isArray(responseData)) {
                         newArticles = responseData;
                     } else if (responseData && typeof responseData === 'object' && 'content' in responseData) {
@@ -559,16 +569,16 @@ const ArticleList: React.FC = () => {
                     } else if (responseData && typeof responseData === 'object') {
                         newArticles = [responseData as ArticleResponse];
                     }
-                } 
+                }
                 // 직접 배열이 반환된 경우
                 else if (Array.isArray(response.data)) {
                     newArticles = response.data;
-                } 
+                }
                 // HATEOAS 형식 응답인 경우
                 else {
                     // 전체 응답 데이터를 any로 타입 단언
                     const anyData = response.data as any;
-                    
+
                     if (anyData._embedded && anyData._embedded.articles) {
                         newArticles = anyData._embedded.articles;
                     } else if (anyData._embedded && anyData._embedded.articleResponseList) {
@@ -579,33 +589,33 @@ const ArticleList: React.FC = () => {
                         newArticles = anyData.data;
                     }
                 }
-                
+
                 console.log(`처리된 매물 수: ${newArticles.length}`);
-                
+
                 if (newArticles && newArticles.length > 0) {
                     console.log(`추가 매물 ${newArticles.length}개 로드됨`);
-                    
+
                     // 유효한 좌표 데이터 필터링
                     const validNewArticles = newArticles.filter(article => {
                         return validateCoordinates(article.latitude, article.longitude);
                     });
-                    
+
                     // 새 데이터 추가
                     setAllPaginatedArticles(prev => [...prev, ...validNewArticles]);
-                    
+
                     // 캐시된 전체 목록에도 추가
                     const updatedAllArticles = [...(currentClusterInfo.allArticles || []), ...validNewArticles];
                     setCurrentClusterInfo({
                         ...currentClusterInfo,
                         allArticles: updatedAllArticles
                     });
-                    
+
                     // 지도에 표시할 매물도 업데이트
                     setVisibleMapArticles(updatedAllArticles);
-                    
+
                     // 페이지 업데이트
                     setCurrentPage(nextPage);
-                    
+
                     // 더 불러올 데이터가 있는지 체크 (PAGE_SIZE 미만으로 왔다면 더 이상 없음)
                     setHasMore(newArticles.length === PAGE_SIZE);
                 } else {
@@ -627,19 +637,22 @@ const ArticleList: React.FC = () => {
     }, [currentClusterInfo, loading, hasMore, currentPage, PAGE_SIZE]);
 
     // 함수 정의 (순환 참조 문제 해결을 위해 별도 선언)
-    const fetchClusters = useCallback(async (bounds: { ne: { lat: number; lng: number }; sw: { lat: number; lng: number } }, zoom: number) => {
+    const fetchClusters = useCallback(async (bounds: {
+        ne: { lat: number; lng: number };
+        sw: { lat: number; lng: number }
+    }, zoom: number) => {
         try {
             console.log(`클러스터 데이터 요청: zoom=${zoom}`);
-            
+
             // 줌 레벨에 따른 적절한 정밀도 계산 (유틸리티 함수 사용)
             const precision = calculatePrecisionByZoom(zoom);
-            
+
             // 클러스터 캐시 키 생성
             const cacheKey = `${zoom.toFixed(1)}_${bounds.sw.lat.toFixed(5)}_${bounds.sw.lng.toFixed(5)}_${bounds.ne.lat.toFixed(5)}_${bounds.ne.lng.toFixed(5)}_${precision}`;
-            
+
             // 즉시 클러스터 모드로 전환 (API 응답을 기다리지 않고)
             setIsClusterMode(zoom >= CLUSTER_ZOOM_THRESHOLD);
-            
+
             // 캐시에 있는 경우 즉시 사용
             if (clusterCache.current.has(cacheKey)) {
                 console.log("캐시된 클러스터 데이터 사용");
@@ -647,7 +660,7 @@ const ArticleList: React.FC = () => {
                 setClusters(cachedClusters);
                 return;
             }
-            
+
             try {
                 // API 호출 파라미터 준비
                 const params = {
@@ -661,13 +674,13 @@ const ArticleList: React.FC = () => {
                     // 줌 레벨에 따라 최소 포인트 수 조정
                     minPoints: zoom <= 3 ? 1 : zoom <= 4 ? 2 : zoom <= 5 ? 2 : 3
                 };
-                
+
                 // API 호출 직전 최종 파라미터 로깅
                 console.log("최종 API 요청 파라미터:", JSON.stringify(params));
-                
+
                 // API 호출 실행
                 const resp = await articleApi.getClusters(params);
-                
+
                 // 클러스터 데이터 검증 및 처리
                 const clusterData = resp.data || [];
                 if (!Array.isArray(clusterData)) {
@@ -675,12 +688,12 @@ const ArticleList: React.FC = () => {
                     setClusters([]);
                     return;
                 }
-                
+
                 console.log(`클러스터 데이터 수신: ${clusterData.length}개`);
-                
+
                 // 클러스터 상태 업데이트
                 setClusters(clusterData);
-                
+
                 // 캐시에 저장 (최대 20개 항목으로 제한)
                 clusterCache.current.set(cacheKey, clusterData);
                 if (clusterCache.current.size > 20) {
@@ -688,12 +701,12 @@ const ArticleList: React.FC = () => {
                     const firstKey = Array.from(clusterCache.current.keys())[0];
                     clusterCache.current.delete(firstKey);
                 }
-                
+
                 // 줌 레벨이 정확히 CLUSTER_ZOOM_THRESHOLD(6)인 경우에는 개별 매물과 클러스터를 모두 가져옴
                 if (zoom === CLUSTER_ZOOM_THRESHOLD && fetchArticlesRef.current) {
                     fetchArticlesRef.current(0, bounds, false);
                 }
-                
+
             } catch (err) {
                 console.error("클러스터 정보 로드 실패:", err);
                 setError("클러스터 정보를 불러오는데 실패했습니다.");
@@ -707,7 +720,10 @@ const ArticleList: React.FC = () => {
     }, [CLUSTER_ZOOM_THRESHOLD]);
 
     // fetchArticles 정의
-    const fetchArticles = useCallback(async (pageToFetch: number, currentBounds?: { ne: { lat: number; lng: number }; sw: { lat: number; lng: number } }, loadMore = false) => {
+    const fetchArticles = useCallback(async (pageToFetch: number, currentBounds?: {
+        ne: { lat: number; lng: number };
+        sw: { lat: number; lng: number }
+    }, loadMore = false) => {
         if (!loadMore) {
             setLoading(true);
         }
@@ -731,7 +747,7 @@ const ArticleList: React.FC = () => {
         else if (mapZoom >= CLUSTER_ZOOM_THRESHOLD) {
             // 클러스터 데이터 요청 (이미 클러스터 모드로 전환된 상태에서 추가 데이터 요청)
             await fetchClusters(effectiveBounds, mapZoom);
-            
+
             // 줌 레벨이 CLUSTER_ZOOM_THRESHOLD(6) 이상인 경우, 개별 매물은 표시하지 않고 클러스터만 표시
             if (mapZoom >= CLUSTER_ZOOM_THRESHOLD) {
                 setVisibleMapArticles([]);
@@ -782,30 +798,30 @@ const ArticleList: React.FC = () => {
             // 백엔드 API와의 호환성을 위해 추가 형식으로도 전송
             params.buildingType = typeFilter;
         }
-        
+
         // 거래 유형 필터 적용
         if (tradeTypeFilter && tradeTypeFilter.length > 0) {
             params.tradeType = tradeTypeFilter;
             // 백엔드 API와의 호환성을 위해 추가 형식으로도 전송
             params.trade_type = tradeTypeFilter;
         }
-        
+
         // 가격 필터 적용
         if (minSalePrice > 0) {
             params.minSalePrice = minSalePrice;
             params.min_price_sale = minSalePrice;
         }
-        
+
         if (maxSalePrice > 0) {
             params.maxSalePrice = maxSalePrice;
             params.max_price_sale = maxSalePrice;
         }
-        
+
         if (minRentPrice > 0) {
             params.minRentPrice = minRentPrice;
             params.min_price_rent = minRentPrice;
         }
-        
+
         if (maxRentPrice > 0) {
             params.maxRentPrice = maxRentPrice;
             params.max_price_rent = maxRentPrice;
@@ -851,7 +867,7 @@ const ArticleList: React.FC = () => {
         else {
             params.type = 'default';
         }
-        
+
         // 기타 필터가 적용된 경우 default 타입으로 강제 변경
         // 백엔드에서 bounds, region 타입일 때 필터를 무시할 수 있으므로
         const hasAdditionalFilters = (
@@ -862,7 +878,7 @@ const ArticleList: React.FC = () => {
             minRentPrice > 0 ||
             maxRentPrice > 0
         );
-        
+
         // 추가 필터가 있고 타입이 bounds이거나 region인 경우 default 타입으로 변경
         if (hasAdditionalFilters && (params.type === 'bounds' || params.type === 'region')) {
             console.log(`필터가 적용되어 검색 타입을 default로 변경: 이전=${params.type}, 필터=`, {
@@ -875,16 +891,16 @@ const ArticleList: React.FC = () => {
             });
             params.type = 'default';
         }
-        
+
         console.log(`최종 검색 타입: ${params.type} (지역필터=${regionFilterApplied}, 추가필터=${hasAdditionalFilters})`);
 
         try {
             // API 호출 직전 최종 파라미터 로깅
             console.log("최종 API 요청 파라미터:", JSON.stringify(params));
-            
+
             const response = await articleApi.getAllArticles(params);
             console.log(`API 응답 상태: ${response.status} ${response.statusText}`);
-            
+
             // 원본 데이터 로깅
             const raw = response.data;
             console.log("원본 API 응답 데이터 구조:", {
@@ -894,7 +910,7 @@ const ArticleList: React.FC = () => {
                 has_data: !!(raw && raw.data),
                 data_structure: raw ? Object.keys(raw) : []
             });
-            
+
             let fetchedArticles: ArticleResponse[] = [];
             let links: any = {};
             let pageInfo: any = {};
@@ -918,126 +934,126 @@ const ArticleList: React.FC = () => {
                 fetchedArticles = raw;
             }
             links = raw._links || {};
-            
+
             // 백엔드 API가 필터를 적용하지 않는 경우를 대비해 프론트엔드에서 추가 필터링
             if (fetchedArticles.length > 0) {
                 console.log("백엔드 응답에 대한 추가 필터링 수행");
-                
+
                 // 매물 유형 필터링
                 if (typeFilter && typeFilter.length > 0) {
                     console.log(`매물 유형 기준 필터링 전: ${fetchedArticles.length}개, 필터:`, typeFilter);
-                    
+
                     // 필터링 전 데이터의 buildingType 종류 확인
                     const existingTypes = [...new Set(fetchedArticles.map(article => article.buildingType))];
                     console.log(`데이터에 존재하는 매물 유형:`, existingTypes);
-                    
+
                     // 디버깅을 위한 표본 데이터 로깅
                     if (fetchedArticles.length > 0) {
                         console.log(`첫 번째 매물의 buildingType: "${fetchedArticles[0].buildingType}"`);
                     }
-                    
+
                     // 필터링 로직 수정 - 케이스 무시하고 포함 여부 확인
                     fetchedArticles = fetchedArticles.filter(article => {
                         // null 체크
                         if (!article.buildingType) return false;
-                        
+
                         // 대소문자 무시하고 비교
-                        const matched = typeFilter.some(type => 
+                        const matched = typeFilter.some(type =>
                             article.buildingType.toLowerCase() === type.toLowerCase()
                         );
-                        
+
                         return matched;
                     });
                     console.log(`매물 유형 기준 필터링 후: ${fetchedArticles.length}개`);
                 }
-                
+
                 // 거래 유형 필터링
                 if (tradeTypeFilter && tradeTypeFilter.length > 0) {
                     console.log(`거래 유형 기준 필터링 전: ${fetchedArticles.length}개, 필터:`, tradeTypeFilter);
-                    
+
                     // 필터링 전 데이터의 tradeType 종류 확인
                     const existingTradeTypes = [...new Set(fetchedArticles.map(article => article.tradeType))];
                     console.log(`데이터에 존재하는 거래 유형:`, existingTradeTypes);
-                    
+
                     // 디버깅을 위한 표본 데이터 로깅
                     if (fetchedArticles.length > 0) {
                         console.log(`첫 번째 매물의 tradeType: "${fetchedArticles[0].tradeType}"`);
                     }
-                    
+
                     // 필터링 로직 수정 - 케이스 무시하고 포함 여부 확인
                     fetchedArticles = fetchedArticles.filter(article => {
                         // null 체크
                         if (!article.tradeType) return false;
-                        
+
                         // 대소문자 무시하고 비교
-                        const matched = tradeTypeFilter.some(type => 
+                        const matched = tradeTypeFilter.some(type =>
                             article.tradeType.toLowerCase() === type.toLowerCase()
                         );
-                        
+
                         return matched;
                     });
                     console.log(`거래 유형 기준 필터링 후: ${fetchedArticles.length}개`);
                 }
-                
+
                 // 가격 필터링 - 매매가/보증금
                 if (minSalePrice > 0 || maxSalePrice > 0) {
                     console.log(`매매가/보증금 기준 필터링 전: ${fetchedArticles.length}개`);
                     fetchedArticles = fetchedArticles.filter(article => {
                         // 가격 정보가 없으면 제외
                         if (article.priceSale === undefined || article.priceSale === null) return false;
-                        
+
                         // 최소 가격 필터
                         if (minSalePrice > 0 && article.priceSale < minSalePrice) return false;
-                        
+
                         // 최대 가격 필터
                         if (maxSalePrice > 0 && article.priceSale > maxSalePrice) return false;
-                        
+
                         return true;
                     });
                     console.log(`매매가/보증금 기준 필터링 후: ${fetchedArticles.length}개`);
                 }
-                
+
                 // 가격 필터링 - 월세
                 if (minRentPrice > 0 || maxRentPrice > 0) {
                     console.log(`월세 기준 필터링 전: ${fetchedArticles.length}개`);
                     fetchedArticles = fetchedArticles.filter(article => {
                         // 월세 매물이 아니면 제외하지 않음
                         if (article.tradeType !== "월세") return true;
-                        
+
                         // 가격 정보가 없으면 제외
                         if (article.priceRent === undefined || article.priceRent === null) return false;
-                        
+
                         // 최소 월세 필터
                         if (minRentPrice > 0 && article.priceRent < minRentPrice) return false;
-                        
+
                         // 최대 월세 필터
                         if (maxRentPrice > 0 && article.priceRent > maxRentPrice) return false;
-                        
+
                         return true;
                     });
                     console.log(`월세 기준 필터링 후: ${fetchedArticles.length}개`);
                 }
-                
+
                 // 정렬 적용 (프론트엔드에서)
                 if (sortField && sortOrder) {
                     console.log(`정렬 적용: ${sortField} ${sortOrder}`);
                     fetchedArticles.sort((a, b) => {
                         const fieldA = a[sortField as keyof ArticleResponse];
                         const fieldB = b[sortField as keyof ArticleResponse];
-                        
+
                         if (fieldA === undefined || fieldB === undefined) return 0;
-                        
+
                         // 문자열 또는 숫자 비교
-                        const compareResult = 
+                        const compareResult =
                             typeof fieldA === 'string' && typeof fieldB === 'string'
                                 ? fieldA.localeCompare(fieldB)
                                 : (Number(fieldA) - Number(fieldB));
-                        
+
                         // 정렬 방향에 따라 결과 반환
                         return sortOrder.toLowerCase() === 'asc' ? compareResult : -compareResult;
                     });
                 }
-                
+
                 // 정렬 및 필터링이 모두 완료된 최종 데이터 로깅
                 console.log("필터링 및 정렬 완료 후 매물 데이터:", {
                     최종_매물_수: fetchedArticles.length,
@@ -1066,7 +1082,7 @@ const ArticleList: React.FC = () => {
                 가져온_매물_수: fetchedArticles?.length || 0,
                 첫번째_매물: fetchedArticles?.length > 0 ? fetchedArticles[0] : null
             });
-            
+
             // 데이터가 너무 많은 경우 제한
             fetchedArticles = fetchedArticles.slice(0, 100000);
 
@@ -1131,7 +1147,7 @@ const ArticleList: React.FC = () => {
             sortField,
             sortOrder
         });
-        
+
         // 초기 로딩 시에는 실행하지 않음 (컴포넌트 마운트 시)
         if (currentPage === 0 && allPaginatedArticles.length === 0 && visibleMapArticles.length === 0) {
             console.log("초기 로딩 중, 필터 변경으로 인한 데이터 갱신 건너뜀");
@@ -1194,7 +1210,7 @@ const ArticleList: React.FC = () => {
         setHasMore(true);
         setAllPaginatedArticles([]);
         setVisibleMapArticles([]);
-        
+
         // 현재 선택된 지역 필터 정보 로깅
         let regionFilterInfo = '';
         if (selectedNeighborhood.length > 0) {
@@ -1206,7 +1222,7 @@ const ArticleList: React.FC = () => {
         }
 
         console.log(`지역 필터 적용: ${regionFilterInfo || '없음'}`);
-        
+
         // 지역 필터 적용 여부에 따라 백엔드에서 다른 검색 방식 사용
         // fetchArticles 함수에서 params.type = 'region' 으로 자동 설정
         fetchArticles(0, mapBounds, false);
@@ -1287,7 +1303,7 @@ const ArticleList: React.FC = () => {
             setNeighborhoodOptions([]);
         }
         handleRegionFilterChange();
-    }; 
+    };
 
     const handleNeighborhoodSelect = (value: string) => {
         setSelectedNeighborhood([value]);
@@ -1442,7 +1458,7 @@ const ArticleList: React.FC = () => {
     const articlesToDisplay = (currentClusterInfo || showMapBoundList) ? visibleMapArticles : allPaginatedArticles;
 
     const getDisplayedTradeTypeCounts = useCallback(() => {
-        const counts = { 매매: 0, 전세: 0, 월세: 0, 기타: 0, 총계: 0 };
+        const counts = {매매: 0, 전세: 0, 월세: 0, 기타: 0, 총계: 0};
         const list = showMapBoundList ? visibleMapArticles : allPaginatedArticles;
 
         list.forEach(article => {
@@ -1491,7 +1507,7 @@ const ArticleList: React.FC = () => {
             setSortOrder(filters.sortOrder);
             hasChanges = true;
         }
-        
+
         // 필터 변경 즉시 데이터 갱신
         if (hasChanges) {
             console.log("필터가 변경되어 즉시 데이터 갱신 실행");
@@ -1501,7 +1517,7 @@ const ArticleList: React.FC = () => {
     };
 
     const [listVisibility, setListVisibility] = useState<'visible' | 'hidden'>('visible');
-    
+
     useEffect(() => {
         if (showList) {
             setListVisibility('visible');
@@ -1516,8 +1532,8 @@ const ArticleList: React.FC = () => {
     // 필터링된 유효한 매물 목록 메모이제이션 추가
     const validArticles = useMemo(() => {
         const articles = showMapBoundList ? visibleMapArticles : allPaginatedArticles;
-        return articles.filter(article => 
-            article.latitude && article.longitude && 
+        return articles.filter(article =>
+            article.latitude && article.longitude &&
             !isNaN(Number(article.latitude)) && !isNaN(Number(article.longitude))
         );
     }, [showMapBoundList, visibleMapArticles, allPaginatedArticles]);
@@ -1614,13 +1630,13 @@ const ArticleList: React.FC = () => {
             <AppBar position="static" color="default" elevation={1}>
                 <Toolbar>
                     <IconButton edge="start" color="inherit" onClick={handleBack}>
-                        <ArrowBackIcon />
+                        <ArrowBackIcon/>
                     </IconButton>
                     <Button
                         variant="outlined"
                         size="small"
                         onClick={handleRegionPopoverOpen}
-                        startIcon={<LocationOnIcon />}
+                        startIcon={<LocationOnIcon/>}
                         sx={{
                             borderRadius: '16px',
                             height: '32px',
@@ -1630,7 +1646,7 @@ const ArticleList: React.FC = () => {
                             color: '#007AFF'
                         }}
                     >
-                        {selectedCity && <span style={{ fontWeight: 'bold' }}>{selectedCity}</span>}
+                        {selectedCity && <span style={{fontWeight: 'bold'}}>{selectedCity}</span>}
                         {selectedDistrict && <span>&nbsp;&gt;&nbsp;{selectedDistrict}</span>}
                         {selectedNeighborhood.length > 0 && <span>&nbsp;&gt;&nbsp;{selectedNeighborhood[0]}</span>}
                         {!selectedCity && '지역 선택'}
@@ -1639,62 +1655,115 @@ const ArticleList: React.FC = () => {
                         open={isRegionPopoverOpen}
                         anchorEl={regionPopoverAnchor}
                         onClose={handleRegionPopoverClose}
-                        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-                        transformOrigin={{ vertical: 'top', horizontal: 'center' }}
-                        PaperProps={{ style: { width: '400px', maxHeight: '500px' } }}
+                        anchorOrigin={{vertical: 'bottom', horizontal: 'center'}}
+                        transformOrigin={{vertical: 'top', horizontal: 'center'}}
+                        PaperProps={{style: {width: '400px', maxHeight: '500px'}}}
                     >
-                        <Box sx={{ p: 2 }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                        <Box sx={{p: 2}}>
+                            <Box sx={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2}}>
                                 <Typography variant="h6">지역 선택</Typography>
                                 <Button size="small" onClick={handleResetRegion} startIcon={<span>↺</span>}>초기화</Button>
                             </Box>
-                            <Box sx={{ display: 'flex', borderBottom: '1px solid #eee', mb: 2 }}>
-                                <Button sx={{ fontWeight: regionSelectStep === 'city' ? 'bold' : 'normal', color: regionSelectStep === 'city' ? 'primary.main' : 'text.secondary', borderBottom: regionSelectStep === 'city' ? '2px solid #007AFF' : 'none', borderRadius: 0, mr: 1 }} onClick={() => setRegionSelectStep('city')} disabled={regionSelectStep === 'city'}>시/도</Button>
-                                <Typography sx={{ color: 'text.secondary', my: 'auto' }}>{'>'}</Typography>
-                                <Button sx={{ fontWeight: regionSelectStep === 'district' ? 'bold' : 'normal', color: regionSelectStep === 'district' ? 'primary.main' : 'text.secondary', borderBottom: regionSelectStep === 'district' ? '2px solid #007AFF' : 'none', borderRadius: 0, mx: 1 }} onClick={() => setRegionSelectStep('district')} disabled={!selectedCity || regionSelectStep === 'district'}>시/군/구</Button>
-                                <Typography sx={{ color: 'text.secondary', my: 'auto' }}>{'>'}</Typography>
-                                <Button sx={{ fontWeight: regionSelectStep === 'neighborhood' ? 'bold' : 'normal', color: regionSelectStep === 'neighborhood' ? 'primary.main' : 'text.secondary', borderBottom: regionSelectStep === 'neighborhood' ? '2px solid #007AFF' : 'none', borderRadius: 0, ml: 1 }} onClick={() => setRegionSelectStep('neighborhood')} disabled={!selectedDistrict || regionSelectStep === 'neighborhood'}>읍/면/동</Button>
+                            <Box sx={{display: 'flex', borderBottom: '1px solid #eee', mb: 2}}>
+                                <Button sx={{
+                                    fontWeight: regionSelectStep === 'city' ? 'bold' : 'normal',
+                                    color: regionSelectStep === 'city' ? 'primary.main' : 'text.secondary',
+                                    borderBottom: regionSelectStep === 'city' ? '2px solid #007AFF' : 'none',
+                                    borderRadius: 0,
+                                    mr: 1
+                                }} onClick={() => setRegionSelectStep('city')}
+                                        disabled={regionSelectStep === 'city'}>시/도</Button>
+                                <Typography sx={{color: 'text.secondary', my: 'auto'}}>{'>'}</Typography>
+                                <Button sx={{
+                                    fontWeight: regionSelectStep === 'district' ? 'bold' : 'normal',
+                                    color: regionSelectStep === 'district' ? 'primary.main' : 'text.secondary',
+                                    borderBottom: regionSelectStep === 'district' ? '2px solid #007AFF' : 'none',
+                                    borderRadius: 0,
+                                    mx: 1
+                                }} onClick={() => setRegionSelectStep('district')}
+                                        disabled={!selectedCity || regionSelectStep === 'district'}>시/군/구</Button>
+                                <Typography sx={{color: 'text.secondary', my: 'auto'}}>{'>'}</Typography>
+                                <Button sx={{
+                                    fontWeight: regionSelectStep === 'neighborhood' ? 'bold' : 'normal',
+                                    color: regionSelectStep === 'neighborhood' ? 'primary.main' : 'text.secondary',
+                                    borderBottom: regionSelectStep === 'neighborhood' ? '2px solid #007AFF' : 'none',
+                                    borderRadius: 0,
+                                    ml: 1
+                                }} onClick={() => setRegionSelectStep('neighborhood')}
+                                        disabled={!selectedDistrict || regionSelectStep === 'neighborhood'}>읍/면/동</Button>
                             </Box>
                             {regionSelectStep === 'city' && (
-                                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1, maxHeight: '350px', overflowY: 'auto', p: 1 }}>
-                                    {cityOptions.map((city) => <Button key={city.id} variant={selectedCity === city.cortarName ? 'contained' : 'outlined'} onClick={() => handleCitySelect(city.cortarName)} sx={{ textTransform: 'none' }}>{city.cortarName}</Button>)}
+                                <Box sx={{
+                                    display: 'grid',
+                                    gridTemplateColumns: 'repeat(2, 1fr)',
+                                    gap: 1,
+                                    maxHeight: '350px',
+                                    overflowY: 'auto',
+                                    p: 1
+                                }}>
+                                    {cityOptions.map((city) => <Button key={city.id}
+                                                                       variant={selectedCity === city.cortarName ? 'contained' : 'outlined'}
+                                                                       onClick={() => handleCitySelect(city.cortarName)}
+                                                                       sx={{textTransform: 'none'}}>{city.cortarName}</Button>)}
                                 </Box>
                             )}
                             {regionSelectStep === 'district' && (
-                                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1, maxHeight: '350px', overflowY: 'auto', p: 1 }}>
-                                    {districtOptions.map((district) => <Button key={district.id} variant={selectedDistrict === district.cortarName ? 'contained' : 'outlined'} onClick={() => handleDistrictSelect(district.cortarName)} sx={{ textTransform: 'none' }}>{district.cortarName}</Button>)}
+                                <Box sx={{
+                                    display: 'grid',
+                                    gridTemplateColumns: 'repeat(2, 1fr)',
+                                    gap: 1,
+                                    maxHeight: '350px',
+                                    overflowY: 'auto',
+                                    p: 1
+                                }}>
+                                    {districtOptions.map((district) => <Button key={district.id}
+                                                                               variant={selectedDistrict === district.cortarName ? 'contained' : 'outlined'}
+                                                                               onClick={() => handleDistrictSelect(district.cortarName)}
+                                                                               sx={{textTransform: 'none'}}>{district.cortarName}</Button>)}
                                 </Box>
                             )}
                             {regionSelectStep === 'neighborhood' && (
-                                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1, maxHeight: '350px', overflowY: 'auto', p: 1 }}>
+                                <Box sx={{
+                                    display: 'grid',
+                                    gridTemplateColumns: 'repeat(2, 1fr)',
+                                    gap: 1,
+                                    maxHeight: '350px',
+                                    overflowY: 'auto',
+                                    p: 1
+                                }}>
                                     {neighborhoodOptions.length > 0 ? (
-                                        neighborhoodOptions.map((neighborhood) => <Button key={neighborhood.id} variant={selectedNeighborhood[0] === neighborhood.cortarName ? 'contained' : 'outlined'} onClick={() => handleNeighborhoodSelect(neighborhood.cortarName)} sx={{ textTransform: 'none' }}>{neighborhood.cortarName}</Button>)
-                                    ) : <Typography variant="body2" sx={{ p: 2, gridColumn: '1 / span 2', textAlign: 'center' }}>검색결과가 없습니다.</Typography>}
+                                        neighborhoodOptions.map((neighborhood) => <Button key={neighborhood.id}
+                                                                                          variant={selectedNeighborhood[0] === neighborhood.cortarName ? 'contained' : 'outlined'}
+                                                                                          onClick={() => handleNeighborhoodSelect(neighborhood.cortarName)}
+                                                                                          sx={{textTransform: 'none'}}>{neighborhood.cortarName}</Button>)
+                                    ) : <Typography variant="body2"
+                                                    sx={{p: 2, gridColumn: '1 / span 2', textAlign: 'center'}}>검색결과가
+                                        없습니다.</Typography>}
                                 </Box>
                             )}
                         </Box>
                     </Popover>
-                    <Box sx={{ flexGrow: 1 }} />
-                    <IconButton 
-                        color="inherit" 
-                        onClick={() => setShowList(!showList)} 
+                    <Box sx={{flexGrow: 1}}/>
+                    <IconButton
+                        color="inherit"
+                        onClick={() => setShowList(!showList)}
                         title={showList ? "지도만 보기" : "목록 보기"}
                         sx={{
                             transition: 'all 0.2s ease-in-out',
                             transform: showList ? 'rotate(0deg)' : 'rotate(180deg)',
                         }}
                     >
-                        {showList ? <ViewMapIcon /> : <ViewListIcon />}
+                        {showList ? <ViewMapIcon/> : <ViewListIcon/>}
                     </IconButton>
                     <IconButton color="inherit" onClick={() => setIsFilterDrawerOpen(true)} title="필터">
-                        <FilterListIcon />
+                        <FilterListIcon/>
                     </IconButton>
                 </Toolbar>
             </AppBar>
 
-            <Box 
+            <Box
                 className={`article-list-container ${!showList ? 'list-hidden' : ''}`}
-                sx={{ 
+                sx={{
                     position: 'relative',
                     flex: 1,
                     overflow: 'hidden',
@@ -1702,10 +1771,10 @@ const ArticleList: React.FC = () => {
                 }}
             >
                 {showMap && (
-                    <Box 
+                    <Box
                         className="map-container"
-                        sx={{ 
-                            flex: showList ? 3 : 1, 
+                        sx={{
+                            flex: showList ? 3 : 1,
                             height: '100%',
                             transition: 'flex 0.3s ease-in-out',
                             ...(isMobile && !showList && {
@@ -1735,14 +1804,14 @@ const ArticleList: React.FC = () => {
                         />
                     </Box>
                 )}
-                <Box 
+                <Box
                     className="list-container"
-                    sx={{ 
+                    sx={{
                         flex: showList ? 1 : 0,
                         width: showList ? (showMap ? '300px' : '100%') : 0,
                         minWidth: showList ? '300px' : 0,
                         maxWidth: showList ? '300px' : 0,
-                        height: '100%', 
+                        height: '100%',
                         borderLeft: showMap && showList ? '1px solid #ddd' : 'none',
                         opacity: showList ? 0.95 : 0,
                         backgroundColor: 'background.paper',
@@ -1787,16 +1856,16 @@ const ArticleList: React.FC = () => {
                 anchor="right"
                 open={isFilterDrawerOpen}
                 onClose={() => setIsFilterDrawerOpen(false)}
-                sx={{ '& .MuiDrawer-paper': { width: DRAWER_WIDTH, padding: 2 } }}
+                sx={{'& .MuiDrawer-paper': {width: DRAWER_WIDTH, padding: 2}}}
             >
-                <Box sx={{ p: 2 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Box sx={{p: 2}}>
+                    <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2}}>
                         <Typography variant="h6" gutterBottom>필터</Typography>
-                        <Button 
-                            size="small" 
-                            variant="outlined" 
-                            color="primary" 
-                            onClick={handleResetFilters} 
+                        <Button
+                            size="small"
+                            variant="outlined"
+                            color="primary"
+                            onClick={handleResetFilters}
                             startIcon={<span>↺</span>}
                         >
                             초기화
@@ -1840,12 +1909,12 @@ const ArticleList: React.FC = () => {
                             }}
                             getOptionLabel={(option) => option}
                             isOptionEqualToValue={(option, value) => option === value}
-                            renderInput={(params) => <TextField {...params} label="매물 유형" />}
+                            renderInput={(params) => <TextField {...params} label="매물 유형"/>}
                             renderTags={(value, getTagProps) =>
                                 value.map((option, index) => {
-                                    const tagProps = getTagProps({ index });
+                                    const tagProps = getTagProps({index});
                                     return (
-                                        <Chip 
+                                        <Chip
                                             key={`${option}-${index}`}
                                             label={option}
                                             size="small"
@@ -1870,12 +1939,12 @@ const ArticleList: React.FC = () => {
                             }}
                             getOptionLabel={(option) => option}
                             isOptionEqualToValue={(option, value) => option === value}
-                            renderInput={(params) => <TextField {...params} label="거래 유형" />}
+                            renderInput={(params) => <TextField {...params} label="거래 유형"/>}
                             renderTags={(value, getTagProps) =>
                                 value.map((option, index) => {
-                                    const tagProps = getTagProps({ index });
+                                    const tagProps = getTagProps({index});
                                     return (
-                                        <Chip 
+                                        <Chip
                                             key={`${option}-${index}`}
                                             label={option}
                                             size="small"
@@ -1889,70 +1958,70 @@ const ArticleList: React.FC = () => {
                         />
                     </FormControl>
 
-                    <Box sx={{ mt: 2 }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                            <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>매매가/전세가/보증금</Typography>
+                    <Box sx={{mt: 2}}>
+                        <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1}}>
+                            <Typography variant="subtitle1" sx={{fontWeight: 'bold'}}>매매가/전세가/보증금</Typography>
                             <Button size="small" variant="text" onClick={handleResetSalePrices}>초기화</Button>
                         </Box>
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+                        <Box sx={{display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2}}>
                             {[5000, 6000, 7000, 8000, 9000, 10000, 20000, 30000, 40000, 50000, 60000, 70000, 80000, 90000, 100000].map((price) => {
                                 // 버튼 색상 로직
                                 let buttonColor = "primary";
                                 let buttonVariant = "outlined";
                                 let buttonStyle: { backgroundColor?: string; color?: string } = {};
-                                
+
                                 if (minSalePrice > 0 && maxSalePrice > 0 && minSalePrice < maxSalePrice) {
                                     // 최소가격과 최대가격이 모두 설정되고 서로 다른 경우
                                     if (price === minSalePrice) {
                                         // 최소 가격 버튼
                                         buttonVariant = "contained";
                                         buttonColor = "primary";
-                                        buttonStyle = { backgroundColor: '#007AFF', color: 'white' };
+                                        buttonStyle = {backgroundColor: '#007AFF', color: 'white'};
                                     } else if (price === maxSalePrice) {
                                         // 최대 가격 버튼
                                         buttonVariant = "contained";
                                         buttonColor = "secondary";
-                                        buttonStyle = { backgroundColor: '#FF5722', color: 'white' };
+                                        buttonStyle = {backgroundColor: '#FF5722', color: 'white'};
                                     } else if (price > minSalePrice && price < maxSalePrice) {
                                         // 범위 내 버튼 (그라데이션 적용)
                                         buttonVariant = "contained";
-                                        
+
                                         // 그라데이션 계산 (0~1 사이의 값)
                                         const range = maxSalePrice - minSalePrice;
                                         const position = (price - minSalePrice) / range;
-                                        
+
                                         // 시작 색상 (파란색 #007AFF)의 RGB 값
                                         const startRed = 0;
                                         const startGreen = 122;
                                         const startBlue = 255;
-                                        
+
                                         // 종료 색상 (주황색 #FF5722)의 RGB 값
                                         const endRed = 255;
                                         const endGreen = 87;
                                         const endBlue = 34;
-                                        
+
                                         // 두 색상 사이의 그라데이션 계산
                                         const red = Math.round(startRed + (endRed - startRed) * position);
                                         const green = Math.round(startGreen + (endGreen - startGreen) * position);
                                         const blue = Math.round(startBlue + (endBlue - startBlue) * position);
-                                        
+
                                         // 색상 코드로 변환
                                         const gradientColor = `rgb(${red}, ${green}, ${blue})`;
-                                        
-                                        buttonStyle = { backgroundColor: gradientColor, color: 'white' };
+
+                                        buttonStyle = {backgroundColor: gradientColor, color: 'white'};
                                     }
                                 } else if (price === minSalePrice && minSalePrice > 0) {
                                     // 최소 가격만 설정된 경우
                                     buttonVariant = "contained";
                                     buttonColor = "primary";
-                                    buttonStyle = { backgroundColor: '#007AFF', color: 'white' };
+                                    buttonStyle = {backgroundColor: '#007AFF', color: 'white'};
                                 } else if (price === maxSalePrice && maxSalePrice > 0) {
                                     // 최대 가격만 설정된 경우
                                     buttonVariant = "contained";
                                     buttonColor = "secondary";
-                                    buttonStyle = { backgroundColor: '#FF5722', color: 'white' };
+                                    buttonStyle = {backgroundColor: '#FF5722', color: 'white'};
                                 }
-                                
+
                                 return (
                                     <Button
                                         key={`sale-${price}`}
@@ -1960,15 +2029,15 @@ const ArticleList: React.FC = () => {
                                         color={buttonColor as "primary" | "secondary"}
                                         size="small"
                                         onClick={() => handleSalePriceButtonClick(price)}
-                                        sx={{ 
-                                            minWidth: '60px', 
-                                            height: '32px', 
-                                            fontSize: '0.875rem', 
+                                        sx={{
+                                            minWidth: '60px',
+                                            height: '32px',
+                                            fontSize: '0.875rem',
                                             borderRadius: '4px',
                                             ...buttonStyle,
-                                            '&:hover': { 
-                                                backgroundColor: buttonVariant === "contained" 
-                                                    ? buttonStyle.backgroundColor 
+                                            '&:hover': {
+                                                backgroundColor: buttonVariant === "contained"
+                                                    ? buttonStyle.backgroundColor
                                                     : undefined,
                                                 opacity: buttonVariant === "contained" ? 0.9 : undefined
                                             }
@@ -1979,75 +2048,79 @@ const ArticleList: React.FC = () => {
                                 );
                             })}
                         </Box>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
-                            <TextField size="small" placeholder="최소" value={minSalePrice} onChange={handleMinSalePriceChange} sx={{ width: '120px' }} InputProps={{ endAdornment: <InputAdornment position="end">만원</InputAdornment> }} />
+                        <Box sx={{display: 'flex', alignItems: 'center', gap: 1, mb: 3}}>
+                            <TextField size="small" placeholder="최소" value={minSalePrice}
+                                       onChange={handleMinSalePriceChange} sx={{width: '120px'}}
+                                       InputProps={{endAdornment: <InputAdornment position="end">만원</InputAdornment>}}/>
                             <Typography>~</Typography>
-                            <TextField size="small" placeholder="최대" value={maxSalePrice} onChange={handleMaxSalePriceChange} sx={{ width: '120px' }} InputProps={{ endAdornment: <InputAdornment position="end">만원</InputAdornment> }} />
+                            <TextField size="small" placeholder="최대" value={maxSalePrice}
+                                       onChange={handleMaxSalePriceChange} sx={{width: '120px'}}
+                                       InputProps={{endAdornment: <InputAdornment position="end">만원</InputAdornment>}}/>
                         </Box>
 
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                            <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>월세</Typography>
+                        <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1}}>
+                            <Typography variant="subtitle1" sx={{fontWeight: 'bold'}}>월세</Typography>
                             <Button size="small" variant="text" onClick={handleResetRentPrices}>초기화</Button>
                         </Box>
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+                        <Box sx={{display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2}}>
                             {[10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200].map((price) => {
                                 // 버튼 색상 로직
                                 let buttonColor = "primary";
                                 let buttonVariant = "outlined";
                                 let buttonStyle: { backgroundColor?: string; color?: string } = {};
-                                
+
                                 if (minRentPrice > 0 && maxRentPrice > 0 && minRentPrice < maxRentPrice) {
                                     // 최소가격과 최대가격이 모두 설정되고 서로 다른 경우
                                     if (price === minRentPrice) {
                                         // 최소 가격 버튼
                                         buttonVariant = "contained";
                                         buttonColor = "primary";
-                                        buttonStyle = { backgroundColor: '#007AFF', color: 'white' };
+                                        buttonStyle = {backgroundColor: '#007AFF', color: 'white'};
                                     } else if (price === maxRentPrice) {
                                         // 최대 가격 버튼
                                         buttonVariant = "contained";
                                         buttonColor = "secondary";
-                                        buttonStyle = { backgroundColor: '#FF5722', color: 'white' };
+                                        buttonStyle = {backgroundColor: '#FF5722', color: 'white'};
                                     } else if (price > minRentPrice && price < maxRentPrice) {
                                         // 범위 내 버튼 (그라데이션 적용)
                                         buttonVariant = "contained";
-                                        
+
                                         // 그라데이션 계산 (0~1 사이의 값)
                                         const range = maxRentPrice - minRentPrice;
                                         const position = (price - minRentPrice) / range;
-                                        
+
                                         // 시작 색상 (파란색 #007AFF)의 RGB 값
                                         const startRed = 0;
                                         const startGreen = 122;
                                         const startBlue = 255;
-                                        
+
                                         // 종료 색상 (주황색 #FF5722)의 RGB 값
                                         const endRed = 255;
                                         const endGreen = 87;
                                         const endBlue = 34;
-                                        
+
                                         // 두 색상 사이의 그라데이션 계산
                                         const red = Math.round(startRed + (endRed - startRed) * position);
                                         const green = Math.round(startGreen + (endGreen - startGreen) * position);
                                         const blue = Math.round(startBlue + (endBlue - startBlue) * position);
-                                        
+
                                         // 색상 코드로 변환
                                         const gradientColor = `rgb(${red}, ${green}, ${blue})`;
-                                        
-                                        buttonStyle = { backgroundColor: gradientColor, color: 'white' };
+
+                                        buttonStyle = {backgroundColor: gradientColor, color: 'white'};
                                     }
                                 } else if (price === minRentPrice && minRentPrice > 0) {
                                     // 최소 가격만 설정된 경우
                                     buttonVariant = "contained";
                                     buttonColor = "primary";
-                                    buttonStyle = { backgroundColor: '#007AFF', color: 'white' };
+                                    buttonStyle = {backgroundColor: '#007AFF', color: 'white'};
                                 } else if (price === maxRentPrice && maxRentPrice > 0) {
                                     // 최대 가격만 설정된 경우
                                     buttonVariant = "contained";
                                     buttonColor = "secondary";
-                                    buttonStyle = { backgroundColor: '#FF5722', color: 'white' };
+                                    buttonStyle = {backgroundColor: '#FF5722', color: 'white'};
                                 }
-                                
+
                                 return (
                                     <Button
                                         key={`rent-${price}`}
@@ -2055,15 +2128,15 @@ const ArticleList: React.FC = () => {
                                         color={buttonColor as "primary" | "secondary"}
                                         size="small"
                                         onClick={() => handleRentPriceButtonClick(price)}
-                                        sx={{ 
-                                            minWidth: '60px', 
-                                            height: '32px', 
-                                            fontSize: '0.875rem', 
+                                        sx={{
+                                            minWidth: '60px',
+                                            height: '32px',
+                                            fontSize: '0.875rem',
                                             borderRadius: '4px',
                                             ...buttonStyle,
-                                            '&:hover': { 
-                                                backgroundColor: buttonVariant === "contained" 
-                                                    ? buttonStyle.backgroundColor 
+                                            '&:hover': {
+                                                backgroundColor: buttonVariant === "contained"
+                                                    ? buttonStyle.backgroundColor
                                                     : undefined,
                                                 opacity: buttonVariant === "contained" ? 0.9 : undefined
                                             }
@@ -2074,10 +2147,14 @@ const ArticleList: React.FC = () => {
                                 );
                             })}
                         </Box>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
-                            <TextField size="small" placeholder="최소" value={minRentPrice} onChange={handleMinRentPriceChange} sx={{ width: '120px' }} InputProps={{ endAdornment: <InputAdornment position="end">만원</InputAdornment> }} />
+                        <Box sx={{display: 'flex', alignItems: 'center', gap: 1, mb: 3}}>
+                            <TextField size="small" placeholder="최소" value={minRentPrice}
+                                       onChange={handleMinRentPriceChange} sx={{width: '120px'}}
+                                       InputProps={{endAdornment: <InputAdornment position="end">만원</InputAdornment>}}/>
                             <Typography>~</Typography>
-                            <TextField size="small" placeholder="최대" value={maxRentPrice} onChange={handleMaxRentPriceChange} sx={{ width: '120px' }} InputProps={{ endAdornment: <InputAdornment position="end">만원</InputAdornment> }} />
+                            <TextField size="small" placeholder="최대" value={maxRentPrice}
+                                       onChange={handleMaxRentPriceChange} sx={{width: '120px'}}
+                                       InputProps={{endAdornment: <InputAdornment position="end">만원</InputAdornment>}}/>
                         </Box>
                     </Box>
                 </Box>

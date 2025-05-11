@@ -1,4 +1,3 @@
-import axios from "axios"
 import api from "./api"
 
 export interface AgentInfo {
@@ -29,12 +28,12 @@ export const getAgent = async (): Promise<AgentInfo> => {
 export const updateAgent = async (data: AgentUpdateRequest): Promise<void> => {
     // Get current agent data
     const currentData = await getAgent()
-    
+
     // Merge current data with update data
     const mergedData = {
         ...currentData,
         ...data
     }
-    
+
     await api.patch("/api/agents/me", mergedData)
 } 

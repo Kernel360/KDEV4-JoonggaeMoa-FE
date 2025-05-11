@@ -1,56 +1,50 @@
 "use client"
 
 import type React from "react"
-
-import { useState, useEffect, useRef, useCallback } from "react"
+import {useCallback, useEffect, useRef, useState} from "react"
 import {
+    Alert,
     Box,
-    Container,
-    Typography,
-    Paper,
-    Grid,
     Button,
+    Chip,
+    CircularProgress,
+    Container,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    Divider,
+    Grid,
+    IconButton,
+    List,
+    ListItem,
+    ListItemText,
+    Menu,
+    MenuItem,
+    Paper,
+    Snackbar,
     Table,
     TableBody,
     TableCell,
     TableContainer,
     TableHead,
     TableRow,
-    AppBar,
-    Toolbar,
-    IconButton,
     TextField,
-    InputAdornment,
-    Chip,
-    CircularProgress,
-    Divider,
-    Menu,
-    MenuItem,
-    Snackbar,
-    Alert,
-    Autocomplete,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    List,
-    ListItem,
-    ListItemText,
+    Typography,
 } from "@mui/material"
-import { Search, Add, ArrowBack, CalendarMonth, ChevronLeft, ChevronRight } from "@mui/icons-material"
-import { useNavigate } from "react-router-dom"
-import { consultationApi } from "../services/consultationApi"
-import { customerApi } from "../services/customerApi"
-import { ConsultationStatus, ConsultationType } from "../types/consultation"
-import type { ConsultationResponse, ConsultationMonthInfo } from "../types/consultation"
-import type { CustomerListResponse } from "../services/customerApi"
+import {Add, ArrowBack, CalendarMonth, ChevronLeft, ChevronRight} from "@mui/icons-material"
+import {useNavigate} from "react-router-dom"
+import {consultationApi} from "../services/consultationApi"
+import {customerApi} from "../services/customerApi"
+import type {ConsultationMonthInfo, ConsultationResponse} from "../types/consultation"
+import {ConsultationStatus, ConsultationType} from "../types/consultation"
 
 // 상담 상태별 칩 색상 및 텍스트 - 새로운 상태 값에 맞게 업데이트
 const statusConfig = {
-    [ConsultationStatus.WAITING]: { color: "#e3f2fd", textColor: "#1976d2", label: "예약 대기" },
-    [ConsultationStatus.CONFIRMED]: { color: "#fff8e1", textColor: "#f57c00", label: "예약 확정" },
-    [ConsultationStatus.COMPLETED]: { color: "#e8f5e9", textColor: "#2e7d32", label: "진행 완료" },
-    [ConsultationStatus.CANCELED]: { color: "#ffebee", textColor: "#c62828", label: "예약 취소" },
+    [ConsultationStatus.WAITING]: {color: "#e3f2fd", textColor: "#1976d2", label: "예약 대기"},
+    [ConsultationStatus.CONFIRMED]: {color: "#fff8e1", textColor: "#f57c00", label: "예약 확정"},
+    [ConsultationStatus.COMPLETED]: {color: "#e8f5e9", textColor: "#2e7d32", label: "진행 완료"},
+    [ConsultationStatus.CANCELED]: {color: "#ffebee", textColor: "#c62828", label: "예약 취소"},
 }
 
 // 상담 유형별 텍스트
@@ -142,15 +136,15 @@ const ConsultationList = () => {
 
     // 상담 등록 모달 관련 상태
     const [createModalOpen, setCreateModalOpen] = useState(false)
-    const [customers, setCustomers] = useState<{id: number; name: string; phone: string}[]>([])
+    const [customers, setCustomers] = useState<{ id: number; name: string; phone: string }[]>([])
     const [customersLoading, setCustomersLoading] = useState(false)
-    const [selectedCustomer, setSelectedCustomer] = useState<{id: number; name: string; phone: string} | null>(null)
+    const [selectedCustomer, setSelectedCustomer] = useState<{ id: number; name: string; phone: string } | null>(null)
     const [scheduledDate, setScheduledDate] = useState("")
     const [scheduledTime, setScheduledTime] = useState("")
     const [createLoading, setCreateLoading] = useState(false)
     const [createSuccess, setCreateSuccess] = useState(false)
     const [createError, setCreateError] = useState<string | null>(null)
-    
+
     // 고객 목록 페이지네이션 관련 상태
     const [cursor, setCursor] = useState<number | undefined>(undefined)
     const [hasMore, setHasMore] = useState(true)
@@ -171,23 +165,23 @@ const ConsultationList = () => {
             } else {
                 setIsLoadingMoreCustomers(true)
             }
-            
+
             const response = await customerApi.getInfiniteCustomers(cursorId, searchTerm)
-            
+
             if (response.data.success && response.data.data) {
                 const newCustomers = response.data.data.content
-                
+
                 if (cursorId === undefined) {
                     setCustomers(newCustomers)
                 } else {
                     setCustomers(prev => [...prev, ...newCustomers])
                 }
-                
+
                 // 마지막 고객의 ID를 커서로 설정
                 if (newCustomers.length > 0) {
                     setCursor(newCustomers[newCustomers.length - 1].id)
                 }
-                
+
                 // 더 이상 데이터가 없으면 hasMore를 false로 설정
                 setHasMore(!response.data.data.last)
             } else {
@@ -213,15 +207,15 @@ const ConsultationList = () => {
     // 무한 스크롤을 위한 콜백 함수
     const lastCustomerRefCallback = useCallback((node: HTMLDivElement | null) => {
         if (customersLoading || isLoadingMoreCustomers) return
-        
+
         if (observer.current) observer.current.disconnect()
-        
+
         observer.current = new IntersectionObserver(entries => {
             if (entries[0].isIntersecting && hasMore) {
                 fetchCustomers(cursor)
             }
         })
-        
+
         if (node) observer.current.observe(node)
         lastCustomerRef.current = node
     }, [customersLoading, hasMore, isLoadingMoreCustomers, cursor])
@@ -297,10 +291,10 @@ const ConsultationList = () => {
             setStatusListLoading(true);
             setSelectedStatus(status);
             setSelectedDate(null); // 날짜 선택 해제
-            
+
             const monthString = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
             const response = await consultationApi.getConsultationsByStatus(monthString, status);
-            
+
             if (response.data.success && response.data.data) {
                 setStatusFilteredConsultations(response.data.data);
             } else {
@@ -323,7 +317,7 @@ const ConsultationList = () => {
             setError(null);
             const formattedDate = `${formatDateToYYYYMMDD(date)}T00:00`;
             const response = await consultationApi.getConsultationsByDate(formattedDate);
-            
+
             if (response.data.success && response.data.data) {
                 const consultations = response.data.data;
                 const formattedConsultations = consultations.map((item) => ({
@@ -336,10 +330,10 @@ const ConsultationList = () => {
                     memo: item.memo || "",
                     consultationStatus: item.consultationStatus || ConsultationStatus.WAITING
                 })) as ConsultationResponse[];
-                
+
                 console.log('API Response:', consultations); // Add this for debugging
                 console.log('Formatted Consultations:', formattedConsultations); // Add this for debugging
-                
+
                 setDateFilteredConsultations(formattedConsultations);
             } else {
                 setDateFilteredConsultations([]);
@@ -375,40 +369,40 @@ const ConsultationList = () => {
         try {
             setStatusLoading(true);
             await consultationApi.updateConsultationStatus(consultationId, newStatus);
-            
+
             // Update the consultation in the list
-            setDateFilteredConsultations(prevConsultations => 
-                prevConsultations.map(consultation => 
-                    consultation.consultationId === consultationId 
-                        ? { ...consultation, consultationStatus: newStatus } 
+            setDateFilteredConsultations(prevConsultations =>
+                prevConsultations.map(consultation =>
+                    consultation.consultationId === consultationId
+                        ? {...consultation, consultationStatus: newStatus}
                         : consultation
                 )
             );
-            
+
             // Also update in status filtered consultations if applicable
             if (selectedStatus) {
-                setStatusFilteredConsultations(prevConsultations => 
-                    prevConsultations.map(consultation => 
-                        consultation.consultationId === consultationId 
-                            ? { ...consultation, consultationStatus: newStatus } 
+                setStatusFilteredConsultations(prevConsultations =>
+                    prevConsultations.map(consultation =>
+                        consultation.consultationId === consultationId
+                            ? {...consultation, consultationStatus: newStatus}
                             : consultation
                     )
                 );
             }
-            
+
             // Update the monthInfo state to reflect the status change
             setMonthInfo(prevInfo => {
                 // Find the consultation to get its previous status
                 const consultation = [...dateFilteredConsultations, ...statusFilteredConsultations]
                     .find(c => c.consultationId === consultationId);
-                
+
                 if (!consultation) return prevInfo;
-                
+
                 const prevStatus = consultation.consultationStatus;
-                
+
                 // Create a new monthInfo object with updated counts
-                const newInfo = { ...prevInfo };
-                
+                const newInfo = {...prevInfo};
+
                 // Decrease count for the previous status
                 if (prevStatus === ConsultationStatus.WAITING) {
                     newInfo.consultationWaiting = Math.max(0, newInfo.consultationWaiting - 1);
@@ -419,7 +413,7 @@ const ConsultationList = () => {
                 } else if (prevStatus === ConsultationStatus.CANCELED) {
                     newInfo.consultationCancelled = Math.max(0, newInfo.consultationCancelled - 1);
                 }
-                
+
                 // Increase count for the new status
                 if (newStatus === ConsultationStatus.WAITING) {
                     newInfo.consultationWaiting += 1;
@@ -430,24 +424,24 @@ const ConsultationList = () => {
                 } else if (newStatus === ConsultationStatus.CANCELED) {
                     newInfo.consultationCancelled += 1;
                 }
-                
+
                 // Update the daysCount array if the consultation date is in the current month
                 if (consultation.date) {
                     const consultationDate = parseDate(consultation.date);
                     if (consultationDate) {
                         const consultationMonth = consultationDate.getMonth();
                         const currentMonth = currentDate.getMonth();
-                        
+
                         // Only update if the consultation is in the current month
                         if (consultationMonth === currentMonth) {
                             const dayIndex = consultationDate.getDate() - 1;
-                            
+
                             // Make sure the dayIndex is valid
                             if (dayIndex >= 0 && dayIndex < newInfo.daysCount.length) {
                                 // If the status is changing to CANCELED, decrease the count for that day
                                 if (newStatus === ConsultationStatus.CANCELED && prevStatus !== ConsultationStatus.CANCELED) {
                                     newInfo.daysCount[dayIndex] = Math.max(0, newInfo.daysCount[dayIndex] - 1);
-                                } 
+                                }
                                 // If the status is changing from CANCELED to another status, increase the count for that day
                                 else if (prevStatus === ConsultationStatus.CANCELED && newStatus !== ConsultationStatus.CANCELED) {
                                     newInfo.daysCount[dayIndex] += 1;
@@ -457,13 +451,13 @@ const ConsultationList = () => {
                         }
                     }
                 }
-                
+
                 return newInfo;
             });
-            
+
             // Show success message
             setStatusSuccess(true);
-            
+
             // Close the menu if it's open
             handleStatusMenuClose();
         } catch (err) {
@@ -506,7 +500,7 @@ const ConsultationList = () => {
             if (monthResponse.data.success) {
                 setMonthInfo(monthResponse.data.data);
             }
-    
+
             // If a date is selected, refresh the consultations for that date
             if (selectedDate) {
                 const formattedDate = `${formatDateToYYYYMMDD(selectedDate)}T00:00`;
@@ -519,12 +513,12 @@ const ConsultationList = () => {
             console.error("Error refreshing data:", error);
         }
     };
-    
+
     const handleCreateConsultation = async () => {
         // Check if selected date is in the past
         const selectedDateTime = new Date(`${scheduledDate}T${scheduledTime}`);
         const now = new Date();
-        
+
         if (selectedDateTime < now) {
             setCreateError("날짜를 제대로 선택해주세요.");
             return;
@@ -575,7 +569,6 @@ const ConsultationList = () => {
     const today = new Date()
     const todayString = formatDateToYYYYMMDD(today)
 
-    
 
     const scheduledCount = consultations.filter((c) => c.consultationStatus === ConsultationStatus.CONFIRMED).length
     const completedCount = consultations.filter((c) => c.consultationStatus === ConsultationStatus.COMPLETED).length
@@ -636,23 +629,23 @@ const ConsultationList = () => {
 
     // Update the summary information section in the render
     return (
-        <Box sx={{ flexGrow: 1, minHeight: "100vh", overflow: "auto" }}>
-            <Container maxWidth="lg" sx={{ mt: 4, mb: 4, mx: "auto", px: { xs: 2, sm: 3, md: 4 } }}>
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
-                    <Box sx={{ display: "flex", alignItems: "center" }}>
-                        <IconButton onClick={() => navigate("/dashboard")} sx={{ mr: 1 }}>
-                            <ArrowBack />
+        <Box sx={{flexGrow: 1, minHeight: "100vh", overflow: "auto"}}>
+            <Container maxWidth="lg" sx={{mt: 4, mb: 4, mx: "auto", px: {xs: 2, sm: 3, md: 4}}}>
+                <Box sx={{display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3}}>
+                    <Box sx={{display: "flex", alignItems: "center"}}>
+                        <IconButton onClick={() => navigate("/dashboard")} sx={{mr: 1}}>
+                            <ArrowBack/>
                         </IconButton>
-                        <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                        <Typography variant="h6" sx={{fontWeight: "bold"}}>
                             상담 관리
                         </Typography>
                     </Box>
                     <Button
                         variant="contained"
-                        startIcon={<Add />}
+                        startIcon={<Add/>}
                         sx={{
                             bgcolor: "#007ea7",
-                            "&:hover": { bgcolor: "#003459" },
+                            "&:hover": {bgcolor: "#003459"},
                         }}
                         onClick={handleCreateModalOpen}
                     >
@@ -661,15 +654,15 @@ const ConsultationList = () => {
                 </Box>
 
                 {/* 요약 정보 */}
-                <Grid container spacing={3} sx={{ mb: 3 }}>
+                <Grid container spacing={3} sx={{mb: 3}}>
                     <Grid item xs={12} sm={4}>
                         <Paper
                             elevation={0}
-                            sx={{ 
-                                p: 3, 
-                                borderRadius: 2, 
-                                display: "flex", 
-                                flexDirection: "column", 
+                            sx={{
+                                p: 3,
+                                borderRadius: 2,
+                                display: "flex",
+                                flexDirection: "column",
                                 alignItems: "center",
                                 cursor: "pointer",
                                 transition: "all 0.2s",
@@ -685,7 +678,7 @@ const ConsultationList = () => {
                             <Typography variant="subtitle2" color="textSecondary" gutterBottom>
                                 상담 대기
                             </Typography>
-                            <Typography variant="h3" sx={{ color: "#2196f3", fontWeight: "bold" }}>
+                            <Typography variant="h3" sx={{color: "#2196f3", fontWeight: "bold"}}>
                                 {monthInfo.consultationWaiting}
                             </Typography>
                         </Paper>
@@ -693,11 +686,11 @@ const ConsultationList = () => {
                     <Grid item xs={12} sm={4}>
                         <Paper
                             elevation={0}
-                            sx={{ 
-                                p: 3, 
-                                borderRadius: 2, 
-                                display: "flex", 
-                                flexDirection: "column", 
+                            sx={{
+                                p: 3,
+                                borderRadius: 2,
+                                display: "flex",
+                                flexDirection: "column",
                                 alignItems: "center",
                                 cursor: "pointer",
                                 transition: "all 0.2s",
@@ -713,7 +706,7 @@ const ConsultationList = () => {
                             <Typography variant="subtitle2" color="textSecondary" gutterBottom>
                                 상담 확정
                             </Typography>
-                            <Typography variant="h3" sx={{ color: "#ff9800", fontWeight: "bold" }}>
+                            <Typography variant="h3" sx={{color: "#ff9800", fontWeight: "bold"}}>
                                 {monthInfo.consultationConfirmed}
                             </Typography>
                         </Paper>
@@ -721,11 +714,11 @@ const ConsultationList = () => {
                     <Grid item xs={12} sm={4}>
                         <Paper
                             elevation={0}
-                            sx={{ 
-                                p: 3, 
-                                borderRadius: 2, 
-                                display: "flex", 
-                                flexDirection: "column", 
+                            sx={{
+                                p: 3,
+                                borderRadius: 2,
+                                display: "flex",
+                                flexDirection: "column",
                                 alignItems: "center",
                                 cursor: "pointer",
                                 transition: "all 0.2s",
@@ -741,7 +734,7 @@ const ConsultationList = () => {
                             <Typography variant="subtitle2" color="textSecondary" gutterBottom>
                                 완료된 상담
                             </Typography>
-                            <Typography variant="h3" sx={{ color: "#4caf50", fontWeight: "bold" }}>
+                            <Typography variant="h3" sx={{color: "#4caf50", fontWeight: "bold"}}>
                                 {monthInfo.consultationCompleted}
                             </Typography>
                         </Paper>
@@ -750,37 +743,41 @@ const ConsultationList = () => {
                 {/* 캘린더 뷰 */}
                 <Grid container spacing={3}>
                     <Grid item xs={12} md={6}>
-                        <Paper elevation={0} sx={{ p: 3, borderRadius: 2, boxShadow: '0 4px 8px -1px rgba(0, 0, 0, 0.2), 0 2px 6px -1px rgba(0, 0, 0, 0.15)' }}>
-                            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+                        <Paper elevation={0} sx={{
+                            p: 3,
+                            borderRadius: 2,
+                            boxShadow: '0 4px 8px -1px rgba(0, 0, 0, 0.2), 0 2px 6px -1px rgba(0, 0, 0, 0.15)'
+                        }}>
+                            <Box sx={{display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2}}>
                                 <Typography variant="h6">
-                                    <CalendarMonth sx={{ verticalAlign: "middle", mr: 1 }} />
+                                    <CalendarMonth sx={{verticalAlign: "middle", mr: 1}}/>
                                     상담 일정
                                 </Typography>
                                 <Box>
                                     <IconButton onClick={goToPreviousMonth}>
-                                        <ChevronLeft />
+                                        <ChevronLeft/>
                                     </IconButton>
-                                    <Typography variant="subtitle1" component="span" sx={{ mx: 2 }}>
+                                    <Typography variant="subtitle1" component="span" sx={{mx: 2}}>
                                         {currentDate.getFullYear()}년 {currentDate.getMonth() + 1}월
                                     </Typography>
                                     <IconButton onClick={goToNextMonth}>
-                                        <ChevronRight />
+                                        <ChevronRight/>
                                     </IconButton>
                                 </Box>
                             </Box>
 
-                            <Divider sx={{ mb: 2 }} />
+                            <Divider sx={{mb: 2}}/>
 
-                            <Table sx={{ tableLayout: 'fixed', width: '100%' }}> {/* 테이블 레이아웃 고정 및 너비 100% 설정 */}
+                            <Table sx={{tableLayout: 'fixed', width: '100%'}}> {/* 테이블 레이아웃 고정 및 너비 100% 설정 */}
                                 <TableHead>
                                     <TableRow>
-                                        <TableCell align="center" sx={{ width: '14.28%' }}>일</TableCell>
-                                        <TableCell align="center" sx={{ width: '14.28%' }}>월</TableCell>
-                                        <TableCell align="center" sx={{ width: '14.28%' }}>화</TableCell>
-                                        <TableCell align="center" sx={{ width: '14.28%' }}>수</TableCell>
-                                        <TableCell align="center" sx={{ width: '14.28%' }}>목</TableCell>
-                                        <TableCell align="center" sx={{ width: '14.28%' }}>금</TableCell>
-                                        <TableCell align="center" sx={{ width: '14.28%' }}>토</TableCell>
+                                        <TableCell align="center" sx={{width: '14.28%'}}>일</TableCell>
+                                        <TableCell align="center" sx={{width: '14.28%'}}>월</TableCell>
+                                        <TableCell align="center" sx={{width: '14.28%'}}>화</TableCell>
+                                        <TableCell align="center" sx={{width: '14.28%'}}>수</TableCell>
+                                        <TableCell align="center" sx={{width: '14.28%'}}>목</TableCell>
+                                        <TableCell align="center" sx={{width: '14.28%'}}>금</TableCell>
+                                        <TableCell align="center" sx={{width: '14.28%'}}>토</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -822,7 +819,13 @@ const ConsultationList = () => {
                                                             pt: 1,
                                                             overflow: 'hidden' // Box 내부 내용이 넘칠 경우 숨김 처리
                                                         }}>
-                                                            <Typography variant="body2" sx={{ mb: 0.5, fontSize: '0.9rem', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{day.getDate()}</Typography>
+                                                            <Typography variant="body2" sx={{
+                                                                mb: 0.5,
+                                                                fontSize: '0.9rem',
+                                                                whiteSpace: 'nowrap',
+                                                                textOverflow: 'ellipsis',
+                                                                overflow: 'hidden'
+                                                            }}>{day.getDate()}</Typography>
                                                             {monthInfo.daysCount[day.getDate() - 1] > 0 && (
                                                                 <Chip
                                                                     size="small"
@@ -854,26 +857,26 @@ const ConsultationList = () => {
 
                     {/* 상담 목록 테이블 - 캘린더 오른쪽에 배치 */}
                     <Grid item xs={12} md={6}>
-                        <Paper elevation={0} sx={{ 
-                            p: 3, 
-                            borderRadius: 2, 
-                            height: '100%', 
+                        <Paper elevation={0} sx={{
+                            p: 3,
+                            borderRadius: 2,
+                            height: '100%',
                             boxShadow: '0 4px 8px -1px rgba(0, 0, 0, 0.2), 0 2px 6px -1px rgba(0, 0, 0, 0.15)',
                             display: 'flex',
                             flexDirection: 'column'
                         }}>
-                            <Typography variant="h6" sx={{ mb: 2 }}>
-                                {selectedStatus 
-                                    ? `${statusConfig[selectedStatus].label} 상담 목록` 
-                                    : selectedDate 
-                                        ? `${selectedDate.getMonth() + 1}월 ${selectedDate.getDate()}일 상담 목록` 
+                            <Typography variant="h6" sx={{mb: 2}}>
+                                {selectedStatus
+                                    ? `${statusConfig[selectedStatus].label} 상담 목록`
+                                    : selectedDate
+                                        ? `${selectedDate.getMonth() + 1}월 ${selectedDate.getDate()}일 상담 목록`
                                         : '상담 목록'}
                             </Typography>
-                            <TableContainer 
-                                component={Paper} 
-                                elevation={0} 
-                                sx={{ 
-                                    borderRadius: 2, 
+                            <TableContainer
+                                component={Paper}
+                                elevation={0}
+                                sx={{
+                                    borderRadius: 2,
                                     overflow: "auto",
                                     flex: 1,
                                     maxHeight: 'calc(100% - 60px)', // 타이틀 높이를 뺀 높이
@@ -885,11 +888,11 @@ const ConsultationList = () => {
                             >
                                 <Table stickyHeader>
                                     <TableHead>
-                                        <TableRow sx={{ 
+                                        <TableRow sx={{
                                             backgroundColor: '#e9ecef',
                                             borderBottom: '1px solid #e9ecef'
                                         }}>
-                                            <TableCell sx={{ 
+                                            <TableCell sx={{
                                                 padding: '12px 16px',
                                                 textAlign: 'center',
                                                 fontSize: '0.875rem',
@@ -899,7 +902,7 @@ const ConsultationList = () => {
                                             }}>
                                                 고객명
                                             </TableCell>
-                                            <TableCell sx={{ 
+                                            <TableCell sx={{
                                                 padding: '12px 16px',
                                                 textAlign: 'center',
                                                 fontSize: '0.875rem',
@@ -909,7 +912,7 @@ const ConsultationList = () => {
                                             }}>
                                                 상담 시간
                                             </TableCell>
-                                            <TableCell sx={{ 
+                                            <TableCell sx={{
                                                 padding: '12px 16px',
                                                 textAlign: 'center',
                                                 fontSize: '0.875rem',
@@ -925,16 +928,16 @@ const ConsultationList = () => {
                                         {loading || statusListLoading ? (
                                             <TableRow>
                                                 <TableCell colSpan={3} align="center">
-                                                    <CircularProgress size={24} />
+                                                    <CircularProgress size={24}/>
                                                 </TableCell>
                                             </TableRow>
                                         ) : selectedStatus ? (
                                             statusFilteredConsultations.length > 0 ? (
                                                 statusFilteredConsultations.map((consultation) => (
-                                                    <TableRow 
+                                                    <TableRow
                                                         key={consultation.consultationId}
                                                         onClick={() => handleViewConsultation(consultation.consultationId)}
-                                                        sx={{ 
+                                                        sx={{
                                                             cursor: 'pointer',
                                                             borderBottom: '1px solid #e9ecef',
                                                             backgroundColor: 'transparent',
@@ -944,7 +947,7 @@ const ConsultationList = () => {
                                                             }
                                                         }}
                                                     >
-                                                        <TableCell sx={{ 
+                                                        <TableCell sx={{
                                                             padding: '12px 16px',
                                                             fontSize: '0.875rem',
                                                             color: '#00171f',
@@ -955,7 +958,7 @@ const ConsultationList = () => {
                                                         }}>
                                                             {consultation.customerName}
                                                         </TableCell>
-                                                        <TableCell sx={{ 
+                                                        <TableCell sx={{
                                                             padding: '12px 16px',
                                                             fontSize: '0.875rem',
                                                             color: '#00171f'
@@ -972,7 +975,7 @@ const ConsultationList = () => {
                                                                 }}
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    
+
                                                                     // Close any other open menu
                                                                     if (openStatusMenuId !== null) {
                                                                         const existingMenu = document.getElementById(`status-menu-${openStatusMenuId}`);
@@ -980,30 +983,30 @@ const ConsultationList = () => {
                                                                             document.body.removeChild(existingMenu);
                                                                         }
                                                                     }
-                                                                    
+
                                                                     // Set this menu as the open one
                                                                     setOpenStatusMenuId(consultation.consultationId);
-                                                                    
+
                                                                     // Create a container for the menu that will be positioned relative to the viewport
                                                                     const menuContainer = document.createElement('div');
                                                                     menuContainer.id = `status-menu-${consultation.consultationId}`;
                                                                     menuContainer.style.position = 'fixed';
                                                                     menuContainer.style.zIndex = '1000';
-                                                                    
+
                                                                     // Get the position of the chip relative to the viewport
                                                                     const chipRect = e.currentTarget.getBoundingClientRect();
-                                                                    
+
                                                                     // Position the menu below the chip
                                                                     menuContainer.style.top = `${chipRect.bottom}px`;
                                                                     menuContainer.style.left = `${chipRect.left}px`;
-                                                                    
+
                                                                     // Create the menu content
                                                                     const menu = document.createElement('div');
                                                                     menu.style.backgroundColor = 'white';
                                                                     menu.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
                                                                     menu.style.borderRadius = '4px';
                                                                     menu.style.padding = '4px';
-                                                                    
+
                                                                     Object.values(ConsultationStatus).forEach((status) => {
                                                                         if (status !== consultation.consultationStatus) {
                                                                             const option = document.createElement('div');
@@ -1023,10 +1026,10 @@ const ConsultationList = () => {
                                                                             menu.appendChild(option);
                                                                         }
                                                                     });
-                                                                    
+
                                                                     menuContainer.appendChild(menu);
                                                                     document.body.appendChild(menuContainer);
-                                                                    
+
                                                                     const closeMenu = (e: MouseEvent) => {
                                                                         if (!menuContainer.contains(e.target as Node)) {
                                                                             document.body.removeChild(menuContainer);
@@ -1034,7 +1037,7 @@ const ConsultationList = () => {
                                                                             setOpenStatusMenuId(null);
                                                                         }
                                                                     };
-                                                                    
+
                                                                     setTimeout(() => {
                                                                         document.addEventListener('click', closeMenu);
                                                                     }, 0);
@@ -1052,10 +1055,10 @@ const ConsultationList = () => {
                                             )
                                         ) : dateFilteredConsultations.length > 0 ? (
                                             dateFilteredConsultations.map((consultation) => (
-                                                <TableRow 
+                                                <TableRow
                                                     key={consultation.consultationId}
                                                     onClick={() => handleViewConsultation(consultation.consultationId)}
-                                                    sx={{ 
+                                                    sx={{
                                                         cursor: 'pointer',
                                                         borderBottom: '1px solid #e9ecef',
                                                         backgroundColor: 'transparent',
@@ -1065,7 +1068,7 @@ const ConsultationList = () => {
                                                         }
                                                     }}
                                                 >
-                                                    <TableCell sx={{ 
+                                                    <TableCell sx={{
                                                         padding: '12px 16px',
                                                         fontSize: '0.875rem',
                                                         color: '#00171f',
@@ -1076,14 +1079,14 @@ const ConsultationList = () => {
                                                     }}>
                                                         {consultation.customerName}
                                                     </TableCell>
-                                                    <TableCell sx={{ 
+                                                    <TableCell sx={{
                                                         padding: '12px 16px',
                                                         fontSize: '0.875rem',
                                                         color: '#00171f'
                                                     }}>
                                                         {consultation.date ? formatDateTime(consultation.date) : '-'}
                                                     </TableCell>
-                                                    <TableCell sx={{ 
+                                                    <TableCell sx={{
                                                         padding: '12px 16px',
                                                         fontSize: '0.875rem',
                                                         color: '#00171f'
@@ -1097,7 +1100,7 @@ const ConsultationList = () => {
                                                             }}
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
-                                                                
+
                                                                 // Close any other open menu
                                                                 if (openStatusMenuId !== null) {
                                                                     const existingMenu = document.getElementById(`status-menu-${openStatusMenuId}`);
@@ -1105,30 +1108,30 @@ const ConsultationList = () => {
                                                                         document.body.removeChild(existingMenu);
                                                                     }
                                                                 }
-                                                                
+
                                                                 // Set this menu as the open one
                                                                 setOpenStatusMenuId(consultation.consultationId);
-                                                                
+
                                                                 // Create a container for the menu that will be positioned relative to the viewport
                                                                 const menuContainer = document.createElement('div');
                                                                 menuContainer.id = `status-menu-${consultation.consultationId}`;
                                                                 menuContainer.style.position = 'fixed';
                                                                 menuContainer.style.zIndex = '1000';
-                                                                
+
                                                                 // Get the position of the chip relative to the viewport
                                                                 const chipRect = e.currentTarget.getBoundingClientRect();
-                                                                
+
                                                                 // Position the menu below the chip
                                                                 menuContainer.style.top = `${chipRect.bottom}px`;
                                                                 menuContainer.style.left = `${chipRect.left}px`;
-                                                                
+
                                                                 // Create the menu content
                                                                 const menu = document.createElement('div');
                                                                 menu.style.backgroundColor = 'white';
                                                                 menu.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
                                                                 menu.style.borderRadius = '4px';
                                                                 menu.style.padding = '4px';
-                                                                
+
                                                                 Object.values(ConsultationStatus).forEach((status) => {
                                                                     if (status !== consultation.consultationStatus) {
                                                                         const option = document.createElement('div');
@@ -1148,10 +1151,10 @@ const ConsultationList = () => {
                                                                         menu.appendChild(option);
                                                                     }
                                                                 });
-                                                                
+
                                                                 menuContainer.appendChild(menu);
                                                                 document.body.appendChild(menuContainer);
-                                                                
+
                                                                 const closeMenu = (e: MouseEvent) => {
                                                                     if (!menuContainer.contains(e.target as Node)) {
                                                                         document.body.removeChild(menuContainer);
@@ -1159,7 +1162,7 @@ const ConsultationList = () => {
                                                                         setOpenStatusMenuId(null);
                                                                     }
                                                                 };
-                                                                
+
                                                                 setTimeout(() => {
                                                                     document.addEventListener('click', closeMenu);
                                                                 }, 0);
@@ -1197,12 +1200,14 @@ const ConsultationList = () => {
                     horizontal: "right",
                 }}
             >
-                <Typography variant="subtitle2" sx={{ px: 2, py: 1, fontWeight: "bold" }}>
+                <Typography variant="subtitle2" sx={{px: 2, py: 1, fontWeight: "bold"}}>
                     상담 상태 변경
                 </Typography>
-                <Divider />
+                <Divider/>
                 {Object.values(ConsultationStatus).map((status) => (
-                    <MenuItem key={status} onClick={() => selectedConsultation && handleStatusChange(selectedConsultation, status)} disabled={statusLoading}>
+                    <MenuItem key={status}
+                              onClick={() => selectedConsultation && handleStatusChange(selectedConsultation, status)}
+                              disabled={statusLoading}>
                         <Chip
                             label={statusConfig[status]?.label}
                             size="small"
@@ -1218,10 +1223,10 @@ const ConsultationList = () => {
             </Menu>
 
             {/* 상담 등록 모달 */}
-            <Dialog 
-                open={createModalOpen} 
-                onClose={handleCreateModalClose} 
-                maxWidth="md" 
+            <Dialog
+                open={createModalOpen}
+                onClose={handleCreateModalClose}
+                maxWidth="md"
                 fullWidth
                 PaperProps={{
                     sx: {
@@ -1235,36 +1240,36 @@ const ConsultationList = () => {
                 }}
             >
                 <DialogTitle>상담 등록</DialogTitle>
-                <DialogContent sx={{ 
-                    height: 'calc(100% - 120px)', 
+                <DialogContent sx={{
+                    height: 'calc(100% - 120px)',
                     overflow: 'hidden',
                     '@media (max-width: 900px)': {
                         overflow: 'auto'
                     }
                 }}>
-                    <Box sx={{ height: '100%' }}>
-                        <Grid container spacing={3} sx={{ height: '100%' }}>
+                    <Box sx={{height: '100%'}}>
+                        <Grid container spacing={3} sx={{height: '100%'}}>
                             {/* 왼쪽: 고객 검색 및 리스트 */}
-                            <Grid item xs={12} md={6} sx={{ 
+                            <Grid item xs={12} md={6} sx={{
                                 height: '100%',
                                 '@media (max-width: 900px)': {
                                     height: 'auto',
                                     minHeight: '300px'
                                 }
                             }}>
-                                <Paper elevation={0} sx={{ 
-                                    p: 2, 
-                                    borderRadius: 2, 
-                                    height: '100%', 
-                                    border: '1px solid #e0e0e0', 
-                                    display: 'flex', 
+                                <Paper elevation={0} sx={{
+                                    p: 2,
+                                    borderRadius: 2,
+                                    height: '100%',
+                                    border: '1px solid #e0e0e0',
+                                    display: 'flex',
                                     flexDirection: 'column',
                                     '@media (max-width: 900px)': {
                                         height: 'auto'
                                     }
                                 }}>
                                     <form onSubmit={handleSearchSubmit}>
-                                        <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+                                        <Box sx={{display: 'flex', gap: 1, mb: 2}}>
                                             <TextField
                                                 fullWidth
                                                 size="small"
@@ -1272,12 +1277,12 @@ const ConsultationList = () => {
                                                 value={searchTerm}
                                                 onChange={handleSearchChange}
                                             />
-                                            <Button 
-                                                type="submit" 
-                                                variant="contained" 
-                                                sx={{ 
-                                                    bgcolor: "#007ea7", 
-                                                    "&:hover": { bgcolor: "#003459" },
+                                            <Button
+                                                type="submit"
+                                                variant="contained"
+                                                sx={{
+                                                    bgcolor: "#007ea7",
+                                                    "&:hover": {bgcolor: "#003459"},
                                                     whiteSpace: 'nowrap'
                                                 }}
                                             >
@@ -1285,8 +1290,8 @@ const ConsultationList = () => {
                                             </Button>
                                         </Box>
                                     </form>
-                                    <Box sx={{ 
-                                        flex: 1, 
+                                    <Box sx={{
+                                        flex: 1,
                                         overflow: 'auto',
                                         '@media (max-width: 900px)': {
                                             flex: 'none',
@@ -1294,11 +1299,16 @@ const ConsultationList = () => {
                                         }
                                     }}>
                                         {customersLoading ? (
-                                            <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
-                                                <CircularProgress size={24} />
+                                            <Box sx={{display: 'flex', justifyContent: 'center', p: 2}}>
+                                                <CircularProgress size={24}/>
                                             </Box>
                                         ) : customers.length === 0 ? (
-                                            <Box sx={{ display: 'flex', justifyContent: 'center', p: 2, color: 'text.secondary' }}>
+                                            <Box sx={{
+                                                display: 'flex',
+                                                justifyContent: 'center',
+                                                p: 2,
+                                                color: 'text.secondary'
+                                            }}>
                                                 {currentSearchTerm ? '검색 결과가 없습니다.' : '고객을 검색해주세요.'}
                                             </Box>
                                         ) : (
@@ -1325,14 +1335,14 @@ const ConsultationList = () => {
                                                     </ListItem>
                                                 ))}
                                                 {isLoadingMoreCustomers && (
-                                                    <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
-                                                        <CircularProgress size={24} />
+                                                    <Box sx={{display: 'flex', justifyContent: 'center', p: 2}}>
+                                                        <CircularProgress size={24}/>
                                                     </Box>
                                                 )}
                                                 {hasMore && (
-                                                    <Box 
-                                                        ref={lastCustomerRefCallback} 
-                                                        sx={{ height: '20px' }}
+                                                    <Box
+                                                        ref={lastCustomerRefCallback}
+                                                        sx={{height: '20px'}}
                                                     />
                                                 )}
                                             </List>
@@ -1342,22 +1352,22 @@ const ConsultationList = () => {
                             </Grid>
 
                             {/* 오른쪽: 상담 날짜/시간 설정 */}
-                            <Grid item xs={12} md={6} sx={{ 
+                            <Grid item xs={12} md={6} sx={{
                                 height: '100%',
                                 '@media (max-width: 900px)': {
                                     height: 'auto'
                                 }
                             }}>
-                                <Paper elevation={0} sx={{ 
-                                    p: 2, 
-                                    borderRadius: 2, 
-                                    height: '100%', 
+                                <Paper elevation={0} sx={{
+                                    p: 2,
+                                    borderRadius: 2,
+                                    height: '100%',
                                     border: '1px solid #e0e0e0',
                                     '@media (max-width: 900px)': {
                                         height: 'auto'
                                     }
                                 }}>
-                                    <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'bold' }}>
+                                    <Typography variant="subtitle1" sx={{mb: 2, fontWeight: 'bold'}}>
                                         상담 일정
                                     </Typography>
                                     <Grid container spacing={2}>
@@ -1409,40 +1419,40 @@ const ConsultationList = () => {
                         onClick={handleCreateConsultation}
                         variant="contained"
                         disabled={createLoading || !selectedCustomer || !scheduledDate || !scheduledTime}
-                        sx={{ 
-                            bgcolor: "#007ea7", 
-                            "&:hover": { bgcolor: "#003459" }
+                        sx={{
+                            bgcolor: "#007ea7",
+                            "&:hover": {bgcolor: "#003459"}
                         }}
                     >
-                        {createLoading ? <CircularProgress size={24} /> : "등록"}
+                        {createLoading ? <CircularProgress size={24}/> : "등록"}
                     </Button>
                 </DialogActions>
             </Dialog>
 
             {/* 상태 변경 성공 메시지 */}
             <Snackbar open={statusSuccess} autoHideDuration={3000} onClose={() => setStatusSuccess(false)}>
-                <Alert onClose={() => setStatusSuccess(false)} severity="success" sx={{ width: "100%" }}>
+                <Alert onClose={() => setStatusSuccess(false)} severity="success" sx={{width: "100%"}}>
                     상담 상태가 성공적으로 변경되었습니다.
                 </Alert>
             </Snackbar>
 
             {/* 상태 변경 에러 메시지 */}
             <Snackbar open={!!statusError} autoHideDuration={3000} onClose={() => setStatusError(null)}>
-                <Alert onClose={() => setStatusError(null)} severity="error" sx={{ width: "100%" }}>
+                <Alert onClose={() => setStatusError(null)} severity="error" sx={{width: "100%"}}>
                     {statusError}
                 </Alert>
             </Snackbar>
 
             {/* 상담 등록 성공 메시지 */}
             <Snackbar open={createSuccess} autoHideDuration={3000} onClose={() => setCreateSuccess(false)}>
-                <Alert onClose={() => setCreateSuccess(false)} severity="success" sx={{ width: "100%" }}>
+                <Alert onClose={() => setCreateSuccess(false)} severity="success" sx={{width: "100%"}}>
                     상담이 성공적으로 등록되었습니다.
                 </Alert>
             </Snackbar>
 
             {/* 상담 등록 에러 메시지 */}
             <Snackbar open={!!createError} autoHideDuration={3000} onClose={() => setCreateError(null)}>
-                <Alert onClose={() => setCreateError(null)} severity="error" sx={{ width: "100%" }}>
+                <Alert onClose={() => setCreateError(null)} severity="error" sx={{width: "100%"}}>
                     {createError}
                 </Alert>
             </Snackbar>

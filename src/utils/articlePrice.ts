@@ -1,13 +1,13 @@
 export const convertKoreanPriceToNumber = (price: string): number => {
     if (!price) return 0;
-    
+
     // 숫자만 추출
     const numbers = price.match(/\d+/g);
     if (!numbers) return 0;
-    
+
     let result = 0;
     const priceStr = price.replace(/\s/g, '');
-    
+
     // 억 단위 처리
     const eokIndex = priceStr.indexOf('억');
     if (eokIndex !== -1) {
@@ -15,7 +15,7 @@ export const convertKoreanPriceToNumber = (price: string): number => {
         const eokNum = parseInt(eokStr.replace(/[^0-9]/g, ''));
         result += eokNum * 100000000;
     }
-    
+
     // 만 단위 처리
     const manIndex = priceStr.indexOf('만');
     if (manIndex !== -1) {
@@ -23,7 +23,7 @@ export const convertKoreanPriceToNumber = (price: string): number => {
         const manNum = parseInt(manStr.replace(/[^0-9]/g, ''));
         result += manNum * 10000;
     }
-    
+
     return result;
 };
 
@@ -35,7 +35,7 @@ export const formatPrice = (price: number): string => {
     if (!price) return '0';
     const priceStr = price.toString();
     const length = priceStr.length;
-    
+
     if (length <= 4) {
         return `${priceStr}만`;
     } else if (length <= 8) {

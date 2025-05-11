@@ -1,6 +1,6 @@
-import { Box, CircularProgress, List, Typography } from "@mui/material";
+import {Box, CircularProgress, List, Typography} from "@mui/material";
 import React from "react";
-import type { ArticleResponse } from "../types/article";
+import type {ArticleResponse} from "../types/article";
 import ArticleItem from "./ArticleItem";
 
 interface ArticleListViewProps {
@@ -14,14 +14,14 @@ interface ArticleListViewProps {
 }
 
 const ArticleListView: React.FC<ArticleListViewProps> = ({
-    articles,
-    selectedArticle,
-    isLoadingMore,
-    hasMore,
-    onArticleClick,
-    onLoadMore,
-    isClusterView = false
-}) => {
+                                                             articles,
+                                                             selectedArticle,
+                                                             isLoadingMore,
+                                                             hasMore,
+                                                             onArticleClick,
+                                                             onLoadMore,
+                                                             isClusterView = false
+                                                         }) => {
     const loadMoreRef = React.useRef<HTMLLIElement>(null);
 
     React.useEffect(() => {
@@ -33,7 +33,7 @@ const ArticleListView: React.FC<ArticleListViewProps> = ({
                     onLoadMore();
                 }
             },
-            { threshold: 1.0 }
+            {threshold: 1.0}
         );
 
         if (loadMoreRef.current) {
@@ -51,16 +51,22 @@ const ArticleListView: React.FC<ArticleListViewProps> = ({
                 bgcolor: "background.default"
             }}
         >
-            <List sx={{ p: 2 }}>
+            <List sx={{p: 2}}>
                 {articles.length === 0 ? (
-                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 8 }}>
-                        <Typography variant="body1" sx={{ color: 'text.secondary', mb: 1 }}>
-                            {isClusterView 
+                    <Box sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        py: 8
+                    }}>
+                        <Typography variant="body1" sx={{color: 'text.secondary', mb: 1}}>
+                            {isClusterView
                                 ? '해당 지역에 매물이 없습니다.'
                                 : '표시할 매물이 없습니다.'}
                         </Typography>
-                        <Typography variant="body2" sx={{ color: 'text.disabled' }}>
-                            {isClusterView 
+                        <Typography variant="body2" sx={{color: 'text.disabled'}}>
+                            {isClusterView
                                 ? '다른 지역으로 이동해보세요.'
                                 : '원을 클릭하거나 필터 조건을 변경해보세요.'}
                         </Typography>
@@ -75,7 +81,7 @@ const ArticleListView: React.FC<ArticleListViewProps> = ({
                                     onClick={() => onArticleClick(article)}
                                 />
                                 {index === articles.length - 1 && (
-                                    <li ref={loadMoreRef} style={{ height: 1 }} />
+                                    <li ref={loadMoreRef} style={{height: 1}}/>
                                 )}
                             </React.Fragment>
                         ))}
@@ -83,8 +89,8 @@ const ArticleListView: React.FC<ArticleListViewProps> = ({
                 )}
 
                 {isLoadingMore && (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
-                        <CircularProgress size={24} />
+                    <Box sx={{display: 'flex', justifyContent: 'center', py: 2}}>
+                        <CircularProgress size={24}/>
                     </Box>
                 )}
             </List>

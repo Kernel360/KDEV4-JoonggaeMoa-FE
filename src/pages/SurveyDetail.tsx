@@ -1,52 +1,48 @@
 "use client"
 
-import React, { useState, useEffect } from 'react';
+import React, {useEffect, useState} from 'react';
 import {
+    Alert,
     Box,
-    Container,
-    Typography,
-    Paper,
-    Grid,
     Button,
-    IconButton,
-    CircularProgress,
-    Divider,
-    List,
+    Checkbox,
     Chip,
+    CircularProgress,
+    Container,
     Dialog,
     DialogActions,
     DialogContent,
-    DialogContentText,
     DialogTitle,
-    Snackbar,
-    Alert,
-    RadioGroup,
+    Divider,
     FormControlLabel,
-    Radio,
     FormGroup,
-    Checkbox,
-    TextField,
+    Grid,
+    IconButton,
+    List,
+    ListItem,
+    ListItemText,
+    Paper,
+    Radio,
+    Snackbar,
     Table,
     TableBody,
     TableCell,
     TableContainer,
     TableHead,
     TableRow,
-    ListItem,
-    ListItemText,
+    TextField,
+    Typography,
 } from "@mui/material"
-import { ArrowBack, Edit, Delete, ContentCopy, Add } from "@mui/icons-material"
-import { useNavigate, useParams } from "react-router-dom"
-import { useAuth } from '../context/AuthContext'
+import {ArrowBack, ContentCopy, Delete, Edit} from "@mui/icons-material"
+import {useNavigate, useParams} from "react-router-dom"
+import {useAuth} from '../context/AuthContext'
 import api from '../services/api'
-import { SurveyDetailResponse } from '../types/survey'
-import { format } from 'date-fns'
-import { ko } from 'date-fns/locale'
+import {SurveyDetailResponse} from '../types/survey'
 
 const SurveyDetail: React.FC = () => {
     const navigate = useNavigate()
-    const { id } = useParams<{ id: string }>()
-    const { isAuthenticated } = useAuth()
+    const {id} = useParams<{ id: string }>()
+    const {isAuthenticated} = useAuth()
     const [survey, setSurvey] = useState<SurveyDetailResponse | null>(null)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -134,17 +130,17 @@ const SurveyDetail: React.FC = () => {
 
         const surveyUrl = `${window.location.origin}/surveys/submit/${id}`
 
-        if(navigator.clipboard && window.isSecureContext){
+        if (navigator.clipboard && window.isSecureContext) {
             navigator.clipboard
-            .writeText(surveyUrl)
-            .then(() => {
-                setCopyUrlSuccess(true)
-                setTimeout(() => setCopyUrlSuccess(false), 3000)
-            })
-            .catch((err) => {
-                console.error("URL 복사 실패:", err)
-                setError("URL을 클립보드에 복사하는데 실패했습니다.")
-            })
+                .writeText(surveyUrl)
+                .then(() => {
+                    setCopyUrlSuccess(true)
+                    setTimeout(() => setCopyUrlSuccess(false), 3000)
+                })
+                .catch((err) => {
+                    console.error("URL 복사 실패:", err)
+                    setError("URL을 클립보드에 복사하는데 실패했습니다.")
+                })
 
             return;
         }
@@ -153,26 +149,26 @@ const SurveyDetail: React.FC = () => {
 
     }
 
-    const copy =  (textToCopy : string) => {
+    const copy = (textToCopy: string) => {
         const textArea = document.createElement("textarea");
-               textArea.value = textToCopy;
-                   
-               // Move textarea out of the viewport so it's not visible
-               textArea.style.position = "absolute";
-               textArea.style.left = "-999999px";
-                   
-               document.body.prepend(textArea);
-               textArea.select();
-       
-               try {
-                   document.execCommand('copy');
-                   setCopyUrlSuccess(true)
-               } catch (error) {
-                   console.error(error);
-               } finally {
-                   textArea.remove();
-               }
-       }
+        textArea.value = textToCopy;
+
+        // Move textarea out of the viewport so it's not visible
+        textArea.style.position = "absolute";
+        textArea.style.left = "-999999px";
+
+        document.body.prepend(textArea);
+        textArea.select();
+
+        try {
+            document.execCommand('copy');
+            setCopyUrlSuccess(true)
+        } catch (error) {
+            console.error(error);
+        } finally {
+            textArea.remove();
+        }
+    }
 
     // 질문 타입에 따른 UI 렌더링
     const renderQuestionOptions = (question: SurveyDetailResponse["questions"][0]) => {
@@ -183,7 +179,7 @@ const SurveyDetail: React.FC = () => {
                         {question.options.map((option, optionIndex) => (
                             <FormControlLabel
                                 key={optionIndex}
-                                control={<Radio disabled />}
+                                control={<Radio disabled/>}
                                 label={option}
                             />
                         ))}
@@ -195,14 +191,14 @@ const SurveyDetail: React.FC = () => {
                         {question.options.map((option, optionIndex) => (
                             <FormControlLabel
                                 key={optionIndex}
-                                control={<Checkbox disabled />}
+                                control={<Checkbox disabled/>}
                                 label={option}
                             />
                         ))}
                     </FormGroup>
                 );
             case "TEXT":
-                return <TextField fullWidth disabled />;
+                return <TextField fullWidth disabled/>;
             default:
                 return null;
         }
@@ -227,8 +223,8 @@ const SurveyDetail: React.FC = () => {
 
     if (loading) {
         return (
-            <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
-                <CircularProgress />
+            <Box sx={{display: "flex", justifyContent: "center", alignItems: "center", height: "100vh"}}>
+                <CircularProgress/>
             </Box>
         )
     }
@@ -236,11 +232,11 @@ const SurveyDetail: React.FC = () => {
     if (error || !survey) {
         return (
             <Container>
-                <Box sx={{ mt: 5, textAlign: "center" }}>
+                <Box sx={{mt: 5, textAlign: "center"}}>
                     <Typography variant="h6" color="error" gutterBottom>
                         {error || "설문을 찾을 수 없습니다."}
                     </Typography>
-                    <Button variant="contained" onClick={() => navigate("/survey")} sx={{ mt: 2 }}>
+                    <Button variant="contained" onClick={() => navigate("/survey")} sx={{mt: 2}}>
                         설문 목록으로 돌아가기
                     </Button>
                 </Box>
@@ -249,24 +245,24 @@ const SurveyDetail: React.FC = () => {
     }
 
     return (
-        <Box sx={{ flexGrow: 1, minHeight: "100vh" }}>
-            <Container maxWidth="md" sx={{ mt: 4, mb: 4, boxShadow: 3 }}>
-                <Paper elevation={0} sx={{ p: 4 }}>
-                    <Box sx={{ display: "flex", alignItems: "center", mb: 4}}>
-                        <IconButton onClick={() => navigate("/survey")} sx={{ mr: 1 }}>
-                            <ArrowBack />
+        <Box sx={{flexGrow: 1, minHeight: "100vh"}}>
+            <Container maxWidth="md" sx={{mt: 4, mb: 4, boxShadow: 3}}>
+                <Paper elevation={0} sx={{p: 4}}>
+                    <Box sx={{display: "flex", alignItems: "center", mb: 4}}>
+                        <IconButton onClick={() => navigate("/survey")} sx={{mr: 1}}>
+                            <ArrowBack/>
                         </IconButton>
-                        <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                        <Typography variant="h6" sx={{fontWeight: "bold"}}>
                             설문 상세 정보
                         </Typography>
-                        <Box sx={{ flexGrow: 1 }} />
+                        <Box sx={{flexGrow: 1}}/>
                         {isAuthenticated && (
-                            <Box sx={{ display: 'flex', gap: 2 }}>
+                            <Box sx={{display: 'flex', gap: 2}}>
                                 {!editMode ? (
                                     <>
                                         <Button
                                             variant="outlined"
-                                            startIcon={<Edit />}
+                                            startIcon={<Edit/>}
                                             onClick={() => navigate(`/survey/edit/${id}`)}
                                             sx={{
                                                 borderColor: '#007ea7',
@@ -281,7 +277,7 @@ const SurveyDetail: React.FC = () => {
                                         </Button>
                                         <Button
                                             variant="outlined"
-                                            startIcon={<Delete />}
+                                            startIcon={<Delete/>}
                                             onClick={handleDeleteClick}
                                             sx={{
                                                 borderColor: '#dc3545',
@@ -316,7 +312,7 @@ const SurveyDetail: React.FC = () => {
                                             onClick={handleSaveClick}
                                             sx={{
                                                 bgcolor: '#007ea7',
-                                                '&:hover': { bgcolor: '#003459' }
+                                                '&:hover': {bgcolor: '#003459'}
                                             }}
                                         >
                                             저장
@@ -333,7 +329,7 @@ const SurveyDetail: React.FC = () => {
                             <Typography variant="subtitle2" color="textSecondary">
                                 설문 제목
                             </Typography>
-                            <Typography variant="h5" sx={{ mt: 1, mb: 2, fontWeight: "bold", wordBreak: "break-word" }}>
+                            <Typography variant="h5" sx={{mt: 1, mb: 2, fontWeight: "bold", wordBreak: "break-word"}}>
                                 {survey.title}
                             </Typography>
                         </Grid>
@@ -341,7 +337,8 @@ const SurveyDetail: React.FC = () => {
                             <Typography variant="subtitle2" color="textSecondary">
                                 설문 설명
                             </Typography>
-                            <Typography variant="body1" sx={{ mt: 1, mb: 3, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                            <Typography variant="body1"
+                                        sx={{mt: 1, mb: 3, whiteSpace: "pre-wrap", wordBreak: "break-word"}}>
                                 {survey.description || "설명이 없습니다."}
                             </Typography>
                         </Grid>
@@ -349,7 +346,7 @@ const SurveyDetail: React.FC = () => {
                             <Typography variant="subtitle2" color="textSecondary">
                                 등록일
                             </Typography>
-                            <Typography variant="body1" sx={{ mt: 1, mb: 3 }}>
+                            <Typography variant="body1" sx={{mt: 1, mb: 3}}>
                                 {formatDate(survey.createdAt)}
                             </Typography>
                         </Grid>
@@ -383,11 +380,11 @@ const SurveyDetail: React.FC = () => {
                                     {`${window.location.origin}/surveys/submit/${id}`}
                                 </Typography>
                                 <Button
-                                    startIcon={<ContentCopy />}
+                                    startIcon={<ContentCopy/>}
                                     onClick={handleCopyUrl}
                                     size="small"
                                     variant="outlined"
-                                    sx={{ ml: 2 }}
+                                    sx={{ml: 2}}
                                 >
                                     URL 복사
                                 </Button>
@@ -395,16 +392,16 @@ const SurveyDetail: React.FC = () => {
                         </Grid>
                     </Grid>
 
-                    <Divider sx={{ my: 3 }} />
+                    <Divider sx={{my: 3}}/>
 
-                    <Typography variant="h6" sx={{ mb: 3 }}>
+                    <Typography variant="h6" sx={{mb: 3}}>
                         질문 목록
                     </Typography>
 
                     <TableContainer>
                         <Table>
                             <TableHead>
-                                <TableRow sx={{ backgroundColor: '#e9ecef' }}>
+                                <TableRow sx={{backgroundColor: '#e9ecef'}}>
                                     <TableCell>질문</TableCell>
                                     <TableCell>유형</TableCell>
                                     <TableCell>필수 여부</TableCell>
@@ -414,34 +411,39 @@ const SurveyDetail: React.FC = () => {
                             <TableBody>
                                 {survey.questions.map((question, index) => (
                                     <TableRow key={index}>
-                                        <TableCell sx={{ maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                        <TableCell sx={{
+                                            maxWidth: 300,
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            whiteSpace: 'nowrap'
+                                        }}>
                                             {question.content}
                                         </TableCell>
                                         <TableCell>
                                             {question.type === 'RADIO' ? '객관식 (단일 선택)' :
-                                             question.type === 'CHECKBOX' ? '객관식 (다중 선택)' :
-                                             '주관식'}
+                                                question.type === 'CHECKBOX' ? '객관식 (다중 선택)' :
+                                                    '주관식'}
                                         </TableCell>
                                         <TableCell>
                                             {question.isRequired ? (
-                                                <Chip label="필수" color="primary" size="small" />
+                                                <Chip label="필수" color="primary" size="small"/>
                                             ) : (
-                                                <Chip label="선택" variant="outlined" size="small" />
+                                                <Chip label="선택" variant="outlined" size="small"/>
                                             )}
                                         </TableCell>
                                         <TableCell>
-                                                <List dense>
-                                                    {question.options.map((option, optionIndex) => (
-                                                        <ListItem key={optionIndex} sx={{ py: 0.5 }}>
-                                                            {question.type === 'RADIO' ? (
-                                                                <Radio size="small" disabled />
-                                                            ) : (
-                                                                <Checkbox size="small" disabled />
-                                                            )}
-                                                            <ListItemText primary={option} />
-                                                        </ListItem>
-                                                    ))}
-                                                </List>
+                                            <List dense>
+                                                {question.options.map((option, optionIndex) => (
+                                                    <ListItem key={optionIndex} sx={{py: 0.5}}>
+                                                        {question.type === 'RADIO' ? (
+                                                            <Radio size="small" disabled/>
+                                                        ) : (
+                                                            <Checkbox size="small" disabled/>
+                                                        )}
+                                                        <ListItemText primary={option}/>
+                                                    </ListItem>
+                                                ))}
+                                            </List>
                                         </TableCell>
                                     </TableRow>
                                 ))}
@@ -464,8 +466,8 @@ const SurveyDetail: React.FC = () => {
                     }
                 }}
             >
-                <DialogTitle sx={{ 
-                    borderBottom: '2px solid #dc3545', 
+                <DialogTitle sx={{
+                    borderBottom: '2px solid #dc3545',
                     color: '#dc3545',
                     fontWeight: 'bold',
                     fontSize: '1.5rem',
@@ -473,12 +475,12 @@ const SurveyDetail: React.FC = () => {
                 }}>
                     설문 삭제
                 </DialogTitle>
-                <DialogContent sx={{ mt: 2 }}>
+                <DialogContent sx={{mt: 2}}>
                     <Typography>
                         이 설문을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
                     </Typography>
                 </DialogContent>
-                <DialogActions sx={{ p: 3, borderTop: '1px solid #e9ecef' }}>
+                <DialogActions sx={{p: 3, borderTop: '1px solid #e9ecef'}}>
                     <Button
                         onClick={() => setDeleteDialogOpen(false)}
                         variant="outlined"
@@ -499,35 +501,35 @@ const SurveyDetail: React.FC = () => {
                         disabled={deleteLoading}
                         sx={{
                             bgcolor: '#dc3545',
-                            '&:hover': { bgcolor: '#c82333' },
+                            '&:hover': {bgcolor: '#c82333'},
                             '&.Mui-disabled': {
                                 bgcolor: '#e9ecef',
                                 color: '#6c757d'
                             }
                         }}
                     >
-                        {deleteLoading ? <CircularProgress size={24} /> : '삭제'}
+                        {deleteLoading ? <CircularProgress size={24}/> : '삭제'}
                     </Button>
                 </DialogActions>
             </Dialog>
 
             {/* 성공 메시지 스낵바 */}
             <Snackbar open={!!successMessage} autoHideDuration={6000} onClose={() => setSuccessMessage(null)}>
-                <Alert onClose={() => setSuccessMessage(null)} severity="success" sx={{ width: "100%" }}>
+                <Alert onClose={() => setSuccessMessage(null)} severity="success" sx={{width: "100%"}}>
                     {successMessage}
                 </Alert>
             </Snackbar>
 
             {/* 에러 메시지 스낵바 */}
             <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError(null)}>
-                <Alert onClose={() => setError(null)} severity="error" sx={{ width: "100%" }}>
+                <Alert onClose={() => setError(null)} severity="error" sx={{width: "100%"}}>
                     {error}
                 </Alert>
             </Snackbar>
 
             {/* Add a new Snackbar for the copy URL success message */}
             <Snackbar open={copyUrlSuccess} autoHideDuration={3000} onClose={() => setCopyUrlSuccess(false)}>
-                <Alert onClose={() => setCopyUrlSuccess(false)} severity="success" sx={{ width: "100%" }}>
+                <Alert onClose={() => setCopyUrlSuccess(false)} severity="success" sx={{width: "100%"}}>
                     설문 URL이 클립보드에 복사되었습니다.
                 </Alert>
             </Snackbar>

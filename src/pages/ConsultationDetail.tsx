@@ -1,59 +1,48 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, {useEffect, useState} from "react"
 import {
-    Box,
-    Container,
-    Typography,
-    Paper,
-    Grid,
-    Button,
-    IconButton,
-    Chip,
-    TextField,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
-    SelectChangeEvent,
-    CircularProgress,
-    Snackbar,
     Alert,
-    Link,
+    Box,
+    Button,
+    Chip,
+    CircularProgress,
+    Container,
     Dialog,
-    DialogTitle,
+    DialogActions,
     DialogContent,
     DialogContentText,
-    DialogActions,
+    DialogTitle,
+    Grid,
+    IconButton,
+    Paper,
+    SelectChangeEvent,
+    Snackbar,
+    TextField,
+    Typography,
 } from "@mui/material"
+import {Add, ArrowBack, ChevronLeft, ChevronRight, Edit, Person, Save,} from "@mui/icons-material"
+import {Link as RouterLink, useLocation, useNavigate, useParams} from "react-router-dom"
+import {consultationApi} from "../services/consultationApi"
 import {
-    ArrowBack,
-    Edit,
-    Save,
-    Add,
-    Phone,
-    Email,
-    Cake,
-    Campaign,
-    Person,
-    ChevronLeft,
-    ChevronRight,
-} from "@mui/icons-material"
-import { useNavigate, useParams, Link as RouterLink, useLocation } from "react-router-dom"
-import { consultationApi } from "../services/consultationApi"
-import { ConsultationStatus, ConsultationResponse, ConsultationHistoryDto, ConsultationCreateRequest, ConsultationUpdateRequest, ConsultationDetailType } from "../types/consultation"
-import { format } from 'date-fns'
+    ConsultationCreateRequest,
+    ConsultationDetailType,
+    ConsultationHistoryDto,
+    ConsultationStatus,
+    ConsultationUpdateRequest
+} from "../types/consultation"
+import {format} from 'date-fns'
 
 // 상담 상태별 칩 색상 및 텍스트 - 새로운 상태 값에 맞게 업데이트
 const statusConfig = {
-    [ConsultationStatus.WAITING]: { color: "#e3f2fd", textColor: "#1976d2", label: "예약 대기" },
-    [ConsultationStatus.CONFIRMED]: { color: "#fff8e1", textColor: "#f57c00", label: "예약 확정" },
-    [ConsultationStatus.COMPLETED]: { color: "#e8f5e9", textColor: "#2e7d32", label: "진행 완료" },
-    [ConsultationStatus.CANCELED]: { color: "#ffebee", textColor: "#c62828", label: "예약 취소" },
+    [ConsultationStatus.WAITING]: {color: "#e3f2fd", textColor: "#1976d2", label: "예약 대기"},
+    [ConsultationStatus.CONFIRMED]: {color: "#fff8e1", textColor: "#f57c00", label: "예약 확정"},
+    [ConsultationStatus.COMPLETED]: {color: "#e8f5e9", textColor: "#2e7d32", label: "진행 완료"},
+    [ConsultationStatus.CANCELED]: {color: "#ffebee", textColor: "#c62828", label: "예약 취소"},
 }
 
 const ConsultationDetail = () => {
-    const { id: consultationId } = useParams<{ id: string }>()
+    const {id: consultationId} = useParams<{ id: string }>()
     const navigate = useNavigate()
     const location = useLocation()
     const [loading, setLoading] = useState(true)
@@ -94,7 +83,7 @@ const ConsultationDetail = () => {
         try {
             setLoading(true)
             setError(null)
-            
+
             if (!consultationId) {
                 setError("상담 ID가 필요합니다.")
                 return
@@ -108,7 +97,7 @@ const ConsultationDetail = () => {
 
             if (response.data?.data) {
                 setConsultationHistory(response.data.data)
-                
+
                 // Only fetch consultation by ID if we're not already loading it
                 if (currentlyEditingConsultationId && !isLoadingConsultation) {
                     await fetchConsultationById(currentlyEditingConsultationId)
@@ -133,15 +122,15 @@ const ConsultationDetail = () => {
         try {
             setIsLoadingConsultation(true)
             const response = await consultationApi.getConsultationById(consultationId)
-            
+
             if (response.data?.data) {
                 const consultation = response.data.data
-                
+
                 // Check if we're already editing this consultation
                 if (currentlyEditingConsultationId === consultationId && originalConsultationData) {
                     // Always preserve the user's edits
                     setSelectedConsultation(consultation)
-                    
+
                     // Update the original data to match the fetched consultation
                     setOriginalConsultationData({
                         consultationId: consultation.consultationId,
@@ -222,14 +211,14 @@ const ConsultationDetail = () => {
     const handleEditChange = (
         event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent<ConsultationStatus>
     ) => {
-        const { name, value } = event.target
-        
+        const {name, value} = event.target
+
         // 날짜 입력의 경우 연도를 4자리로 제한
         if (name === 'date') {
             const year = value.split('-')[0];
             if (year.length > 4) return;
         }
-        
+
         setEditFormData(prev => ({
             ...prev,
             [name]: value
@@ -252,7 +241,7 @@ const ConsultationDetail = () => {
         if (isNewConsultation) {
             const consultationDate = new Date(editFormData.date || "")
             const now = new Date()
-            
+
             if (consultationDate <= now) {
                 setSnackbar({
                     open: true,
@@ -276,30 +265,30 @@ const ConsultationDetail = () => {
                 if (response.data.success) {
                     // 새 상담이 생성되면 상담 목록을 새로고침
                     await fetchConsultationHistory()
-                    
+
                     // 모든 페이지를 검색하여 새로 생성된 상담을 찾음
                     let foundNewConsultation = false
                     let currentPage = 0
-                    
+
                     while (!foundNewConsultation) {
                         const historyResponse = await consultationApi.getConsultationHistoryByConsultationId(
                             parseInt(consultationId!, 10),
                             currentPage,
                             pageSize
                         )
-                        
+
                         if (!historyResponse.data?.data || historyResponse.data.data.consultations.content.length === 0) {
                             break
                         }
-                        
+
                         // 현재 페이지에서 새 상담을 찾음
                         const newConsultation = historyResponse.data.data.consultations.content.find(
-                            consultation => 
+                            consultation =>
                                 consultation.date === format(new Date(editFormData.date || ""), "yyyy-MM-dd HH:mm") &&
                                 consultation.purpose === editFormData.purpose &&
                                 consultation.memo === editFormData.memo
                         )
-                        
+
                         if (newConsultation) {
                             // 새 상담 정보로 수정 폼 업데이트
                             setEditFormData({
@@ -313,7 +302,7 @@ const ConsultationDetail = () => {
                             foundNewConsultation = true
                             break
                         }
-                        
+
                         currentPage++
                     }
                 }
@@ -349,30 +338,30 @@ const ConsultationDetail = () => {
     const handlePageChange = (newPage: number) => {
         // Store the currently editing consultation ID and form data before changing the page
         const editingId = currentlyEditingConsultationId
-        const currentFormData = { ...editFormData }
-        
+        const currentFormData = {...editFormData}
+
         // Update the current page
         setCurrentPage(newPage)
-        
+
         // Fetch the consultation history for the new page
         const fetchNewPageHistory = async () => {
             try {
                 setLoading(true)
                 console.log(`Fetching page ${newPage} for customer ${customerId}`)
-                
+
                 if (!customerId) {
                     console.error("Customer ID is missing")
                     return
                 }
-                
+
                 const response = await consultationApi.getConsultationHistoryByConsultationId(
-                    parseInt(consultationId, 10), 
-                    newPage, 
+                    parseInt(consultationId, 10),
+                    newPage,
                     pageSize
                 )
-                
+
                 console.log("Response received:", response)
-                
+
                 if (response.data?.data) {
                     setConsultationHistory(response.data.data)
                     console.log("Consultation history updated")
@@ -385,10 +374,10 @@ const ConsultationDetail = () => {
                 setLoading(false)
             }
         }
-        
+
         // Fetch the new page history
         fetchNewPageHistory()
-        
+
         // If we're editing a consultation, we need to fetch it again to ensure it's still available
         if (editingId) {
             // Fetch the consultation and preserve the user's edits
@@ -397,10 +386,10 @@ const ConsultationDetail = () => {
                     if (response.data?.data) {
                         // Update the selected consultation
                         setSelectedConsultation(response.data.data)
-                        
+
                         // Always restore the user's edits
                         setEditFormData(currentFormData)
-                        
+
                         // Update the original data to match the fetched consultation
                         setOriginalConsultationData({
                             consultationId: response.data.data.consultationId,
@@ -420,21 +409,21 @@ const ConsultationDetail = () => {
     const handleStatusChange = async (consultationId: number, newStatus: ConsultationStatus) => {
         try {
             await consultationApi.updateConsultationStatus(consultationId, newStatus)
-            
+
             // Update the selected consultation if it's the one being edited
             if (selectedConsultation && selectedConsultation.consultationId === consultationId) {
                 setSelectedConsultation({
                     ...selectedConsultation,
                     consultationStatus: newStatus
                 })
-                
+
                 // Also update the editFormData state to reflect the new status
                 setEditFormData(prev => ({
                     ...prev,
                     consultationStatus: newStatus
                 }))
             }
-            
+
             // Update the consultation in the history list
             if (consultationHistory) {
                 const updatedConsultations = consultationHistory.consultations.content.map(consultation => {
@@ -446,7 +435,7 @@ const ConsultationDetail = () => {
                     }
                     return consultation
                 })
-                
+
                 setConsultationHistory({
                     ...consultationHistory,
                     consultations: {
@@ -454,7 +443,7 @@ const ConsultationDetail = () => {
                         content: updatedConsultations
                     }
                 })
-                
+
                 // If the consultation being edited is in the history list, update the editFormData
                 if (currentlyEditingConsultationId === consultationId) {
                     setEditFormData(prev => ({
@@ -463,7 +452,7 @@ const ConsultationDetail = () => {
                     }))
                 }
             }
-            
+
             setSnackbar({
                 open: true,
                 message: "상담 상태가 변경되었습니다.",
@@ -491,7 +480,7 @@ const ConsultationDetail = () => {
     const handleStartEdit = (consultation: ConsultationDetailType) => {
         setSelectedConsultation(consultation)
         setIsNewConsultation(false)
-        
+
         // Store the original consultation data
         const consultationData: Partial<ConsultationDetailType> = {
             consultationId: consultation.consultationId,
@@ -500,7 +489,7 @@ const ConsultationDetail = () => {
             purpose: consultation.purpose,
             memo: consultation.memo,
         }
-        
+
         setOriginalConsultationData(consultationData)
         setEditFormData(consultationData)
         setViewMode('history')
@@ -517,8 +506,8 @@ const ConsultationDetail = () => {
 
     if (loading) {
         return (
-            <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
-                <CircularProgress />
+            <Box sx={{display: "flex", justifyContent: "center", alignItems: "center", height: "100vh"}}>
+                <CircularProgress/>
             </Box>
         )
     }
@@ -526,11 +515,11 @@ const ConsultationDetail = () => {
     if (error || !consultationHistory) {
         return (
             <Container>
-                <Box sx={{ mt: 5, textAlign: "center" }}>
+                <Box sx={{mt: 5, textAlign: "center"}}>
                     <Typography variant="h6" color="error" gutterBottom>
                         {error || "상담 내역을 찾을 수 없습니다."}
                     </Typography>
-                    <Button variant="contained" onClick={() => navigate("/consultation")} sx={{ mt: 2 }}>
+                    <Button variant="contained" onClick={() => navigate("/consultation")} sx={{mt: 2}}>
                         상담 목록으로 돌아가기
                     </Button>
                 </Box>
@@ -539,24 +528,29 @@ const ConsultationDetail = () => {
     }
 
     return (
-        <Box sx={{ flexGrow: 1, minHeight: "100vh", py: 3 }}>
+        <Box sx={{flexGrow: 1, minHeight: "100vh", py: 3}}>
             <Container maxWidth="xl">
                 {/* 헤더 & 고객 정보 카드 */}
-                <Box sx={{ mb: 3 }}>
-                    <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                        <IconButton onClick={() => navigate("/consultation")} sx={{ mr: 2 }}>
-                            <ArrowBack />
+                <Box sx={{mb: 3}}>
+                    <Box sx={{display: "flex", alignItems: "center", mb: 2}}>
+                        <IconButton onClick={() => navigate("/consultation")} sx={{mr: 2}}>
+                            <ArrowBack/>
                         </IconButton>
-                        <Typography variant="h6" sx={{ fontWeight: "bold", flexGrow: 1 }}>
+                        <Typography variant="h6" sx={{fontWeight: "bold", flexGrow: 1}}>
                             고객 상담 관리
                         </Typography>
                     </Box>
 
-                    <Paper elevation={0} sx={{ p: 3, borderRadius: 2, boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)' }}>
+                    <Paper elevation={0} sx={{
+                        p: 3,
+                        borderRadius: 2,
+                        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)'
+                    }}>
                         <Grid container spacing={3}>
                             <Grid item xs={12}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                                    <Typography variant="h6" component="h2" sx={{ flexGrow: 1, color: '#00171f', fontWeight: 'bold' }}>
+                                <Box sx={{display: 'flex', alignItems: 'center', mb: 2}}>
+                                    <Typography variant="h6" component="h2"
+                                                sx={{flexGrow: 1, color: '#00171f', fontWeight: 'bold'}}>
                                         고객 정보
                                     </Typography>
                                     <IconButton
@@ -565,73 +559,81 @@ const ConsultationDetail = () => {
                                         color="primary"
                                         size="small"
                                     >
-                                        <Person />
+                                        <Person/>
                                     </IconButton>
                                 </Box>
-                                <Paper sx={{ p: 2, bgcolor: '#f9fafb' }}>
+                                <Paper sx={{p: 2, bgcolor: '#f9fafb'}}>
                                     <Grid container spacing={3}>
                                         <Grid item xs={12} md={6}>
                                             <Grid container spacing={2}>
                                                 <Grid item xs={6}>
-                                                    <Typography variant="body2" sx={{ color: '#007ea7', fontWeight: 'medium' }}>
+                                                    <Typography variant="body2"
+                                                                sx={{color: '#007ea7', fontWeight: 'medium'}}>
                                                         이름
                                                     </Typography>
-                                                    <Typography variant="body1" sx={{ color: '#007ea7', mt: 0.5, fontWeight: 'bold' }}>
+                                                    <Typography variant="body1"
+                                                                sx={{color: '#007ea7', mt: 0.5, fontWeight: 'bold'}}>
                                                         {consultationHistory?.customerName}
                                                     </Typography>
                                                 </Grid>
                                                 <Grid item xs={6}>
-                                                    <Typography variant="body2" sx={{ color: '#6b7280', fontWeight: 'medium' }}>
+                                                    <Typography variant="body2"
+                                                                sx={{color: '#6b7280', fontWeight: 'medium'}}>
                                                         이메일
                                                     </Typography>
-                                                    <Typography variant="body1" sx={{ color: '#111827', mt: 0.5 }}>
+                                                    <Typography variant="body1" sx={{color: '#111827', mt: 0.5}}>
                                                         {consultationHistory?.customerEmail}
                                                     </Typography>
                                                 </Grid>
                                                 <Grid item xs={6}>
-                                                    <Typography variant="body2" sx={{ color: '#6b7280', fontWeight: 'medium' }}>
+                                                    <Typography variant="body2"
+                                                                sx={{color: '#6b7280', fontWeight: 'medium'}}>
                                                         전화번호
                                                     </Typography>
-                                                    <Typography variant="body1" sx={{ color: '#111827', mt: 0.5 }}>
+                                                    <Typography variant="body1" sx={{color: '#111827', mt: 0.5}}>
                                                         {consultationHistory?.customerPhone}
                                                     </Typography>
                                                 </Grid>
                                                 <Grid item xs={6}>
-                                                    <Typography variant="body2" sx={{ color: '#6b7280', fontWeight: 'medium' }}>
+                                                    <Typography variant="body2"
+                                                                sx={{color: '#6b7280', fontWeight: 'medium'}}>
                                                         직업
                                                     </Typography>
-                                                    <Typography variant="body1" sx={{ color: '#111827', mt: 0.5 }}>
+                                                    <Typography variant="body1" sx={{color: '#111827', mt: 0.5}}>
                                                         {consultationHistory?.customerJob || "-"}
                                                     </Typography>
                                                 </Grid>
                                             </Grid>
                                         </Grid>
-                                        <Grid item xs={12} md={6} sx={{ 
-                                            borderLeft: { md: '1px solid #e5e7eb' },
-                                            pl: { md: 3 }
+                                        <Grid item xs={12} md={6} sx={{
+                                            borderLeft: {md: '1px solid #e5e7eb'},
+                                            pl: {md: 3}
                                         }}>
                                             <Grid container spacing={2}>
                                                 <Grid item xs={6}>
-                                                    <Typography variant="body2" sx={{ color: '#6b7280', fontWeight: 'medium' }}>
+                                                    <Typography variant="body2"
+                                                                sx={{color: '#6b7280', fontWeight: 'medium'}}>
                                                         관심매물
                                                     </Typography>
-                                                    <Typography variant="body1" sx={{ color: '#111827', mt: 0.5 }}>
+                                                    <Typography variant="body1" sx={{color: '#111827', mt: 0.5}}>
                                                         {consultationHistory?.interestProperty || "-"}
                                                     </Typography>
                                                 </Grid>
                                                 <Grid item xs={6}>
-                                                    <Typography variant="body2" sx={{ color: '#6b7280', fontWeight: 'medium' }}>
+                                                    <Typography variant="body2"
+                                                                sx={{color: '#6b7280', fontWeight: 'medium'}}>
                                                         관심지역
                                                     </Typography>
-                                                    <Typography variant="body1" sx={{ color: '#111827', mt: 0.5 }}>
+                                                    <Typography variant="body1" sx={{color: '#111827', mt: 0.5}}>
                                                         {consultationHistory?.interestLocation || "-"}
                                                     </Typography>
                                                 </Grid>
                                                 <Grid item xs={6}>
-                                                    <Typography variant="body2" sx={{ color: '#6b7280', fontWeight: 'medium' }}>
+                                                    <Typography variant="body2"
+                                                                sx={{color: '#6b7280', fontWeight: 'medium'}}>
                                                         자산상태
                                                     </Typography>
-                                                    <Typography variant="body1" sx={{ color: '#111827', mt: 0.5 }}>
+                                                    <Typography variant="body1" sx={{color: '#111827', mt: 0.5}}>
                                                         {consultationHistory?.assetStatus || "-"}
                                                     </Typography>
                                                 </Grid>
@@ -647,15 +649,23 @@ const ConsultationDetail = () => {
                 <Grid container spacing={3}>
                     {/* 좌측: 상담 히스토리 리스트 또는 상세 정보 */}
                     <Grid item xs={12} md={6}>
-                        <Paper elevation={0} sx={{ p: 3, borderRadius: 2, height: '100%', display: 'flex', flexDirection: 'column', minHeight: '600px', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)' }}>
+                        <Paper elevation={0} sx={{
+                            p: 3,
+                            borderRadius: 2,
+                            height: '100%',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            minHeight: '600px',
+                            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)'
+                        }}>
                             {viewMode === 'history' ? (
-                                <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                                    <Typography variant="h6" sx={{ mb: 3, fontWeight: "bold", color: '#111827' }}>
+                                <Box sx={{display: 'flex', flexDirection: 'column', height: '100%'}}>
+                                    <Typography variant="h6" sx={{mb: 3, fontWeight: "bold", color: '#111827'}}>
                                         상담 히스토리
                                     </Typography>
 
-                                    <Box sx={{ 
-                                        flexGrow: 1, 
+                                    <Box sx={{
+                                        flexGrow: 1,
                                         overflow: 'auto',
                                         minHeight: '400px',
                                         maxHeight: 'calc(100vh - 300px)',
@@ -685,11 +695,16 @@ const ConsultationDetail = () => {
                                                         justifyContent: 'space-between'
                                                     }}
                                                 >
-                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                                                    <Box sx={{
+                                                        display: 'flex',
+                                                        justifyContent: 'space-between',
+                                                        alignItems: 'center',
+                                                        mb: 1
+                                                    }}>
                                                         <Typography variant="subtitle2" color="text.secondary">
                                                             {consultation.date}
                                                         </Typography>
-                                                        <Box sx={{ display: 'flex', gap: 1 }}>
+                                                        <Box sx={{display: 'flex', gap: 1}}>
                                                             <Chip
                                                                 label={statusConfig[consultation.consultationStatus]?.label}
                                                                 size="small"
@@ -700,7 +715,7 @@ const ConsultationDetail = () => {
                                                                 }}
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    
+
                                                                     // Close any other open menu
                                                                     if (openStatusMenuId !== null) {
                                                                         const existingMenu = document.getElementById(`status-menu-${openStatusMenuId}`);
@@ -708,30 +723,30 @@ const ConsultationDetail = () => {
                                                                             document.body.removeChild(existingMenu);
                                                                         }
                                                                     }
-                                                                    
+
                                                                     // Set this menu as the open one
                                                                     setOpenStatusMenuId(consultation.consultationId);
-                                                                    
+
                                                                     // Create a container for the menu that will be positioned relative to the viewport
                                                                     const menuContainer = document.createElement('div');
                                                                     menuContainer.id = `status-menu-${consultation.consultationId}`;
                                                                     menuContainer.style.position = 'fixed';
                                                                     menuContainer.style.zIndex = '1000';
-                                                                    
+
                                                                     // Get the position of the chip relative to the viewport
                                                                     const chipRect = e.currentTarget.getBoundingClientRect();
-                                                                    
+
                                                                     // Position the menu below the chip
                                                                     menuContainer.style.top = `${chipRect.bottom}px`;
                                                                     menuContainer.style.left = `${chipRect.left}px`;
-                                                                    
+
                                                                     // Create the menu content
                                                                     const menu = document.createElement('div');
                                                                     menu.style.backgroundColor = 'white';
                                                                     menu.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
                                                                     menu.style.borderRadius = '4px';
                                                                     menu.style.padding = '4px';
-                                                                    
+
                                                                     Object.values(ConsultationStatus).forEach((status) => {
                                                                         if (status !== consultation.consultationStatus) {
                                                                             const option = document.createElement('div');
@@ -751,10 +766,10 @@ const ConsultationDetail = () => {
                                                                             menu.appendChild(option);
                                                                         }
                                                                     });
-                                                                    
+
                                                                     menuContainer.appendChild(menu);
                                                                     document.body.appendChild(menuContainer);
-                                                                    
+
                                                                     const closeMenu = (e: MouseEvent) => {
                                                                         if (!menuContainer.contains(e.target as Node)) {
                                                                             document.body.removeChild(menuContainer);
@@ -762,7 +777,7 @@ const ConsultationDetail = () => {
                                                                             setOpenStatusMenuId(null);
                                                                         }
                                                                     };
-                                                                    
+
                                                                     setTimeout(() => {
                                                                         document.addEventListener('click', closeMenu);
                                                                     }, 0);
@@ -770,10 +785,14 @@ const ConsultationDetail = () => {
                                                             />
                                                         </Box>
                                                     </Box>
-                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                        <Typography 
-                                                            variant="subtitle1" 
-                                                            sx={{ 
+                                                    <Box sx={{
+                                                        display: 'flex',
+                                                        justifyContent: 'space-between',
+                                                        alignItems: 'center'
+                                                    }}>
+                                                        <Typography
+                                                            variant="subtitle1"
+                                                            sx={{
                                                                 fontWeight: "medium",
                                                                 minHeight: '24px',
                                                                 display: 'flex',
@@ -781,19 +800,19 @@ const ConsultationDetail = () => {
                                                                 flex: 1,
                                                                 mr: 1,
                                                                 color: '#111827'
-                                                            }} 
+                                                            }}
                                                             noWrap
                                                         >
                                                             {consultation.purpose || ""}
                                                         </Typography>
                                                         <Button
                                                             size="small"
-                                                            startIcon={<Edit />}
+                                                            startIcon={<Edit/>}
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
                                                                 handleEditClick(consultation);
                                                             }}
-                                                            sx={{ 
+                                                            sx={{
                                                                 color: '#007ea7',
                                                                 '&:hover': {
                                                                     backgroundColor: 'rgba(0, 126, 167, 0.08)',
@@ -807,10 +826,10 @@ const ConsultationDetail = () => {
                                                 </Box>
                                             ))
                                         ) : (
-                                            <Box sx={{ 
-                                                display: 'flex', 
-                                                justifyContent: 'center', 
-                                                alignItems: 'center', 
+                                            <Box sx={{
+                                                display: 'flex',
+                                                justifyContent: 'center',
+                                                alignItems: 'center',
                                                 height: '100%',
                                                 color: 'text.secondary'
                                             }}>
@@ -820,35 +839,48 @@ const ConsultationDetail = () => {
                                     </Box>
 
                                     {/* 페이지네이션 컨트롤 */}
-                                    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2, gap: 1, pt: 2, borderTop: '1px solid', borderColor: '#e5e7eb' }}>
+                                    <Box sx={{
+                                        display: 'flex',
+                                        justifyContent: 'center',
+                                        mt: 2,
+                                        gap: 1,
+                                        pt: 2,
+                                        borderTop: '1px solid',
+                                        borderColor: '#e5e7eb'
+                                    }}>
                                         <Button
                                             size="small"
                                             onClick={() => handlePageChange(currentPage - 1)}
                                             disabled={currentPage === 0}
-                                            startIcon={<ChevronLeft />}
-                                            sx={{ color: '#007ea7' }}
+                                            startIcon={<ChevronLeft/>}
+                                            sx={{color: '#007ea7'}}
                                         >
                                             이전
                                         </Button>
-                                        <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center' }}>
+                                        <Typography variant="body2" sx={{display: 'flex', alignItems: 'center'}}>
                                             {currentPage + 1} / {consultationHistory.consultations.totalPages}
                                         </Typography>
                                         <Button
                                             size="small"
                                             onClick={() => handlePageChange(currentPage + 1)}
                                             disabled={currentPage >= consultationHistory.consultations.totalPages - 1}
-                                            endIcon={<ChevronRight />}
-                                            sx={{ color: '#007ea7' }}
+                                            endIcon={<ChevronRight/>}
+                                            sx={{color: '#007ea7'}}
                                         >
                                             다음
                                         </Button>
                                     </Box>
                                 </Box>
                             ) : (
-                                <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                            <Typography variant="h6" sx={{ fontWeight: "bold", mr: 2, color: '#111827' }}>
+                                <Box sx={{display: 'flex', flexDirection: 'column', height: '100%'}}>
+                                    <Box sx={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        mb: 3
+                                    }}>
+                                        <Box sx={{display: 'flex', alignItems: 'center'}}>
+                                            <Typography variant="h6" sx={{fontWeight: "bold", mr: 2, color: '#111827'}}>
                                                 상담 상세 정보
                                             </Typography>
                                             {selectedConsultation && (
@@ -862,7 +894,7 @@ const ConsultationDetail = () => {
                                                     }}
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        
+
                                                         // Close any other open menu
                                                         if (openStatusMenuId !== null) {
                                                             const existingMenu = document.getElementById(`status-menu-${openStatusMenuId}`);
@@ -870,30 +902,30 @@ const ConsultationDetail = () => {
                                                                 document.body.removeChild(existingMenu);
                                                             }
                                                         }
-                                                        
+
                                                         // Set this menu as the open one
                                                         setOpenStatusMenuId(selectedConsultation.consultationId);
-                                                        
+
                                                         // Create a container for the menu that will be positioned relative to the viewport
                                                         const menuContainer = document.createElement('div');
                                                         menuContainer.id = `status-menu-${selectedConsultation.consultationId}`;
                                                         menuContainer.style.position = 'fixed';
                                                         menuContainer.style.zIndex = '1000';
-                                                        
+
                                                         // Get the position of the chip relative to the viewport
                                                         const chipRect = e.currentTarget.getBoundingClientRect();
-                                                        
+
                                                         // Position the menu below the chip
                                                         menuContainer.style.top = `${chipRect.bottom}px`;
                                                         menuContainer.style.left = `${chipRect.left}px`;
-                                                        
+
                                                         // Create the menu content
                                                         const menu = document.createElement('div');
                                                         menu.style.backgroundColor = 'white';
                                                         menu.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
                                                         menu.style.borderRadius = '4px';
                                                         menu.style.padding = '4px';
-                                                        
+
                                                         Object.values(ConsultationStatus).forEach((status) => {
                                                             if (status !== selectedConsultation.consultationStatus) {
                                                                 const option = document.createElement('div');
@@ -913,10 +945,10 @@ const ConsultationDetail = () => {
                                                                 menu.appendChild(option);
                                                             }
                                                         });
-                                                        
+
                                                         menuContainer.appendChild(menu);
                                                         document.body.appendChild(menuContainer);
-                                                        
+
                                                         const closeMenu = (e: MouseEvent) => {
                                                             if (!menuContainer.contains(e.target as Node)) {
                                                                 document.body.removeChild(menuContainer);
@@ -924,7 +956,7 @@ const ConsultationDetail = () => {
                                                                 setOpenStatusMenuId(null);
                                                             }
                                                         };
-                                                        
+
                                                         setTimeout(() => {
                                                             document.addEventListener('click', closeMenu);
                                                         }, 0);
@@ -935,9 +967,9 @@ const ConsultationDetail = () => {
                                         <Box>
                                             <Button
                                                 variant="contained"
-                                                startIcon={<Edit />}
+                                                startIcon={<Edit/>}
                                                 onClick={() => handleEditClick(selectedConsultation!)}
-                                                sx={{ 
+                                                sx={{
                                                     mr: 1,
                                                     bgcolor: '#007ea7',
                                                     '&:hover': {
@@ -949,9 +981,9 @@ const ConsultationDetail = () => {
                                             </Button>
                                             <Button
                                                 variant="outlined"
-                                                startIcon={<ArrowBack />}
+                                                startIcon={<ArrowBack/>}
                                                 onClick={handleBackToHistory}
-                                                sx={{ 
+                                                sx={{
                                                     borderColor: '#007ea7',
                                                     color: '#007ea7',
                                                     '&:hover': {
@@ -965,45 +997,64 @@ const ConsultationDetail = () => {
                                             </Button>
                                         </Box>
                                     </Box>
-                                    
+
                                     {selectedConsultation && (
-                                        <Box sx={{ 
-                                            flexGrow: 1, 
+                                        <Box sx={{
+                                            flexGrow: 1,
                                             overflow: 'auto',
                                             display: 'flex',
                                             flexDirection: 'column'
                                         }}>
-                                            <Grid container spacing={2} sx={{ height: '100%' }}>
+                                            <Grid container spacing={2} sx={{height: '100%'}}>
                                                 <Grid item xs={12}>
                                                     <Grid container spacing={2}>
                                                         <Grid item xs={12} sm={6}>
-                                                            <Typography variant="subtitle1" gutterBottom sx={{ color: '#374151', fontWeight: 'medium' }}>
+                                                            <Typography variant="subtitle1" gutterBottom
+                                                                        sx={{color: '#374151', fontWeight: 'medium'}}>
                                                                 상담 일시
                                                             </Typography>
-                                                            <Paper variant="outlined" sx={{ p: 2, bgcolor: '#f9fafb' }}>
-                                                                <Typography variant="body1" sx={{ color: '#111827' }}>
+                                                            <Paper variant="outlined" sx={{p: 2, bgcolor: '#f9fafb'}}>
+                                                                <Typography variant="body1" sx={{color: '#111827'}}>
                                                                     {selectedConsultation.date}
                                                                 </Typography>
                                                             </Paper>
                                                         </Grid>
                                                         <Grid item xs={12} sm={6}>
-                                                            <Typography variant="subtitle1" gutterBottom sx={{ color: '#374151', fontWeight: 'medium' }}>
+                                                            <Typography variant="subtitle1" gutterBottom
+                                                                        sx={{color: '#374151', fontWeight: 'medium'}}>
                                                                 상담 목적
                                                             </Typography>
-                                                            <Paper variant="outlined" sx={{ p: 2, bgcolor: '#f9fafb' }}>
-                                                                <Typography variant="body1" sx={{ color: '#111827' }}>
+                                                            <Paper variant="outlined" sx={{p: 2, bgcolor: '#f9fafb'}}>
+                                                                <Typography variant="body1" sx={{color: '#111827'}}>
                                                                     {selectedConsultation.purpose || "없음"}
                                                                 </Typography>
                                                             </Paper>
                                                         </Grid>
                                                     </Grid>
                                                 </Grid>
-                                                <Grid item xs={12} sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', mt: 0 }}>
-                                                    <Typography variant="subtitle1" gutterBottom sx={{ color: '#374151', fontWeight: 'medium' }}>
+                                                <Grid item xs={12} sx={{
+                                                    flexGrow: 1,
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    mt: 0
+                                                }}>
+                                                    <Typography variant="subtitle1" gutterBottom
+                                                                sx={{color: '#374151', fontWeight: 'medium'}}>
                                                         메모
                                                     </Typography>
-                                                    <Paper variant="outlined" sx={{ p: 2, flexGrow: 1, display: 'flex', flexDirection: 'column', minHeight: '400px', bgcolor: '#f9fafb' }}>
-                                                        <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', flexGrow: 1, color: '#111827' }}>
+                                                    <Paper variant="outlined" sx={{
+                                                        p: 2,
+                                                        flexGrow: 1,
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        minHeight: '400px',
+                                                        bgcolor: '#f9fafb'
+                                                    }}>
+                                                        <Typography variant="body1" sx={{
+                                                            whiteSpace: 'pre-wrap',
+                                                            flexGrow: 1,
+                                                            color: '#111827'
+                                                        }}>
                                                             {selectedConsultation.memo || "메모 없음"}
                                                         </Typography>
                                                     </Paper>
@@ -1018,17 +1069,25 @@ const ConsultationDetail = () => {
 
                     {/* 우측: 상담 상세 정보 & 수정 폼 */}
                     <Grid item xs={12} md={6}>
-                        <Paper elevation={0} sx={{ p: 3, borderRadius: 2, height: '100%', display: 'flex', flexDirection: 'column', minHeight: '600px', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)' }}>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                                <Typography variant="h6" sx={{ fontWeight: "bold", color: '#111827' }}>
+                        <Paper elevation={0} sx={{
+                            p: 3,
+                            borderRadius: 2,
+                            height: '100%',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            minHeight: '600px',
+                            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)'
+                        }}>
+                            <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3}}>
+                                <Typography variant="h6" sx={{fontWeight: "bold", color: '#111827'}}>
                                     {isNewConsultation ? "새 상담 등록" : "상담 수정"}
                                 </Typography>
                                 <Box>
                                     <Button
                                         variant="contained"
-                                        startIcon={<Save />}
+                                        startIcon={<Save/>}
                                         onClick={handleSave}
-                                        sx={{ 
+                                        sx={{
                                             mr: 1,
                                             bgcolor: '#007ea7',
                                             '&:hover': {
@@ -1041,9 +1100,9 @@ const ConsultationDetail = () => {
                                     </Button>
                                     <Button
                                         variant="outlined"
-                                        startIcon={<Add />}
+                                        startIcon={<Add/>}
                                         onClick={handleNewConsultation}
-                                        sx={{ 
+                                        sx={{
                                             borderColor: '#007ea7',
                                             color: '#007ea7',
                                             '&:hover': {
@@ -1060,16 +1119,22 @@ const ConsultationDetail = () => {
                             </Box>
 
                             {isLoadingConsultation ? (
-                                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                                    <CircularProgress />
+                                <Box sx={{
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    height: '100%'
+                                }}>
+                                    <CircularProgress/>
                                 </Box>
                             ) : (
-                                <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                                    <Grid container spacing={2} sx={{ height: '100%' }}>
+                                <Box sx={{display: 'flex', flexDirection: 'column', height: '100%'}}>
+                                    <Grid container spacing={2} sx={{height: '100%'}}>
                                         <Grid item xs={12}>
                                             <Grid container spacing={2}>
                                                 <Grid item xs={12} sm={6}>
-                                                    <Typography variant="subtitle1" gutterBottom sx={{ color: '#374151', fontWeight: 'medium' }}>
+                                                    <Typography variant="subtitle1" gutterBottom
+                                                                sx={{color: '#374151', fontWeight: 'medium'}}>
                                                         상담 일시
                                                     </Typography>
                                                     <TextField
@@ -1078,7 +1143,7 @@ const ConsultationDetail = () => {
                                                         type="datetime-local"
                                                         value={editFormData.date || ""}
                                                         onChange={handleEditChange}
-                                                        InputLabelProps={{ shrink: true }}
+                                                        InputLabelProps={{shrink: true}}
                                                         disabled={!isNewConsultation}
                                                         variant="outlined"
                                                         sx={{
@@ -1097,7 +1162,8 @@ const ConsultationDetail = () => {
                                                     />
                                                 </Grid>
                                                 <Grid item xs={12} sm={6}>
-                                                    <Typography variant="subtitle1" gutterBottom sx={{ color: '#374151', fontWeight: 'medium' }}>
+                                                    <Typography variant="subtitle1" gutterBottom
+                                                                sx={{color: '#374151', fontWeight: 'medium'}}>
                                                         상담 목적
                                                     </Typography>
                                                     <TextField
@@ -1126,8 +1192,10 @@ const ConsultationDetail = () => {
                                                 </Grid>
                                             </Grid>
                                         </Grid>
-                                        <Grid item xs={12} sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', mt: 0 }}>
-                                            <Typography variant="subtitle1" gutterBottom sx={{ color: '#374151', fontWeight: 'medium' }}>
+                                        <Grid item xs={12}
+                                              sx={{flexGrow: 1, display: 'flex', flexDirection: 'column', mt: 0}}>
+                                            <Typography variant="subtitle1" gutterBottom
+                                                        sx={{color: '#374151', fontWeight: 'medium'}}>
                                                 메모
                                             </Typography>
                                             <TextField
@@ -1170,13 +1238,13 @@ const ConsultationDetail = () => {
             <Snackbar
                 open={snackbar.open}
                 autoHideDuration={6000}
-                onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
-                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+                onClose={() => setSnackbar(prev => ({...prev, open: false}))}
+                anchorOrigin={{vertical: "bottom", horizontal: "center"}}
             >
-                <Alert 
-                    onClose={() => setSnackbar(prev => ({ ...prev, open: false }))} 
+                <Alert
+                    onClose={() => setSnackbar(prev => ({...prev, open: false}))}
                     severity={snackbar.severity}
-                    sx={{ width: "100%" }}
+                    sx={{width: "100%"}}
                 >
                     {snackbar.message}
                 </Alert>

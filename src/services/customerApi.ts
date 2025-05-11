@@ -1,6 +1,5 @@
-import axios from "axios"
+import type {AxiosResponse} from "axios"
 import api from "./api"
-import type { AxiosResponse } from "axios"
 
 // API 응답 타입
 export interface ApiResponse<T> {
@@ -89,9 +88,9 @@ export interface CustomerHistoryResponse {
 }
 
 //Page 응답 타입
-export interface PageResponse<T>{
+export interface PageResponse<T> {
     content: T[]
-    totalPages: number 
+    totalPages: number
     totalElements: number
     number: number // 현재 페이지 번호 (0부터 시작)
     size: number // 페이지당 데이터 수
@@ -151,11 +150,11 @@ export const getInfiniteCustomers = async (
     keyword?: string
 ): Promise<AxiosResponse<ApiResponse<CustomerInfiniteResponse>>> => {
     const params = new URLSearchParams();
-    
+
     if (cursor) {
         params.append('cursor', cursor.toString());
     }
-    
+
     if (keyword) {
         params.append('keyword', keyword);
     }
@@ -208,7 +207,7 @@ export const getCustomers = async (
         size: size.toString(),
         sort: `${sortField},${sortDirection}`
     });
-    
+
     if (keyword) {
         params.append('keyword', keyword);
     }
@@ -230,7 +229,7 @@ export const customerApi = {
     getCustomers,
     getCustomerById,
     getInfiniteCustomers,
-    
+
     // Add new method for downloading excel format
     getExcelFormat: () => {
         return api.get<ApiResponse<string>>(`api/customers/bulk`)

@@ -1,6 +1,6 @@
 import api from "./api"
-import type { AxiosResponse } from "axios"
-import type { ApiResponse } from "../types/api"
+import type {AxiosResponse} from "axios"
+import type {ApiResponse} from "../types/api"
 
 // 메시지 템플릿 요청 타입
 export interface MessageTemplateRequest {
