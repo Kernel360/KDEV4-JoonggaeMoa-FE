@@ -12,13 +12,7 @@ interface ArticlePriceProps {
 const ArticlePrice = ({tradeType, priceSale, priceRent, priceRoomMin, priceRoomMax}: ArticlePriceProps) => {
     return (
         <Box sx={{display: 'flex', flexDirection: 'column', gap: 0.5}}>
-            {tradeType === "단기임대" ? (
-                <Typography variant="subtitle1" fontWeight="bold">
-                    {priceRoomMin && priceRoomMax
-                        ? `단기임대 ${formatPrice(priceRoomMin)} ~ ${formatPrice(priceRoomMax)}원`
-                        : `단기임대 가격 정보 없음`}
-                </Typography>
-            ) : isZeroPrice(priceSale) ? (
+            {isZeroPrice(priceSale) ? (
                 <Typography variant="subtitle1" fontWeight="bold">월세 {formatPrice(priceRent)}원</Typography>
             ) : (
                 <>
