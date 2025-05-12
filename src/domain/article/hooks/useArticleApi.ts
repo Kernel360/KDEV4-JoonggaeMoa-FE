@@ -205,16 +205,13 @@ export function useArticleApi() {
       // 줌 레벨에 따른 적절한 정밀도 계산
       const precision = calculatePrecisionByZoom(zoom);
 
-      // API 호출 파라미터 준비
+      // API 호출 파라미터 준비 - 백엔드와 일치하는 파라미터만 전달
       const params = {
         swLat: bounds.sw.lat,
         swLng: bounds.sw.lng,
         neLat: bounds.ne.lat,
         neLng: bounds.ne.lng,
-        precision,
-        zoomLevel: zoom,
-        clusterRadius: zoom <= 3 ? 100 : zoom <= 4 ? 80 : zoom <= 5 ? 60 : 40,
-        minPoints: zoom <= 3 ? 1 : zoom <= 4 ? 2 : zoom <= 5 ? 2 : 3
+        zoomLevel: zoom
       };
 
       const resp = await articleApi.getClusters(params);

@@ -16,6 +16,22 @@ const MapControlButtons = ({
   handleCurrentLocation,
   isLocating
 }: MapControlButtonsProps) => {
+  // 디버깅을 위한 이벤트 핸들러
+  const onZoomInClick = () => {
+    console.log('줌인 버튼 클릭됨');
+    handleZoomIn();
+  };
+
+  const onZoomOutClick = () => {
+    console.log('줌아웃 버튼 클릭됨');
+    handleZoomOut();
+  };
+
+  const onCurrentLocationClick = () => {
+    console.log('현재 위치 버튼 클릭됨');
+    handleCurrentLocation();
+  };
+
   return (
     <>
       {/* 줌 컨트롤 버튼 */}
@@ -31,14 +47,14 @@ const MapControlButtons = ({
         flexDirection: 'column'
       }}>
         <Button
-          onClick={handleZoomIn}
+          onClick={onZoomInClick}
           sx={{minWidth: '36px', height: '36px', p: 0, borderRadius: '4px 4px 0 0'}}
         >
           <AddIcon />
         </Button>
         <Box sx={{height: '1px', bgcolor: 'divider', width: '100%'}} />
         <Button
-          onClick={handleZoomOut}
+          onClick={onZoomOutClick}
           sx={{minWidth: '36px', height: '36px', p: 0, borderRadius: '0 0 4px 4px'}}
         >
           <RemoveIcon />
@@ -58,7 +74,7 @@ const MapControlButtons = ({
         flexDirection: 'column'
       }}>
         <Button
-          onClick={handleCurrentLocation}
+          onClick={onCurrentLocationClick}
           disabled={isLocating}
           sx={{
             minWidth: '36px',

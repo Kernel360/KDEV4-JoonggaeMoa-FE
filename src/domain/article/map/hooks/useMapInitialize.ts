@@ -30,25 +30,29 @@ export const useMapInitialize = ({
     const KAKAO_APP_KEY = import.meta.env.VITE_KAKAO_APP_KEY;
 
     const initialCenterRef = useRef<{ lat: number; lng: number } | null>(null);
+    const initializeAttempted = useRef<boolean>(false);
 
     // 지도 초기화 함수
     const initializeMap = useCallback(() => {
         if (!mapRefInternal.current) {
-            console.error('Map container ref is not available');
             return;
         }
+
+        if (initializeAttempted.current && mapInstance.current) {
+            return;
+        }
+
+        initializeAttempted.current = true;
 
         try {
             const kakao = (window as any).kakao;
             if (!kakao || !kakao.maps) {
-                console.error('Kakao Maps API is not loaded');
                 setMapErrorMessage('지도 API를 불러오는데 실패했습니다');
                 return;
             }
 
             // 기존 지도 인스턴스가 있으면 재사용
             if (mapInstance.current) {
-                console.log('Reusing existing map instance');
                 return;
             }
 
@@ -57,69 +61,136 @@ export const useMapInitialize = ({
                 initialCenter?.lng || 126.9786567
             );
 
-            // 지도 생성
+            // 지도 생성 및 최적화 옵션 설정
             const map = new kakao.maps.Map(mapRefInternal.current, {
                 center: center,
-                level: initialZoom
+                level: initialZoom,
+                // 성능 향상을 위한 옵션
+                draggable: true,
+                disableDoubleClick: false,
+                disableDoubleClickZoom: false,
+                tileAnimation: false, // 타일 애니메이션 비활성화로 렌더링 속도 향상
+                maxLevel: 14 // 최대 줌 레벨 제한
             });
 
-            // 지도 타입 컨트롤 추가
-            const mapTypeControl = new kakao.maps.MapTypeControl();
-            map.addControl(mapTypeControl, kakao.maps.ControlPosition.TOPRIGHT);
+            // 지도 타입 컨트롤 필요한 경우만 추가
+            // const mapTypeControl = new kakao.maps.MapTypeControl();
+            // map.addControl(mapTypeControl, kakao.maps.ControlPosition.TOPRIGHT);
 
-            // 확대/축소 컨트롤 추가
-            // Custom 컨트롤로 대체하므로 주석 처리
-            // const zoomControl = new kakao.maps.ZoomControl();
-            // map.addControl(zoomControl, kakao.maps.ControlPosition.RIGHT);
-
-            // 현재 지도 범위 얻기
+            // 현재 지도 범위 얻기 (최소한의 연산만 수행)
             const bounds = map.getBounds();
             const ne = bounds.getNorthEast();
             const sw = bounds.getSouthWest();
-            setMapBounds({
+            const newBounds = {
                 ne: { lat: ne.getLat(), lng: ne.getLng() },
                 sw: { lat: sw.getLat(), lng: sw.getLng() }
-            });
+            };
+            setMapBounds(newBounds);
 
-            // 지도 이벤트 리스너 등록
+            // 바운드 변경 이벤트 - 디바운스 처리
+            let boundsChangeTimeout: NodeJS.Timeout | null = null;
             kakao.maps.event.addListener(map, 'bounds_changed', () => {
-                const bounds = map.getBounds();
-                const ne = bounds.getNorthEast();
-                const sw = bounds.getSouthWest();
-                const newBounds = {
-                    ne: { lat: ne.getLat(), lng: ne.getLng() },
-                    sw: { lat: sw.getLat(), lng: sw.getLng() }
-                };
-                setMapBounds(newBounds);
-
-                // 바운드 변경 이벤트 콜백
-                if (onBoundsChanged) {
-                    onBoundsChanged(newBounds, map.getLevel());
+                // 이전 타임아웃이 있으면 제거
+                if (boundsChangeTimeout) {
+                    clearTimeout(boundsChangeTimeout);
                 }
+                
+                // 200ms 디바운스 적용 - 과도한 이벤트 발생 방지
+                boundsChangeTimeout = setTimeout(() => {
+                    const bounds = map.getBounds();
+                    const ne = bounds.getNorthEast();
+                    const sw = bounds.getSouthWest();
+                    const newBounds = {
+                        ne: { lat: ne.getLat(), lng: ne.getLng() },
+                        sw: { lat: sw.getLat(), lng: sw.getLng() }
+                    };
+                    setMapBounds(newBounds);
+
+                    // 바운드 변경 이벤트 콜백
+                    if (onBoundsChanged) {
+                        onBoundsChanged(newBounds, map.getLevel());
+                    }
+                }, 200);
             });
 
-            // 중심점/줌 변경 이벤트
+            // 중심점/줌 변경 이벤트에 대한 통합 관리 (디바운스 적용)
+            let viewChangeTimeout: NodeJS.Timeout | null = null;
+            
+            // 중심점 변경 이벤트가 발생하면 줌 레벨 변경 없이 센터만 변경된 경우만 처리
             kakao.maps.event.addListener(map, 'center_changed', () => {
-                if (onViewChange) {
+                if (!onViewChange) return;
+                
+                // 이전 타임아웃이 있으면 제거
+                if (viewChangeTimeout) {
+                    clearTimeout(viewChangeTimeout);
+                }
+                
+                // 디바운스 타이머 적용 (200ms)
+                viewChangeTimeout = setTimeout(() => {
                     const center = map.getCenter();
                     onViewChange(
                         { lat: center.getLat(), lng: center.getLng() },
                         map.getLevel()
                     );
-                }
+                }, 200);
             });
 
-            // 줌 변경 이벤트
+            // 줌 변경 이벤트 - 디바운스 처리 (줌 변경에만 반응)
+            let zoomChangeTimeout: NodeJS.Timeout | null = null;
             kakao.maps.event.addListener(map, 'zoom_changed', () => {
                 const zoomLevel = map.getLevel();
                 setCurrentZoomLevel(zoomLevel);
 
-                if (onViewChange) {
+                if (!onViewChange) return;
+                
+                // 이전 타임아웃이 있으면 제거
+                if (zoomChangeTimeout) {
+                    clearTimeout(zoomChangeTimeout);
+                }
+                
+                // 센터 변경 타임아웃도 취소 (줌 변경이 우선)
+                if (viewChangeTimeout) {
+                    clearTimeout(viewChangeTimeout);
+                }
+                
+                // 디바운스 타이머 적용 (150ms)
+                zoomChangeTimeout = setTimeout(() => {
                     const center = map.getCenter();
                     onViewChange(
                         { lat: center.getLat(), lng: center.getLng() },
                         zoomLevel
                     );
+                }, 150);
+            });
+
+            // 타일 로드 완료 이벤트를 통해 지도가 실제로 렌더링되었는지 확인
+            kakao.maps.event.addListener(map, 'tilesloaded', () => {
+                if (!isMapLoaded) {
+                    setIsMapLoaded(true);
+                    
+                    // 초기 bounds_changed 이벤트 트리거
+                    if (onBoundsChanged) {
+                        const bounds = map.getBounds();
+                        const ne = bounds.getNorthEast();
+                        const sw = bounds.getSouthWest();
+                        onBoundsChanged(
+                            {
+                                ne: { lat: ne.getLat(), lng: ne.getLng() },
+                                sw: { lat: sw.getLat(), lng: sw.getLng() }
+                            },
+                            map.getLevel()
+                        );
+                    }
+                    
+                    // 초기 중심점 설정 (있을 경우에만)
+                    if (initialCenter && !initialCenterRef.current) {
+                        initialCenterRef.current = initialCenter;
+                        const position = new kakao.maps.LatLng(
+                            initialCenter.lat,
+                            initialCenter.lng
+                        );
+                        map.setCenter(position);
+                    }
                 }
             });
 
@@ -130,21 +201,18 @@ export const useMapInitialize = ({
             if (mapRef) {
                 mapRef.current = map;
             }
-
-            setIsMapLoaded(true);
-            console.log('Kakao map initialized successfully');
         } catch (error) {
             console.error('Error initializing map:', error);
             setMapErrorMessage('지도를 초기화하는데 문제가 발생했습니다');
         }
-    }, [initialCenter, initialZoom, onBoundsChanged, onViewChange, mapRef]);
+    }, [initialCenter, initialZoom, onBoundsChanged, onViewChange, mapRef, isMapLoaded]);
 
     // 카카오맵 스크립트 로드
     useEffect(() => {
         if (typeof window === 'undefined') return;
 
         // 이미 로드된 경우
-        if (isScriptLoaded || (window as any).kakao?.maps) {
+        if ((window as any).kakao?.maps) {
             setIsScriptLoaded(true);
             initializeMap();
             return;
@@ -157,7 +225,6 @@ export const useMapInitialize = ({
 
             script.onload = () => {
                 (window as any).kakao.maps.load(() => {
-                    console.log('Kakao Maps API loaded');
                     setIsScriptLoaded(true);
                     initializeMap();
                 });
@@ -177,29 +244,7 @@ export const useMapInitialize = ({
             console.error('Error loading map script:', error);
             setMapErrorMessage('지도 스크립트를 로드하는데 문제가 발생했습니다');
         }
-    }, [KAKAO_APP_KEY, initializeMap, isScriptLoaded]);
-
-    // 초기 중심점 설정
-    useEffect(() => {
-        if (!isMapLoaded || !initialCenter) return;
-
-        // 매우 처음 한 번만 실행
-        if (!initialCenterRef.current) {
-            initialCenterRef.current = initialCenter;
-
-            if (mapInstance.current) {
-                try {
-                    const position = new (window as any).kakao.maps.LatLng(
-                        initialCenter.lat,
-                        initialCenter.lng
-                    );
-                    mapInstance.current.setCenter(position);
-                } catch (error) {
-                    console.error('Error setting initial center:', error);
-                }
-            }
-        }
-    }, [isMapLoaded, initialCenter]);
+    }, [KAKAO_APP_KEY, initializeMap]);
 
     // 초기 줌 레벨 설정
     const initialZoomRef = useRef(initialZoom);
