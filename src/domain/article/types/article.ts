@@ -1,5 +1,4 @@
-// 매물 응답 타입
-import { REAL_ESTATE_OPTIONS, TRADE_TYPE_OPTIONS } from '../constants/articleConstants';
+import { AxiosResponse } from 'axios';
 
 export type RealEstateType =
     | "아파트"
@@ -133,11 +132,10 @@ export interface ClusterInfo {
     lat: number;
     lng: number;
     count: number;
-    precision?: number;
-    weight?: number;
-    radius?: number;
     color?: string;
     isMerged?: boolean;
+    clusterId?: string;
+    precision?: number;
     mainRealEstateType?: RealEstateType;
     typeDistribution?: Record<string, number>;
 }
@@ -180,6 +178,15 @@ export interface PageResponse<T> {
     last: boolean;
 }
 
+// 기존 ApiResponse 타입을 확장하여 다양한 응답 형식 지원
+export interface ExtendedApiResponse<T> extends Partial<Omit<AxiosResponse, 'data'>> {
+    data: T;
+    success?: boolean;
+    error?: { message: string; code?: number };
+    _links?: Record<string, any>;
+    page?: any;
+}
+
 // 다양한 API 응답 형식
 export type ArticleApiResponse =
     | ApiResponse<ArticleResponse[]>
@@ -187,3 +194,26 @@ export type ArticleApiResponse =
     | HateoasResponse<ArticleResponse>
     | PageResponse<ArticleResponse>
     | ArticleResponse[];
+
+// ArticleClusterResponse 인터페이스 재정의
+export interface ArticleClusterResponse {
+    data: {
+        content: ArticleResponse[];
+        totalElements?: number;
+        totalPages?: number;
+        size?: number;
+        number?: number;
+        last?: boolean;
+    };
+    success: boolean;
+    error?: { 
+        message: string; 
+        code?: number;
+    } | null;
+    status?: number;
+    statusText?: string;
+    headers?: any;
+    config?: any;
+    _links?: Record<string, any>;
+    page?: any;
+}

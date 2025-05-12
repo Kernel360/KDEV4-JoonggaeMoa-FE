@@ -1,7 +1,15 @@
 import { useEffect, useState } from 'react';
-import { validateCoordinates } from '@/domain/article/utils/articleFormat';
-import { createArticleMarkerSvg } from '@/domain/article/utils/articleDisplay';
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+
 import type { ArticleResponse, ClusterInfo } from '@/domain/article/types/article';
+import { createArticleMarkerSvg } from '@/domain/article/utils/articleDisplay';
+import { validateCoordinates } from '@/domain/article/utils/articleFormat';
+
+import { useMapDisplayMode } from './useMapDisplayMode';
+import RegionArticleCountMarker from '../components/RegionArticleCountMarker';
+import { MAP_DISPLAY_MODES } from '../constants/mapConstants';
+import { RegionArticleCount } from '../types/mapDisplayTypes';
 
 // window 전역 객체에 마커 배열이 없으면 초기화
 if (typeof window !== 'undefined' && !window._customMarkers) {
@@ -21,6 +29,8 @@ interface UseMarkersProps {
     color?: string;
   })[];
   onClusterClick?: (cluster: ClusterInfo) => void;
+  currentZoomLevel: number;
+  onRegionClick?: (region: RegionArticleCount) => void;
 }
 
 export const useMarkers = ({
@@ -29,13 +39,21 @@ export const useMarkers = ({
   articles,
   selectedArticle,
   onArticleClick,
-  clusterMode,
   clusters,
   onClusterClick,
+  currentZoomLevel,
+  onRegionClick
 }: UseMarkersProps) => {
   const [sameLocationArticles, setSameLocationArticles] = useState<ArticleResponse[]>([]);
   const [sameLocationPopupOpen, setSameLocationPopupOpen] = useState<boolean>(false);
   const [currentLocation, setCurrentLocation] = useState<{ lat: number, lng: number } | null>(null);
+
+  // 줌 레벨에 따른 표시 방식 결정
+  const { displayMode, displayData } = useMapDisplayMode({
+    articles,
+    currentZoomLevel,
+    clusters
+  });
 
   // 마커 표시
   useEffect(() => {
@@ -76,6 +94,24 @@ export const useMarkers = ({
           const position = new kakao.maps.LatLng(cluster.lat, cluster.lng);
           mapInstance.current.setCenter(position);
           mapInstance.current.setLevel(3); // Or an appropriate zoom level
+        }
+      }
+    };
+
+    // 지역 마커 클릭 이벤트 처리 함수
+    const handleRegionClick = (region: RegionArticleCount) => {
+      if (onRegionClick) {
+        onRegionClick(region);
+      }
+      if (mapInstance.current) {
+        const kakao = (window as any).kakao;
+        if (kakao && kakao.maps) {
+          const position = new kakao.maps.LatLng(region.lat, region.lng);
+          mapInstance.current.setCenter(position);
+          
+          // 시 레벨이면 7로, 구 레벨이면 4로 줌인
+          const newZoomLevel = region.type === 'city' ? 7 : 4;
+          mapInstance.current.setLevel(newZoomLevel);
         }
       }
     };
@@ -124,111 +160,126 @@ export const useMarkers = ({
       else return 90; // 100개 초과
     };
 
-    // 클러스터 모드가 활성화되고 클러스터 데이터가 있으면 클러스터 표시
-    if (clusterMode && clusters && clusters.length > 0) {
-      try {
-        // 클러스터끼리의 거리 계산 함수
-        const calculateDistance = (c1: ClusterInfo, c2: ClusterInfo) => {
-          const R = 6371; // 지구 반경 (km)
-          const dLat = (c2.lat - c1.lat) * Math.PI / 180;
-          const dLon = (c2.lng - c1.lng) * Math.PI / 180;
-          const a =
-            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(c1.lat * Math.PI / 180) * Math.cos(c2.lat * Math.PI / 180) *
-            Math.sin(dLon / 2) * Math.sin(dLon / 2);
-          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-          const distance = R * c;
-          return distance * 1000; // 미터 단위로 변환
-        };
+    // 현재 표시 모드에 따라 적절한 마커 표시
+    if (displayMode === MAP_DISPLAY_MODES.SHOW_CLUSTERS && displayData.clusters && displayData.clusters.length > 0) {
+      // 클러스터 표시
+      displayData.clusters.forEach(cluster => {
+        try {
+          // HTML 요소로 클러스터 마커 생성
+          const element = document.createElement('div');
 
-        // 클러스터 마커 생성 로직...
-        clusters.forEach(cluster => {
-          try {
-            // HTML 요소로 클러스터 마커 생성
-            const element = document.createElement('div');
+          // 히트맵 색상 사용
+          const color = cluster.color || getHeatmapColorByCount(cluster.count);
 
-            // 히트맵 색상 사용
-            const color = getHeatmapColorByCount(cluster.count);
+          // 클러스터 크기 결정 - 10단위로 크기 구분
+          let radius: number;
+          let opacity: number;
 
-            // 클러스터 크기 결정 - 10단위로 크기 구분
-            let radius: number;
-            let opacity: number;
-
-            if (cluster.radius) {
-              // 이미 지정된 반경이 있으면 그대로 사용
-              radius = cluster.radius;
-              opacity = getOpacityByCount(cluster.count);
-            } else {
-              // 매물 수에 따라 반경 결정
-              radius = calculateRadiusByCount(cluster.count);
-              opacity = getOpacityByCount(cluster.count);
-            }
-
-            // 글자 크기 조정
-            const fontSize = Math.max(radius * 0.35, 14); // 최소 글자 크기 보장
-
-            // 클러스터 마커 스타일 (SVG)
-            const markerHtml = `
-              <div 
-                style="
-                  position: absolute;
-                  cursor: pointer;
-                  width: ${radius}px;
-                  height: ${radius}px;
-                  transform: translate(-50%, -50%);
-                "
-              >
-                <svg width="${radius}" height="${radius}" viewBox="0 0 100 100">
-                  <circle 
-                    cx="50" 
-                    cy="50" 
-                    r="45" 
-                    fill="${color}" 
-                    opacity="${opacity}"
-                    stroke="#ffffff"
-                    stroke-width="4"
-                  />
-                  <text 
-                    x="50" 
-                    y="55" 
-                    text-anchor="middle" 
-                    font-size="${fontSize}px" 
-                    font-weight="bold"
-                    fill="white"
-                  >${cluster.count}</text>
-                </svg>
-              </div>
-            `;
-            element.innerHTML = markerHtml;
-
-            // 클릭 이벤트 추가
-            element.firstElementChild?.addEventListener('click', (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              handleClusterClick(cluster);
-            });
-
-            // 클러스터 커스텀 마커 생성
-            const marker = new (window as any).kakao.maps.CustomOverlay({
-              position: new (window as any).kakao.maps.LatLng(cluster.lat, cluster.lng),
-              content: element,
-              zIndex: 2,
-              map: map
-            });
-
-            window._customMarkers.push(marker);
-          } catch (error) {
-            console.error("Error creating cluster marker:", error);
+          if (cluster.radius) {
+            // 이미 지정된 반경이 있으면 그대로 사용
+            radius = cluster.radius;
+            opacity = getOpacityByCount(cluster.count);
+          } else {
+            // 매물 수에 따라 반경 결정
+            radius = calculateRadiusByCount(cluster.count);
+            opacity = getOpacityByCount(cluster.count);
           }
-        });
-      } catch (error) {
-        console.error("Error processing clusters:", error);
-      }
+
+          // 글자 크기 조정
+          const fontSize = Math.max(radius * 0.35, 14); // 최소 글자 크기 보장
+
+          // 클러스터 마커 스타일 (SVG)
+          const markerHtml = `
+            <div 
+              style="
+                position: absolute;
+                cursor: pointer;
+                width: ${radius}px;
+                height: ${radius}px;
+                transform: translate(-50%, -50%);
+              "
+            >
+              <svg width="${radius}" height="${radius}" viewBox="0 0 100 100">
+                <circle 
+                  cx="50" 
+                  cy="50" 
+                  r="45" 
+                  fill="${color}" 
+                  opacity="${opacity}"
+                  stroke="#ffffff"
+                  stroke-width="4"
+                />
+                <text 
+                  x="50" 
+                  y="55" 
+                  text-anchor="middle" 
+                  font-size="${fontSize}px" 
+                  font-weight="bold"
+                  fill="white"
+                >${cluster.count}</text>
+              </svg>
+            </div>
+          `;
+          element.innerHTML = markerHtml;
+
+          // 클릭 이벤트 추가
+          element.firstElementChild?.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleClusterClick(cluster);
+          });
+
+          // 클러스터 커스텀 마커 생성
+          const marker = new (window as any).kakao.maps.CustomOverlay({
+            position: new (window as any).kakao.maps.LatLng(cluster.lat, cluster.lng),
+            content: element,
+            zIndex: 2,
+            map: map
+          });
+
+          window._customMarkers.push(marker);
+        } catch (error) {
+          console.error("Error creating cluster marker:", error);
+        }
+      });
+    } 
+    else if ((displayMode === MAP_DISPLAY_MODES.SHOW_DISTRICT_COUNT && displayData.districtCounts && displayData.districtCounts.length > 0) ||
+             (displayMode === MAP_DISPLAY_MODES.SHOW_CITY_COUNT && displayData.cityCounts && displayData.cityCounts.length > 0)) {
+      // 지역별 매물 개수 표시
+      const regionCounts = displayMode === MAP_DISPLAY_MODES.SHOW_DISTRICT_COUNT 
+        ? displayData.districtCounts!
+        : displayData.cityCounts!;
+      
+      regionCounts.forEach(regionCount => {
+        try {
+          // React 컴포넌트를 DOM에 렌더링
+          const element = document.createElement('div');
+          const root = createRoot(element);
+          
+          root.render(
+            React.createElement(RegionArticleCountMarker, {
+              regionCount: regionCount,
+              onClick: handleRegionClick
+            })
+          );
+
+          // 지역 매물 수 커스텀 마커 생성
+          const marker = new (window as any).kakao.maps.CustomOverlay({
+            position: new (window as any).kakao.maps.LatLng(regionCount.lat, regionCount.lng),
+            content: element,
+            zIndex: 2,
+            map: map
+          });
+
+          window._customMarkers.push(marker);
+        } catch (error) {
+          console.error("Error creating region count marker:", error);
+        }
+      });
     }
-    // 클러스터 모드가 비활성화되고 매물 데이터가 있으면 매물 핀 표시
-    else if (articles?.length > 0) {
-      // 유효한 좌표가 있는 매물만 필터링
-      const validArticles = articles.filter(article => {
+    else if (displayMode === MAP_DISPLAY_MODES.SHOW_ALL_PINS && displayData.articles && displayData.articles.length > 0) {
+      // 일반 매물 핀 표시
+      const validArticles = displayData.articles.filter(article => {
         const isValid = validateCoordinates(article.latitude, article.longitude);
         if (!isValid) {
           console.warn(`Invalid coordinates for article ${article.id}: lat=${article.latitude}, lng=${article.longitude}`);
@@ -295,55 +346,47 @@ export const useMarkers = ({
             </div>
           `;
 
-          // 클릭 이벤트 추가
-          element.firstElementChild?.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
+          // 마커 생성
+          const marker = new (window as any).kakao.maps.CustomOverlay({
+            position: new (window as any).kakao.maps.LatLng(lat, lng),
+            content: element,
+            map: map
+          });
 
-            // 동일 위치에 매물이 여러 개인 경우
-            if (articleGroup.length > 1) {
-              console.log(`${articleGroup.length}개의 동일 위치 매물 그룹 클릭됨`);
-              // 동일 위치 매물 목록 표시
-              setSameLocationArticles(articleGroup);
-              setCurrentLocation({lat, lng});
-              setSameLocationPopupOpen(true);
+          // 클릭 이벤트 추가
+          element.addEventListener('click', () => {
+            if (articleGroup.length === 1) {
+              // 단일 매물인 경우 즉시 상세 정보로 이동
+              onArticleClick(articleGroup[0]);
             } else {
-              // 단일 매물인 경우 바로 선택
-              console.log("Article clicked:", representativeArticle.id);
-              onArticleClick(representativeArticle);
+              // 여러 매물이 있는 경우 리스트 팝업 표시
+              setSameLocationArticles(articleGroup);
+              setSameLocationPopupOpen(true);
+              setCurrentLocation({ lat, lng });
             }
           });
 
-          // kakao LatLng 객체 생성
-          let position;
-          try {
-            position = new (window as any).kakao.maps.LatLng(lat, lng);
-          } catch (err) {
-            console.error(`Failed to create LatLng for location ${locationKey}: ${err}`);
-            return;
-          }
-
-          // 마커 생성
-          try {
-            const marker = new (window as any).kakao.maps.CustomOverlay({
-              position: position,
-              content: element,
-              map: map,
-              zIndex: isSelectedLocation ? 5 : 1
-            });
-
-            window._customMarkers.push(marker);
-          } catch (err) {
-            console.error(`Failed to create marker for location ${locationKey}: ${err}`);
-          }
-        } catch (err) {
-          console.error("Error creating location group marker:", err);
+          window._customMarkers.push(marker);
+        } catch (error) {
+          console.error("Error creating article marker:", error);
         }
       });
     }
 
-    return clearMarkers;
-  }, [isMapLoaded, articles, selectedArticle, clusterMode, clusters, onArticleClick, onClusterClick]);
+    // 컴포넌트 언마운트 시 마커 제거
+    return () => {
+      clearMarkers();
+    };
+  }, [
+    isMapLoaded, 
+    mapInstance, 
+    displayMode, 
+    displayData, 
+    selectedArticle, 
+    onArticleClick, 
+    onClusterClick,
+    onRegionClick
+  ]);
 
   // 선택된 매물로 이동
   useEffect(() => {
@@ -369,7 +412,7 @@ export const useMarkers = ({
     } catch (error) {
       console.error("Failed to move to selected article:", error);
     }
-  }, [isMapLoaded, selectedArticle]);
+  }, [isMapLoaded, selectedArticle, mapInstance]);
 
   // 동일 위치 매물 팝업 닫기 핸들러
   const handleCloseLocationPopup = () => {
@@ -405,12 +448,13 @@ export const useMarkers = ({
         parentContainer.classList.remove('same-location-open');
       }
     };
-  }, [sameLocationPopupOpen]);
+  }, [sameLocationPopupOpen, mapInstance]);
 
   return {
     sameLocationArticles,
     sameLocationPopupOpen,
     currentLocation,
-    handleCloseLocationPopup
+    handleCloseLocationPopup,
+    displayMode
   };
-}; 
+};

@@ -1,6 +1,7 @@
-import api, {ApiResponse} from "@/global/api/services/api"
 import type {AxiosResponse} from "axios"
+
 import type {RegionResponse} from "@/domain/article/types/article"
+import api, {ApiResponse} from "@/global/api/services/api"
 
 export interface RegionParams {
     cortarNoPrefix?: string;

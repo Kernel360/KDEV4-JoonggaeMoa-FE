@@ -1,6 +1,6 @@
+import { HEATMAP_COLORS } from "@/domain/article/map/constants/mapConstants";
 import {ClusterInfo} from "@/domain/article/types/article";
 import {getTypeColor} from "@/domain/article/utils/articleDisplay";
-import { HEATMAP_COLORS, PRECISION_BY_ZOOM } from "@/domain/article/map/constants/mapConstants";
 
 /**
  * 좌표와 정밀도를 기반으로 클러스터 ID를 생성합니다.
@@ -49,20 +49,17 @@ export const extractCoordinatesFromClusterId = (clusterId: string, precision: nu
 };
 
 /**
- * 줌 레벨에 따른 적절한 정밀도를 계산합니다.
- *
+ * 줌 레벨에 따른 정밀도 계산 함수
+ * 줌 레벨이 낮을수록(지도가 넓게 보일수록) 정밀도를 낮게, 줌 레벨이 높을수록 정밀도를 높게 설정
  * @param zoom 지도 줌 레벨
- * @returns 정밀도 값 (1~8)
+ * @returns 적절한 정밀도 값
  */
 export const calculatePrecisionByZoom = (zoom: number): number => {
-    if (zoom <= PRECISION_BY_ZOOM.LOW.MAX_LEVEL) return PRECISION_BY_ZOOM.LOW.PRECISION;
-    if (zoom <= PRECISION_BY_ZOOM.MEDIUM_LOW.MAX_LEVEL) return PRECISION_BY_ZOOM.MEDIUM_LOW.PRECISION;
-    if (zoom <= PRECISION_BY_ZOOM.MEDIUM.MAX_LEVEL) return PRECISION_BY_ZOOM.MEDIUM.PRECISION;
-    if (zoom <= PRECISION_BY_ZOOM.MEDIUM_HIGH.MAX_LEVEL) return PRECISION_BY_ZOOM.MEDIUM_HIGH.PRECISION;
-    if (zoom <= PRECISION_BY_ZOOM.HIGH.MAX_LEVEL) return PRECISION_BY_ZOOM.HIGH.PRECISION;
-    if (zoom <= PRECISION_BY_ZOOM.VERY_HIGH.MAX_LEVEL) return PRECISION_BY_ZOOM.VERY_HIGH.PRECISION;
-    if (zoom <= PRECISION_BY_ZOOM.ULTRA_HIGH.MAX_LEVEL) return PRECISION_BY_ZOOM.ULTRA_HIGH.PRECISION;
-    return PRECISION_BY_ZOOM.MAX.PRECISION;
+    if (zoom <= 3) return 2;       // 0.01 정도의 정밀도 (매우 넓은 영역)
+    else if (zoom <= 5) return 3;  // 0.001 정도의 정밀도 (넓은 영역)
+    else if (zoom <= 7) return 4;  // 0.0001 정도의 정밀도 (중간 영역)
+    else if (zoom <= 9) return 5;  // 0.00001 정도의 정밀도 (좁은 영역)
+    else return 6;                 // 0.000001 정도의 정밀도 (매우 좁은 영역)
 };
 
 /**

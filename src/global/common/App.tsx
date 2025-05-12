@@ -1,39 +1,40 @@
-import {BrowserRouter as Router, Navigate, Outlet, Route, Routes} from "react-router-dom";
 import {createTheme, CssBaseline, ThemeProvider} from "@mui/material";
-import Login from "@/global/auth/pages/Login"
-import SignUp from '@/global/auth/pages/SignUp';
-import Dashboard from "@/domain/dashboard/pages/Dashboard";
-import CustomerManagement from "@/domain/customer/pages/CustomerManagement";
-import CustomerAdd from "@/domain/customer//pages/CustomerAdd";
-import CustomerImport from "@/domain/customer/pages/CustomerImport";
-import CustomerDetail from "@/domain/customer/pages/CustomerDetail";
-import CustomerEdit from "@/domain/customer/pages/CustomerEdit";
-import SurveyList from "@/domain/survey/pages/SurveyList";
-import SurveyDetail from "@/domain/survey/pages/SurveyDetail";
-import SurveyCreate from "@/domain/survey/pages/SurveyCreate";
-import SurveyEdit from "@/domain/survey/pages/SurveyEdit";
-import SurveySubmit from "@/domain/survey/pages/SurveySubmit";
-import SurveyAnswers from "@/domain/survey/pages/SurveyAnswers";
-import ConsultationList from "@/domain/consultation/pages/ConsultationList";
+import {BrowserRouter as Router, Navigate, Outlet, Route, Routes} from "react-router-dom";
+import 'react-toastify/dist/ReactToastify.css';
+import { ToastContainer } from 'react-toastify';
+
+import ArticleList from "@/domain/article/pages/ArticleList";
 import ConsultationDetail from "@/domain/consultation/pages/ConsultationDetail";
-import MessageList from "@/domain/message/pages/MessageList";
-import MessageHistory from "@/domain/message/pages/MessageHistory";
-import MessageCreate from "@/domain/message/pages/MessageCreate";
-import MessageTemplateCreate from "@/domain/message/pages/MessageTemplateCreate";
-import ContractList from "@/domain/contract/pages/ContractList";
+import ConsultationList from "@/domain/consultation/pages/ConsultationList";
 import ContractCreate from "@/domain/contract/pages/ContractCreate";
 import ContractDetail from "@/domain/contract/pages/ContractDetail";
-import ArticleList from "@/domain/article/pages/ArticleList";
-import MyPage from "@/global/auth/pages/MyPage";
-import {AuthProvider} from "@/global/auth/context/AuthContext";
-import ProtectedRoute from "@/global/auth/components/ProtectedRoute";
-import "@/global/common/styles/App.css";
-import NotificationList from "@/domain/notification/pages/NotificationList";
-import 'react-toastify/dist/ReactToastify.css';
-import {ToastContainer} from 'react-toastify';
-import {NotificationProvider} from "@/domain/notification/context/NotificationContext";
+import ContractList from "@/domain/contract/pages/ContractList";
+import CustomerAdd from "@/domain/customer/pages/CustomerAdd";
+import CustomerDetail from "@/domain/customer/pages/CustomerDetail";
+import CustomerEdit from "@/domain/customer/pages/CustomerEdit";
+import CustomerImport from "@/domain/customer/pages/CustomerImport";
+import CustomerManagement from "@/domain/customer/pages/CustomerManagement";
+import Dashboard from "@/domain/dashboard/pages/Dashboard";
 import InquiryBoard from "@/domain/inquiry/pages/InquiryBoard";
 import InquiryDetail from "@/domain/inquiry/pages/InquiryDetail";
+import MessageCreate from "@/domain/message/pages/MessageCreate";
+import MessageHistory from "@/domain/message/pages/MessageHistory";
+import MessageList from "@/domain/message/pages/MessageList";
+import MessageTemplateCreate from "@/domain/message/pages/MessageTemplateCreate";
+import {NotificationProvider} from "@/domain/notification/context/NotificationContext";
+import NotificationList from "@/domain/notification/pages/NotificationList";
+import SurveyAnswers from "@/domain/survey/pages/SurveyAnswers";
+import SurveyCreate from "@/domain/survey/pages/SurveyCreate";
+import SurveyDetail from "@/domain/survey/pages/SurveyDetail";
+import SurveyEdit from "@/domain/survey/pages/SurveyEdit";
+import SurveyList from "@/domain/survey/pages/SurveyList";
+import SurveySubmit from "@/domain/survey/pages/SurveySubmit";
+import ProtectedRoute from "@/global/auth/components/ProtectedRoute";
+import {AuthProvider} from "@/global/auth/context/AuthContext";
+import Login from "@/global/auth/pages/Login"
+import MyPage from "@/global/auth/pages/MyPage";
+import SignUp from '@/global/auth/pages/SignUp';
+import "@/global/common/styles/App.css";
 
 // Create a theme instance
 const theme = createTheme({

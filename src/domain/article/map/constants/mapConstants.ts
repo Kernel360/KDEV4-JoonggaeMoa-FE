@@ -12,6 +12,32 @@ export const MAP_ZOOM_LEVELS = {
   MAP_BOUND_LIST: 8     // 지도 영역 기준 목록 표시 줌 레벨
 } as const;
 
+// 지도 표시 방식 설정
+export const MAP_DISPLAY_MODES = {
+  SHOW_ALL_PINS: 'SHOW_ALL_PINS',           // 모든 매물 표시
+  SHOW_CLUSTERS: 'SHOW_CLUSTERS',           // 클러스터 표시
+  SHOW_DISTRICT_COUNT: 'SHOW_DISTRICT_COUNT', // 구별 매물 개수 표시
+  SHOW_CITY_COUNT: 'SHOW_CITY_COUNT'        // 시별 매물 개수 표시
+} as const;
+
+// 줌 레벨에 따른 표시 방식
+export const DISPLAY_MODE_BY_ZOOM_LEVEL = {
+  1: MAP_DISPLAY_MODES.SHOW_CITY_COUNT,     // 1~3: 시별 매물 개수
+  2: MAP_DISPLAY_MODES.SHOW_CITY_COUNT,
+  3: MAP_DISPLAY_MODES.SHOW_CITY_COUNT,
+  4: MAP_DISPLAY_MODES.SHOW_ALL_PINS,       // 4: 모든 매물
+  5: MAP_DISPLAY_MODES.SHOW_CLUSTERS,       // 5~6: 클러스터
+  6: MAP_DISPLAY_MODES.SHOW_CLUSTERS,
+  7: MAP_DISPLAY_MODES.SHOW_DISTRICT_COUNT, // 7~8: 구별 매물 개수
+  8: MAP_DISPLAY_MODES.SHOW_DISTRICT_COUNT,
+  9: MAP_DISPLAY_MODES.SHOW_CITY_COUNT,     // 9 이상: 시별 매물 개수
+  10: MAP_DISPLAY_MODES.SHOW_CITY_COUNT,
+  11: MAP_DISPLAY_MODES.SHOW_CITY_COUNT,
+  12: MAP_DISPLAY_MODES.SHOW_CITY_COUNT,
+  13: MAP_DISPLAY_MODES.SHOW_CITY_COUNT,
+  14: MAP_DISPLAY_MODES.SHOW_CITY_COUNT
+} as const;
+
 // 강남구 일대를 보여주기 위한 기본 경계
 export const DEFAULT_MAP_BOUNDS = {
   ne: {lat: 37.5170664, lng: 127.0523278}, // 역삼동 중심에서 북동쪽

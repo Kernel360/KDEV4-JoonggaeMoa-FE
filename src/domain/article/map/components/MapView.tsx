@@ -1,19 +1,16 @@
 import { Alert, Box } from '@mui/material';
-import { useEffect, useRef } from 'react';
-import type { ArticleResponse, ClusterInfo } from '@/domain/article/types/article';
+import React, { useEffect, useRef } from 'react';
+
 import SameLocationArticleList from "@/domain/article/components/SameLocationArticleList";
+import type { Region } from '@/domain/article/map/utils/regionUtils';
+import type { ArticleResponse, ClusterInfo } from '@/domain/article/types/article';
+
 import MapControlButtons from './MapControlButtons';
-import { useMapInitialize } from '../hooks/useMapInitialize';
 import { useMapControls } from '../hooks/useMapControls';
+import { useMapInitialize } from '../hooks/useMapInitialize';
 import { useMarkers } from '../hooks/useMarkers';
 import { useRegions } from '../hooks/useRegions';
-import type { Region } from '@/domain/article/map/utils/regionUtils';
-
-declare global {
-  interface Window {
-    _customMarkers: any[];
-  }
-}
+import { RegionArticleCount } from '../types/mapDisplayTypes';
 
 interface MapViewProps {
   articles: ArticleResponse[];
@@ -46,6 +43,7 @@ interface MapViewProps {
     color?: string;
   })[];
   onClusterClick?: (cluster: ClusterInfo) => void;
+  onRegionClick?: (region: RegionArticleCount) => void;
   mapRef?: React.MutableRefObject<any>;
   /**
    * 리스트 숨김 상태
@@ -66,6 +64,7 @@ const MapView = ({
   clusterMode = false,
   clusters,
   onClusterClick,
+  onRegionClick,
   mapRef,
   isListHidden
 }: MapViewProps) => {
@@ -115,7 +114,9 @@ const MapView = ({
     onArticleClick,
     clusterMode,
     clusters,
-    onClusterClick
+    onClusterClick,
+    currentZoomLevel,
+    onRegionClick
   });
 
   // 행정구역 경계
