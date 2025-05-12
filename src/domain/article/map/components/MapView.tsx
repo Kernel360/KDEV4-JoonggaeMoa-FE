@@ -1,5 +1,5 @@
-import { Alert, Box } from '@mui/material';
-import React, { useEffect, useRef } from 'react';
+import { Alert, Box, LinearProgress, Fade, Typography } from '@mui/material';
+import React, { useEffect, useRef, useState } from 'react';
 
 import SameLocationArticleList from "@/domain/article/components/SameLocationArticleList";
 import type { Region } from '@/domain/article/map/utils/regionUtils';
@@ -68,7 +68,11 @@ const MapView = ({
   mapRef,
   isListHidden
 }: MapViewProps) => {
-  const externalMapRef = useRef<any>(mapRef?.current);
+  // 외부에서 전달받은 mapRef를 저장할 내부 참조
+  const externalMapRef = useRef<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("");
+  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // 지도 초기화
   const {
@@ -81,10 +85,60 @@ const MapView = ({
   } = useMapInitialize({
     initialCenter, 
     initialZoom, 
-    onViewChange, 
-    onBoundsChanged,
+    onViewChange,
+    onBoundsChanged: (bounds, zoom) => {
+      // 지도 이동 시 로딩 상태 시작
+      setIsLoading(true);
+      setLoadingMessage("지도 로딩 중...");
+      
+      // 기존 타임아웃이 있으면 제거
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+      }
+      
+      // 바운드 변경 콜백 호출
+      if (onBoundsChanged) {
+        onBoundsChanged(bounds, zoom);
+      }
+      
+      // 500ms 후에 로딩 상태 해제 (타일 로딩 완료 시간 고려)
+      loadingTimeoutRef.current = setTimeout(() => {
+        setIsLoading(false);
+        setLoadingMessage("로딩 완료");
+        
+        // 로딩 완료 메시지를 잠시 표시한 후 사라지게 함
+        loadingTimeoutRef.current = setTimeout(() => {
+          setLoadingMessage("");
+        }, 1000);
+      }, 500);
+    },
     mapRef: externalMapRef
   });
+
+  // 지도 인스턴스가 생성되면 외부 mapRef에도 할당
+  useEffect(() => {
+    if (isMapLoaded && mapInstance.current && mapRef) {
+      mapRef.current = mapInstance.current;
+      
+      // 타일 로드 완료 이벤트 추가
+      const kakao = (window as any).kakao;
+      if (kakao && kakao.maps) {
+        kakao.maps.event.addListener(mapInstance.current, 'tilesloaded', () => {
+          setIsLoading(false);
+          setLoadingMessage("로딩 완료");
+          
+          // 로딩 완료 메시지를 잠시 표시한 후 사라지게 함
+          if (loadingTimeoutRef.current) {
+            clearTimeout(loadingTimeoutRef.current);
+          }
+          
+          loadingTimeoutRef.current = setTimeout(() => {
+            setLoadingMessage("");
+          }, 1000);
+        });
+      }
+    }
+  }, [isMapLoaded, mapInstance, mapRef]);
 
   // 지도 컨트롤 (줌, 현위치)
   const {
@@ -127,12 +181,16 @@ const MapView = ({
     allRegions
   });
 
-  // 마이 로케이션 마커 언마운트 시 제거
+  // 마이 로케이션 마커 언마운트 시 제거 및 타임아웃 정리
   useEffect(() => {
     return () => {
       if (myLocationMarker) {
         myLocationMarker.setMap(null);
         setMyLocationMarker(null);
+      }
+      
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
       }
     };
   }, [myLocationMarker, setMyLocationMarker]);
@@ -146,6 +204,38 @@ const MapView = ({
       display: 'flex',
       flexDirection: 'column'
     }}>
+      {/* 로딩 표시기 */}
+      <Fade in={isLoading || loadingMessage !== ""} timeout={300}>
+        <Box sx={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 10,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center'
+        }}>
+          {isLoading && (
+            <LinearProgress sx={{ width: '100%', height: 4 }} />
+          )}
+          {loadingMessage && (
+            <Typography 
+              variant="caption" 
+              sx={{ 
+                bgcolor: 'rgba(0, 0, 0, 0.6)', 
+                color: 'white', 
+                py: 0.5, 
+                px: 2, 
+                borderRadius: '0 0 4px 4px'
+              }}
+            >
+              {loadingMessage}
+            </Typography>
+          )}
+        </Box>
+      </Fade>
+
       {/* 지도 컨테이너 */}
       <Box
         ref={mapRefInternal}

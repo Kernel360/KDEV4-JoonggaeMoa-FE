@@ -130,40 +130,37 @@ const ArticleList: React.FC = () => {
 
     // 지도 경계 변경 핸들러
     const handleBoundsChanged = useCallback((newBounds: any, newZoom: number) => {
+        // 디버그 로그 제거
+        
         // 클러스터 모드 전환 확인
         const isTransitioningToCluster = mapZoom < CLUSTER_ZOOM_THRESHOLD && newZoom >= CLUSTER_ZOOM_THRESHOLD;
         const isTransitioningFromCluster = mapZoom >= CLUSTER_ZOOM_THRESHOLD && newZoom < CLUSTER_ZOOM_THRESHOLD;
+        
+        // 현재 클러스터 정보가 있는 경우, 클러스터 모드를 그대로 유지하지만 필요 시 API 호출 실행
+        if (currentClusterInfo && !isTransitioningFromCluster) {
+            return;
+        }
 
         // 클러스터 모드 상태에 따른 데이터 요청
-        if (isTransitioningToCluster) {
+        if (isTransitioningToCluster || (newZoom >= 5 && newZoom <= 7)) {
             // 매물 핀에서 클러스터로 전환
             fetchClusters(newBounds, newZoom);
+            return;
         } else if (isTransitioningFromCluster) {
             // 클러스터에서 매물 핀으로 전환
             fetchArticles(0, newBounds, getFilterParams(), false);
-        } else if (newZoom >= CLUSTER_ZOOM_THRESHOLD) {
-            // 클러스터 모드에서 경계 이동 시 클러스터 데이터 요청
-            fetchClusters(newBounds, newZoom);
-        } else {
-            // 매물 모드에서 경계 이동 시 매물 데이터 요청
-            // 필터가 적용되었거나 지도 영역 기준으로 리스트가 표시되는 경우만
-            const hasFilters = typeFilter.length > 0 ||
-                tradeTypeFilter.length > 0 ||
-                minSalePrice > 0 ||
-                maxSalePrice > 0 ||
-                minRentPrice > 0 ||
-                maxRentPrice > 0 ||
-                isRegionFiltered;
-
-            if (!currentClusterInfo && (hasFilters || showMapBoundList)) {
-                fetchArticles(0, newBounds, getFilterParams(), false);
-            }
+            setShowMapBoundList(true);
+            return;
+        }
+        
+        // 모든 줌 레벨에서 매물 데이터 요청
+        if (!currentClusterInfo) {
+            fetchArticles(0, newBounds, getFilterParams(), false);
+            setShowMapBoundList(true);
         }
     }, [
         mapZoom, CLUSTER_ZOOM_THRESHOLD, fetchClusters, fetchArticles,
-        getFilterParams, typeFilter, tradeTypeFilter, minSalePrice, maxSalePrice,
-        minRentPrice, maxRentPrice, isRegionFiltered,
-        currentClusterInfo, showMapBoundList
+        getFilterParams, currentClusterInfo, setShowMapBoundList
     ]);
 
     // 클러스터 클릭 핸들러
@@ -251,6 +248,12 @@ const ArticleList: React.FC = () => {
     // 매물 표시 관련 메모이제이션
     const processedClusters = useMemo(() => {
         const clustersArray = Array.isArray(clusters) ? clusters : [];
+        console.log("클러스터 처리:", clustersArray.length, "개");
+        
+        if (clustersArray.length === 0) {
+            return [];
+        }
+        
         return clustersArray.map(cluster => ({
             ...cluster,
             color: getClusterColor(cluster)
@@ -450,7 +453,7 @@ const ArticleList: React.FC = () => {
                             allRegions={regions}
                             initialCenter={currentLocation}
                             initialZoom={mapZoom}
-                            clusterMode={isClusterMode}
+                            clusterMode={processedClusters.length > 0}
                             clusters={processedClusters}
                             onArticleClick={handleArticleClick}
                             onClusterClick={handleClusterClick}

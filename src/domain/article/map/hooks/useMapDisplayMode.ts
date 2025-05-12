@@ -25,9 +25,24 @@ export const useMapDisplayMode = ({
 }: UseMapDisplayModeProps) => {
   // 줌 레벨에 따른 표시 방식 결정
   const displayMode = useMemo<MapDisplayMode>(() => {
+    // 수정: 현재 줌 레벨을 1~14 사이로 제한
     const level = Math.min(Math.max(1, currentZoomLevel), 14);
-    return DISPLAY_MODE_BY_ZOOM_LEVEL[level as keyof typeof DISPLAY_MODE_BY_ZOOM_LEVEL] || MAP_DISPLAY_MODES.SHOW_ALL_PINS;
-  }, [currentZoomLevel]);
+    
+    // 클러스터가 있고 줌 레벨이 클러스터 표시 범위에 있다면 클러스터 모드 강제
+    if (clusters && clusters.length > 0 && 
+       (level >= 5 && level <= 7)) {
+      return MAP_DISPLAY_MODES.SHOW_CLUSTERS;
+    }
+    
+    // 매물이 있고 구/시 매물 수가 없을 경우 모든 줌 레벨에서 매물 핀 표시 모드 사용
+    if (articles.length > 0) {
+      return MAP_DISPLAY_MODES.SHOW_ALL_PINS;
+    }
+    
+    // 그 외에는 줌 레벨에 따라 지정된 표시 모드 사용
+    const mode = DISPLAY_MODE_BY_ZOOM_LEVEL[level as keyof typeof DISPLAY_MODE_BY_ZOOM_LEVEL] || MAP_DISPLAY_MODES.SHOW_ALL_PINS;
+    return mode;
+  }, [currentZoomLevel, clusters, articles]);
 
   // 시별 매물 개수 계산
   const cityCounts = useMemo<RegionArticleCount[]>(() => {
@@ -125,6 +140,18 @@ export const useMapDisplayMode = ({
         return { articles };
       
       case MAP_DISPLAY_MODES.SHOW_CLUSTERS:
+        // 클러스터가 없거나 비어있을 경우 처리
+        if (!clusters || clusters.length === 0) {
+          // 줌 레벨에 따라 대체 표시 모드 사용
+          if (currentZoomLevel <= 2) {
+            return { cityCounts };
+          } else if (currentZoomLevel <= 4) {
+            return { districtCounts };
+          } else {
+            return { articles };
+          }
+        }
+        
         return { clusters };
       
       case MAP_DISPLAY_MODES.SHOW_DISTRICT_COUNT:
@@ -136,7 +163,7 @@ export const useMapDisplayMode = ({
       default:
         return { articles };
     }
-  }, [displayMode, articles, clusters, districtCounts, cityCounts]);
+  }, [displayMode, articles, clusters, districtCounts, cityCounts, currentZoomLevel]);
 
   return {
     displayMode,

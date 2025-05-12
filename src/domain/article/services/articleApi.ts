@@ -179,7 +179,6 @@ export const getClusters = async (
         zoomLevel?: number; // 줌 레벨 추가
     }
 ): Promise<ExtendedApiResponse<ClusterInfo[]>> => {
-    console.log("getClusters API called with params:", params);
     try {
         // 파라미터 유효성 검사
         if (!params.swLat || !params.swLng || !params.neLat || !params.neLng) {
@@ -196,8 +195,16 @@ export const getClusters = async (
             params.precision = calculatePrecisionByZoom(params.zoomLevel);
         }
 
-        const response = await api.get('/api/clusters', {params});
-        console.log("getClusters API response:", response);
+        // API 호출 시 필요한 파라미터만 전달 - 백엔드 클래스와 일치하도록 수정
+        const apiParams = {
+            swLat: params.swLat,
+            neLat: params.neLat,
+            swLng: params.swLng,
+            neLng: params.neLng,
+            zoomLevel: params.zoomLevel
+        };
+
+        const response = await api.get('/api/clusters', {params: apiParams});
 
         // HATEOAS 응답 처리
         const clusters = extractHateoasData<ClusterInfo>(response.data);
@@ -243,9 +250,7 @@ export const getArticlesByCluster = async (params: {
   size: number;
 }): Promise<ArticleClusterResponse> => {
   try {
-    console.log("getArticlesByCluster API 요청:", params);
     const response = await api.get('/api/articles/by-cluster', { params });
-    console.log("getArticlesByCluster API 응답:", response);
 
     // HATEOAS 응답 처리
     const articles = extractHateoasData<ArticleResponse>(response.data);

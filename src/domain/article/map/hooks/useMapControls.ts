@@ -16,20 +16,38 @@ export const useMapControls = ({
 
   // 확대/축소 버튼 클릭 핸들러
   const handleZoomIn = () => {
-    if (!mapInstance.current) return;
-    const currentLevel = mapInstance.current.getLevel();
-    if (currentLevel > 1) { // 최소 줌 레벨은 1
-      mapInstance.current.setLevel(currentLevel - 1);
-      setCurrentZoomLevel(currentLevel - 1);
+    if (!mapInstance.current) {
+      console.warn('지도 인스턴스가 없습니다. 줌 기능을 사용할 수 없습니다.');
+      return;
+    }
+    
+    try {
+      const currentLevel = mapInstance.current.getLevel();
+      
+      if (currentLevel > 1) { // 최소 줌 레벨은 1
+        mapInstance.current.setLevel(currentLevel - 1);
+        setCurrentZoomLevel(currentLevel - 1);
+      }
+    } catch (error) {
+      console.error('줌 인 작업 중 오류 발생:', error);
     }
   };
 
   const handleZoomOut = () => {
-    if (!mapInstance.current) return;
-    const currentLevel = mapInstance.current.getLevel();
-    if (currentLevel < 14) { // 최대 줌 레벨은 14
-      mapInstance.current.setLevel(currentLevel + 1);
-      setCurrentZoomLevel(currentLevel + 1);
+    if (!mapInstance.current) {
+      console.warn('지도 인스턴스가 없습니다. 줌 기능을 사용할 수 없습니다.');
+      return;
+    }
+    
+    try {
+      const currentLevel = mapInstance.current.getLevel();
+      
+      if (currentLevel < 14) { // 최대 줌 레벨은 14
+        mapInstance.current.setLevel(currentLevel + 1);
+        setCurrentZoomLevel(currentLevel + 1);
+      }
+    } catch (error) {
+      console.error('줌 아웃 작업 중 오류 발생:', error);
     }
   };
 
