@@ -9,6 +9,7 @@ import {
     TextField
 } from '@mui/material';
 import React, {useEffect} from 'react';
+
 import {filterCities, filterDistricts, filterNeighborhoods, Region} from '@/domain/article/map/utils/regionUtils';
 
 interface RegionSelectorProps {
@@ -167,23 +168,23 @@ const RegionSelector: React.FC<RegionSelectorProps> = ({
                             <TextField
                                 {...params}
                                 label="동/읍/면 선택"
-                                InputProps={{
-                                    ...params.InputProps,
+                                {...(params.InputProps, {
                                     endAdornment: (
                                         <>
                                             {neighborhoodsLoading ? <CircularProgress size={20}/> : null}
                                             {params.InputProps.endAdornment}
                                         </>
                                     ),
-                                }}
+                                })}
                             />
                         )}
-                        renderTags={(value, getTagProps) =>
+                        {...(value, getTagProps) =>
                             value.map((option, index) => (
                                 <Chip
                                     label={option}
                                     {...getTagProps({index})}
                                     size="small"
+                                    key={index}
                                 />
                             ))
                         }

@@ -1,254 +1,235 @@
-import { useEffect, useRef, useState } from 'react';
-import { YEOKSAM_CENTER } from '@/domain/article/map/constants/mapConstants';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+
+import { MAP_ZOOM_LEVELS } from '../constants/mapConstants';
 
 interface UseMapInitializeProps {
-  initialCenter?: { lat: number, lng: number };
-  initialZoom?: number;
-  onViewChange?: (center: { lat: number, lng: number }, zoom: number) => void;
-  onBoundsChanged?: (bounds: {
-    ne: { lat: number; lng: number };
-    sw: { lat: number; lng: number }
-  }, zoom: number) => void;
-  mapRef?: React.MutableRefObject<any>;
+    initialCenter?: { lat: number; lng: number };
+    initialZoom?: number;
+    onViewChange?: (center: { lat: number; lng: number }, zoom: number) => void;
+    onBoundsChanged?: (bounds: {
+        ne: { lat: number; lng: number };
+        sw: { lat: number; lng: number }
+    }, zoom: number) => void;
+    mapRef?: React.MutableRefObject<any>;
 }
 
-// debounce 함수 구현
-const debounce = <F extends (...args: any[]) => any>(
-  func: F,
-  wait: number
-): ((...args: Parameters<F>) => void) => {
-  let timeout: ReturnType<typeof setTimeout> | null = null;
-
-  return function (...args: Parameters<F>) {
-    if (timeout) {
-      clearTimeout(timeout);
-    }
-    timeout = setTimeout(() => {
-      func(...args);
-    }, wait);
-  };
-};
-
 export const useMapInitialize = ({
-  initialCenter,
-  initialZoom,
-  onViewChange,
-  onBoundsChanged,
-  mapRef
-}: UseMapInitializeProps) => {
-  const mapRefInternal = useRef<HTMLDivElement>(null);
-  const mapInstance = useRef<any>(null);
-  const [isMapLoaded, setIsMapLoaded] = useState<boolean>(false);
-  const [isScriptLoaded, setIsScriptLoaded] = useState<boolean>(false);
-  const [mapErrorMessage, setMapErrorMessage] = useState<string | null>(null);
-  const [mapBounds, setMapBounds] = useState<any>(null);
-  const [currentZoomLevel, setCurrentZoomLevel] = useState<number>(initialZoom || 5);
-  const KAKAO_APP_KEY = import.meta.env.VITE_KAKAO_APP_KEY;
+                                     initialCenter,
+                                     initialZoom = MAP_ZOOM_LEVELS.DEFAULT,
+                                     onViewChange,
+                                     onBoundsChanged,
+                                     mapRef
+                                 }: UseMapInitializeProps) => {
+    const mapRefInternal = useRef<HTMLDivElement>(null);
+    const mapInstance = useRef<any>(null);
+    const [isMapLoaded, setIsMapLoaded] = useState<boolean>(false);
+    const [isScriptLoaded, setIsScriptLoaded] = useState<boolean>(false);
+    const [mapErrorMessage, setMapErrorMessage] = useState<string>('');
+    const [mapBounds, setMapBounds] = useState<any>(null);
+    const [currentZoomLevel, setCurrentZoomLevel] = useState<number>(initialZoom);
+    const KAKAO_APP_KEY = import.meta.env.VITE_KAKAO_APP_KEY;
 
-  // 카카오맵 스크립트 로드
-  useEffect(() => {
-    if (!KAKAO_APP_KEY) {
-      console.error('Kakao API key is not defined');
-      setMapErrorMessage("Kakao API 키가 설정되지 않았습니다");
-      return;
-    }
+    const initialCenterRef = useRef<{ lat: number; lng: number } | null>(null);
 
-    const kakaoMapScript = document.getElementById('kakao-map-script');
-
-    // 스크립트가 이미 로드되었고 API가 사용 가능한 경우
-    if (
-      kakaoMapScript &&
-      (window as any).kakao &&
-      (window as any).kakao.maps
-    ) {
-      setIsScriptLoaded(true);
-      return;
-    }
-
-    // 이전 스크립트 제거
-    if (kakaoMapScript) {
-      kakaoMapScript.remove();
-    }
-
-    // 새 스크립트 요소 생성
-    const script = document.createElement('script');
-    script.id = 'kakao-map-script';
-    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_APP_KEY}&libraries=services,clusterer,drawing&autoload=false`;
-    script.async = true;
-
-    // 스크립트 로드 성공
-    script.onload = () => {
-      (window as any).kakao.maps.load(() => {
-        setIsScriptLoaded(true);
-      });
-    };
-
-    // 스크립트 로드 실패
-    script.onerror = () => {
-      console.error("Failed to load Kakao Maps script");
-      setMapErrorMessage("Kakao 맵 스크립트 로드에 실패했습니다");
-    };
-
-    document.head.appendChild(script);
-  }, [KAKAO_APP_KEY]);
-
-  // 맵 초기화
-  useEffect(() => {
-    if (!isScriptLoaded || !mapRefInternal.current) return;
-
-    try {
-      // 이미 지도 인스턴스가 존재하는지 확인
-      if (mapInstance.current) {
-        // 지도가 존재하면 초기 세팅이 완료된 상태로 표시
-        setIsMapLoaded(true);
-
-        // 외부 참조도 업데이트
-        if (mapRef) {
-          mapRef.current = mapInstance.current;
+    // 지도 초기화 함수
+    const initializeMap = useCallback(() => {
+        if (!mapRefInternal.current) {
+            console.error('Map container ref is not available');
+            return;
         }
-        return;
-      }
 
-      // 새 지도 인스턴스 생성 (처음 마운트될 때만)
-      const container = mapRefInternal.current;
-      const options = {
-        center: new (window as any).kakao.maps.LatLng(
-          initialCenter?.lat || YEOKSAM_CENTER.lat,
-          initialCenter?.lng || YEOKSAM_CENTER.lng
-        ),
-        level: initialZoom || 5,
-        mapTypeControl: false,
-        zoomControl: false,
-        scaleControl: false  // 스케일 컨트롤 비활성화
-      };
-
-      const kakaoMap = new (window as any).kakao.maps.Map(container, options);
-
-      // 스케일 컨트롤 비활성화 (줌 레벨 표시 제거)
-      if ((window as any).kakao.maps.ScaleControl) {
-        const scaleControl = kakaoMap.getScaleControl();
-        if (scaleControl) {
-          scaleControl.setMap(null);
-        }
-      }
-
-      // 맵 인스턴스 저장 - 내부 및 외부 참조 모두 업데이트
-      mapInstance.current = kakaoMap;
-      if (mapRef) {
-        mapRef.current = kakaoMap;
-      }
-
-      // 지도 이동 이벤트
-      const handleMapIdle = debounce(() => {
         try {
-          const bounds = kakaoMap.getBounds();
-          setMapBounds(bounds);
+            const kakao = (window as any).kakao;
+            if (!kakao || !kakao.maps) {
+                console.error('Kakao Maps API is not loaded');
+                setMapErrorMessage('지도 API를 불러오는데 실패했습니다');
+                return;
+            }
 
-          const center = kakaoMap.getCenter();
-          const level = kakaoMap.getLevel();
-          setCurrentZoomLevel(level);
+            // 기존 지도 인스턴스가 있으면 재사용
+            if (mapInstance.current) {
+                console.log('Reusing existing map instance');
+                return;
+            }
 
-          if (onViewChange) {
-            onViewChange({
-              lat: center.getLat(),
-              lng: center.getLng()
-            }, level);
-          }
+            const center = new kakao.maps.LatLng(
+                initialCenter?.lat || 37.566826,
+                initialCenter?.lng || 126.9786567
+            );
 
-          if (onBoundsChanged) {
+            // 지도 생성
+            const map = new kakao.maps.Map(mapRefInternal.current, {
+                center: center,
+                level: initialZoom
+            });
+
+            // 지도 타입 컨트롤 추가
+            const mapTypeControl = new kakao.maps.MapTypeControl();
+            map.addControl(mapTypeControl, kakao.maps.ControlPosition.TOPRIGHT);
+
+            // 확대/축소 컨트롤 추가
+            // Custom 컨트롤로 대체하므로 주석 처리
+            // const zoomControl = new kakao.maps.ZoomControl();
+            // map.addControl(zoomControl, kakao.maps.ControlPosition.RIGHT);
+
+            // 현재 지도 범위 얻기
+            const bounds = map.getBounds();
             const ne = bounds.getNorthEast();
             const sw = bounds.getSouthWest();
+            setMapBounds({
+                ne: { lat: ne.getLat(), lng: ne.getLng() },
+                sw: { lat: sw.getLat(), lng: sw.getLng() }
+            });
 
-            onBoundsChanged({
-              ne: {
-                lat: ne.getLat(),
-                lng: ne.getLng()
-              },
-              sw: {
-                lat: sw.getLat(),
-                lng: sw.getLng()
-              }
-            }, level);
-          }
+            // 지도 이벤트 리스너 등록
+            kakao.maps.event.addListener(map, 'bounds_changed', () => {
+                const bounds = map.getBounds();
+                const ne = bounds.getNorthEast();
+                const sw = bounds.getSouthWest();
+                const newBounds = {
+                    ne: { lat: ne.getLat(), lng: ne.getLng() },
+                    sw: { lat: sw.getLat(), lng: sw.getLng() }
+                };
+                setMapBounds(newBounds);
+
+                // 바운드 변경 이벤트 콜백
+                if (onBoundsChanged) {
+                    onBoundsChanged(newBounds, map.getLevel());
+                }
+            });
+
+            // 중심점/줌 변경 이벤트
+            kakao.maps.event.addListener(map, 'center_changed', () => {
+                if (onViewChange) {
+                    const center = map.getCenter();
+                    onViewChange(
+                        { lat: center.getLat(), lng: center.getLng() },
+                        map.getLevel()
+                    );
+                }
+            });
+
+            // 줌 변경 이벤트
+            kakao.maps.event.addListener(map, 'zoom_changed', () => {
+                const zoomLevel = map.getLevel();
+                setCurrentZoomLevel(zoomLevel);
+
+                if (onViewChange) {
+                    const center = map.getCenter();
+                    onViewChange(
+                        { lat: center.getLat(), lng: center.getLng() },
+                        zoomLevel
+                    );
+                }
+            });
+
+            // 외부에서 참조할 수 있도록 지도 인스턴스 저장
+            mapInstance.current = map;
+
+            // 외부에서 제공된 mapRef가 있으면 참조 설정
+            if (mapRef) {
+                mapRef.current = map;
+            }
+
+            setIsMapLoaded(true);
+            console.log('Kakao map initialized successfully');
         } catch (error) {
-          console.error("Error in handleMapIdle:", error);
+            console.error('Error initializing map:', error);
+            setMapErrorMessage('지도를 초기화하는데 문제가 발생했습니다');
         }
-      }, 300);
+    }, [initialCenter, initialZoom, onBoundsChanged, onViewChange, mapRef]);
 
-      (window as any).kakao.maps.event.addListener(kakaoMap, 'idle', handleMapIdle);
+    // 카카오맵 스크립트 로드
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
 
-      // 초기 줌 레벨 설정
-      setCurrentZoomLevel(kakaoMap.getLevel());
-      setIsMapLoaded(true);
+        // 이미 로드된 경우
+        if (isScriptLoaded || (window as any).kakao?.maps) {
+            setIsScriptLoaded(true);
+            initializeMap();
+            return;
+        }
 
-      return () => {
         try {
-          const kakao = (window as any).kakao;
-          if (kakao && kakao.maps && kakao.maps.event && kakaoMap) {
-            kakao.maps.event.removeListener(kakaoMap, 'idle', handleMapIdle);
-          }
+            const script = document.createElement('script');
+            script.async = true;
+            script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_APP_KEY}&autoload=false&libraries=services,clusterer,drawing`;
+
+            script.onload = () => {
+                (window as any).kakao.maps.load(() => {
+                    console.log('Kakao Maps API loaded');
+                    setIsScriptLoaded(true);
+                    initializeMap();
+                });
+            };
+
+            script.onerror = () => {
+                console.error('Failed to load Kakao Maps API');
+                setMapErrorMessage('지도 API를 불러오는데 실패했습니다');
+            };
+
+            document.head.appendChild(script);
+
+            return () => {
+                // 언마운트 시 스크립트 제거는 하지 않음 (다른 컴포넌트에서 재사용)
+            };
         } catch (error) {
-          console.error('idle 이벤트 리스너 제거 중 오류:', error);
+            console.error('Error loading map script:', error);
+            setMapErrorMessage('지도 스크립트를 로드하는데 문제가 발생했습니다');
         }
-      };
-    } catch (error) {
-      console.error('Error initializing map:', error);
-      setMapErrorMessage("지도 초기화에 실패했습니다.");
-    }
-  }, [isScriptLoaded]);
+    }, [KAKAO_APP_KEY, initializeMap, isScriptLoaded]);
 
-  // initialCenter가 변경될 때 한 번만 실행되는 효과
-  const initialCenterRef = useRef(initialCenter);
-  useEffect(() => {
-    if (!isMapLoaded || !initialCenter) return;
+    // 초기 중심점 설정
+    useEffect(() => {
+        if (!isMapLoaded || !initialCenter) return;
 
-    // 매우 처음 한 번만 실행
-    if (!initialCenterRef.current) {
-      initialCenterRef.current = initialCenter;
+        // 매우 처음 한 번만 실행
+        if (!initialCenterRef.current) {
+            initialCenterRef.current = initialCenter;
 
-      if (mapInstance.current) {
-        try {
-          const position = new (window as any).kakao.maps.LatLng(
-            initialCenter.lat,
-            initialCenter.lng
-          );
-          mapInstance.current.setCenter(position);
-        } catch (error) {
-          console.error('Error setting initial center:', error);
+            if (mapInstance.current) {
+                try {
+                    const position = new (window as any).kakao.maps.LatLng(
+                        initialCenter.lat,
+                        initialCenter.lng
+                    );
+                    mapInstance.current.setCenter(position);
+                } catch (error) {
+                    console.error('Error setting initial center:', error);
+                }
+            }
         }
-      }
-    }
-  }, [isMapLoaded, initialCenter]);
+    }, [isMapLoaded, initialCenter]);
 
-  // 초기 줌 레벨 설정
-  const initialZoomRef = useRef(initialZoom);
-  useEffect(() => {
-    if (!isMapLoaded || !mapInstance.current) return;
+    // 초기 줌 레벨 설정
+    const initialZoomRef = useRef(initialZoom);
+    useEffect(() => {
+        if (!isMapLoaded || !mapInstance.current) return;
 
-    // initialZoom이 변경되었고, 사용자 상호작용이 아닌 경우에만 줌 레벨 업데이트
-    if (initialZoom !== undefined && initialZoom !== currentZoomLevel) {
-      // 클러스터나 매물 선택으로 인한 변경일 때만 실행
-      if (initialZoom !== initialZoomRef.current) {
-        initialZoomRef.current = initialZoom;
+        // initialZoom이 변경되었고, 사용자 상호작용이 아닌 경우에만 줌 레벨 업데이트
+        if (initialZoom !== undefined && initialZoom !== currentZoomLevel) {
+            // 클러스터나 매물 선택으로 인한 변경일 때만 실행
+            if (initialZoom !== initialZoomRef.current) {
+                initialZoomRef.current = initialZoom;
 
-        try {
-          mapInstance.current.setLevel(initialZoom);
-          setCurrentZoomLevel(initialZoom);
-        } catch (error) {
-          console.error('Error setting zoom level:', error);
+                try {
+                    mapInstance.current.setLevel(initialZoom);
+                    setCurrentZoomLevel(initialZoom);
+                } catch (error) {
+                    console.error('Error setting zoom level:', error);
+                }
+            }
         }
-      }
-    }
-  }, [isMapLoaded, initialZoom, currentZoomLevel]);
+    }, [isMapLoaded, initialZoom, currentZoomLevel]);
 
-  return {
-    mapRefInternal,
-    mapInstance,
-    isMapLoaded,
-    isScriptLoaded,
-    mapErrorMessage,
-    mapBounds,
-    currentZoomLevel,
-    setCurrentZoomLevel
-  };
+    return {
+        mapRefInternal,
+        mapInstance,
+        isMapLoaded,
+        isScriptLoaded,
+        mapErrorMessage,
+        mapBounds,
+        currentZoomLevel,
+        setCurrentZoomLevel
+    };
 }; 

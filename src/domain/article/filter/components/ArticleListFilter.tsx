@@ -13,7 +13,9 @@ import {
     TextField
 } from "@mui/material";
 import React, {useState} from "react";
-import {REAL_ESTATE_OPTIONS, RealEstateType, TRADE_TYPE_OPTIONS, TradeType} from "@/domain/article/types/article";
+
+import {REAL_ESTATE_OPTIONS, TRADE_TYPE_OPTIONS} from "@/domain/article/constants/articleConstants"
+import {RealEstateType, TradeType} from "@/domain/article/types/article";
 import {getTypeColor} from "@/domain/article/utils/articleDisplay";
 import {convertKoreanPriceToNumber} from "@/domain/article/utils/articlePrice";
 
@@ -145,7 +147,7 @@ const ArticleListFilter: React.FC<ArticleListFilterProps> = ({
                                 placeholder="최소"
                                 value={minSalePrice === 0 ? '' : minSalePrice.toString()}
                                 onChange={(e) => handlePriceChange('minSalePrice', e.target.value)}
-                                InputProps={{
+                                {...{
                                     endAdornment: <InputAdornment position="end">만원</InputAdornment>,
                                 }}
                             />
@@ -154,7 +156,7 @@ const ArticleListFilter: React.FC<ArticleListFilterProps> = ({
                                 placeholder="최대"
                                 value={maxSalePrice === 0 ? '' : maxSalePrice.toString()}
                                 onChange={(e) => handlePriceChange('maxSalePrice', e.target.value)}
-                                InputProps={{
+                                {...{
                                     endAdornment: <InputAdornment position="end">만원</InputAdornment>,
                                 }}
                             />
@@ -169,7 +171,7 @@ const ArticleListFilter: React.FC<ArticleListFilterProps> = ({
                                 placeholder="최소"
                                 value={minRentPrice === 0 ? '' : minRentPrice.toString()}
                                 onChange={(e) => handlePriceChange('minRentPrice', e.target.value)}
-                                InputProps={{
+                                {...{
                                     endAdornment: <InputAdornment position="end">만원</InputAdornment>,
                                 }}
                             />
@@ -178,7 +180,7 @@ const ArticleListFilter: React.FC<ArticleListFilterProps> = ({
                                 placeholder="최대"
                                 value={maxRentPrice === 0 ? '' : maxRentPrice.toString()}
                                 onChange={(e) => handlePriceChange('maxRentPrice', e.target.value)}
-                                InputProps={{
+                                {...{
                                     endAdornment: <InputAdornment position="end">만원</InputAdornment>,
                                 }}
                             />
@@ -204,4 +206,4 @@ const ArticleListFilter: React.FC<ArticleListFilterProps> = ({
     );
 };
 
-export default ArticleListFilter; 
+export default ArticleListFilter;

@@ -1,7 +1,7 @@
-import { Box, Button } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import RemoveIcon from '@mui/icons-material/Remove';
 import MyLocationIcon from '@mui/icons-material/MyLocation';
+import RemoveIcon from '@mui/icons-material/Remove';
+import { Box, Button } from '@mui/material';
 
 interface MapControlButtonsProps {
   handleZoomIn: () => void;

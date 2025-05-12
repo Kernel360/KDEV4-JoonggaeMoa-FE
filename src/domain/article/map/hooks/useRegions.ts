@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
+
 import { regionApi } from '@/domain/article/map/services/regionApi';
 import type { Region } from '@/domain/article/map/utils/regionUtils';
 
@@ -51,12 +52,12 @@ export const useRegions = ({
   };
 
   // 행정구역 ID로부터 일관된 색상 얻기
-  const getColorForRegion = (regionId: string) => {
+  const getColorForRegion = useCallback((regionId: string) => {
     if (!colorMapRef.current.has(regionId)) {
       colorMapRef.current.set(regionId, getRandomColor());
     }
     return colorMapRef.current.get(regionId);
-  };
+  }, []);
 
   // 행정구역 경계 그리기 - 폴리곤과 라벨 생성
   useEffect(() => {
@@ -156,7 +157,7 @@ export const useRegions = ({
               let pointCount = 0;
 
               // 폴리곤 경로
-              let paths: any[] = [];
+              const paths: any[] = [];
 
               if (feature.geometry.type === 'MultiPolygon') {
                 feature.geometry.coordinates.forEach((coordsArray: any) => {
@@ -251,7 +252,7 @@ export const useRegions = ({
     } catch (error) {
       console.error('행정구역 경계 그리기 초기화 중 오류:', error);
     }
-  }, [isMapLoaded, dongBoundaries, guBoundaries]);
+  }, [isMapLoaded, dongBoundaries, guBoundaries, mapInstance, getColorForRegion]);
 
   // 줌 레벨 변경 이벤트 리스너 등록 - 별도의 useEffect로 분리
   useEffect(() => {
@@ -292,7 +293,7 @@ export const useRegions = ({
     } catch (error) {
       console.error('줌 레벨 변경 이벤트 리스너 등록 중 오류:', error);
     }
-  }, [isMapLoaded, dongBoundaries, guBoundaries]);
+  }, [isMapLoaded, dongBoundaries, guBoundaries, mapInstance]);
 
   // 선택된 지역으로 이동
   useEffect(() => {
@@ -333,7 +334,7 @@ export const useRegions = ({
     } catch (error) {
       console.error("Failed to move to selected region:", error);
     }
-  }, [isMapLoaded, selectedRegions, allRegions]);
+  }, [isMapLoaded, selectedRegions, allRegions, mapInstance]);
 
   return {
     dongBoundaries,

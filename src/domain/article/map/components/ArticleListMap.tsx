@@ -1,9 +1,10 @@
-import React, {useRef} from 'react';
 import {Box} from '@mui/material';
+import React, {useRef} from 'react';
+
 import MapView from '@/domain/article/map/components/MapView';
+import type {Region} from '@/domain/article/map/utils/regionUtils';
 import type {ArticleResponse, ClusterInfo} from '@/domain/article/types/article';
 import {validateCoordinates} from '@/domain/article/utils/articleFormat';
-import type {Region} from '@/domain/article/map/utils/regionUtils';
 
 interface ArticleListMapProps {
     articles: ArticleResponse[];
