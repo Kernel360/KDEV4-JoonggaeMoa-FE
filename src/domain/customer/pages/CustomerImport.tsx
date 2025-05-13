@@ -58,12 +58,12 @@ const CustomerImport = () => {
                 // Redirect after successful upload
                 navigate("/customer-management")
             } else {
-                if (response.data.error?.code == "4092") {
+                if (response.data.error?.code == 4092) {
                     setError("이미 등록된 고객 정보가 있습니다.")
-                } else if (response.data.error?.code == "4093") {
+                } else if (response.data.error?.code == 4093) {
                     setError("이미 등록된 이메일 정보가 있습니다.")
 
-                } else if (response.data.error?.code == "4002") {
+                } else if (response.data.error?.code == 4002) {
                     setError("지원하는 파일 형식이 아닙니다.")
                 } else {
                     setError("파일 업로드에 실패했습니다.")

@@ -94,9 +94,9 @@ const CustomerAdd = () => {
                 navigate("/customer-management")
 
             } else {
-                if (response.data.error?.code == "4092") {
+                if (response.data.error?.code == 4092) {
                     setError("이미 등록된 전화번호입니다.")
-                } else if (response.data.error?.code == "4093") {
+                } else if (response.data.error?.code == 4093) {
                     setError("이미 등록된 이메일입니다.")
                 } else {
                     setError("고객 등록에 실패했습니다.")
