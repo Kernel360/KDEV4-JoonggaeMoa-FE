@@ -1,5 +1,5 @@
 export interface ApiError {
-    code: string
+    code: number
     message: string
 }
 
