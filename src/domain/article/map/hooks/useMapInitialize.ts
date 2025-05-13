@@ -211,28 +211,73 @@ export const useMapInitialize = ({
     useEffect(() => {
         if (typeof window === 'undefined') return;
 
+        // kakao 객체와 maps 속성이 존재하고 LatLng 생성자가 있는지 확인
+        const isKakaoMapsLoaded = () => {
+            return (
+                typeof (window as any).kakao !== 'undefined' && 
+                typeof (window as any).kakao.maps !== 'undefined' &&
+                typeof (window as any).kakao.maps.LatLng === 'function'
+            );
+        };
+
         // 이미 로드된 경우
-        if ((window as any).kakao?.maps) {
+        if (isKakaoMapsLoaded()) {
+            console.log("카카오맵 API 이미 로드됨");
             setIsScriptLoaded(true);
             initializeMap();
             return;
         }
 
         try {
+            // 이미 스크립트 태그가 존재하는지 확인
+            const existingScript = document.querySelector('script[src*="dapi.kakao.com/v2/maps/sdk.js"]');
+            
+            if (existingScript) {
+                console.log("카카오맵 스크립트 태그 존재함, 로드 대기 중");
+                
+                // 스크립트가 이미 있지만 아직 로드가 완료되지 않은 경우, 로드 완료 대기
+                const waitForKakaoMaps = () => {
+                    if (isKakaoMapsLoaded()) {
+                        console.log("카카오맵 API 로드 완료 확인");
+                        setIsScriptLoaded(true);
+                        initializeMap();
+                    } else {
+                        console.log("카카오맵 API 대기 중...");
+                        setTimeout(waitForKakaoMaps, 100);
+                    }
+                };
+                
+                waitForKakaoMaps();
+                return;
+            }
+            
+            // 새로운 스크립트 태그 생성
             const script = document.createElement('script');
             script.async = true;
-            script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_APP_KEY}&autoload=false&libraries=services,clusterer,drawing`;
+            script.defer = true; // defer 추가
+            script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_APP_KEY}&autoload=false&libraries=services,clusterer,drawing`;
 
             script.onload = () => {
+                console.log("카카오맵 스크립트 온로드 이벤트 발생");
+                // autoload=false 옵션을 사용했기 때문에 명시적 로드 필요
                 (window as any).kakao.maps.load(() => {
-                    setIsScriptLoaded(true);
-                    initializeMap();
+                    console.log("카카오맵 API 명시적 로드 완료");
+                    // 2초 지연 후 초기화 (API가 완전히 로드될 시간을 줌)
+                    setTimeout(() => {
+                        if (isKakaoMapsLoaded()) {
+                            setIsScriptLoaded(true);
+                            initializeMap();
+                        } else {
+                            console.error("카카오맵 API 로드 실패: LatLng 생성자 없음");
+                            setMapErrorMessage('지도 API를 불러오는데 실패했습니다 (LatLng 미지원)');
+                        }
+                    }, 500);
                 });
             };
 
-            script.onerror = () => {
-                console.error('Failed to load Kakao Maps API');
-                setMapErrorMessage('지도 API를 불러오는데 실패했습니다');
+            script.onerror = (error) => {
+                console.error('Failed to load Kakao Maps API:', error);
+                setMapErrorMessage('지도 API를 불러오는데 실패했습니다 (스크립트 로드 오류)');
             };
 
             document.head.appendChild(script);

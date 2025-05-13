@@ -7,8 +7,7 @@ import { createArticleMarkerSvg } from '@/domain/article/utils/articleDisplay';
 import { validateCoordinates } from '@/domain/article/utils/articleFormat';
 
 import { useMapDisplayMode } from './useMapDisplayMode';
-import RegionArticleCountMarker from '../components/RegionArticleCountMarker';
-import RegionArticlePopper from '../components/RegionArticlePopper';
+import RegionHoverPopper from '../components/RegionHoverPopper';
 import { MAP_DISPLAY_MODES } from '../constants/mapConstants';
 import { RegionArticleCount } from '../types/mapDisplayTypes';
 
@@ -142,7 +141,7 @@ export const useMarkers = ({
     // 현재 표시 모드에 따라 적절한 마커 표시
     if (displayMode === MAP_DISPLAY_MODES.SHOW_CLUSTERS && displayData.clusters && displayData.clusters.length > 0) {
       // 클러스터 표시 (배치 처리)
-      console.log("클러스터 모드: 클러스터 데이터 표시", displayData.clusters.length, "개");
+      console.log("[매물 표시 모드] 클러스터 모드 (줌 레벨: 5-6): 클러스터", displayData.clusters.length, "개 표시");
       
       const maxClusters = Math.min(displayData.clusters.length, 100); // 클러스터 수 제한
       
@@ -204,6 +203,10 @@ export const useMarkers = ({
         ? displayData.districtCounts!
         : displayData.cityCounts!;
       
+      console.log(`[매물 표시 모드] ${displayMode === MAP_DISPLAY_MODES.SHOW_DISTRICT_COUNT 
+        ? '구역별 매물 개수 모드 (줌 레벨: 7-8)' 
+        : '시단위별 매물 개수 모드 (줌 레벨: 9+)'}: ${regionCounts.length}개 지역 표시`);
+      
       // 성능을 위해 최대 표시 개수 제한
       const maxRegions = Math.min(regionCounts.length, 100);
       
@@ -213,17 +216,19 @@ export const useMarkers = ({
         // 마커 DOM 요소 생성
         const markerContainer = document.createElement('div');
         
-        // React 컴포넌트 렌더링 - Popper 컴포넌트 사용
-        const root = createRoot(markerContainer);
-        root.render(
-          React.createElement(RegionArticlePopper, {
-            regionCount: region,
-            onClick: () => handleRegionClick(region)
-          })
-        );
-
-        // 지역 마커 생성
+        // React 컴포넌트 렌더링 - 호버 포퍼 컴포넌트 사용
         try {
+          const root = createRoot(markerContainer);
+          root.render(
+            React.createElement(RegionHoverPopper, {
+              regionCount: region,
+              mapArticles: articles,
+              onMouseEnter: () => console.log(`Region hover: ${region.name}`),
+              onMouseLeave: () => console.log(`Region hover end: ${region.name}`)
+            })
+          );
+          
+          // 지역 마커 생성
           const position = new kakao.maps.LatLng(region.lat, region.lng);
           const marker = new kakao.maps.CustomOverlay({
             position: position,
@@ -231,8 +236,20 @@ export const useMarkers = ({
             zIndex: 2,
             map: map
           });
+          
+          // 클릭 이벤트 추가
+          markerContainer.addEventListener('click', (e) => {
+            // 이벤트 전파 중지
+            e.stopPropagation();
+            
+            if (onRegionClick) {
+              onRegionClick(region);
+            }
+          });
+          
           newMarkers.push(marker);
         } catch (error) {
+          console.error(`[지역 마커 오류] ${region.name} 지역 마커 생성 실패:`, error);
           // 오류는 무시하고 다음 마커로 진행
           continue;
         }
@@ -240,13 +257,13 @@ export const useMarkers = ({
     } 
     else if (displayMode === MAP_DISPLAY_MODES.SHOW_ALL_PINS || articles.length > 0) {
       // 개별 매물 마커 표시
+      console.log("[매물 표시 모드] 개별 매물 핀 모드 (줌 레벨: 1-4): 매물", articles.length, "개 표시");
       
-      // 너무 많은 매물이 있으면 렌더링 부하가 커지므로 제한
-      const maxArticles = Math.min(articles.length, 100);
+      // 모든 매물 표시 (제한 제거)
       const articlesByLocation = new Map();
       
       // 같은 위치의 매물을 하나의 마커로 그룹화
-      for (let i = 0; i < maxArticles; i++) {
+      for (let i = 0; i < articles.length; i++) {
         const article = articles[i];
         
         // 좌표 유효성 검사

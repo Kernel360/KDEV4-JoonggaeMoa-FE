@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from "react"
+import { Forum, InsertDriveFile, People, } from "@mui/icons-material"
 import {
     Box,
     Button,
@@ -10,12 +10,13 @@ import {
     ToggleButtonGroup,
     Typography,
 } from "@mui/material"
-import {Forum, InsertDriveFile, People,} from "@mui/icons-material"
-import {useNavigate} from "react-router-dom"
-import {useAuth} from "@/global/auth/context/AuthContext"
-import api from "@/global/api/services/api"
-import {PieChart} from "@toast-ui/chart"
-import {dashboardApi} from "@/domain/dashboard/services/dashboardApi"
+import { PieChart } from "@toast-ui/chart"
+import { differenceInDays, format, parseISO, startOfDay } from 'date-fns'
+import React, { useEffect, useRef, useState } from "react"
+import { useNavigate } from "react-router-dom"
+
+import { contractApi } from "@/domain/contract/services/contractApi"
+import { dashboardApi } from "@/domain/dashboard/services/dashboardApi"
 import type {
     ConsultationSummaryResponse,
     ContractSummaryResponse,
@@ -23,9 +24,8 @@ import type {
     RealEstateTypeSummaryResponse,
     TradeTypeSummaryResponse
 } from "@/domain/dashboard/types/dashboard"
-import {differenceInDays, format, parseISO, startOfDay} from 'date-fns';
-import {contractApi} from "@/domain/contract/services/contractApi"
-
+import api from "@/global/api/services/api"
+import { useAuth } from "@/global/auth/context/AuthContext"
 
 // 커스텀 테마 생성
 const theme = createTheme({
@@ -284,7 +284,7 @@ const Dashboard = () => {
         return () => {
             cleanupCharts();
         };
-    }, []); // 의존성 배열 비움 - 컴포넌트 마운트 시 한 번만 실행
+    }, []);
 
 
     const fetchRealEstateTypeData = async (period) => {
@@ -434,38 +434,53 @@ const Dashboard = () => {
 
     // 차트 렌더링
     useEffect(() => {
-        if (!realEstateTypeData?.values?.length || !realEstateTypeChartRef.current) return;
+        // 조건 확인: 데이터가 없거나 차트 참조가 없으면 실행하지 않음
+        if (!realEstateTypeData?.values?.length || !realEstateTypeChartRef.current) {
+            return;
+        }
 
-        // 부동산 유형 차트 렌더링
+        // 이전 차트 인스턴스 정리
         if (realEstateTypeChartInstance.current) {
-            realEstateTypeChartInstance.current.destroy();
+            try {
+                realEstateTypeChartInstance.current.destroy();
+            } catch (err) {
+                console.error("Error destroying real estate type chart:", err);
+            }
             realEstateTypeChartInstance.current = null;
         }
 
-        // 5% 미만인 부동산 유형을 '기타'로 통합
-        const THRESHOLD = 5;
-        const sortedRealEstateTypes = [...realEstateTypeData.values]
-            .sort((a, b) => b.ratio - a.ratio);
+        try {
+            // 5% 미만인 부동산 유형을 '기타'로 통합
+            const THRESHOLD = 5;
+            const sortedRealEstateTypes = [...realEstateTypeData.values]
+                .sort((a, b) => b.ratio - a.ratio);
 
-        const mainTypes = sortedRealEstateTypes.filter(item => item.ratio >= THRESHOLD);
-        const otherTypes = sortedRealEstateTypes.filter(item => item.ratio < THRESHOLD);
+            const mainTypes = sortedRealEstateTypes.filter(item => item.ratio >= THRESHOLD);
+            const otherTypes = sortedRealEstateTypes.filter(item => item.ratio < THRESHOLD);
 
-        const otherRatio = otherTypes.reduce((sum, item) => sum + item.ratio, 0);
+            const otherRatio = otherTypes.reduce((sum, item) => sum + item.ratio, 0);
 
-        const realEstateChartData = {
-            series: [
-                ...mainTypes.map(item => ({
+            // 차트 데이터 포맷
+            const realEstateChartData = {
+                series: mainTypes.map(item => ({
                     name: item.type,
                     data: item.ratio
-                })),
-                ...(otherRatio > 0 ? [{
+                }))
+            };
+
+            if (otherRatio > 0) {
+                realEstateChartData.series.push({
                     name: '기타',
                     data: otherRatio
-                }] : [])
-            ]
-        };
+                });
+            }
 
-        try {
+            // 차트 DOM 요소가 존재하는지 다시 확인
+            if (!realEstateTypeChartRef.current) {
+                return;
+            }
+
+            // 차트 생성
             realEstateTypeChartInstance.current = new PieChart({
                 el: realEstateTypeChartRef.current,
                 data: realEstateChartData,
@@ -515,34 +530,53 @@ const Dashboard = () => {
             console.error("Error creating real estate type chart:", err);
         }
 
+        // 컴포넌트 정리 함수
         return () => {
             if (realEstateTypeChartInstance.current) {
-                realEstateTypeChartInstance.current.destroy();
-                realEstateTypeChartInstance.current = null;
+                try {
+                    realEstateTypeChartInstance.current.destroy();
+                    realEstateTypeChartInstance.current = null;
+                } catch (err) {
+                    console.error("Error destroying real estate type chart in cleanup:", err);
+                }
             }
         };
     }, [realEstateTypeData]);
 
     // 거래 유형 차트 렌더링
     useEffect(() => {
-        if (!tradeTypeData?.values?.length || !tradeTypeChartRef.current) return;
+        // 조건 확인: 데이터가 없거나 차트 참조가 없으면 실행하지 않음
+        if (!tradeTypeData?.values?.length || !tradeTypeChartRef.current) {
+            return;
+        }
 
-        // 거래 유형 차트 렌더링
+        // 이전 차트 인스턴스 정리
         if (tradeTypeChartInstance.current) {
-            tradeTypeChartInstance.current.destroy();
+            try {
+                tradeTypeChartInstance.current.destroy();
+            } catch (err) {
+                console.error("Error destroying trade type chart:", err);
+            }
             tradeTypeChartInstance.current = null;
         }
 
-        const types = tradeTypeData.values.filter(item => item.ratio >= 0.5);
-
-        const tradeTypeChartData = {
-            series: types.map(item => ({
-                name: item.type,
-                data: item.ratio
-            }))
-        };
-
         try {
+            const types = tradeTypeData.values.filter(item => item.ratio >= 0.5);
+
+            // 차트 데이터 포맷
+            const tradeTypeChartData = {
+                series: types.map(item => ({
+                    name: item.type,
+                    data: item.ratio
+                }))
+            };
+
+            // 차트 DOM 요소가 존재하는지 다시 확인
+            if (!tradeTypeChartRef.current) {
+                return;
+            }
+
+            // 차트 생성
             tradeTypeChartInstance.current = new PieChart({
                 el: tradeTypeChartRef.current,
                 data: tradeTypeChartData,
@@ -581,10 +615,15 @@ const Dashboard = () => {
             console.error("Error creating trade type chart:", err);
         }
 
+        // 컴포넌트 정리 함수
         return () => {
             if (tradeTypeChartInstance.current) {
-                tradeTypeChartInstance.current.destroy();
-                tradeTypeChartInstance.current = null;
+                try {
+                    tradeTypeChartInstance.current.destroy();
+                    tradeTypeChartInstance.current = null;
+                } catch (err) {
+                    console.error("Error destroying trade type chart in cleanup:", err);
+                }
             }
         };
     }, [tradeTypeData]);
@@ -979,11 +1018,11 @@ const Dashboard = () => {
                         </Box>
 
                         {realEstateTypeLoading ? (
-                            <Box sx={{display: "flex", justifyContent: "center", my: 5}}>
-                                <CircularProgress/>
+                            <Box sx={{display: "flex", justifyContent: "center", my: 5, height: '350px'}}>
+                                <CircularProgress />
                             </Box>
                         ) : realEstateTypeError ? (
-                            <Box sx={{textAlign: "center", py: 3}}>
+                            <Box sx={{textAlign: "center", py: 3, height: '350px'}}>
                                 <Typography color="error">{realEstateTypeError}</Typography>
                                 <Button
                                     variant="contained"
@@ -1052,11 +1091,11 @@ const Dashboard = () => {
                         </Box>
 
                         {tradeTypeLoading ? (
-                            <Box sx={{display: "flex", justifyContent: "center", my: 5}}>
-                                <CircularProgress/>
+                            <Box sx={{display: "flex", justifyContent: "center", my: 5, height: '350px'}}>
+                                <CircularProgress />
                             </Box>
                         ) : tradeTypeError ? (
-                            <Box sx={{textAlign: "center", py: 3}}>
+                            <Box sx={{textAlign: "center", py: 3, height: '350px'}}>
                                 <Typography color="error">{tradeTypeError}</Typography>
                                 <Button
                                     variant="contained"
