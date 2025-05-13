@@ -1,5 +1,17 @@
 import axios, { type AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from "axios"
 
+// API Response Types
+interface ExceptionDto {
+    code: number;
+    message: string;
+}
+
+interface ApiResponse<T> {
+    success: boolean;
+    data: T | null;
+    error: ExceptionDto | null;
+}
+
 // 환경 변수에서 API URL 가져오기
 const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 
@@ -46,16 +58,16 @@ api.interceptors.response.use(
     (response: AxiosResponse) => {
         return response
     },
-    async (error: AxiosError) => {
+    async (error: AxiosError<ApiResponse<unknown>>) => {
         const originalRequest = error.config
 
         // Skip token refresh for auth endpoints
         const isAuthEndpoint =
             originalRequest?.url?.includes("/api/agent/login") || originalRequest?.url?.includes("/api/agent/signup")
 
-        // If error is 401 (Unauthorized) and we haven't tried to refresh the token yet
+        // Check if error response has code 4011 and we haven't tried to refresh the token yet
         // and it's not an auth endpoint
-        if (error.response?.status === 401 && !originalRequest?.headers?.["X-Retry"] && !isAuthEndpoint) {
+        if (error.response?.data?.error?.code === 4011 && !originalRequest?.headers?.["X-Retry"] && !isAuthEndpoint) {
             try {
                 // Try to refresh the token
                 const refreshResponse = await axios.post(
