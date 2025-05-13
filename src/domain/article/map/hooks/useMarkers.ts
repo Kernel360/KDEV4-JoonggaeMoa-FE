@@ -2,6 +2,12 @@ import { useEffect, useState, useCallback } from 'react';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 
+declare global {
+  interface Window {
+    _customMarkers: any[];
+  }
+}
+
 import type { ArticleResponse, ClusterInfo } from '@/domain/article/types/article';
 import { createArticleMarkerSvg } from '@/domain/article/utils/articleDisplay';
 import { validateCoordinates } from '@/domain/article/utils/articleFormat';

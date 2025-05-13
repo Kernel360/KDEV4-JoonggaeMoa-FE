@@ -30,20 +30,6 @@ export default defineConfig(({ mode }) => {
     },
     define: {
       'import.meta.env.VITE_API_BASE_URL': JSON.stringify(env.VITE_API_BASE_URL)
-    },
-    build: {
-      rollupOptions: {
-        output: {
-          manualChunks: (id) => {
-            if (id.includes('node_modules')) {
-              if (id.includes('react')) return 'vendor';
-              if (id.includes('@mui')) return 'ui';
-              return 'deps'; // 기타 의존성
-            }
-          }
-        }
-      },
-      chunkSizeWarningLimit: 1000
     }
   }
 })

@@ -248,7 +248,7 @@ const InquiryDetail: React.FC = () => {
                         onClick={() => navigate('/inquiry')}
                     >
                         <img
-                            src="/로고.png"
+                            src="/logo.png"
                             alt="중개모아 로고"
                             style={{height: '50px'}}
                         />
