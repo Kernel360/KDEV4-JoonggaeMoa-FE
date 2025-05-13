@@ -1,0 +1,42 @@
+// 계약 관련 타입 정의
+
+// 계약 생성 요청 타입
+export interface CreateContractRequest {
+    landlordId: number;
+    tenantId: number;
+    startedAt: string; // LocalDate -> ISO 문자열 형식 (YYYY-MM-DD)
+    expiredAt: string; // LocalDate -> ISO 문자열 형식 (YYYY-MM-DD)
+}
+
+// 계약 수정 요청 타입
+export interface UpdateContractRequest {
+    startedAt: string; // LocalDate -> ISO 문자열 형식 (YYYY-MM-DD)
+    expiredAt: string; // LocalDate -> ISO 문자열 형식 (YYYY-MM-DD)
+}
+
+// 계약 응답 타입
+export interface ContractResponse {
+    id: string;
+    landlordId: number
+    tenantId: number
+    landlordName: string;
+    tenantName: string;
+    landlordPhone: string;
+    tenantPhone: string;
+    landlordEmail: string;
+    tenantEmail: string;
+    startedAt: string; // LocalDate -> ISO 문자열 형식 (YYYY-MM-DD)
+    expiredAt: string; // LocalDate -> ISO 문자열 형식 (YYYY-MM-DD)
+    url: string; // 계약서 파일 URL
+}
+
+export interface ExpiredContract {
+    id: string;
+    landlordName: string;
+    tenantName: string;
+    expiredAt: string; // LocalDate will be received as string from API
+}
+
+export interface ExpiredContractResponse {
+    expiredContracts: ExpiredContract[];
+}

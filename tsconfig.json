@@ -2,7 +2,7 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "moduleResolution": "node",  // 모듈 경로를 Node 방식으로 확인
-    "baseUrl": "./",             // 상대 경로 문제 해결
+    "baseUrl": ".",             // 상대 경로 문제 해결
     "paths": {
       "@/*": ["src/*"]           // (선택) 경로 alias 설정
     },
