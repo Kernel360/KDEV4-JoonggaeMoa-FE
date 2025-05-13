@@ -98,7 +98,7 @@ function Login() {
                     }}>
                         <Box sx={{width: '90px'}}>
                             <img
-                                src="/로고.png"
+                                src="/logo.png"
                                 alt="브랜드 로고"
                                 style={{width: '100%'}}
                             />

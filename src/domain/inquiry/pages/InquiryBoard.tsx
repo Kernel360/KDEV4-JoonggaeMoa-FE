@@ -108,7 +108,7 @@ const InquiryBoard: React.FC = () => {
                         borderBottom: '2px solid #003459'
                     }}>
                         <img
-                            src="/로고.png"
+                            src="/logo.png"
                             alt="중개모아 로고"
                             style={{height: '50px'}}
                         />
