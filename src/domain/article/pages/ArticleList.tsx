@@ -130,7 +130,8 @@ const ArticleList: React.FC = () => {
 
     // 지도 경계 변경 핸들러
     const handleBoundsChanged = useCallback((newBounds: any, newZoom: number) => {
-        // 디버그 로그 제거
+        // 디버그 로그 추가
+        console.log("지도 경계 변경:", { newZoom, isClusterMode });
         
         // 클러스터 모드 전환 확인
         const isTransitioningToCluster = mapZoom < CLUSTER_ZOOM_THRESHOLD && newZoom >= CLUSTER_ZOOM_THRESHOLD;
@@ -149,18 +150,20 @@ const ArticleList: React.FC = () => {
         } else if (isTransitioningFromCluster) {
             // 클러스터에서 매물 핀으로 전환
             fetchArticles(0, newBounds, getFilterParams(), false);
-            setShowMapBoundList(true);
+            // 맵 바운드 리스트 모드를 false로 설정하여 페이지네이션 사용
+            setShowMapBoundList(false);
             return;
         }
         
         // 모든 줌 레벨에서 매물 데이터 요청
         if (!currentClusterInfo) {
             fetchArticles(0, newBounds, getFilterParams(), false);
-            setShowMapBoundList(true);
+            // 맵 바운드 리스트 모드를 false로 설정하여 페이지네이션 사용
+            setShowMapBoundList(false);
         }
     }, [
         mapZoom, CLUSTER_ZOOM_THRESHOLD, fetchClusters, fetchArticles,
-        getFilterParams, currentClusterInfo, setShowMapBoundList
+        getFilterParams, currentClusterInfo, setShowMapBoundList, isClusterMode
     ]);
 
     // 클러스터 클릭 핸들러
@@ -498,7 +501,10 @@ const ArticleList: React.FC = () => {
                             isLoadingMore={isLoadingMore}
                             hasMore={hasMore}
                             onArticleClick={handleArticleClick}
-                            onLoadMore={loadMoreArticles}
+                            onLoadMore={() => {
+                                console.log("[ArticleList] 무한 스크롤 트리거됨 - loadMoreArticles 호출");
+                                loadMoreArticles();
+                            }}
                             isClusterView={currentClusterInfo !== null}
                         />
                     )}
