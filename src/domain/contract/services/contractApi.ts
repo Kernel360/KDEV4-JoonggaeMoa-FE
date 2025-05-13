@@ -1,8 +1,9 @@
-import type {ApiResponse} from "@/global/api/services/api"
+import type { AxiosResponse } from "axios"
+
+import type { ContractResponse, CreateContractRequest, ExpiredContractResponse } from "@/domain/contract/types/contract"
 import api from "@/global/api/services/api"
-import type {AxiosResponse} from "axios"
-import type {ContractResponse, CreateContractRequest, ExpiredContractResponse} from "@/domain/contract/types/contract"
-import type {PageResponse} from "@/global/common/types/page"
+import type { ApiResponse } from "@/global/api/types/api"
+import type { PageResponse } from "@/global/common/types/page"
 
 // 계약 생성
 export const createContract = async (

@@ -1,5 +1,7 @@
-import type {AxiosResponse} from "axios"
-import api, {ApiResponse} from "@/global/api/services/api"
+import type { AxiosResponse } from "axios"
+
+import api from "@/global/api/services/api"
+import type { ApiResponse } from "@/global/api/types/api"
 
 // 고객 생성 요청 타입
 export interface CreateCustomerRequest {
