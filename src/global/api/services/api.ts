@@ -55,7 +55,7 @@ api.interceptors.response.use(
         const isAuthEndpoint =
             originalRequest?.url?.includes("/api/agent/login") || originalRequest?.url?.includes("/api/agent/signup")
 
-        if (error.response?.data?.error?.code === "4011" && !originalRequest?.headers?.["X-Retry"] && !isAuthEndpoint) {
+        if (error.response?.data?.error?.code === 4011 && !originalRequest?.headers?.["X-Retry"] && !isAuthEndpoint) {
             try {
                 const refreshResponse = await axios.post(
                     "/api/refresh-token",
