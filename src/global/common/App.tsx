@@ -3,7 +3,7 @@ import {BrowserRouter as Router, Navigate, Outlet, Route, Routes} from "react-ro
 import 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer } from 'react-toastify';
 
-import ArticleList from "@/domain/article/pages/ArticleList";
+import ArticleMapPage from "@/domain/article/pages/ArticleMapPage";
 import ConsultationDetail from "@/domain/consultation/pages/ConsultationDetail";
 import ConsultationList from "@/domain/consultation/pages/ConsultationList";
 import ContractCreate from "@/domain/contract/pages/ContractCreate";
@@ -124,7 +124,7 @@ function App() {
                                 <Route path="/contract" element={<ContractList/>}/>
                                 <Route path="/contract/create" element={<ContractCreate/>}/>
                                 <Route path="/contract/:id" element={<ContractDetail/>}/>
-                                <Route path="/article" element={<ArticleList/>}/>
+                                <Route path="/article" element={<ArticleMapPage/>}/>
                                 <Route path="/notification-list" element={<NotificationList/>}/>
                             </Route>
 
