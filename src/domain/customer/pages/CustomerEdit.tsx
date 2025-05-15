@@ -1,5 +1,4 @@
-import type React from "react"
-import {useEffect, useState} from "react"
+import {ArrowBack} from "@mui/icons-material"
 import {
     Alert,
     Box,
@@ -15,12 +14,15 @@ import {
     TextField,
     Typography,
 } from "@mui/material"
-import {ArrowBack} from "@mui/icons-material"
-import {useNavigate, useParams} from "react-router-dom"
-import {customerApi, type UpdateCustomerRequest} from "@/domain/customer/services/customerApi"
-import dayjs from "dayjs"
 import {DatePicker, LocalizationProvider} from "@mui/x-date-pickers"
 import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs"
+import dayjs from "dayjs"
+import type React from "react"
+import {useEffect, useState} from "react"
+import {useNavigate, useParams} from "react-router-dom"
+
+import {customerApi, type UpdateCustomerRequest} from "@/domain/customer/services/customerApi"
+
 
 const CustomerEdit = () => {
     const navigate = useNavigate()

@@ -1,6 +1,7 @@
 import type React from "react"
 import {createContext, type ReactNode, useContext, useEffect, useState} from "react"
 import {useNavigate} from "react-router-dom"
+
 import {removeAccessToken, setAccessToken} from "@/global/api/services/api"
 
 interface AuthContextType {

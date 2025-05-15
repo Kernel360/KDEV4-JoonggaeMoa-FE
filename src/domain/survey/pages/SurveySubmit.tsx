@@ -1,6 +1,4 @@
-import type React from "react"
-import {useEffect, useState} from "react"
-import {useNavigate, useParams} from "react-router-dom"
+import {CheckCircle} from "@mui/icons-material"
 import {
     Alert,
     Box,
@@ -23,6 +21,10 @@ import {
     TextField,
     Typography,
 } from "@mui/material"
+import type React from "react"
+import {useEffect, useState} from "react"
+import {useNavigate, useParams} from "react-router-dom"
+
 import {getSurveyForCustomer, submitSurveyAnswerForCustomer} from "@/domain/survey/services/surveyApi"
 import {
     AnswerRequest,
@@ -30,7 +32,7 @@ import {
     QuestionType,
     type SurveyDetailResponse
 } from "@/domain/survey/types/survey"
-import {CheckCircle} from "@mui/icons-material"
+
 
 const SurveySubmit: React.FC = () => {
     const {surveyId} = useParams<{ surveyId: string }>()

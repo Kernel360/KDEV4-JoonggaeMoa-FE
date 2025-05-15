@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import ChatIcon from '@mui/icons-material/Chat';
 import {
     Box,
     Button,
@@ -18,12 +18,14 @@ import {
     TextField,
     Typography,
 } from '@mui/material';
-import {useAuth} from '@/global/auth/context/AuthContext';
-import api from '@/global/api/services/api';
-import {InquiryRequest, InquiryResponse} from '@/domain/inquiry/types/inquiry';
+import React, {useEffect, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
+
+import {InquiryRequest, InquiryResponse} from '@/domain/inquiry/types/inquiry';
 import ChatbotDialog from '@/domain/message/components/ChatbotDialog';
-import ChatIcon from '@mui/icons-material/Chat';
+import api from '@/global/api/services/api';
+import {useAuth} from '@/global/auth/context/AuthContext';
+
 
 const InquiryBoard: React.FC = () => {
     const navigate = useNavigate();

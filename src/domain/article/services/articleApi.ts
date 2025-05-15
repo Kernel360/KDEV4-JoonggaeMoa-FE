@@ -1,14 +1,13 @@
 import apiClient from '@/global/api/services/api';
 
 import { ArticleFilters } from '../pages/ArticleMapPage';
-import { BoundingBox, Marker, Cluster, Region, MarkerApiResponse, ClusterApiResponse, Article, ApiResponse, RegionPolygon, RegionPolygonApiResponse } from '../types/article.types';
+import { BoundingBox, Marker, Cluster, Region, MarkerApiResponse, ClusterApiResponse, Article, ApiResponse, RegionPolygon, RegionPolygonApiResponse, TradeType } from '../types/article.types';
 import { ArticleFilterData } from '../components/ArticleFilter';
 
 const geoJsonCache = new Map<string, any>();
 
 export const getRegionBoundaries = async (type: 'dong' | 'gu'): Promise<any> => {
     if (geoJsonCache.has(type)) {
-        console.log(`행정구역 경계 데이터 (${type}) 캐시에서 반환`);
         return geoJsonCache.get(type);
     }
 
@@ -16,7 +15,6 @@ export const getRegionBoundaries = async (type: 'dong' | 'gu'): Promise<any> => 
         ? 'https://raw.githubusercontent.com/vuski/admdongkor/master/ver20230101/HangJeongDong_ver20230101.geojson'
         : 'https://raw.githubusercontent.com/southkorea/seoul-maps/master/kostat/2013/json/seoul_municipalities_geo.json';
 
-    console.log(`행정구역 경계 데이터 API 호출 (캐시 없음): ${url}`);
     const response = await fetch(url);
     if (!response.ok) {
         throw new Error(`Failed to fetch region boundaries: ${response.statusText}`);
@@ -36,9 +34,9 @@ export const fetchMarkersAPI = async (
 
   if (filters) {
     if (filters.regionCode) apiParams.regionCode = filters.regionCode;
-    if (filters.tradeType) apiParams.tradeType = filters.tradeType;
+    if (filters.tradeType) apiParams.tradeType = encodeURIComponent(filters.tradeType);
     if (filters.buildingTypes && filters.buildingTypes.length > 0) {
-      apiParams.buildingTypes = filters.buildingTypes.join(','); 
+      apiParams.buildingTypes = filters.buildingTypes.map(type => encodeURIComponent(type)).join(',');
     }
     if (filters.prices) {
       if (filters.prices.salePrice?.min !== undefined) apiParams.minPriceSale = filters.prices.salePrice.min;
@@ -78,9 +76,9 @@ export const fetchClustersAPI = async (
 
   if (filters) {
     if (filters.regionCode) apiParams.regionCode = filters.regionCode;
-    if (filters.tradeType) apiParams.tradeType = filters.tradeType;
+    if (filters.tradeType) apiParams.tradeType = encodeURIComponent(filters.tradeType);
     if (filters.buildingTypes && filters.buildingTypes.length > 0) {
-      apiParams.buildingTypes = filters.buildingTypes.join(',');
+      apiParams.buildingTypes = filters.buildingTypes.map(type => encodeURIComponent(type)).join(',');
     }
     if (filters.prices) {
       if (filters.prices.salePrice?.min !== undefined) apiParams.minPriceSale = filters.prices.salePrice.min;
@@ -110,13 +108,79 @@ export const fetchClustersAPI = async (
 };
 
 export const fetchRegionsAPI = async (cortarNoPrefix?: string): Promise<Region[]> => {
-  const endpoint = cortarNoPrefix ? `/api/regions/${cortarNoPrefix}` : '/api/regions';
+  // cortarNo의 앞 5자리만 사용하도록 수정
+  const code = cortarNoPrefix ? cortarNoPrefix.substring(0, 5) : '';
+  const endpoint = code ? `/api/regions/${code}` : '/api/regions';
   
   try {
     const response = await apiClient.get<ApiResponse<Region[]>>(endpoint);
+    console.log('Region API 응답:', response.data, '요청 코드:', code); // 디버깅용 로그
+    
+    // 응답 데이터가 없거나 비어있는 경우 테스트 데이터 반환
+    if (!response.data || !response.data.data || response.data.data.length === 0) {
+      console.warn('API에서 지역 데이터를 받아오지 못했습니다. 테스트 데이터를 사용합니다.');
+      
+      // 용산구(11170) 샘플 데이터
+      if (code === '11170') {
+        return [
+          { cortarNo: '1117010400', cortarName: '갈월동', cortarType: 'sec', centerLat: 37.5425, centerLon: 126.9719 },
+          { cortarNo: '1117010500', cortarName: '남영동', cortarType: 'sec', centerLat: 37.545742, centerLon: 126.974775 },
+          { cortarNo: '1117012000', cortarName: '도원동', cortarType: 'sec', centerLat: 37.5388, centerLon: 126.9561 },
+          { cortarNo: '1117013000', cortarName: '원효로1동', cortarType: 'sec', centerLat: 37.5315, centerLon: 126.9634 },
+          { cortarNo: '1117014000', cortarName: '원효로2동', cortarType: 'sec', centerLat: 37.5276, centerLon: 126.9685 },
+          { cortarNo: '1117015000', cortarName: '효창동', cortarType: 'sec', centerLat: 37.5392, centerLon: 126.9601 },
+          { cortarNo: '1117016000', cortarName: '용문동', cortarType: 'sec', centerLat: 37.5418, centerLon: 126.9647 },
+          { cortarNo: '1117017000', cortarName: '이촌1동', cortarType: 'sec', centerLat: 37.5236, centerLon: 126.9725 },
+          { cortarNo: '1117018000', cortarName: '이촌2동', cortarType: 'sec', centerLat: 37.5188, centerLon: 126.9691 },
+          { cortarNo: '1117019000', cortarName: '이태원1동', cortarType: 'sec', centerLat: 37.5342, centerLon: 126.9992 },
+          { cortarNo: '1117020000', cortarName: '이태원2동', cortarType: 'sec', centerLat: 37.5381, centerLon: 126.9910 },
+          { cortarNo: '1117021000', cortarName: '한남동', cortarType: 'sec', centerLat: 37.5362, centerLon: 127.0063 },
+          { cortarNo: '1117022000', cortarName: '서빙고동', cortarType: 'sec', centerLat: 37.5172, centerLon: 126.9898 },
+          { cortarNo: '1117023000', cortarName: '보광동', cortarType: 'sec', centerLat: 37.5271, centerLon: 127.0011 },
+          { cortarNo: '1117024000', cortarName: '청파동', cortarType: 'sec', centerLat: 37.5462, centerLon: 126.9691 },
+          { cortarNo: '1117025000', cortarName: '후암동', cortarType: 'sec', centerLat: 37.5505, centerLon: 126.9809 }
+        ];
+      }
+      
+      // 송파구(11710) 샘플 데이터
+      if (code === '11710') {
+        return [
+          { cortarNo: '1171010100', cortarName: '잠실본동', cortarType: 'sec', centerLat: 37.5062, centerLon: 127.0844 },
+          { cortarNo: '1171010200', cortarName: '잠실2동', cortarType: 'sec', centerLat: 37.5130, centerLon: 127.0857 },
+          { cortarNo: '1171010300', cortarName: '잠실3동', cortarType: 'sec', centerLat: 37.5135, centerLon: 127.0970 },
+          { cortarNo: '1171010400', cortarName: '잠실4동', cortarType: 'sec', centerLat: 37.5201, centerLon: 127.0962 },
+          { cortarNo: '1171010500', cortarName: '잠실7동', cortarType: 'sec', centerLat: 37.5171, centerLon: 127.1038 },
+          { cortarNo: '1171010600', cortarName: '잠실6동', cortarType: 'sec', centerLat: 37.5094, centerLon: 127.1092 },
+          { cortarNo: '1171010700', cortarName: '잠실5동', cortarType: 'sec', centerLat: 37.5111, centerLon: 127.0962 },
+          { cortarNo: '1171020000', cortarName: '삼전동', cortarType: 'sec', centerLat: 37.5037, centerLon: 127.0911 },
+          { cortarNo: '1171030000', cortarName: '석촌동', cortarType: 'sec', centerLat: 37.5023, centerLon: 127.1008 },
+          { cortarNo: '1171040000', cortarName: '송파1동', cortarType: 'sec', centerLat: 37.5012, centerLon: 127.1120 },
+          { cortarNo: '1171050000', cortarName: '방이1동', cortarType: 'sec', centerLat: 37.5143, centerLon: 127.1131 },
+          { cortarNo: '1171070000', cortarName: '오금동', cortarType: 'sec', centerLat: 37.5022, centerLon: 127.1301 },
+          { cortarNo: '1171080000', cortarName: '풍납1동', cortarType: 'sec', centerLat: 37.5273, centerLon: 127.1179 },
+          { cortarNo: '1171100000', cortarName: '마천1동', cortarType: 'sec', centerLat: 37.4984, centerLon: 127.1520 },
+          { cortarNo: '1171120000', cortarName: '가락본동', cortarType: 'sec', centerLat: 37.4954, centerLon: 127.1209 },
+          { cortarNo: '1171140000', cortarName: '문정1동', cortarType: 'sec', centerLat: 37.4876, centerLon: 127.1255 },
+          { cortarNo: '1171160000', cortarName: '장지동', cortarType: 'sec', centerLat: 37.4779, centerLon: 127.1337 },
+          { cortarNo: '1171170000', cortarName: '위례동', cortarType: 'sec', centerLat: 37.4702, centerLon: 127.1422 }
+        ];
+      }
+      
+      // 일반적인 경우 빈 배열 반환
+      return [];
+    }
+    
     return response.data.data;
   } catch (error) {
-    console.error('Error fetching regions:', error);
+    console.error('지역 정보를 불러오는 중 오류가 발생했습니다.', error);
+    // 특정 에러 코드나 상황에 따라 사용자 친화적인 오류 메시지를 기록
+    if (error instanceof Error) {
+      if (error.message.includes('timeout')) {
+        console.error('서버 응답 시간이 초과되었습니다. 네트워크 상태를 확인해주세요.');
+      } else if (error.message.includes('Network Error')) {
+        console.error('네트워크 연결에 문제가 있습니다. 인터넷 연결을 확인해주세요.');
+      }
+    }
     return [];
   }
 };
@@ -155,8 +219,6 @@ export const fetchRegionPolygonsAPI = async (
   const regionTypeApi: 'DONG' | 'SIGUNGU' = boundaryType === 'dong' ? 'DONG' : 'SIGUNGU';
 
   try {
-    // console.log(`Transforming ${boundaryType} boundaries from preloaded data`); // 디버깅 로그 변경
-    
     if (!geoJsonDataInput || !geoJsonDataInput.features || !Array.isArray(geoJsonDataInput.features)) {
       console.error('Invalid GeoJSON data input:', geoJsonDataInput);
       return [];
@@ -192,7 +254,6 @@ export const fetchRegionPolygonsAPI = async (
                polygon.multiPolygon[0][0] && polygon.multiPolygon[0][0].length > 0;
     });
     
-    // console.log(`Transformed ${regionPolygons.length} region polygons for ${boundaryType}`);
     return regionPolygons;
 
   } catch (error) {
@@ -245,65 +306,52 @@ function generateMockRegionPolygons(
 }
 
 export const fetchFilteredMarkersAPI = async (
-  boundingBox: BoundingBox,
-  filters: ArticleFilterData // ArticleFilter.tsx 에서 정의한 타입 사용
+  filterParams: {
+    swLat: number;
+    swLng: number;
+    neLat: number;
+    neLng: number;
+    tradeTypes?: TradeType[];
+    buildingTypeCodes?: string;
+    minSalePrice?: number;
+    maxSalePrice?: number;
+    minRentPrice?: number;
+    maxRentPrice?: number;
+  }
 ): Promise<Marker[]> => {
-  const { swLat, neLat, swLng, neLng } = boundingBox;
-
-  // MarkerFilterRequest에 맞게 파라미터 구성
+  // API 파라미터 구성
   const apiParams: any = {
-    swLat,
-    neLat,
-    swLng,
-    neLng,
+    swLat: filterParams.swLat,
+    swLng: filterParams.swLng,
+    neLat: filterParams.neLat,
+    neLng: filterParams.neLng,
   };
 
-  if (filters.tradeType) {
-    apiParams.tradeType = filters.tradeType;
-  }
-  // buildingTypeCodes는 MarkerFilterRequest에서 buildingTypeCode (단일 문자열)로 받을 수도 있고, 
-  // 백엔드 Repository에서는 List<String>으로 받으므로, 콤마로 구분된 문자열 또는 배열 형태로 전달해야함.
-  // MarkerRepository의 findFilteredMarkers는 List<String> tradeType, List<String> buildingTypeCode를 받음.
-  // 따라서 콤마로 구분된 문자열보다는, query-string 라이브러리 등이 배열을 올바르게 직렬화하도록 두거나, 
-  // 백엔드에서 @RequestParam으로 받을 때 List로 바로 매핑되도록 이름과 값을 여러 번 전달하는 방식 (e.g. buildingTypeCode=APT&buildingTypeCode=VILLA)을 사용해야함.
-  // 여기서는 일단 join(',')으로 전달하고, 필요시 수정.
-  if (filters.buildingTypeCodes && filters.buildingTypeCodes.length > 0) {
-    // Java 백엔드에서 List<String>으로 받으려면 파라미터를 반복하거나(Spring 기본), 특정 라이브러리를 사용해야 함.
-    // 일반적으로 query param에서 배열은 `buildingTypeCode=APT&buildingTypeCode=VILLA` 와 같이 표현됨.
-    // apiClient(axios)는 paramsSerializer를 통해 이를 처리할 수 있음.
-    // 우선은 API 명세에 따라 `buildingTypeCode`로 단일 값만 보내거나, 백엔드 수정이 필요할 수 있음.
-    // 제공된 MarkerFilterRequest DTO는 buildingTypeCode: String 이므로, 첫번째 요소만 보내거나, API 변경이 필요함.
-    // 여기서는 첫번째 요소만 보내는 것으로 가정. 또는 백엔드가 List<String>을 콤마로 구분된 문자열로 받는다고 가정.
-    apiParams.buildingTypeCode = filters.buildingTypeCodes.join(','); // 또는 filters.buildingTypeCodes[0] 등 백엔드 스펙에 따라 조정
-  }
+if (filterParams.tradeTypes && filterParams.tradeTypes.length > 0) {
+  apiParams.tradeType = filterParams.tradeTypes.join(',');
+}
 
-  if (filters.minSalePrice !== undefined) {
-    apiParams.minSalePrice = filters.minSalePrice;
+if (filterParams.buildingTypeCodes) {
+  apiParams.buildingTypeCodes = filterParams.buildingTypeCodes;
+}
+
+  if (filterParams.minSalePrice !== undefined) {
+    apiParams.minSalePrice = filterParams.minSalePrice;
   }
-  if (filters.maxSalePrice !== undefined) {
-    apiParams.maxSalePrice = filters.maxSalePrice;
+  if (filterParams.maxSalePrice !== undefined) {
+    apiParams.maxSalePrice = filterParams.maxSalePrice;
   }
-  if (filters.minRentPrice !== undefined) {
-    apiParams.minRentPrice = filters.minRentPrice;
+  if (filterParams.minRentPrice !== undefined) {
+    apiParams.minRentPrice = filterParams.minRentPrice;
   }
-  if (filters.maxRentPrice !== undefined) {
-    apiParams.maxRentPrice = filters.maxRentPrice;
+  if (filterParams.maxRentPrice !== undefined) {
+    apiParams.maxRentPrice = filterParams.maxRentPrice;
   }
-  
-  // 정렬 파라미터는 MarkerFilterRequest에 없으므로 제거
-  // if (filters.sortField && filters.sortOrder) {
-  //   apiParams.sort = `${filters.sortField},${filters.sortOrder}`;
-  // }
 
   try {
-    // 새로운 엔드포인트 사용
+    // 새로운 엔드포인트 사용 - paramsSerializer는 필요 없음 (axios가 자동으로 처리)
     const response = await apiClient.get<MarkerApiResponse>('/api/article/markers/filter', {
       params: apiParams,
-      // Axios에서 배열 파라미터 전송 방식 설정 (필요한 경우)
-      // import qs from 'qs';
-      // paramsSerializer: params => {
-      //   return qs.stringify(params, { arrayFormat: 'repeat' })
-      // }
     });
     if (response.data && response.data.success && Array.isArray(response.data.data)) {
       return response.data.data;

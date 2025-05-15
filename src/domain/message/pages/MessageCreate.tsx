@@ -1,6 +1,4 @@
-import type React from "react"
-import {useCallback, useEffect, useRef, useState} from "react"
-import type {SelectChangeEvent} from "@mui/material/Select"
+import {ArrowBack, InfoOutlined, Search} from "@mui/icons-material"
 import {
     Alert,
     Box,
@@ -22,12 +20,15 @@ import {
     TextField,
     Typography,
 } from "@mui/material"
-import {ArrowBack, InfoOutlined, Search} from "@mui/icons-material"
+import type {SelectChangeEvent} from "@mui/material/Select"
+import type React from "react"
+import {useCallback, useEffect, useRef, useState} from "react"
 import {useNavigate} from "react-router-dom"
+
+import {customerApi} from "@/domain/customer/services/customerApi"
 import {messageApi} from "@/domain/message/services/messageApi"
 import type {MessageTemplateResponse} from "@/domain/message/services/messageTemplateApi"
 import {messageTemplateApi} from "@/domain/message/services/messageTemplateApi"
-import {customerApi} from "@/domain/customer/services/customerApi"
 
 function getByteLength(str: string): number {
     // Count bytes properly for Korean characters (UTF-8)

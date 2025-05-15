@@ -1,12 +1,14 @@
+
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import { 
-  FormControl, 
-  InputLabel, 
-  Select, 
-  MenuItem, 
-  Box, 
-  FormLabel, 
+  Box,
   CircularProgress, 
-  SelectChangeEvent 
+  Typography,
+  Button,
+  Paper,
+  Divider
 } from '@mui/material';
 import React, { useState, useCallback } from 'react';
 
@@ -347,152 +349,385 @@ const DISTRICTS_IN_CITIES: { [cityCodePrefix: string]: RegionItem[] } = {
 };
 
 interface RegionFilterProps {
-  onRegionChange: (selectedRegionCode: string | null, selectedRegionName?: string | null, coordinates?: { latitude: number, longitude: number, zoomLevel: number }) => void;
+  onRegionChange: (selectedRegionCode: string | null, selectedRegionName?: string | null) => void;
+  onCenterChange?: (coordinates: { latitude: number, longitude: number, zoomLevel: number }) => void;
 }
 
-const RegionFilter: React.FC<RegionFilterProps> = ({ onRegionChange }) => {
+const RegionFilter: React.FC<RegionFilterProps> = ({ onRegionChange, onCenterChange }) => {
+  const [activeStep, setActiveStep] = useState<"city" | "district" | "dong">("city");
   const [selectedCity, setSelectedCity] = useState<string>("");
   const [selectedDistrict, setSelectedDistrict] = useState<string>("");
   const [selectedDong, setSelectedDong] = useState<string>("");
   const [dongOptions, setDongOptions] = useState<RegionItem[]>([]);
   const [isLoadingDongs, setIsLoadingDongs] = useState<boolean>(false);
+  
+  const [selectedCityName, setSelectedCityName] = useState<string>("");
+  const [selectedDistrictName, setSelectedDistrictName] = useState<string>("");
+  const [selectedDongName, setSelectedDongName] = useState<string>("");
 
-  // 선택된 시/도 변경 핸들러
-  const handleCityChange = useCallback((event: SelectChangeEvent) => {
-    const cityCode = event.target.value;
-    setSelectedCity(cityCode);
+  // 현재 선택된 시/도에 해당하는 구/군 목록 계산
+  const getDistrictOptions = useCallback(() => {
+    if (!selectedCity) return [];
+    const cityPrefix = selectedCity.substr(0, 2);
+    return DISTRICTS_IN_CITIES[cityPrefix] || [];
+  }, [selectedCity]);
+
+  // 지역 선택 초기화
+  const handleReset = () => {
+    setSelectedCity("");
     setSelectedDistrict("");
     setSelectedDong("");
+    setSelectedCityName("");
+    setSelectedDistrictName("");
+    setSelectedDongName("");
     setDongOptions([]);
+    setActiveStep("city");
+    onRegionChange(null, null);
+  };
 
-    // 시/도 좌표 정보를 찾아서 지도 이동
+  // 선택된 시/도 변경 핸들러
+  const handleCityChange = useCallback((cityCode: string, cityName: string) => {
+    setSelectedCity(cityCode);
+    setSelectedCityName(cityName);
+    setSelectedDistrict("");
+    setSelectedDistrictName("");
+    setSelectedDong("");
+    setSelectedDongName("");
+    setDongOptions([]);
+    setActiveStep("district");
+
     const selectedCityItem = CITIES.find(city => city.bjd_code === cityCode);
-    if (selectedCityItem && selectedCityItem.latitude && selectedCityItem.longitude && selectedCityItem.zoomLevel) {
-      onRegionChange(cityCode, selectedCityItem.address, {
+    if (selectedCityItem && selectedCityItem.latitude && selectedCityItem.longitude && selectedCityItem.zoomLevel && onCenterChange) {
+      onCenterChange({
         latitude: selectedCityItem.latitude,
         longitude: selectedCityItem.longitude,
         zoomLevel: selectedCityItem.zoomLevel
       });
-    } else {
-      onRegionChange(cityCode, selectedCityItem?.address || null);
     }
-  }, [onRegionChange]);
+  }, [onCenterChange]);
 
   // 선택된 구/군 변경 핸들러
-  const handleDistrictChange = useCallback(async (event: SelectChangeEvent) => {
-    const districtCode = event.target.value;
+  const handleDistrictChange = useCallback(async (districtCode: string, districtName: string) => {
     setSelectedDistrict(districtCode);
+    setSelectedDistrictName(districtName);
     setSelectedDong("");
+    setSelectedDongName("");
     setIsLoadingDongs(true);
+    setDongOptions([]); // 이전 동 옵션 초기화
+    setActiveStep("dong");
 
     try {
-      // 구/군 코드로 동 목록 가져오기
       const regions = await fetchRegionsAPI(districtCode);
+      console.log('API 응답:', regions); // 디버깅용 로그
+      
+      if (regions.length === 0) {
+        // API에서 데이터를 반환했지만 빈 배열인 경우
+        setDongOptions([]);
+        return;
+      }
+      
       const regionItems: RegionItem[] = regions.map(region => ({
         bjd_code: region.cortarNo,
         address: region.cortarName,
-        category: region.cortarType
+        category: region.cortarType,
+        latitude: region.centerLat,  // API 응답의 centerLat 사용
+        longitude: region.centerLon, // API 응답의 centerLon 사용
+        zoomLevel: 7 // 동 레벨에서 사용할 적절한 줌 레벨
       }));
-      setDongOptions(regionItems);
-
-      // 구/군 선택 시 지도 이동
-      const cityPrefix = selectedCity.substr(0, 2);
-      const districts = DISTRICTS_IN_CITIES[cityPrefix] || [];
-      const selectedDistrictItem = districts.find(d => d.bjd_code === districtCode);
       
-      onRegionChange(districtCode, selectedDistrictItem?.address || null);
+      setDongOptions(regionItems);
+      
+      // 구/군 좌표가 있는 경우 지도 중심 이동
+      const districtObj = getDistrictOptions().find(d => d.bjd_code === districtCode);
+      if (districtObj && districtObj.latitude && districtObj.longitude && districtObj.zoomLevel && onCenterChange) {
+        onCenterChange({
+          latitude: districtObj.latitude,
+          longitude: districtObj.longitude,
+          zoomLevel: districtObj.zoomLevel
+        });
+      }
     } catch (error) {
-      console.error("동 목록을 가져오는 데 실패했습니다.", error);
+      console.error('동 정보를 불러올 수 없습니다.', error);
       setDongOptions([]);
     } finally {
       setIsLoadingDongs(false);
     }
-  }, [onRegionChange, selectedCity]);
+  }, [onCenterChange, getDistrictOptions]);
 
   // 선택된 동 변경 핸들러
-  const handleDongChange = useCallback((event: SelectChangeEvent) => {
-    const dongCode = event.target.value;
+  const handleDongChange = useCallback((dongCode: string, dongName: string) => {
     setSelectedDong(dongCode);
+    setSelectedDongName(dongName);
+    onRegionChange(dongCode, dongName);
+    
+    // 동에 좌표가 있으면 지도 중심 이동
+    const dongObj = dongOptions.find(d => d.bjd_code === dongCode);
+    if (dongObj && dongObj.latitude && dongObj.longitude && onCenterChange) {
+      onCenterChange({
+        latitude: dongObj.latitude,
+        longitude: dongObj.longitude,
+        zoomLevel: 5 // 동 레벨에서는 고정된 줌 레벨 사용
+      });
+    }
+  }, [onRegionChange, dongOptions, onCenterChange]);
 
-    // 동 선택 시 지도 이동
-    const selectedDongItem = dongOptions.find(dong => dong.bjd_code === dongCode);
-    onRegionChange(dongCode, selectedDongItem?.address || null);
-  }, [dongOptions, onRegionChange]);
+  // 그리드 레이아웃으로 지역 버튼 렌더링
+  const renderRegionButtons = (regions: RegionItem[], handleSelect: (code: string, name: string) => void, selectedValue: string) => {
+    return (
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+        {regions.map((region) => (
+          <Button
+            key={region.bjd_code}
+            variant={selectedValue === region.bjd_code ? "contained" : "outlined"}
+            color={selectedValue === region.bjd_code ? "primary" : "inherit"}
+            onClick={() => handleSelect(region.bjd_code, region.address)}
+            sx={{ 
+              width: 'calc(25% - 8px)', // 4개씩 배치, gap 고려
+              textAlign: 'center',
+              justifyContent: 'center',
+              borderRadius: '4px',
+              textTransform: 'none',
+              height: '38px',
+              lineHeight: '1.2',
+              fontSize: '0.875rem',
+              margin: '0 0 8px 0',
+              padding: '0 4px',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              borderColor: selectedValue === region.bjd_code ? '#007AFF' : '#ddd',
+              color: selectedValue === region.bjd_code ? 'white' : '#333',
+              backgroundColor: selectedValue === region.bjd_code ? '#007AFF' : 'transparent',
+              '&:hover': {
+                backgroundColor: selectedValue === region.bjd_code ? '#0069d9' : 'rgba(0, 0, 0, 0.04)',
+                borderColor: selectedValue === region.bjd_code ? '#0062cc' : '#ccc'
+              },
+              '@media (max-width: 600px)': {
+                width: 'calc(33.333% - 8px)', // 모바일에서는 3개씩
+              }
+            }}
+          >
+            {region.address}
+          </Button>
+        ))}
+      </Box>
+    );
+  };
 
-  // 현재 선택된 시/도에 해당하는 구/군 목록 계산
-  const getDistrictOptions = () => {
-    if (!selectedCity) return [];
-    const cityPrefix = selectedCity.substr(0, 2);
-    return DISTRICTS_IN_CITIES[cityPrefix] || [];
+  // 선택된 지역 경로 표시
+  const renderLocationPath = () => {
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+        <LocationOnIcon sx={{ color: '#767676', fontSize: '1.25rem', mr: 0.5 }} />
+        
+        <Typography 
+          variant="body1"
+          component="span" 
+          sx={{ 
+            color: selectedCityName ? '#333' : '#767676', 
+            fontWeight: selectedCityName ? 500 : 400,
+            cursor: selectedCityName ? 'pointer' : 'default',
+            '&:hover': {
+              textDecoration: selectedCityName ? 'underline' : 'none',
+              color: selectedCityName ? '#007AFF' : '#767676'
+            }
+          }}
+          onClick={selectedCityName ? () => setActiveStep("city") : undefined}
+        >
+          {selectedCityName || '시/도'}
+        </Typography>
+        
+        {selectedCityName && (
+          <>
+            <Typography variant="body1" component="span" sx={{ mx: 1, color: '#767676' }}>{'>'}</Typography>
+            <Typography 
+              variant="body1" 
+              component="span" 
+              sx={{ 
+                color: selectedDistrictName ? '#333' : '#767676', 
+                fontWeight: selectedDistrictName ? 500 : 400,
+                cursor: selectedDistrictName ? 'pointer' : 'default',
+                '&:hover': {
+                  textDecoration: selectedDistrictName ? 'underline' : 'none',
+                  color: selectedDistrictName ? '#007AFF' : '#767676'
+                }
+              }}
+              onClick={selectedDistrictName ? () => setActiveStep("district") : undefined}
+            >
+              {selectedDistrictName || '구/군'}
+            </Typography>
+          </>
+        )}
+        
+        {selectedDistrictName && (
+          <>
+            <Typography variant="body1" component="span" sx={{ mx: 1, color: '#767676' }}>{'>'}</Typography>
+            <Typography 
+              variant="body1" 
+              component="span" 
+              sx={{ 
+                color: selectedDongName ? '#333' : '#767676', 
+                fontWeight: selectedDongName ? 500 : 400
+              }}
+            >
+              {selectedDongName || '읍/면/동'}
+            </Typography>
+          </>
+        )}
+      </Box>
+    );
   };
 
   return (
-    <Box sx={{ mb: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
-      <FormLabel component="legend">지역 선택</FormLabel>
-      
-      {/* 시/도 선택 */}
-      <FormControl size="small" fullWidth>
-        <InputLabel>시/도</InputLabel>
-        <Select
-          value={selectedCity}
-          onChange={handleCityChange}
-          label="시/도"
+    <Paper 
+      elevation={0} 
+      sx={{ 
+        p: 2, 
+        borderRadius: 1, 
+        backgroundColor: 'white',
+        border: '1px solid #eee',
+        mb: 2,
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
+      }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+        <Typography 
+          variant="h6" 
+          component="h2" 
+          sx={{ 
+            fontSize: '1rem', 
+            fontWeight: 500,
+            color: '#333' 
+          }}
         >
-          <MenuItem value="">
-            <em>전체</em>
-          </MenuItem>
-          {CITIES.map((city) => (
-            <MenuItem key={city.bjd_code} value={city.bjd_code}>
-              {city.address}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-
-      {/* 구/군 선택 */}
-      <FormControl size="small" fullWidth disabled={!selectedCity}>
-        <InputLabel>구/군</InputLabel>
-        <Select
-          value={selectedDistrict}
-          onChange={handleDistrictChange}
-          label="구/군"
-        >
-          <MenuItem value="">
-            <em>전체</em>
-          </MenuItem>
-          {getDistrictOptions().map((district) => (
-            <MenuItem key={district.bjd_code} value={district.bjd_code}>
-              {district.address}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-
-      {/* 동 선택 */}
-      <FormControl size="small" fullWidth disabled={!selectedDistrict}>
-        <InputLabel>동</InputLabel>
-        {isLoadingDongs ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 1 }}>
-            <CircularProgress size={24} />
-          </Box>
-        ) : (
-          <Select
-            value={selectedDong}
-            onChange={handleDongChange}
-            label="동"
+          지역 선택
+        </Typography>
+        
+        {(selectedCity || selectedDistrict || selectedDong) && (
+          <Button 
+            startIcon={<RefreshIcon sx={{ fontSize: '18px' }} />}
+            size="small"
+            onClick={handleReset}
+            sx={{ 
+              color: '#007AFF', 
+              fontSize: '0.8125rem',
+              textTransform: 'none',
+              minWidth: 'unset',
+              p: '4px 8px'
+            }}
           >
-            <MenuItem value="">
-              <em>전체</em>
-            </MenuItem>
-            {dongOptions.map((dong) => (
-              <MenuItem key={dong.bjd_code} value={dong.bjd_code}>
-                {dong.address}
-              </MenuItem>
-            ))}
-          </Select>
+            초기화
+          </Button>
         )}
-      </FormControl>
-    </Box>
+      </Box>
+      
+      {renderLocationPath()}
+      
+      <Divider sx={{ mb: 2, backgroundColor: '#eee' }} />
+      
+      <Box sx={{ mb: 2 }}>
+        <Typography variant="body2" sx={{ color: '#767676', mb: 1 }}>
+          {activeStep === "city" ? "시/도" : activeStep === "district" ? "시/군/구" : "읍/면/동"}
+        </Typography>
+      </Box>
+      
+      {activeStep === "city" && (
+        <Box>
+          {renderRegionButtons(CITIES, handleCityChange, selectedCity)}
+        </Box>
+      )}
+      
+      {activeStep === "district" && (
+        <Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+            <Button 
+              size="small" 
+              onClick={() => setActiveStep("city")}
+              startIcon={<ArrowBackIcon sx={{ fontSize: '16px' }} />}
+              sx={{ 
+                mr: 1,
+                color: '#007AFF',
+                textTransform: 'none',
+                fontSize: '0.8125rem',
+                minWidth: 'unset',
+                p: '4px 8px'
+              }}
+            >
+              시/도
+            </Button>
+            <Typography 
+              variant="subtitle1"
+              sx={{ 
+                fontSize: '0.9375rem', 
+                fontWeight: 500,
+                color: '#333'
+              }}
+            >
+              {selectedCityName} 내 지역
+            </Typography>
+          </Box>
+          {getDistrictOptions().length > 0 ? (
+            renderRegionButtons(getDistrictOptions(), handleDistrictChange, selectedDistrict)
+          ) : (
+            <Typography variant="body2" sx={{ color: '#767676', textAlign: 'center', py: 2 }}>
+              시/군/구 정보를 불러올 수 없습니다.
+            </Typography>
+          )}
+        </Box>
+      )}
+      
+      {activeStep === "dong" && (
+        <Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+            <Button 
+              size="small" 
+              onClick={() => setActiveStep("district")}
+              startIcon={<ArrowBackIcon sx={{ fontSize: '16px' }} />}
+              sx={{ 
+                mr: 1,
+                color: '#007AFF',
+                textTransform: 'none',
+                fontSize: '0.8125rem',
+                minWidth: 'unset',
+                p: '4px 8px'
+              }}
+            >
+              구/군
+            </Button>
+            <Typography 
+              variant="subtitle1"
+              sx={{ 
+                fontSize: '0.9375rem', 
+                fontWeight: 500,
+                color: '#333'
+              }}
+            >
+              {selectedDistrictName} 내 동
+            </Typography>
+          </Box>
+          
+          {isLoadingDongs ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+              <CircularProgress size={30} sx={{ color: '#007AFF' }} />
+            </Box>
+          ) : dongOptions.length > 0 ? (
+            renderRegionButtons(dongOptions, handleDongChange, selectedDong)
+          ) : (
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                textAlign: 'center', 
+                py: 2, 
+                color: '#767676',
+                fontSize: '0.875rem'
+              }}
+            >
+              현재 읍/면/동 정보를 사용할 수 없습니다.
+            </Typography>
+          )}
+        </Box>
+      )}
+    </Paper>
   );
 };
 

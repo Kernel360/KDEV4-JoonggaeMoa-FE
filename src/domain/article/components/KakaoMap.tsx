@@ -14,14 +14,12 @@ import {
   AlertTitle,
   Typography,
   Paper,
-  Chip,
   IconButton,
   List,
   ListItem,
   Slide,
   useMediaQuery,
   useTheme,
-  Divider,
   Switch,
   FormControlLabel,
   Tooltip,
@@ -31,20 +29,27 @@ import React, { useState, useEffect, useRef, useCallback, MutableRefObject } fro
 import { Map, MapMarker, CustomOverlayMap, useKakaoLoader, Polygon } from 'react-kakao-maps-sdk';
 
 import ArticleDetailModal from './ArticleDetailModal';
-import { ArticleFilters } from '../pages/ArticleMapPage';
-import { fetchMarkersAPI, fetchClustersAPI, fetchArticleDetail, fetchRegionPolygonsAPI, getRegionBoundaries } from '../services/articleApi';
+import { fetchArticleDetail } from '../services/articleApi';
 import { BoundingBox, Marker as MarkerData, Cluster as ClusterData, Article, RegionPolygon } from '../types/article.types';
 
 
 interface KakaoMapProps {
   initialCenter?: { lat: number; lng: number };
   initialZoom?: number;
-  activeFilters: ArticleFilters;
   mapRef?: MutableRefObject<any>;
   onBoundsChanged?: (bounds: {
     ne: { lat: number; lng: number };
     sw: { lat: number; lng: number }
   }, zoom: number) => void;
+  showRegionPolygons: boolean;
+  onToggleShowRegionPolygons: (checked: boolean) => void;
+  markers: MarkerData[];
+  clusters: ClusterData[];
+  regionPolygons: RegionPolygon[];
+  isLoading: boolean;
+  loadingMessage: string;
+  boundariesLoading: boolean;
+  onLoad?: (map: any) => void;
 }
 
 interface SnackbarError {
@@ -399,8 +404,6 @@ const SameLocationArticleList = ({
             borderColor: 'divider',
             zIndex: 1000
           }),
-          overflowY: 'auto',
-          bgcolor: 'background.paper',
           display: 'flex',
           flexDirection: 'column'
         }}
@@ -426,63 +429,105 @@ const SameLocationArticleList = ({
           </IconButton>
         </Box>
 
-        <Box sx={{ flexGrow: 1, overflowY: 'auto' }}>
-          <List sx={{p: isMobile ? 1 : 2}}>
-            {articles.map((article) => (
-              <ListItem 
-                key={article.id}
-                disablePadding
-                sx={{
-                  mb: 1,
-                  bgcolor: selectedArticle?.id === article.id ? 'action.selected' : 'background.paper',
-                  borderRadius: 1,
-                  overflow: 'hidden',
-                  cursor: 'pointer',
-                  '&:hover': {
-                    bgcolor: 'action.hover'
-                  }
-                }}
-                onClick={() => onArticleClick(article)}
-              >
-                <Box sx={{ p: 1, width: '100%' }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
-                    {getBuildingIcon(article.buildingType)}
-                    <Typography variant="subtitle2" sx={{ ml: 1, fontWeight: 'bold' }}>
-                      {article.articleName || '이름 없는 매물'}
-                    </Typography>
-                  </Box>
-                  
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Chip 
-                      label={article.tradeType} 
-                      size="small" 
-                      color={
-                        article.tradeType === 'SALE' || article.tradeType === '매매' ? 'primary' :
-                        article.tradeType === 'LEASE' || article.tradeType === '전세' ? 'secondary' : 'default'
-                      }
-                      sx={{ fontSize: '0.7rem', height: '20px' }}
-                    />
-                    
-                    <Typography variant="subtitle2" color="primary" fontWeight="bold">
-                      {formatPrice(article.priceSale)}
-                      {article.priceRent > 0 && article.tradeType !== 'SALE' && ` / ${article.priceRent}만`}
-                    </Typography>
-                  </Box>
-                  
-                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem', mt: 0.5 }}>
-                    {article.addressFullRoad || article.addressFullLot || '-'}
-                  </Typography>
-                  
-                  {article.areaExclusive && (
-                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
-                      {article.areaExclusive}㎡ {article.floors && `/ ${article.floors}`}
-                    </Typography>
-                  )}
-                  
-                  <Divider sx={{ my: 0.5 }} />
-                </Box>
-              </ListItem>
-            ))}
+        <Box
+          sx={{
+            height: "100%",
+            overflow: "auto",
+            bgcolor: "background.default",
+            flexGrow: 1
+          }}
+        >
+          <List sx={{p: 2}}>
+            {articles.length === 0 ? (
+              <Box sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                py: 8
+              }}>
+                <Typography variant="body1" sx={{color: 'text.secondary', mb: 1}}>
+                  표시할 매물이 없습니다.
+                </Typography>
+                <Typography variant="body2" sx={{color: 'text.disabled'}}>
+                  다른 위치를 선택해보세요.
+                </Typography>
+              </Box>
+            ) : (
+              <>
+                {articles.map((article, index) => (
+                  <React.Fragment key={`article-${article.id}-${index}`}>
+                    <ListItem
+                      disablePadding
+                      sx={{
+                        mb: 1.5,
+                        bgcolor: 'background.paper',
+                        borderRadius: 1,
+                        overflow: 'hidden',
+                        cursor: 'pointer',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.12)',
+                        transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+                        position: 'relative',
+                        borderLeft: '4px solid',
+                        borderColor: (theme) => {
+                          const color = getTypeColor(article.buildingType);
+                          return color;
+                        },
+                        '&:hover': {
+                          bgcolor: 'action.hover',
+                          transform: 'translateY(-2px)',
+                          boxShadow: '0 3px 6px rgba(0,0,0,0.15)'
+                        },
+                        ...(selectedArticle?.id === article.id && {
+                          bgcolor: 'rgba(245, 245, 245, 1)',
+                          boxShadow: '0 2px 6px rgba(0,0,0,0.18)'
+                        })
+                      }}
+                      onClick={() => onArticleClick(article)}
+                    >
+                      <Box sx={{ p: 1.5, width: '100%' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.8 }}>
+                          <Box sx={{ 
+                            bgcolor: (theme) => {
+                              const color = getTypeColor(article.buildingType);
+                              return `${color}15`; // 15% opacity
+                            },
+                            borderRadius: '50%', 
+                            p: 0.8, 
+                            mr: 1.2,
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center' 
+                          }}>
+                            {getBuildingIcon(article.buildingType)}
+                          </Box>
+                          <Typography variant="subtitle1" sx={{ fontWeight: '600' }}>
+                            {article.buildingType || ''}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" sx={{ mx: 0.5 }}>
+                            ·
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {article.floors ? `${article.floors}층` : ''} · {article.areaExclusive ? `${Math.floor(Number(article.areaExclusive) / 3.305785)}평` : ''}
+                          </Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                          <Typography variant="subtitle1" fontWeight="600" sx={{ fontSize: '1rem' }}>
+                            {article.tradeType === '매매' ? '매매가' : '보증금'} {formatPrice(article.priceSale)}
+                          </Typography>
+                          
+                          {article.priceRent > 0 && article.tradeType !== 'SALE' && (
+                            <Typography variant="subtitle1" color="error" fontWeight="600" sx={{ fontSize: '1rem' }}>
+                              월세 {article.priceRent}만원
+                            </Typography>
+                          )}
+                        </Box>
+                      </Box>
+                    </ListItem>
+                  </React.Fragment>
+                ))}
+              </>
+            )}
           </List>
         </Box>
       </Paper>
@@ -493,20 +538,23 @@ const SameLocationArticleList = ({
 const KakaoMap: React.FC<KakaoMapProps> = ({
   initialCenter = { lat: 37.505, lng: 127.045 }, // 강남 초기 위치
   initialZoom = 5, // 클러스터 보이는 줌 레벨
-  activeFilters,
   mapRef: externalMapRef,
   onBoundsChanged,
+  showRegionPolygons,
+  onToggleShowRegionPolygons,
+  markers: propMarkers,
+  clusters: propClusters,
+  regionPolygons: propRegionPolygons,
+  isLoading,
+  loadingMessage,
+  boundariesLoading,
+  onLoad,
 }) => {
   useKakaoLoader({ appkey: import.meta.env.VITE_KAKAO_APP_KEY, libraries: ["services", "clusterer"] });
 
   const internalMapRef = useRef<kakao.maps.Map | null>(null);
   const [mapCenter, setMapCenter] = useState(initialCenter);
   const [mapZoom, setMapZoom] = useState(initialZoom);
-  const [markers, setMarkers] = useState<MarkerData[]>([]);
-  const [clusters, setClusters] = useState<ClusterData[]>([]);
-  const [regionPolygons, setRegionPolygons] = useState<RegionPolygon[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [loadingMessage, setLoadingMessage] = useState<string>('');
   const [snackbarInfo, setSnackbarInfo] = useState<SnackbarError | null>(null);
   const [selectedMarkerId, setSelectedMarkerId] = useState<number | null>(null); // 선택된 마커 ID 상태
   const [detailModalOpen, setDetailModalOpen] = useState<boolean>(false);
@@ -519,46 +567,8 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
   const [sameLocationListOpen, setSameLocationListOpen] = useState<boolean>(false);
   const [sameLocationPosition, setSameLocationPosition] = useState<{lat: number, lng: number}>({lat: 0, lng: 0});
   
-  const loadMapDataRequestIdRef = useRef(0); // 요청 ID 추적을 위한 ref
-  
   // 각 구역별 폴리곤 색상 캐싱 (리렌더링 시 색상 유지)
   const regionColors = useRef<{[key: string]: string}>({});
-
-  // 행정구역 GeoJSON 데이터 저장을 위한 Ref 및 로딩 상태
-  const dongGeoJsonDataRef = useRef<any>(null);
-  const guGeoJsonDataRef = useRef<any>(null);
-  const [boundariesLoading, setBoundariesLoading] = useState(true);
-  const [showRegionPolygons, setShowRegionPolygons] = useState(true); // 폴리곤 표시 상태
-
-  // 초기 행정구역 데이터 로드 useEffect
-  useEffect(() => {
-    const loadInitialBoundaries = async () => {
-      try {
-        setBoundariesLoading(true);
-        console.log('초기 행정구역 데이터 로드 시작: 동');
-        const dongData = await getRegionBoundaries('dong');
-        dongGeoJsonDataRef.current = dongData;
-        console.log('동 데이터 로드 완료, 데이터 일부:', dongData?.features?.[0]?.properties);
-        
-        console.log('초기 행정구역 데이터 로드 시작: 구');
-        const guData = await getRegionBoundaries('gu');
-        guGeoJsonDataRef.current = guData;
-        console.log('구 데이터 로드 완료, 데이터 일부:', guData?.features?.[0]?.properties);
-
-      } catch (error) {
-        console.error("초기 행정구역 데이터 로드 실패:", error);
-        setSnackbarInfo({
-          title: '경계 로드 오류',
-          message: '행정구역 경계 정보를 불러오는데 실패했습니다.',
-          type: 'error'
-        });
-      } finally {
-        setBoundariesLoading(false);
-        console.log('초기 행정구역 데이터 로드 종료');
-      }
-    };
-    loadInitialBoundaries();
-  }, []); // 빈 의존성 배열로 마운트 시 1회 실행
 
   const getRandomColor = (alphaParam: number = 0.3): string => {
     const r = Math.floor(Math.random() * 200);
@@ -579,96 +589,6 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
       externalMapRef.current = internalMapRef.current;
     }
   }, [externalMapRef]);
-
-  const loadMapData = useCallback(async (boundingBox: BoundingBox, zoomLevel: number) => {
-    const currentRequestId = ++loadMapDataRequestIdRef.current;
-    setIsLoading(true);
-    setSnackbarInfo(null);
-    setMarkers([]);
-    setClusters([]);
-    setRegionPolygons([]); // 폴리곤도 초기화
-
-    try {
-      const boundaryType = zoomLevel >= 6 ? 'gu' : 'dong';
-      const selectedGeoJsonData = boundaryType === 'dong' ? dongGeoJsonDataRef.current : guGeoJsonDataRef.current;
-
-      if (boundariesLoading) {
-        setLoadingMessage('행정구역 정보 로딩 중...');
-        // 경계 데이터가 아직 로딩 중이면, 폴리곤 관련 처리를 잠시 보류하거나 로딩 메시지만 표시
-      } else if (selectedGeoJsonData) {
-        setLoadingMessage('지역 폴리곤 정보 처리 중...');
-        const regionPolygonData = await fetchRegionPolygonsAPI(selectedGeoJsonData, boundaryType);
-        if (loadMapDataRequestIdRef.current === currentRequestId) {
-          setRegionPolygons(regionPolygonData);
-        }
-      } else {
-        console.warn(`${boundaryType} 경계 데이터 사용 불가.`);
-        // 경계 데이터 로드 실패 시 사용자에게 알림 또는 대체 로직 (현재는 콘솔 경고만)
-      }
-      if (loadMapDataRequestIdRef.current !== currentRequestId) return; // 중간에 요청 ID 변경 시 중단
-
-      // 마커 및 클러스터 로직 (기존과 유사하게 진행)
-      if (zoomLevel <= 2) {
-        setLoadingMessage('매물 정보를 불러오는 중...');
-        const markerDataList = await fetchMarkersAPI(boundingBox, activeFilters);
-        if (loadMapDataRequestIdRef.current !== currentRequestId) return;
-        setMarkers(markerDataList);
-        setClusters([]);
-        const locationCounts: {[key: string]: number} = {};
-        markerDataList.forEach(marker => {
-          const position = parseGeoJsonCoordinates(marker.geoJson);
-          if (position) {
-            const locationKey = `${position.lat.toFixed(6)},${position.lng.toFixed(6)}`;
-            locationCounts[locationKey] = (locationCounts[locationKey] || 0) + 1;
-          }
-        });
-        setSameLocationMarkers(locationCounts);
-        if (markerDataList.length === 0 && !boundariesLoading && selectedGeoJsonData) {
-          // 폴리곤은 있지만 마커가 없을 수 있음
-        }
-      } else { // zoomLevel > 2
-        setLoadingMessage('매물 클러스터를 불러오는 중...');
-        const clusterDataList = await fetchClustersAPI(boundingBox, zoomLevel, activeFilters);
-        if (loadMapDataRequestIdRef.current !== currentRequestId) return;
-        setClusters(clusterDataList);
-        setMarkers([]);
-        if (clusterDataList.length === 0 && !boundariesLoading && selectedGeoJsonData) {
-          // 폴리곤은 있지만 클러스터가 없을 수 있음
-        }
-      }
-    } catch (err) {
-      if (loadMapDataRequestIdRef.current !== currentRequestId) return;
-      console.error("지도 데이터 로드 중 오류:", err);
-      setSnackbarInfo({
-        title: '오류',
-        message: '지도 데이터를 불러오는 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.',
-        type: 'error'
-      });
-    } finally {
-      if (loadMapDataRequestIdRef.current === currentRequestId) {
-        setIsLoading(false);
-        setLoadingMessage('');
-      }
-    }
-  }, [activeFilters, boundariesLoading]); // boundariesLoading 의존성 추가
-
-  // 지도 데이터 로딩을 위한 useEffect (초기 로드 및 activeFilters 변경 시)
-  useEffect(() => {
-    if (internalMapRef.current) {
-      const map = internalMapRef.current;
-      const bounds = map.getBounds();
-      const swLatLng = bounds.getSouthWest();
-      const neLatLng = bounds.getNorthEast();
-      const zoom = map.getLevel();
-      const currentBoundingBox: BoundingBox = {
-        swLat: swLatLng.getLat(),
-        swLng: swLatLng.getLng(),
-        neLat: neLatLng.getLat(),
-        neLng: neLatLng.getLng(),
-      };
-      loadMapData(currentBoundingBox, zoom);
-    }
-  }, [activeFilters, loadMapData]);
 
   // 지도 유휴 상태 이벤트 핸들러 (useCallback으로 메모이즈)
   const handleMapIdle = useCallback((mapInstance: kakao.maps.Map) => {
@@ -691,9 +611,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
         ne: { lat: neLatLng.getLat(), lng: neLatLng.getLng() }
       }, zoom);
     }
-
-    loadMapData(currentBoundingBox, zoom);
-  }, [loadMapData, onBoundsChanged]);
+  }, [onBoundsChanged]);
 
   // 지도 생성 시 호출될 콜백 (useCallback으로 메모이즈, 안정적인 참조 유지)
   const onMapCreate = useCallback((map: kakao.maps.Map) => {
@@ -701,23 +619,10 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
     if (externalMapRef) {
       externalMapRef.current = map;
     }
-
-    // 지도 생성 후 즉시 현재 경계 정보를 가져와 데이터 로드
-    const bounds = map.getBounds();
-    const swLatLng = bounds.getSouthWest();
-    const neLatLng = bounds.getNorthEast();
-    const zoom = map.getLevel();
-
-    const initialBoundingBox: BoundingBox = {
-      swLat: swLatLng.getLat(),
-      swLng: swLatLng.getLng(),
-      neLat: neLatLng.getLat(),
-      neLng: neLatLng.getLng(),
-    };
-
-    // 초기 데이터 로드
-    loadMapData(initialBoundingBox, zoom);
-  }, [externalMapRef, loadMapData]);
+    if (onLoad) {
+      onLoad(map);
+    }
+  }, [externalMapRef, onLoad]);
 
   // 확대 수준 변경 핸들러 (메모이즈)
   const onMapZoomChanged = useCallback((map: kakao.maps.Map) => {
@@ -785,7 +690,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
       { label: '매물명', value: selectedArticle.articleName || '-' },
       { label: '거래 유형', value: selectedArticle.tradeType || '-' },
       { label: '건물 유형', value: selectedArticle.buildingType || '-' },
-      { label: '매매가/보증금', value: formatPrice(selectedArticle.priceSale) },
+      { label: selectedArticle.tradeType === 'SALE' ? '매매가' : '보증금', value: formatPrice(selectedArticle.priceSale) },
       { label: '월세', value: selectedArticle.priceRent ? `${selectedArticle.priceRent}만원` : '-' },
       { label: '층수', value: selectedArticle.floors || '-' },
       { label: '공급면적', value: selectedArticle.areaSupply ? `${selectedArticle.areaSupply}㎡` : '-' },
@@ -810,7 +715,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
       const locationKey = `${position.lat.toFixed(6)},${position.lng.toFixed(6)}`;
       const sameLocationMarkerIds: number[] = [];
       
-      markers.forEach(marker => {
+      propMarkers.forEach(marker => {
         const markerPosition = parseGeoJsonCoordinates(marker.geoJson);
         if (!markerPosition) return;
         
@@ -839,7 +744,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
     } finally {
       setArticleLoading(false);
     }
-  }, [markers]);
+  }, [propMarkers]);
 
   // 동일 위치 매물 목록에서 선택
   const handleSameLocationArticleClick = useCallback((article: Article) => {
@@ -855,8 +760,20 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
   }, []);
 
   const handleToggleRegionPolygons = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setShowRegionPolygons(event.target.checked);
+    onToggleShowRegionPolygons(event.target.checked);
   };
+
+  // 추가: propMarkers 변경 시 동일 위치 매물 개수 계산
+  useEffect(() => {
+    const counts: {[key: string]: number} = {};
+    propMarkers.forEach(marker => {
+      const position = parseGeoJsonCoordinates(marker.geoJson);
+      if (!position) return;
+      const key = `${position.lat.toFixed(6)},${position.lng.toFixed(6)}`;
+      counts[key] = (counts[key] || 0) + 1;
+    });
+    setSameLocationMarkers(counts);
+  }, [propMarkers]);
 
   return (
     <Box sx={{ position: 'relative', width: '100%', height: '100%' }}>
@@ -918,7 +835,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
         onClick={onMapClick}
         ref={internalMapRef}
       >
-        {!boundariesLoading && showRegionPolygons && regionPolygons.map((region) => {
+        {!boundariesLoading && showRegionPolygons && propRegionPolygons.map((region) => {
           const regionColor = getRegionColor(region.regionId);
           return (
             <React.Fragment key={region.regionId}>
@@ -953,7 +870,7 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
           );
         })}
 
-        {markers.map((marker) => {
+        {propMarkers.map((marker) => {
           const position = parseGeoJsonCoordinates(marker.geoJson);
           if (!position) return null;
           const locationKey = `${position.lat.toFixed(6)},${position.lng.toFixed(6)}`;
@@ -961,12 +878,12 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
           const isSelected = selectedMarkerId === marker.id;
           const markerSvg = createMarkerIcon(marker.buildingType, isSelected, sameLocationCount);
           const markerUrl = svgToDataUrl(markerSvg);
-          const baseSvgSize = 36;
+          const baseSvgSize = 30;
           const imageDisplaySize = isSelected ? baseSvgSize * 1.5 : baseSvgSize;
 
           return (
             <MapMarker
-              key={marker.id} // React.Fragment에서 key를 MapMarker로 이동
+              key={marker.id}
               position={position}
               onClick={() => {
                 if (sameLocationCount > 1) {
@@ -975,17 +892,13 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
                   handleShowArticleDetail(marker.id);
                 }
               }}
-              image={{
-                src: markerUrl,
-                size: { width: imageDisplaySize, height: imageDisplaySize },
-                options: { offset: { x: imageDisplaySize / 2, y: imageDisplaySize / 2 } }
-              }}
-              zIndex={isSelected ? 10 : 1} // 선택된 마커가 최상단, 일반 마커는 RegionLabel 아래
+              image={{ src: markerUrl, size: { width: imageDisplaySize, height: imageDisplaySize }, options: { offset: { x: imageDisplaySize/2, y: imageDisplaySize/2 } } }}
+              zIndex={isSelected ? 10 : 1}
             />
           );
         })}
 
-        {clusters.map((cluster, index) => {
+        {propClusters.map((cluster, index) => {
           const position = parseGeoJsonCoordinates(cluster.geoJson);
           if (!position) return null;
           const bgColor = getClusterColorWithOpacity(cluster.count || 0);
@@ -999,8 +912,8 @@ const KakaoMap: React.FC<KakaoMapProps> = ({
               <ClusterBox
                 onClick={() => {
                   if (internalMapRef.current) {
-                    internalMapRef.current.setCenter(new kakao.maps.LatLng(position.lat, position.lng));
-                    internalMapRef.current.setLevel(2);
+                    const map = internalMapRef.current;
+                    map.setLevel(2, { anchor: new kakao.maps.LatLng(position.lat, position.lng) }); 
                     setSelectedMarkerId(null); 
                   }
                 }}

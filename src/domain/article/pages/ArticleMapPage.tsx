@@ -29,9 +29,9 @@ import { useNavigate } from 'react-router-dom';
 import ArticleFilter, { ArticleFilterData } from '../components/ArticleFilter';
 import KakaoMap from '../components/KakaoMap';
 import RegionFilterComponent from '../components/RegionFilter';
-import { fetchMarkersAPI, fetchFilteredMarkersAPI, fetchClustersAPI } from '../services/articleApi';
-import { TradeType, BuildingType } from '../types/article.types';
-import { BoundingBox, Marker, Cluster } from '../types/article.types';
+import { fetchMarkersAPI, fetchFilteredMarkersAPI, fetchClustersAPI, getRegionBoundaries, fetchRegionPolygonsAPI } from '../services/articleApi';
+import { TradeType, BuildingType, Marker, Cluster, RegionPolygon } from '../types/article.types';
+import { BoundingBox } from '../types/article.types';
 
 // 기본 테마 (필요에 따라 커스터마이징)
 const theme = createTheme({
@@ -145,12 +145,20 @@ const ArticleMapPage: React.FC = () => {
   const [zoomLevel, setZoomLevel] = useState(5); // 기본값 5 (클러스터 표시 수준)
   const mapRef = useRef<any>(null);
   const currentBoundingBox = useRef<BoundingBox | null>(null);
+  const loadDataRequestIdRef = useRef(0);
 
   const [markers, setMarkers] = useState<Marker[]>([]);
   const [clusters, setClusters] = useState<Cluster[]>([]);
+  const [regionPolygons, setRegionPolygons] = useState<RegionPolygon[]>([]);
+
+  // 행정구역 데이터 관련 상태 추가
+  const dongGeoJsonDataRef = useRef<any>(null);
+  const guGeoJsonDataRef = useRef<any>(null);
+  const [boundariesLoading, setBoundariesLoading] = useState(true);
+  const [showRegionPolygons, setShowRegionPolygons] = useState(false); // 초기값 false
 
   const [activeFilters, setActiveFilters] = useState<ArticleFilterData>({
-    tradeType: null,
+    tradeTypes: [],
     buildingTypeCodes: [],
     minSalePrice: undefined,
     maxSalePrice: undefined,
@@ -163,108 +171,188 @@ const ArticleMapPage: React.FC = () => {
   const [regionCode, setRegionCode] = useState<string | null>(null);
   const [regionName, setRegionName] = useState<string | null>("전체 지역");
   const [regionPopoverAnchor, setRegionPopoverAnchor] = useState<null | HTMLElement>(null);
+  
+  // 필터 팝오버를 위한 상태 추가
+  const [filterPopoverAnchor, setFilterPopoverAnchor] = useState<HTMLButtonElement | null>(null);
+  const filterPopoverOpen = Boolean(filterPopoverAnchor);
 
   const handleDrawerToggle = () => {
     setDrawerOpen(!drawerOpen);
   };
 
+  // 필터 팝오버를 열기 위한 핸들러
+  const handleFilterPopoverOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setFilterPopoverAnchor(event.currentTarget);
+  };
+
+  // 필터 팝오버를 닫기 위한 핸들러
+  const handleFilterPopoverClose = () => {
+    setFilterPopoverAnchor(null);
+  };
+
+  // showRegionPolygons 상태 토글 함수
+  const handleToggleShowRegionPolygons = useCallback((checked: boolean) => {
+    setShowRegionPolygons(checked);
+  }, []);
+
   const handleRegionChange = useCallback((
     code: string | null, 
-    name?: string | null, 
-    coordinates?: { latitude: number, longitude: number, zoomLevel?: number }
+    name?: string | null
   ) => {
     setRegionCode(code);
     setRegionName(name || "전체 지역");
-    
-    if (coordinates && mapRef.current) {
-      const kakao = (window as any).kakao;
-      if (kakao && kakao.maps) {
-        const latLng = new kakao.maps.LatLng(
-          coordinates.latitude,
-          coordinates.longitude
-        );
-        mapRef.current.setCenter(latLng);
-        if (coordinates.zoomLevel) {
-            mapRef.current.setLevel(coordinates.zoomLevel);
-        }
-      }
-    }
     setRegionPopoverAnchor(null);
   }, []);
 
-  const handleFilterChange = useCallback((newFilters: Partial<ArticleFilterData>) => {
-    setActiveFilters(prevFilters => ({ ...prevFilters, ...newFilters }));
-  }, []);
+  // 초기 행정구역 데이터 로드
+  useEffect(() => {
+    if (showRegionPolygons) {
+      setBoundariesLoading(true);
+      (async () => {
+        try {
+          if (!dongGeoJsonDataRef.current) {
+            dongGeoJsonDataRef.current = await getRegionBoundaries('dong');
+          }
+          if (!guGeoJsonDataRef.current) {
+            guGeoJsonDataRef.current = await getRegionBoundaries('gu');
+          }
+        } catch {
+          // 에러 처리
+        } finally {
+          setBoundariesLoading(false);
+        }
+      })();
+    } else {
+      setBoundariesLoading(false);
+    }
+  }, [showRegionPolygons]);
 
-  const loadData = useCallback(async (bounds: BoundingBox | null, currentFilters: ArticleFilterData, currentZoom: number, currentRegionCode: string | null) => {
+  const loadData = useCallback(async (
+    bounds: BoundingBox | null,
+    currentFilters: ArticleFilterData,
+    currentZoom: number,
+    currentRegionCode: string | null,
+    currentShowRegionPolygons: boolean
+  ) => {
     if (!bounds) return;
+    const requestId = ++loadDataRequestIdRef.current;
     setIsLoading(true);
-    setLoadingMessage("데이터를 불러오는 중...");
 
-    const isAnyNonGeoFilterApplied = 
-        currentFilters.tradeType !== null ||
-        currentFilters.buildingTypeCodes.length > 0 ||
-        currentFilters.minSalePrice !== undefined ||
-        currentFilters.maxSalePrice !== undefined ||
-        currentFilters.minRentPrice !== undefined ||
-        currentFilters.maxRentPrice !== undefined;
+    const filterParams: any = {
+      swLat: bounds.swLat,
+      swLng: bounds.swLng,
+      neLat: bounds.neLat,
+      neLng: bounds.neLng,
+    };
+    if (currentFilters.tradeTypes.length) filterParams.tradeTypes = currentFilters.tradeTypes.map(t => encodeURIComponent(t));
+    if (currentFilters.buildingTypeCodes.length) filterParams.buildingTypeCodes = currentFilters.buildingTypeCodes.join(',');
+    if (currentFilters.minSalePrice !== undefined) filterParams.minSalePrice = currentFilters.minSalePrice;
+    if (currentFilters.maxSalePrice !== undefined) filterParams.maxSalePrice = currentFilters.maxSalePrice;
+    if (currentFilters.minRentPrice !== undefined) filterParams.minRentPrice = currentFilters.minRentPrice;
+    if (currentFilters.maxRentPrice !== undefined) filterParams.maxRentPrice = currentFilters.maxRentPrice;
 
-    const filtersForApi = { ...currentFilters };
+    // 초기 상태 클리어
+    if (requestId === loadDataRequestIdRef.current) {
+      setMarkers([]);
+      setClusters([]);
+    }
 
+    // Polygons
+    if (currentShowRegionPolygons) {
+      const boundaryType = currentZoom >= 6 ? 'gu' : 'dong';
+      const data = boundaryType === 'dong' ? dongGeoJsonDataRef.current : guGeoJsonDataRef.current;
+      if (!boundariesLoading && data) {
+        try {
+          const polygons = await fetchRegionPolygonsAPI(data, boundaryType);
+          if (requestId === loadDataRequestIdRef.current) setRegionPolygons(polygons);
+        } catch {
+          if (requestId === loadDataRequestIdRef.current) setRegionPolygons([]);
+        }
+      }
+    } else {
+      if (requestId === loadDataRequestIdRef.current) setRegionPolygons([]);
+    }
+
+    // API 호출 분기
     try {
-      if (currentZoom <= 8) { 
+      if (currentZoom <= 2) {
+        if (
+          currentFilters.tradeTypes.length ||
+          currentFilters.buildingTypeCodes.length ||
+          currentFilters.minSalePrice !== undefined ||
+          currentFilters.maxSalePrice !== undefined ||
+          currentFilters.minRentPrice !== undefined ||
+          currentFilters.maxRentPrice !== undefined
+        ) {
+          setLoadingMessage("필터링된 매물 정보를 가져오는 중...");
+          const data = await fetchFilteredMarkersAPI(filterParams);
+          if (requestId === loadDataRequestIdRef.current) setMarkers(data);
+        } else {
+          setLoadingMessage("매물 정보를 가져오는 중...");
+          const data = await fetchMarkersAPI(bounds);
+          if (requestId === loadDataRequestIdRef.current) setMarkers(data);
+        }
+        if (requestId === loadDataRequestIdRef.current) setClusters([]);
+      } else if (currentZoom <= 8) {
         setLoadingMessage("클러스터 정보를 가져오는 중...");
-        const clusterData = await fetchClustersAPI(bounds, currentZoom);
-        setClusters(clusterData);
-        setMarkers([]);
+        const data = await fetchClustersAPI(bounds, currentZoom, undefined);
+        if (requestId === loadDataRequestIdRef.current) {
+          setClusters(data);
+          setMarkers([]);
+        }
       } else {
         setLoadingMessage("매물 정보를 가져오는 중...");
-        let markerData;
-        if (isAnyNonGeoFilterApplied) { 
-          markerData = await fetchFilteredMarkersAPI(bounds, filtersForApi);
-        } else { 
-          markerData = await fetchMarkersAPI(bounds); 
+        const data = await fetchMarkersAPI(bounds);
+        if (requestId === loadDataRequestIdRef.current) {
+          setMarkers(data);
+          setClusters([]);
         }
-        setMarkers(markerData);
-        setClusters([]);
       }
-    } catch (error) {
-      console.error("Error loading map data:", error);
-      setLoadingMessage("데이터 로드 실패");
+    } catch {
+      if (requestId === loadDataRequestIdRef.current) {
+        setLoadingMessage("데이터 로드 실패");
+      }
     } finally {
-      setIsLoading(false);
-      if (loadingMessage === "데이터를 불러오는 중...") {
+      if (requestId === loadDataRequestIdRef.current) {
+        setIsLoading(false);
         setLoadingMessage("");
       }
     }
-  }, [loadingMessage]); 
-  
-  const handleBoundsChanged: (boundsFromMap: KakaoMapBounds, newZoomFromMap: number) => void = useCallback((boundsFromMap, newZoomFromMap) => {
-    const newBounds: BoundingBox = {
+  }, [boundariesLoading]);
+
+  // 지도가 생성될 때 최초 한 번 호출되는 콜백
+  const handleMapLoad = useCallback((map: any) => {
+    mapRef.current = map;
+    const bounds = map.getBounds();
+    const sw = bounds.getSouthWest();
+    const ne = bounds.getNorthEast();
+    const initialBounds: BoundingBox = {
+      swLat: sw.getLat(),
+      swLng: sw.getLng(),
+      neLat: ne.getLat(),
+      neLng: ne.getLng(),
+    };
+    currentBoundingBox.current = initialBounds;
+    const initialZoom = map.getLevel();
+    setZoomLevel(initialZoom);
+    loadData(initialBounds, activeFilters, initialZoom, regionCode, showRegionPolygons);
+  }, [activeFilters, regionCode, loadData, showRegionPolygons]);
+
+  // 지도 경계/줌 변경 시 호출
+  const handleBoundsChanged = useCallback(
+    (boundsFromMap: KakaoMapBounds, newZoom: number) => {
+      const newBounds: BoundingBox = {
         swLat: boundsFromMap.sw.lat,
         swLng: boundsFromMap.sw.lng,
         neLat: boundsFromMap.ne.lat,
         neLng: boundsFromMap.ne.lng,
-    };
-    currentBoundingBox.current = newBounds;
-    if (zoomLevel !== newZoomFromMap) {
-        setZoomLevel(newZoomFromMap);
-    } else {
-      if (currentBoundingBox.current) {
-        loadData(currentBoundingBox.current, activeFilters, newZoomFromMap, regionCode);
-      }
-    }
-  }, [activeFilters, regionCode, loadData, zoomLevel]); 
-
-  const handleZoomChanged = useCallback((newZoomLevel: number) => {
-    setZoomLevel(newZoomLevel);
-  }, []);
-
-   useEffect(() => {
-     if (currentBoundingBox.current) {
-       loadData(currentBoundingBox.current, activeFilters, zoomLevel, regionCode);
-     }
-   }, [activeFilters, zoomLevel, regionCode, loadData]);
+      };
+      currentBoundingBox.current = newBounds;
+      setZoomLevel(newZoom);
+      loadData(newBounds, activeFilters, newZoom, regionCode, showRegionPolygons);
+    },
+    [activeFilters, regionCode, loadData, showRegionPolygons]
+  );
 
   const handleRegionPopoverOpen = (event: React.MouseEvent<HTMLElement>) => {
     setRegionPopoverAnchor(event.currentTarget);
@@ -308,34 +396,47 @@ const ArticleMapPage: React.FC = () => {
     }
   };
 
-  const handleMapLoad = (map: any) => { 
-    mapRef.current = map;
-    const bounds = map.getBounds();
-    const sw = bounds.getSouthWest();
-    const ne = bounds.getNorthEast();
-    const initialBounds: BoundingBox = {
-        swLat: sw.getLat(),
-        swLng: sw.getLng(),
-        neLat: ne.getLat(),
-        neLng: ne.getLng(),
-    };
-    currentBoundingBox.current = initialBounds;
-    const initialZoom = map.getLevel();
-    setZoomLevel(initialZoom);
-    loadData(initialBounds, activeFilters, initialZoom, regionCode);
-  };
-  
-  // KakaoMap에 전달할 props 객체 생성
+  // Filter change handler
+  const handleFilterChange = useCallback((newFilters: Partial<ArticleFilterData>) => {
+    setActiveFilters(prev => ({ ...prev, ...newFilters }));
+  }, []);
+
+  // Center change handler for RegionFilter
+  const handleCenterChange = useCallback((coordinates: { latitude: number; longitude: number; zoomLevel: number }) => {
+    if (mapRef.current) {
+      const kakaoMap = window.kakao.maps;
+      const latLng = new kakaoMap.LatLng(coordinates.latitude, coordinates.longitude);
+      mapRef.current.setCenter(latLng);
+      if (coordinates.zoomLevel != null) {
+        mapRef.current.setLevel(coordinates.zoomLevel);
+      }
+    }
+  }, []);
+
+  // KakaoMap props
   const kakaoMapProps = {
     markers,
     clusters,
+    regionPolygons,
     onBoundsChanged: handleBoundsChanged,
-    onZoomChanged: handleZoomChanged,
     onLoad: handleMapLoad,
-    showControls: false,
-    activeFilters: activeFilters, // KakaoMap이 이 prop을 받는다고 가정 (실제 KakaoMapProps 확인 필요)
-    // initialCenter, initialZoom 등은 KakaoMap 내부 로직 또는 onLoad로 처리
+    showRegionPolygons,
+    onToggleShowRegionPolygons: (checked: boolean) => setShowRegionPolygons(checked),
+    isLoading,
+    loadingMessage,
+    boundariesLoading,
+    mapRef,
   };
+
+  // 리전 팝오버 내용
+  const regionPopoverContent = (
+    <Box sx={{ p: 1, width: '100%', maxWidth: 360, height: 'auto', maxHeight: '80vh', overflow: 'auto' }}>
+      <RegionFilterComponent 
+        onRegionChange={handleRegionChange} 
+        onCenterChange={handleCenterChange}
+      />
+    </Box>
+  );
 
   return (
     <ThemeProvider theme={theme}>
@@ -370,17 +471,18 @@ const ArticleMapPage: React.FC = () => {
               {regionName || "전체 지역"}
               <ArrowDownIcon sx={{ ml: 0.5 }} />
             </Button>
-            <IconButton
+            {/* <IconButton
               color="inherit"
               aria-label="필터 열기"
               edge="end"
-              onClick={handleDrawerToggle} 
+              onClick={handleFilterPopoverOpen}
             >
               <FilterListIcon />
-            </IconButton>
+            </IconButton> */}
           </Toolbar>
         </AppBar>
         
+        {/* 지역 선택 팝오버 */}
         <Popover
           open={Boolean(regionPopoverAnchor)}
           anchorEl={regionPopoverAnchor}
@@ -395,10 +497,18 @@ const ArticleMapPage: React.FC = () => {
           }}
           sx={{ '& .MuiPopover-paper': { width: { xs: '90%', sm: 360 }, boxShadow: 3 } }}
         >
-          <Box sx={{ p: 2 }}>
-            <RegionFilterComponent onRegionChange={handleRegionChange} />
-          </Box>
+          {regionPopoverContent}
         </Popover>
+
+        {/* 필터 팝오버 추가 */}
+        <ArticleFilter
+          initialFilters={activeFilters}
+          onFilterChange={handleFilterChange}
+          isPopoverOpen={filterPopoverOpen}
+          anchorEl={filterPopoverAnchor}
+          onClose={handleFilterPopoverClose}
+          zoomLevel={zoomLevel}
+        />
 
         <Box
           component="main"
@@ -444,7 +554,7 @@ const ArticleMapPage: React.FC = () => {
             </Fade>
           )}
 
-          <KakaoMap {...(kakaoMapProps as any)} />
+          <KakaoMap {...kakaoMapProps} />
           
           <Box
             sx={{
@@ -523,6 +633,7 @@ const ArticleMapPage: React.FC = () => {
             <ArticleFilter 
               initialFilters={activeFilters} 
               onFilterChange={handleFilterChange} 
+              zoomLevel={zoomLevel}
             />
           </Box>
         </Drawer>

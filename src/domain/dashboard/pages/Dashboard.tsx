@@ -221,7 +221,7 @@ const Dashboard = () => {
 
     useEffect(() => {
         const agentId = localStorage.getItem('agentId');
-        let eventSource: EventSource | null = null;
+        const eventSource: EventSource | null = null;
 
         if (!agentId) {
             console.warn("agentId is missing or invalid:", agentId);

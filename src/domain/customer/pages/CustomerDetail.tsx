@@ -1,4 +1,10 @@
-import {useEffect, useState} from "react"
+import {ArrowBack, Assignment, Delete, Description, Edit, Message, Poll} from "@mui/icons-material"
+import Timeline from '@mui/lab/Timeline';
+import TimelineConnector from '@mui/lab/TimelineConnector';
+import TimelineContent from '@mui/lab/TimelineContent';
+import TimelineDot from '@mui/lab/TimelineDot';
+import TimelineItem from '@mui/lab/TimelineItem';
+import TimelineSeparator from '@mui/lab/TimelineSeparator';
 import {
     Alert,
     Box,
@@ -17,14 +23,9 @@ import {
     Snackbar,
     Typography,
 } from "@mui/material"
-import Timeline from '@mui/lab/Timeline';
-import TimelineItem from '@mui/lab/TimelineItem';
-import TimelineSeparator from '@mui/lab/TimelineSeparator';
-import TimelineConnector from '@mui/lab/TimelineConnector';
-import TimelineContent from '@mui/lab/TimelineContent';
-import TimelineDot from '@mui/lab/TimelineDot';
-import {ArrowBack, Assignment, Delete, Description, Edit, Message, Poll} from "@mui/icons-material"
+import {useEffect, useState} from "react"
 import {useNavigate, useParams} from "react-router-dom"
+
 import type {CustomerResponse, History} from "@/domain/customer/services/customerApi"
 import {customerApi} from "@/domain/customer/services/customerApi"
 

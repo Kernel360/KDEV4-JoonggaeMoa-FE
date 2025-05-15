@@ -1,7 +1,8 @@
-import React from 'react';
-import {Box, Container, IconButton, List, ListItem, Paper, Typography,} from '@mui/material';
 import {ArrowBack} from '@mui/icons-material';
+import {Box, Container, IconButton, List, ListItem, Paper, Typography,} from '@mui/material';
+import React from 'react';
 import {useNavigate} from 'react-router-dom';
+
 import {useNotification} from '@/domain/notification/context/NotificationContext';
 
 interface Notification {

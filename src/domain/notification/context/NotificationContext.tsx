@@ -1,7 +1,9 @@
 import React, {createContext, ReactNode, useCallback, useContext, useEffect, useState} from 'react';
-import api from '@/global/api/services/api';
-import {toast} from 'react-toastify';
 import {useNavigate} from 'react-router-dom';
+import {toast} from 'react-toastify';
+
+import api from '@/global/api/services/api';
+
 
 interface Notification {
     id: number;

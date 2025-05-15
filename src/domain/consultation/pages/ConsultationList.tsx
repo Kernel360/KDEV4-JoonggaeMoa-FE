@@ -1,5 +1,4 @@
-import type React from "react"
-import {useCallback, useEffect, useRef, useState} from "react"
+import {Add, ArrowBack, CalendarMonth, ChevronLeft, ChevronRight} from "@mui/icons-material"
 import {
     Alert,
     Box,
@@ -30,12 +29,14 @@ import {
     TextField,
     Typography,
 } from "@mui/material"
-import {Add, ArrowBack, CalendarMonth, ChevronLeft, ChevronRight} from "@mui/icons-material"
+import type React from "react"
+import {useCallback, useEffect, useRef, useState} from "react"
 import {useNavigate} from "react-router-dom"
+
 import {consultationApi} from "@/domain/consultation/services/consultationApi"
-import {customerApi} from "@/domain/customer/services/customerApi"
 import type {ConsultationMonthInfo, ConsultationResponse} from "@/domain/consultation/types/consultation"
 import {ConsultationStatus, ConsultationType} from "@/domain/consultation/types/consultation"
+import {customerApi} from "@/domain/customer/services/customerApi"
 
 // 상담 상태별 칩 색상 및 텍스트 - 새로운 상태 값에 맞게 업데이트
 const statusConfig = {

@@ -27,8 +27,8 @@ import {
   Chip,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import React from 'react';
-
+import React, { useEffect, useState } from 'react';
+import { Map, MapMarker } from 'react-kakao-maps-sdk';
 
 import { Article } from '../types/article.types';
 
@@ -168,6 +168,20 @@ interface ArticleDetailModalProps {
 }
 
 const ArticleDetailModal: React.FC<ArticleDetailModalProps> = ({ open, onClose, article }) => {
+  const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
+
+  useEffect(() => {
+    if (article && open) {
+      // 좌표 설정 (article에서 좌표 정보가 있으면 사용, 없으면 기본값)
+      if (article.latitude && article.longitude) {
+        setCoordinates({ lat: article.latitude, lng: article.longitude });
+      } else {
+        // 서울시청 기본 좌표
+        setCoordinates({ lat: 37.5666805, lng: 126.9784147 });
+      }
+    }
+  }, [article, open]);
+
   if (!article) {
     return null;
   }
@@ -183,7 +197,7 @@ const ArticleDetailModal: React.FC<ArticleDetailModalProps> = ({ open, onClose, 
     }
   };
   
-  const BuildingIcon = () => {
+  const BuildingIcon = (): React.ReactElement => {
     const color = getTypeColor(article.buildingType);
     switch (article.buildingType) {
       case 'APT':
@@ -215,6 +229,28 @@ const ArticleDetailModal: React.FC<ArticleDetailModalProps> = ({ open, onClose, 
     const numArea = typeof area === 'string' ? parseFloat(area) : area;
     if (isNaN(numArea) || numArea === 0) return '-';
     return (numArea / 3.30578).toFixed(1);
+  };
+
+  // 평당가 계산 함수
+  const calculatePricePerPyeong = (price?: number, area?: string | number): string => {
+    if (!price || price === 0 || !area) return '-';
+    
+    const numArea = typeof area === 'string' ? parseFloat(area) : area;
+    if (isNaN(numArea) || numArea === 0) return '-';
+    
+    // 3.3㎡당 가격 계산 (평당가)
+    const pricePerPyeong = Math.round(price / (numArea / 3.30578));
+    
+    if (pricePerPyeong >= 10000) {
+      const eok = Math.floor(pricePerPyeong / 10000);
+      const man = pricePerPyeong % 10000;
+      if (man > 0) {
+        return `${eok}억 ${man.toLocaleString()}만원/3.3㎡`;
+      }
+      return `${eok}억원/3.3㎡`;
+    }
+    
+    return `${pricePerPyeong.toLocaleString()}만원/3.3㎡`;
   };
 
   return (
@@ -278,10 +314,17 @@ const ArticleDetailModal: React.FC<ArticleDetailModalProps> = ({ open, onClose, 
             <Box sx={{ width: { xs: '100%', md: '60%' } }}>
               <Stack spacing={2}>
                 <Paper elevation={0} sx={{ p: 2, border: '1px solid rgba(0,0,0,0.12)'}}>
-                  <Typography variant="h5" fontWeight="bold" gutterBottom>
-                    {article.tradeType === '매매' ? '매매가' : '보증금'}{' '}
-                    {isZeroPrice(article.priceSale) ? '가격 문의' : formatPrice(article.priceSale)}
-                  </Typography>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Typography variant="h5" fontWeight="bold" gutterBottom>
+                      {article.tradeType === '매매' ? '매매가' : '보증금'}{' '}
+                      {isZeroPrice(article.priceSale) ? '가격 문의' : formatPrice(article.priceSale)}
+                    </Typography>
+                    <Typography variant="subtitle1" color="text.secondary">
+                      {!isZeroPrice(article.priceSale) && article.areaExclusive 
+                        ? calculatePricePerPyeong(article.priceSale, article.areaExclusive)
+                        : ''}
+                    </Typography>
+                  </Box>
                   {(article.tradeType === '전세' || article.tradeType === '월세' || article.tradeType === '단기임대') &&
                     article.priceRent && article.priceRent > 0 && (
                     <Typography variant="h6" color="text.secondary">
@@ -329,60 +372,74 @@ const ArticleDetailModal: React.FC<ArticleDetailModalProps> = ({ open, onClose, 
           </Box>
 
           <Stack spacing={2} sx={{ mt: 3 }}>
-            <Paper elevation={0} sx={{ p: 2, border: '1px solid rgba(0,0,0,0.12)' }}>
-              <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                상세 정보
-              </Typography>
-              <TableContainer>
-                <Table size="small">
-                  <TableBody>
-                    <TableRow>
-                      <TableCell sx={{ width: '25%', fontWeight: 'medium', borderBottom: 'none', py: 0.5 }}>층수</TableCell>
-                      <TableCell sx={{ width: '25%', borderBottom: 'none', py: 0.5 }}>{article.floors || '-'}</TableCell>
-                      <TableCell sx={{ width: '25%', fontWeight: 'medium', borderBottom: 'none', py: 0.5 }}>방향</TableCell>
-                      <TableCell sx={{ width: '25%', borderBottom: 'none', py: 0.5 }}>{article.direction || '-'}</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 'medium', borderBottom: 'none', py: 0.5 }}>공급면적</TableCell>
-                      <TableCell sx={{ borderBottom: 'none', py: 0.5 }}>
-                        {article.areaSupply ? `${article.areaSupply}㎡ (${calculatePyeong(article.areaSupply)}평)` : '-'}
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 'medium', borderBottom: 'none', py: 0.5 }}>전용면적</TableCell>
-                      <TableCell sx={{ borderBottom: 'none', py: 0.5 }}>
-                        {article.areaExclusive ? `${article.areaExclusive}㎡ (${calculatePyeong(article.areaExclusive)}평)` : '-'}
-                      </TableCell>
-                    </TableRow>
-                     <TableRow>
-                      <TableCell sx={{ fontWeight: 'medium', borderBottom: 'none', py: 0.5 }}>사용승인일</TableCell>
-                      <TableCell sx={{ borderBottom: 'none', py: 0.5 }}>{article.confirmedAt ? formatDate(article.confirmedAt) : '-'}</TableCell>
-                      <TableCell sx={{ fontWeight: 'medium', borderBottom: 'none', py: 0.5 }}>주변 지하철역</TableCell>
-                      <TableCell sx={{ borderBottom: 'none', py: 0.5 }}>{article.subway || '-'}</TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Paper>
-            
-            <Paper elevation={0} sx={{ p: 2, border: '1px solid rgba(0,0,0,0.12)' }}>
-                <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                매물 설명
-                </Typography>
-                <Typography variant="body2" sx={{ whiteSpace: 'pre-line' }}>
-                {article.articleDesc || '등록된 매물 설명이 없습니다.'}
-                </Typography>
-            </Paper>
-
-            <Paper elevation={0} sx={{ p: 2, border: '1px solid rgba(0,0,0,0.12)' }}>
-              <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                중개사 정보
-              </Typography>
-              <Typography variant="body2">
-                <strong>공인중개사:</strong> {article.agency || '-'}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                <strong>정보 제공 출처:</strong> {article.companyName || '-'}
-              </Typography>
-            </Paper>
+            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2 }}>
+              {/* 지도 컴포넌트 (70% 너비) */}
+              <Box sx={{ width: { xs: '100%', md: '70%' }, height: '300px' }}>
+                {coordinates && (
+                  <Map
+                    center={{ lat: coordinates.lat, lng: coordinates.lng }}
+                    style={{ width: '100%', height: '100%', borderRadius: '4px' }}
+                    level={3}
+                    draggable={false}
+                    zoomable={false}
+                  >
+                    <MapMarker 
+                      position={{ lat: coordinates.lat, lng: coordinates.lng }}
+                    />
+                  </Map>
+                )}
+              </Box>
+              
+              {/* 상세 정보 컴포넌트 (30% 너비) */}
+              <Paper 
+                elevation={0} 
+                sx={{ 
+                  p: 2, 
+                  border: '1px solid rgba(0,0,0,0.12)', 
+                  width: { xs: '100%', md: '30%' },
+                  borderLeft: '4px solid #3E54AC',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 1
+                }}
+              >
+                <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="body1" fontWeight="bold" sx={{ width: '100%' }}>{article.articleDesc || '(등록된 매물 설명이 없습니다.)'}</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+                  <Typography variant="body2" fontWeight="bold" sx={{ width: '40%' }}>층수</Typography>
+                  <Typography variant="body2">{article.floors || '-'}</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="body2" fontWeight="bold" sx={{ width: '40%' }}>방향</Typography>
+                  <Typography variant="body2">{article.direction || '-'}</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="body2" fontWeight="bold" sx={{ width: '40%' }}>공급면적</Typography>
+                  <Typography variant="body2">
+                    {article.areaSupply ? `${article.areaSupply}㎡ (${calculatePyeong(article.areaSupply)}평)` : '-'}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="body2" fontWeight="bold" sx={{ width: '40%' }}>전용면적</Typography>
+                  <Typography variant="body2">
+                    {article.areaExclusive ? `${article.areaExclusive}㎡ (${calculatePyeong(article.areaExclusive)}평)` : '-'}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="body2" fontWeight="bold" sx={{ width: '40%' }}>사용승인일</Typography>
+                  <Typography variant="body2">{article.confirmedAt ? formatDate(article.confirmedAt) : '-'}</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="body2" fontWeight="bold" sx={{ width: '40%' }}>중개법인</Typography>
+                  <Typography variant="body2">{article.agency || '-'}</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="body2" fontWeight="bold" sx={{ width: '40%' }}>출처</Typography>
+                  <Typography variant="body2">{article.companyName || '-'}</Typography>
+                </Box>
+              </Paper>
+            </Box>
           </Stack>
         </ModalBody>
 
