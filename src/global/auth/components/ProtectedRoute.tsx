@@ -1,8 +1,9 @@
+import {Alert, Box, CircularProgress, createTheme, Snackbar, ThemeProvider} from "@mui/material"
 import React, {ReactNode, useState} from "react";
 import {Navigate, useLocation} from "react-router-dom"
+
 import {useAuth} from "@/global/auth/context/AuthContext"
 import Layout from "@/global/common/components/Layout"
-import {Alert, Box, CircularProgress, createTheme, Snackbar, ThemeProvider} from "@mui/material"
 
 const theme = createTheme({
     palette: {

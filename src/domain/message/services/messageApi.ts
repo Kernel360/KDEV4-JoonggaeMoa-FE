@@ -1,5 +1,6 @@
-import api from "@/global/api/services/api"
 import type {AxiosResponse} from "axios"
+
+import api from "@/global/api/services/api"
 import type {ApiResponse} from "@/global/api/types/api"
 
 // 메시지 응답 타입

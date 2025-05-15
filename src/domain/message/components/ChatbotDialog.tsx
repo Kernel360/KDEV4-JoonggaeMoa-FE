@@ -1,6 +1,7 @@
-import React, {useEffect, useRef, useState} from 'react';
-import {Box, Button, CircularProgress, Dialog, DialogContent, IconButton, TextField, Typography} from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import {Box, Button, CircularProgress, Dialog, DialogContent, IconButton, TextField, Typography} from '@mui/material';
+import React, {useEffect, useRef, useState} from 'react';
+
 import api from '@/global/api/services/api';
 
 interface Message {

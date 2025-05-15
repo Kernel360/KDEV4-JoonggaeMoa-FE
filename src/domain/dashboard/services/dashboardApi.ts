@@ -1,4 +1,3 @@
-import api from "@/global/api/services/api"
 import type {
     ConsultationSummaryResponse,
     ContractSummaryResponse,
@@ -6,6 +5,7 @@ import type {
     RealEstateTypeSummaryResponse,
     TradeTypeSummaryResponse
 } from "@/domain/dashboard/types/dashboard";
+import api from "@/global/api/services/api"
 import type {ApiResponse} from "@/global/api/types/api";
 
 // 대시보드 API 서비스

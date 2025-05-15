@@ -1,5 +1,4 @@
-import type React from "react"
-import {useCallback, useEffect, useRef, useState} from "react"
+import {ArrowBack, CloudUpload} from "@mui/icons-material"
 import {
     Alert,
     Box,
@@ -15,8 +14,10 @@ import {
     TextField,
     Typography,
 } from "@mui/material"
-import {ArrowBack, CloudUpload} from "@mui/icons-material"
+import type React from "react"
+import {useCallback, useEffect, useRef, useState} from "react"
 import {useNavigate} from "react-router-dom"
+
 import {contractApi} from "@/domain/contract/services/contractApi"
 import {customerApi} from "@/domain/customer/services/customerApi"
 

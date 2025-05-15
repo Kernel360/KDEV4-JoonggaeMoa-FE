@@ -1,5 +1,4 @@
-import type React from "react"
-import {useEffect, useState} from "react"
+import {Add, ArrowBack, Delete, Search} from "@mui/icons-material"
 import {
     Alert,
     Box,
@@ -17,8 +16,10 @@ import {
     TextField,
     Typography,
 } from "@mui/material"
-import {Add, ArrowBack, Delete, Search} from "@mui/icons-material"
+import type React from "react"
+import {useEffect, useState} from "react"
 import {useNavigate, useParams} from "react-router-dom"
+
 import type {MessageTemplateRequest, MessageTemplateResponse} from "@/domain/message/services/messageTemplateApi"
 import {messageTemplateApi} from "@/domain/message/services/messageTemplateApi"
 

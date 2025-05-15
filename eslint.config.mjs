@@ -4,7 +4,6 @@ import {fileURLToPath} from "url";
 import {fixupConfigRules, fixupPluginRules} from "@eslint/compat";
 import {FlatCompat} from "@eslint/eslintrc";
 import js from "@eslint/js";
-import typescriptEslint from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
 import {defineConfig, globalIgnores} from "eslint/config";
 import importPlugin from "eslint-plugin-import";
@@ -57,39 +56,10 @@ export default defineConfig([
         },
 
         rules: {
-            "react/prop-types": "off",
-            "react/display-name": "off",
-
-            "react-refresh/only-export-components": ["warn", {
-                allowConstantExport: true,
-            }],
-
-            "@typescript-eslint/no-explicit-any": "off",
-            "@typescript-eslint/no-unused-vars": "warn",
-            "@typescript-eslint/no-unused-expressions": "off",
-            "@typescript-eslint/no-this-alias": "off",
-            "@typescript-eslint/ban-ts-comment": "off",
-            "@typescript-eslint/ban-types": "off",
-            "prefer-const": "warn",
-            "no-undef": "off",
-            "no-empty": "off",
-            "no-unused-expressions": "off",
-            "no-prototype-builtins": "off",
-            "no-constant-condition": "off",
-            "no-func-assign": "off",
-            "no-cond-assign": "off",
-            "no-useless-escape": "off",
-            "no-case-declarations": "off",
-            "no-inner-declarations": "off",
-            "logical-assignment-operators": "off",
-            "no-empty-static-block": "off",
-            "no-new-native-nonconstructor": "off",
-
             "no-fallthrough": ["error", {
                 commentPattern: "break[\\s\\w]*omitted",
             }],
-
-            "import/order": ["warn", {
+            "import/order": ["error", {
                 "groups": ["builtin", "external", "internal", ["parent", "sibling", "index"]],
                 "pathGroups": [
                     {

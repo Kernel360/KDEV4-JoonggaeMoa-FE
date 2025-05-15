@@ -1,5 +1,3 @@
-import React, {useEffect, useState} from 'react';
-import {useNavigate, useParams} from 'react-router-dom';
 import {
     Alert,
     Box,
@@ -16,13 +14,16 @@ import {
     TextField,
     Typography
 } from '@mui/material';
-import {useAuth} from '@/global/auth/context/AuthContext';
-import api from '@/global/api/services/api';
-import {InquiryConsultationRequest, InquiryDetailResponse} from '@/domain/inquiry/types/inquiry';
 import {LocalizationProvider} from '@mui/x-date-pickers';
-import {DateTimePicker} from '@mui/x-date-pickers/DateTimePicker';
 import {AdapterDateFns} from '@mui/x-date-pickers/AdapterDateFns';
+import {DateTimePicker} from '@mui/x-date-pickers/DateTimePicker';
 import {ko} from 'date-fns/locale';
+import React, {useEffect, useState} from 'react';
+import {useNavigate, useParams} from 'react-router-dom';
+
+import {InquiryConsultationRequest, InquiryDetailResponse} from '@/domain/inquiry/types/inquiry';
+import api from '@/global/api/services/api';
+import {useAuth} from '@/global/auth/context/AuthContext';
 
 const InquiryDetail: React.FC = () => {
     const {id} = useParams();

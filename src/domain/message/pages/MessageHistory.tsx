@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useRef, useState} from "react"
+import {ArrowBack, Search} from "@mui/icons-material"
 import {
     Box,
     Chip,
@@ -17,8 +17,9 @@ import {
     TextField,
     Typography,
 } from "@mui/material"
-import {ArrowBack, Search} from "@mui/icons-material"
+import React, {useCallback, useEffect, useRef, useState} from "react"
 import {useNavigate} from "react-router-dom"
+
 import type {MessageResponse} from "@/domain/message/services/messageApi"
 import {messageApi} from "@/domain/message/services/messageApi"
 import {MessageStatus} from "@/domain/message/types/message"

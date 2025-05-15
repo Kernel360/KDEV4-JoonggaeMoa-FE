@@ -6,6 +6,9 @@
     "paths": {
       "@/*": ["src/*"]           // (선택) 경로 alias 설정
     },
+    "types": [
+      "kakao.maps.d.ts"
+    ],
     "esModuleInterop": true,     // ES 모듈 호환 (import 사용 가능)
     "allowSyntheticDefaultImports": true, // Synthetic import 허용
     "skipLibCheck": true,

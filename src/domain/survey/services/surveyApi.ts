@@ -1,5 +1,5 @@
-import api from "@/global/api/services/api"
 import type {AxiosResponse} from "axios"
+
 import type {
     AnswerRequest,
     AnswerResponse,
@@ -8,6 +8,7 @@ import type {
     SurveyResponse,
     SurveyUpdateRequest,
 } from "@/domain/survey/types/survey"
+import api from "@/global/api/services/api"
 import type {ApiResponse} from "@/global/api/types/api"
 
 // 설문 생성

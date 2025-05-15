@@ -1,5 +1,5 @@
-import api from "@/global/api/services/api"
 import type {AxiosResponse} from "axios"
+
 import type {
     ConsultationHistoryDto,
     ConsultationMonthInfo,
@@ -7,6 +7,7 @@ import type {
     ConsultationResultRequest
 } from "@/domain/consultation/types/consultation"
 import {ConsultationStatus} from "@/domain/consultation/types/consultation"
+import api from "@/global/api/services/api"
 import type {ApiResponse} from "@/global/api/types/api"
 
 export const createConsultation = async (consultationData: {

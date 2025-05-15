@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react"
+import {Add, ArrowBack, ChevronLeft, ChevronRight, Edit, Person, Save,} from "@mui/icons-material"
 import {
     Alert,
     Box,
@@ -19,8 +19,10 @@ import {
     TextField,
     Typography,
 } from "@mui/material"
-import {Add, ArrowBack, ChevronLeft, ChevronRight, Edit, Person, Save,} from "@mui/icons-material"
+import {format} from 'date-fns'
+import React, {useEffect, useState} from "react"
 import {Link as RouterLink, useLocation, useNavigate, useParams} from "react-router-dom"
+
 import {consultationApi} from "@/domain/consultation/services/consultationApi"
 import {
     ConsultationCreateRequest,
@@ -29,7 +31,7 @@ import {
     ConsultationStatus,
     ConsultationUpdateRequest
 } from "@/domain/consultation/types/consultation"
-import {format} from 'date-fns'
+
 
 // 상담 상태별 칩 색상 및 텍스트 - 새로운 상태 값에 맞게 업데이트
 const statusConfig = {
