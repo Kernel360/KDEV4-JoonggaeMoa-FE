@@ -1,160 +1,125 @@
-# 부동산 중개의 새로운 기준, 중개모아 <img alt="중개모아 로고" height="29" src="./docs/logo.png" title="logo" width="25"/>
+<div align="center">
 
-![대시보드](./docs/screenshot-dashboard.png)
+<!-- logo -->
 
-## 1. 서비스 개요
+![Image](https://github.com/user-attachments/assets/b3568df3-77a8-424d-ab45-0dacf687c3ce)
 
-**중개모아**는 공인중개사를 위한 통합 부동산 CRM 솔루션입니다. 단순한 매물 및 단지 정보 수집을 넘어서, 중개 실무의 전 과정을 효율화하고 자동화하여 공인중개사의 업무 생산성과 고객 만족도를 극대화하는 것을 목표로 합니다.
+## 부동산 중개의 새로운 기준, 중개모아
 
-본 서비스는 다음과 같은 기능적 범위를 포함합니다:
+</div>
 
-- **매물 및 단지 통합 수집 및 관리**: 네이버부동산, 직방 등 주요 플랫폼의 데이터를 자동 수집하여 단일 인터페이스에서 관리할 수 있도록 통합 처리합니다. Hibernate Spatial을 활용해 공간 기반 클러스터링 및 위치 필터링 기능도 제공합니다.
+## 일부 기능 시연 영상
 
-- **공인중개사 중심 계약 관리**: 임차인과 임대인 간의 계약서를 생성, 편집, PDF 저장하며 계약 상태(진행 중, 완료, 갱신 등)를 실시간으로 추적하고 관리할 수 있습니다.
+### - 대시보드
 
-- **고객 데이터 통합 및 상담 관리**: 다양한 채널(네이버 부동산과 직방)에서 유입되는 고객 데이터를 수집, 통합하며 상담 이력과 통화 내역을 기록하고 시각화된 대시보드로 제공합니다. 엑셀 업로드, 라벨링, 필터링 기능도 포함됩니다.
+![dashboard-screenshot-gif](https://github.com/user-attachments/assets/5484d43b-4a33-41c3-9d93-5e0744cab5fb)
 
-- **자동화 문자 발송 기능**: 고객 생일, 계약 만료일, 기념일 등 주요 이벤트를 기준으로 자동 문자를 발송할 수 있으며, 템플릿 설정, 예약 발송, 실패 리포트 기능을 지원합니다.
+### - 매물
 
-- **신규 고객 유입 설문 프로세스**: 공인중개사가 QR코드 또는 고유 URL을 활용해 설문지 기반 상담 요청을 받을 수 있으며, 다중 문항 유형(객관식/주관식/파일 업로드 포함)과 통계 리포트를 통해 고객을 분류하고 상담 준비도를 향상시킬 수 있습니다.
+![article-screenshot-gif](https://github.com/user-attachments/assets/e306bace-3f76-4609-a64f-98815e7247a6)
 
-- **단체 문자 발송**: 등록된 고객 데이터를 필터링하여 템플릿 기반 대량 문자를 발송할 수 있으며, 발송 성공률, 통계, 실패 건 리포트 등을 실시간으로 확인할 수 있습니다.
+### - 상담
 
-- **문의 게시판 및 커뮤니케이션 허브**: 고객이 직접 남긴 질문에 답변하고, 파일 첨부, 댓글, 좋아요 기능을 통해 쌍방향 커뮤니케이션을 제공합니다.
+![consultation-screenshot-gif](https://github.com/user-attachments/assets/e6e7f35f-cefc-4a66-9bca-7a40229f6353)
 
-- **기타 중개업무 지원 기능**: 회원가입, 로그인, 권한 관리(RBAC), 마이페이지(개인정보 수정, 알림 설정), 상담 일정 등록, 상담사 지정 등의 부가 기능도 포함됩니다.
+## 프로젝트 설명
 
-이러한 기능은 React 기반 직관적인 프론트엔드 UI와 Spring Boot 기반의 견고한 백엔드 아키텍처를 통해 유기적으로 동작하며, 공인중개사가 데이터를 기반으로 시장을 선도할 수 있도록 돕습니다.
+**2025년 3월 17일 ~ 2025년 5월 16일**
 
-## 2. 주요 기능
-### 2.1 공통 기능
-- 회원가입(Sign Up), 로그인(Sign In), 비밀번호 재설정, 권한 관리(RBAC)
-- 마이페이지(개인정보 조회/수정, 알림 설정)
+[![중개모아 웹사이트](https://img.shields.io/badge/중개모아%20웹사이트-%2300BFFF?style=for-the-badge&logo=googlechrome&logoColor=white)](https://www.joonggaemoa.com)
 
-### 2.2 대시보드
-- 전체 통계(매물, 단지, 회원 수)
-- 실시간 스크래핑 상태 모니터링
-- 주요 알림 배너
+**중개모아**는 공인중개사를 위한 통합 부동산 CRM 솔루션으로, 단순한 매물 및 단지 정보 수집을 넘어서 **중개 실무의 전 과정을 효율화하고 자동화**하여 **공인중개사의 업무 생산성**과 **고객 만족도**를
+높이는 것을 목표로 만들어졌습니다.
 
-### 2.3 매물 관리
-- 매물 목록 조회/검색
-- 상세 정보 편집(가격, 면적, 위치)
-- 상태 변경(활성/비활성)
+## 주요 기능
 
-### 2.4 단지 관리
-- 단지 목록 조회
-- 중복 단지 병합 및 관리
-- 행정동/지오해시 기반 클러스터링
+### 대시보드
 
-### 2.5 계약 관리
-- 계약서 작성 및 저장(PDF)
-- 계약 상태 추적(진행, 완료, 갱신)
-- 알림(만료 예정 알림)
+전체 통계(매물 유형, 거래 병), 주요 알림, 만료 예정 계약 등
 
-### 2.6 고객 관리
-- 고객 프로필 및 연락처 관리
-- 문의/상담 이력 조회
+### 매물 관리
 
-### 2.7 상담 관리
-- 상담 일정 등록 및 알림
-- 상담사 지정 및 기록 저장
+지도 기반 매물 목록 조회/검색
 
-### 2.8 설문 관리
-- 설문 템플릿 생성
-- 응답 수집 및 통계 분석
+### 고객 관리
 
-### 2.9 문자 관리
-- 대량 문자 발송
-- 발송 이력 및 실패 내역 리포트
+고객 프로필 및 연락처 관리, 상담, 계약,메시지, 설문 히스토리 확인
 
-### 2.10 문의 게시판
-- 질문 작성/답변
-- 파일 첨부, 댓글 및 좋아요 기능
+### 상담 관리
 
-## 3. 아키텍처 및 모듈 구조
-```
-   Frontend
-   ├─ src
-   │  ├─ global                        # 전역 설정 및 공통 모듈
-   │  │  ├─ config                     # 프로젝트 설정 파일 (라우팅, 상태관리 등)
-   │  │  ├─ auth                       # 인증 관련 컴포넌트 (로그인, 회원가입, 권한)
-   │  │  ├─ api                        # API 호출 모듈 (Axios 인스턴스, 인터셉터)
-   │  │  └─ common                     # 공통 컴포넌트 (버튼, 입력창, 모달 등)
-   │  └─ domain                        # 도메인별 비즈니스 로직 및 컴포넌트
-   │     ├─ agent                      # 중개사 관련 페이지 및 컴포넌트
-   │     ├─ article                    # 매물 관리 페이지 및 컴포넌트 
-   │     ├─ consultation               # 상담 관리 페이지 및 컴포넌트
-   │     ├─ contract                   # 계약 관리 페이지 및 컴포넌트
-   │     ├─ customer                   # 고객 관리 페이지 및 컴포넌트
-   │     ├─ dashboard                  # 대시보드 페이지 및 컴포넌트
-   │     ├─ inquiry                    # 문의 게시판 페이지 및 컴포넌트
-   │     ├─ message                    # 문자 발송 관리 페이지 및 컴포넌트
-   │     ├─ notification               # 알림 관련 페이지 및 컴포넌트
-   │     └─ survey                     # 설문 관리 페이지 및 컴포넌트
-   ├─ public                           # 정적 파일 (이미지, 폰트 등)
-   ├─ styles                           # 글로벌 스타일 및 테마 설정
-   │  ├─ GlobalStyles.js               # 전역 스타일 정의
-   │  └─ theme.js                      # 테마 변수 (색상, 폰트, 간격 등)
-   ├─ tests                            # 테스트 파일
-   │  ├─ unit                          # 단위 테스트
-   │  └─ integration                   # 통합 테스트
-   ├─ package.json                     # 의존성 및 스크립트 정의
-   ├─ vite.config.js                   # Vite 설정
-   └─ .env                             # 환경 변수 설정
-```
+상담 일정 등록 및 알림, 상담 히스토리 기반 상담 작성
 
-## 4. 기술 스택
+### 설문 관리
 
-### 🌐 Frontend
-- **React**: 컴포넌트 기반 UI 라이브러리로, 사용자 인터페이스를 효율적으로 구성.
-- **Redux**: 전역 상태 관리를 위한 라이브러리로, 복잡한 상태 트리와 API 상태를 효율적으로 관리.
-- **React Router**: 클라이언트 사이드 라우팅을 통해 SPA 구조 구현.
-- **Axios**: HTTP 비동기 통신 라이브러리로, API 요청 및 응답을 효율적으로 처리.
-- **Leaflet.js**: 지도 시각화 라이브러리로, 부동산 매물 및 단지 데이터를 직관적으로 표현.
+설문 템플릿 생성, url 추출, 응답 수
 
-### 📌 Backend
-- **Java 17**: 최신 LTS 버전으로 안정성과 성능을 보장하며, 모듈 시스템과 레코드 등 최신 언어 기능을 활용.
-- **Spring Boot 2.7.x**: 애플리케이션의 설정과 실행을 간소화하며, 스타터 의존성과 자동 구성 기능을 제공.
-- **Spring Data JPA**: ORM 기반 데이터 접근을 추상화하여 생산성을 높이고, 복잡한 쿼리도 메서드 정의로 해결.
-- **Spring Batch**: 대용량 데이터 처리 및 배치 작업(스크래핑 등)을 위한 프레임워크.
-- **Hibernate Spatial**: 공간 데이터(위도/경도 등)를 JPA 기반으로 처리할 수 있는 확장 모듈.
-- **Spring HATEOAS**: RESTful API 응답에 하이퍼미디어 링크를 포함해 클라이언트가 자가 탐색이 가능하도록 지원.
-- **Springdoc OpenAPI3**: Swagger UI를 통해 API 문서를 자동 생성 및 인터페이스 테스트 제공.
+### 문자 관리
 
-### 🗄 Database
-- **MySQL 8.x (with Geometry)**: 공간 데이터를 저장하고, 공간 쿼리를 통해 위치 기반 검색 및 클러스터링 처리.
+대량 문자 발송, 문자 발송 예약, 발송 이력 확인
 
-### 🔐 인증 및 보안
-- **JWT (JSON Web Token)**: 무상태(stateless) 인증 방식으로 사용자 인증 정보와 권한을 안전하게 유지.
+### 문의 게시판
 
-### 🧪 테스트 및 문서화
-- **Swagger UI**: API 스펙 문서 자동 생성 및 UI 기반 테스트 지원(Springdoc 기반).
+질문 작성/답변, 챗봇을 통한 자동 질문 응답, 답변을 통한 상담 신청
 
-## 5. 실행 가이드
+## Tech Stack
 
-### 프론트엔드 실행
-- 설정 파일이 필요한 경우 .env 파일을 수정하세요.
-  ```bash
-  npm install && npm run dev
-  ```
+### Core Stack
+![React](https://img.shields.io/badge/React-18.2.0-61DAFB?logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.3.3-3178C6?logo=typescript)
+![Vite](https://img.shields.io/badge/Vite-6.2.4-646CFF?logo=vite)
 
-### 백엔드 실행
-- 설정 파일이 필요한 경우 application.yml 또는 application-local.yml 파일을 수정하세요.
-  ```bash
-  ./gradlew bootRun
-  ```
+### Routing & HTTP
+![React Router](https://img.shields.io/badge/React%20Router-6.21.1-CA4245?logo=reactrouter)
+![Axios](https://img.shields.io/badge/Axios-1.6.5-5A29E4?logo=axios)
+![QS](https://img.shields.io/badge/qs-6.14.0-6E4AFF)
 
-### Swagger UI 사용
-- 백엔드가 정상 기동되면 브라우저에서 아래 주소로 접근하여 API를 확인하고 테스트할 수 있습니다:
-  ```
-  http://localhost:8080/swagger-ui/index.html
-  ```
+### UI Frameworks & Styling
+![Material UI](https://img.shields.io/badge/Material%20UI-7.1.0-0081CB?logo=mui)
+![Emotion](https://img.shields.io/badge/Emotion-11.11.x-C76494?logo=emotion)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4.1.4-06B6D4?logo=tailwindcss)
+![ShadCN UI](https://img.shields.io/badge/shadcn/ui-0.0.4-purple)
 
-## 6. 작성자
-- 권승목 ([Seungmok1](https://github.com/Seungmok1))
-- 정소현 ([sohyeonjung](https://github.com/sohyeonjung))
-- 허용석 ([missiletoe](https://github.com/missiletoe))
+### Date & Time Utilities
+![Day.js](https://img.shields.io/badge/Day.js-1.11.13-orange?logo=dayjs)
+![date-fns](https://img.shields.io/badge/date--fns-4.1.0-green)
 
-## 7. 참고사항
+### Chart / Map / Toast
+![Toast UI Chart](https://img.shields.io/badge/Toast%20UI%20Chart-4.6.1-FF6B00)
+![React Kakao Maps SDK](https://img.shields.io/badge/Kakao%20Map%20SDK-1.1.27-yellow)
+![React Toastify](https://img.shields.io/badge/React%20Toastify-11.0.5-f28500)
+
+### Utilities & Helpers
+![Lodash](https://img.shields.io/badge/Lodash-4.17.21-blue?logo=lodash)
+![ts-morph](https://img.shields.io/badge/ts--morph-25.0.1-777BB4)
+![ts-node](https://img.shields.io/badge/ts--node-10.9.2-3178C6)
+
+### Lint & Quality
+![ESLint](https://img.shields.io/badge/ESLint-9.0.0-4B32C3?logo=eslint)
+![TypeScript ESLint](https://img.shields.io/badge/@typescript--eslint-8.32.0-007ACC)
+![Prettier](https://img.shields.io/badge/Prettier-integrated-F7B93E?logo=prettier)
+
+### Build Tools
+![PostCSS](https://img.shields.io/badge/PostCSS-8.5.3-DD3A0A?logo=postcss)
+![Autoprefixer](https://img.shields.io/badge/Autoprefixer-10.4.21-E34F26)
+![Rimraf](https://img.shields.io/badge/Rimraf-6.0.1-black)
+
+### MUI Extension Modules
+![MUI Icons](https://img.shields.io/badge/MUI%20Icons-7.1.0-0081CB)
+![MUI Lab](https://img.shields.io/badge/MUI%20Lab-7.0.0--beta.12-0081CB)
+![MUI X Date Pickers](https://img.shields.io/badge/MUI%20X%20DatePickers-8.3.0-0081CB)
+
+### Types & Dev Tools
+![@types/react](https://img.shields.io/badge/@types/react-18.2.45-blue)
+![@types/node](https://img.shields.io/badge/@types/node-22.14.1-blue)
+![Glob](https://img.shields.io/badge/glob-11.0.2-grey)
+
+## 팀원
+
+|                      팀장 권승목 ([Seungmok1](https://github.com/Seungmok1))                      |                      허용석 ([missiletoe](https://github.com/missiletoe))                       |                            정소현 ([sohyeonjung](https://github.com/sohyeonjung))                            |
+|:--------------------------------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------:|:---------------------------------------------------------------------------------------------------------:|
+| <img src="https://avatars.githubusercontent.com/u/103080705?v=4" width=200px height=200px /> | <img src="https://avatars.githubusercontent.com/u/116016950?v=4" width=200px height=200px /> |       <img src="https://avatars.githubusercontent.com/u/127183850?v=4" width=200px height=200px />        |
+
+
+
 ### Backend Repository
 - [KDEV4-JoonggaeMoa-BE](https://github.com/Kernel360/KDEV4-JoonggaeMoa-BE)
